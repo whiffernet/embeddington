@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/dude-hero.jpg" width="760" alt="A relaxed fellow in a Pendleton cardigan doing a white-Russian spit-take at a glowing tablet full of knowledge-graph data.">
+  <img src="assets/dude-hero-02.png" width="760" alt="A relaxed fellow in a Pendleton cardigan doing a white-Russian spit-take at a glowing tablet full of knowledge-graph data.">
 </p>
 
 # embeddington
