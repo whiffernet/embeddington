@@ -164,6 +164,39 @@ outside embedding API. The `.mcp.json` already points `EMBED_URL` at it.
 
 ---
 
+## Take 'er for a spin (example prompts)
+
+> _"This is a very complicated case. A lotta ins, a lotta outs, a lotta what-have-yous."_
+
+With the embeddington MCP loaded, ask Claude the kind of deep, multi-hop ServiceNow
+architecture questions that need the graph **and** the docs together. These two scored a
+perfect **100/100** for embeddington in our KG benchmark:
+
+**1. CI identification & deduplication strategy**
+
+> A customer populates CMDB from Discovery, a Service Graph Connector, and a legacy import,
+> and is accumulating duplicate CIs. Give a decision framework to reconcile identification:
+> when to rely on Discovery identification rules vs connector-provided identifiers vs custom
+> IRE rules, how datasource precedence resolves conflicting attribute ownership, the criteria
+> for dependent vs independent CI identification, and the governance to prevent future
+> duplication. Recommend a default authoritative-source model and name the exceptions.
+
+**2. Multi-instance platform & domain strategy at scale**
+
+> A global enterprise with 12 business units and 200k+ employees must choose its platform
+> topology: single instance with domain separation vs separate production instances vs a
+> hub-and-spoke model, the table-rotation/archiving strategy for high-volume tables, the
+> cross-instance integration pattern, the performance levers, the license implications, and
+> the top 3 architectural risks. Constraint: per-BU isolation with a shared CMDB, GA features
+> only.
+
+**Start with `enrich`** — it's the fullest, most robust tool in the box. One call runs
+vector search **and** graph traversal (entity match + neighbors) in parallel and hands Claude
+both, so it has the documents _and_ the connected structure to reason over. The other `kg_*`
+tools are there for when you want to drill into one specific entity or trace a single path.
+
+---
+
 ## How much room you'll need (storage)
 
 > _"You want a toe? I can get you a toe… with disk space. Believe me."_

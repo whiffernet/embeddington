@@ -86,15 +86,21 @@ than the data services.
 
 Seven of them. Maude would approve of the precise ones.
 
-| Tool                                      | What it does                                                                            | Needs embed service? |
-| ----------------------------------------- | --------------------------------------------------------------------------------------- | -------------------- |
-| `enrich(query, entity_hints, top_k)`      | The default move: vector search **and** KG entity match + 1-hop neighbors, in parallel. | Yes                  |
-| `vector_search(query, collection, limit)` | Raw vector search against an allowlisted Qdrant collection (defaults to `technology`).  | Yes                  |
-| `kg_find_entities(text, limit)`           | Fuzzy-match entity names; relevance-ranked, hub entities win.                           | No                   |
-| `kg_get_entity(entity_id)`                | Fetch one full entity document by its `_id`.                                            | No                   |
-| `kg_neighbors(entity_id, depth, types)`   | Traverse connected entities + edges around a node (depth 1–3).                          | No                   |
-| `kg_path(from_id, to_id, max_hops)`       | Shortest path between two known entities.                                               | No                   |
-| `kg_schema()`                             | List the entity types and relationship predicates in the graph.                         | No                   |
+**`enrich` is the fullest and most robust tool in the box — start there.** A single call
+runs vector search **and** graph traversal (entity match + 1-hop neighbors) in parallel and
+hands Claude both the documents and the connected structure, so it has the most to reason
+over in one shot. The other six are for targeted drill-downs once you know where you're
+headed.
+
+| Tool                                      | What it does                                                                                                          | Needs embed service? |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `enrich(query, entity_hints, top_k)`      | **The default move** — vector search **and** KG entity match + 1-hop neighbors, in parallel. The richest single call. | Yes                  |
+| `vector_search(query, collection, limit)` | Raw vector search against an allowlisted Qdrant collection (defaults to `technology`).                                | Yes                  |
+| `kg_find_entities(text, limit)`           | Fuzzy-match entity names; relevance-ranked, hub entities win.                                                         | No                   |
+| `kg_get_entity(entity_id)`                | Fetch one full entity document by its `_id`.                                                                          | No                   |
+| `kg_neighbors(entity_id, depth, types)`   | Traverse connected entities + edges around a node (depth 1–3).                                                        | No                   |
+| `kg_path(from_id, to_id, max_hops)`       | Shortest path between two known entities.                                                                             | No                   |
+| `kg_schema()`                             | List the entity types and relationship predicates in the graph.                                                       | No                   |
 
 `vector_search` and `enrich` embed the query first, so they need `EMBED_URL`
 reachable. The `kg_*` traversal tools talk to ArangoDB only — pure graph, no
