@@ -169,8 +169,7 @@ outside embedding API. The `.mcp.json` already points `EMBED_URL` at it.
 > _"This is a very complicated case. A lotta ins, a lotta outs, a lotta what-have-yous."_
 
 With the embeddington MCP loaded, ask Claude the kind of deep, multi-hop ServiceNow
-architecture questions that need the graph **and** the docs together. These two scored a
-perfect **100/100** for embeddington in our KG benchmark:
+architecture questions that need the graph **and** the docs together. Two examples:
 
 **1. CI identification & deduplication strategy**
 
