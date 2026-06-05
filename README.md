@@ -28,7 +28,7 @@ Loaded in Claude, it shows up as **embeddington**.
 
 ## There are rules (prerequisites)
 
-> _"This is not 'Nam. This is bowling. There are rules."_
+> _"This is not 'Nam. This is embeddington. There are rules."_
 
 - **Docker** (with the Compose plugin) — runs the local Qdrant + ArangoDB + embedder.
 - **GitHub CLI** (`gh`), logged in (`gh auth login`). You must have been **added as a
