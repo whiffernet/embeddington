@@ -26,6 +26,27 @@ Loaded in Claude, it shows up as **embeddington**.
 
 ---
 
+## By the numbers
+
+> _"There's a lot of strands to keep in old Duder's head."_
+
+Snapshot of the **`baseline-2026-06`** baseline (as of **2026-06-04**). The graph grows as
+daily diffs land, so a fresh install will already be a touch bigger than this.
+
+| Metric                                      | Count       |
+| ------------------------------------------- | ----------- |
+| Vectors (Qdrant chunks, `bge-m3`, 1024-dim) | **62,717**  |
+| Entities (graph nodes)                      | **242,937** |
+| Relationships / triples (graph edges)       | **499,836** |
+| Entity types                                | 14          |
+| Relationship predicates                     | 14          |
+| Avg. relationships per entity               | ~2.1        |
+
+Each edge is one subject–predicate–object triple, so "relationships" and "triples" are the
+same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
+
+---
+
 ## There are rules (prerequisites)
 
 > _"This is not 'Nam. This is embeddington. There are rules."_
