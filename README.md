@@ -49,7 +49,7 @@ same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
 
 ## There are rules (prerequisites)
 
-> _"This is not 'Nam. This is embeddington. There are rules."_
+> _"This is not Docs. This is embeddington. There are rules."_
 
 - **Docker** (with the Compose plugin) — runs the local Qdrant + ArangoDB + embedder.
 - **GitHub CLI** (`gh`), authenticated with **read access** to this repo — either you've

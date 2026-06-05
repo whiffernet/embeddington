@@ -1,6 +1,6 @@
 # `embeddington` — the format + apply library
 
-> _"This is not 'Nam. This is embeddington. There are rules."_
+> _"This is not Docs. This is embeddington. There are rules."_
 
 This is the small, dependency-light core that everyone agrees on. It defines **the
 on-the-wire format** for shipping a ServiceNow `technology` knowledge graph (a

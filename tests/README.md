@@ -1,6 +1,6 @@
 # embeddington Tests
 
-> _"This is not 'Nam. This is embeddington. There are rules."_
+> _"This is not Docs. This is embeddington. There are rules."_
 
 The Dude abides, but the test suite has rules. This folder is where every record,
 bundle, manifest, and apply step gets graded before it touches a real graph. Mark it
