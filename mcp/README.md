@@ -1,147 +1,121 @@
-# claudeGraph MCP
+# embeddington MCP
 
-Local stdio MCP server that exposes a Qdrant vector collection + ServiceNow
-ArangoDB knowledge graph to Claude Desktop directly. Returns structured JSON
-for Claude's LLM to synthesize — does NOT run a local LLM in the loop.
+> _"That tablet really tied the graph together."_ — The Dude (more or less)
 
-Designed for a setup where Claude Desktop runs on one machine (e.g. a Mac)
-and the data services (Qdrant, ArangoDB, the LlamaIndex `/embed` endpoint)
-run on another machine (e.g. a "spark" / dev box) reachable on the same LAN.
+This is the bundled MCP server that lets Claude reach into your local
+knowledge graph and actually look things up — the vectors, the entities, the
+relationships, the whole rug. It hands Claude structured JSON. Claude does the
+thinking. There's no other model in the loop, no external API, no cloud
+service quietly phoning home. The Dude keeps it local, man.
 
-## What it does
+You ask Claude a question; Claude calls these tools; the tools query your
+Qdrant collection and your ServiceNow ArangoDB graph and return clean,
+citable JSON; Claude reasons over it and answers. That's the whole story.
 
-Seven tools, all returning structured JSON (no synthesized prose):
+## What shows up in Claude
 
-| Tool                                      | Purpose                                                                                                                                                                                                                                         |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `enrich(query, entity_hints, top_k)`      | Default. Parallel vector search + KG entity match + 1-hop neighborhood.                                                                                                                                                                         |
-| `vector_search(query, collection, limit)` | Raw Qdrant vector search against an allowlisted collection. `collection` defaults to `technology` (the ServiceNow MD corpus); the query is embedded with the encoder matching the chosen collection. `enrich` is always pinned to `technology`. |
-| `kg_find_entities(text, limit)`           | Fuzzy entity name search.                                                                                                                                                                                                                       |
-| `kg_get_entity(entity_id)`                | Full entity document.                                                                                                                                                                                                                           |
-| `kg_neighbors(entity_id, depth, types)`   | Graph traversal.                                                                                                                                                                                                                                |
-| `kg_path(from_id, to_id, max_hops)`       | Shortest path between two entities.                                                                                                                                                                                                             |
-| `kg_schema()`                             | Catalog of entity types + relationship predicates.                                                                                                                                                                                              |
+The server registers as **`embeddington`**. Its tools appear as
+`mcp__embeddington__vector_search`, `mcp__embeddington__enrich`, and so on.
 
-> **Consuming these tools?** See [`RESPONSE_SHAPES.md`](RESPONSE_SHAPES.md) — the authoritative, version-tracked contract for every tool's return shape (envelopes, edge/entity/node/chunk fields, error cases, and grounding guidance). The integration tests enforce it.
+That display name comes straight from the config key, not from anything magic
+in the code:
 
-## Architecture
-
-```
-Claude Desktop
-  └─> claudeGraph MCP (stdio subprocess on the Desktop machine)
-        ├─> Qdrant (port 6333)         — code-scoped to allowlisted collections
-        ├─> ArangoDB (port 8529)       — scoped read-only user
-        └─> LlamaIndex /embed (8100)   — for query vectorization (1024-dim)
-```
-
-Security model:
-
-- **ArangoDB**: real per-collection isolation via a dedicated read-only user with
-  explicit `none` grants on every collection that isn't the ServiceNow KG.
-- **Qdrant**: v1 uses code-level scoping (allowlist enforced in `config.py`);
-  JWT-based credential isolation deferred until the broader Qdrant API key
-  retrofit lands across LangChain + LlamaIndex + other consumers.
-
-## Prerequisites
-
-You need:
-
-- Python 3.12+
-- A reachable Qdrant instance with a `technology` collection
-- A reachable ArangoDB with a `knowledge_graph` database containing the
-  ServiceNow KG collections (`entities_v2`, `relationships_v2`) and a named
-  graph `servicenow_graph_v2` wrapping them
-- A reachable embedding endpoint (LlamaIndex `/embed`) producing 1024-dim vectors
-- A scoped read-only ArangoDB user with grants on `entities_v2` and
-  `relationships_v2` (and `none` on everything else)
-
-## Setup (any platform — Mac, Linux, Windows)
-
-**1. Clone the repo on the machine that will run Claude Desktop:**
-
-```bash
-git clone <repo-url>
-cd claudegraph
-python3 -m venv .venv
-.venv/bin/pip install qdrant-client python-arango python-dotenv fastmcp httpx pydantic
-```
-
-(Or `pip install -e ".[dev]"` if the flat-layout install works on your machine.)
-
-**2. Create `.env` with your connection details:**
-
-Copy `.env.example` to `.env` and fill in the values. Then lock the file:
-
-```bash
-chmod 0600.env
-```
-
-**3. Register with Claude Desktop:**
-
-Add a `claudegraph` block under `mcpServers` in your Claude Desktop config:
-
-- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- Linux: `~/.config/Claude/claude_desktop_config.json`
-- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Claude Code** auto-discovers the `.mcp.json` at the repo root. The
+  `embeddington` key under `mcpServers` is the name you'll see. Nothing else to
+  do — open the repo, and Claude Code picks it up.
+- **Claude Desktop** needs a manual entry. Add a block under `mcpServers` in
+  your config (rename the key and you rename the server — keep it
+  `embeddington` to match the docs):
 
 ```json
 {
   "mcpServers": {
-    "claudegraph": {
-      "command": "/path/to/.venv/bin/python",
-      "args": ["/path/to/server.py"],
-      "env": {}
+    "embeddington": {
+      "command": "python",
+      "args": ["mcp/server.py"],
+      "env": {
+        "QDRANT_URL": "http://localhost:6333",
+        "ARANGO_URL": "http://localhost:8529",
+        "ARANGO_DATABASE": "technology_kg",
+        "ARANGO_USER": "root",
+        "ARANGO_PASSWORD": "your-arango-password",
+        "EMBED_URL": "http://localhost:8100/embed"
+      }
     }
   }
 }
 ```
 
-Keep your existing MCPs — just merge the `claudegraph` block.
+Config files live at:
 
-**4. Restart Claude Desktop fully.** Then in a new conversation: _"List the
-tools available from claudegraph"_ — you should see all seven.
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Linux: `~/.config/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
-## Configuration (`.env` keys)
+Keep your existing MCPs — just merge the `embeddington` block in. Then restart
+Claude Desktop fully.
 
-See `.env.example` for the full template.
-
-| Key                   | Default                       | Notes                                                                |
-| --------------------- | ----------------------------- | -------------------------------------------------------------------- |
-| `QDRANT_URL`          | `http://localhost:6333`       | Use the LAN hostname if MCP runs on a different machine than Qdrant. |
-| `ARANGO_URL`          | `http://localhost:8529`       | Same.                                                                |
-| `ARANGO_DATABASE`     | `knowledge_graph`             |                                                                      |
-| `ARANGO_USER`         | `arango_reader`               | Scoped read-only user; set up separately in ArangoDB.                |
-| `ARANGO_PASSWORD`     | (none — required)             | Password for the scoped Arango user.                                 |
-| `EMBED_URL`           | `http://localhost:8100/embed` | LlamaIndex /embed; must produce 1024-dim vectors.                    |
-| `CLAUDEGRAPH_TIMEOUT` | `30`                          | HTTP timeout in seconds.                                             |
-
-Process env vars (e.g. those set by `claude_desktop_config.json`) **override**
-the `.env` file. So you can keep credentials in either place — `.env` for
-the cleaner default, JSON env block if you prefer everything in one file.
-
-## Adapting for non-ServiceNow KGs
-
-The Qdrant collection (`technology`), the Arango collections (`entities_v2`,
-`relationships_v2`), and the named graph (`servicenow_graph_v2`) are
-currently hardcoded in `config.py`. If your KG has a different schema, edit
-those constants — they're isolated to one place. A future version may
-make them env-configurable; track that as a follow-up.
-
-## Running tests
+## Install the deps
 
 ```bash
-# Unit tests only (no external services needed):
-.venv/bin/pytest claudegraph/tests/ -k "not integration and not arango"
-
-# Full suite (unit + integration, requires live services):
-ARANGO_TEST_PASSWORD=<your-arango-password> \
-ARANGO_TEST_URL=http://localhost:8529 \
-QDRANT_URL=http://localhost:6333 \
-EMBED_URL=http://localhost:8100/embed \
-  .venv/bin/pytest claudegraph/tests/
+pip install -r mcp/requirements.txt
 ```
 
-## Spec & plan
+That's `fastmcp`, `python-arango`, `python-dotenv`, `httpx`, and `pydantic`.
+The Dude abides by a short requirements file.
 
-Full design at `docs/superpowers/specs/2026-05-09-claudegraph-mcp-design.md`.
-Implementation plan at `docs/superpowers/plans/2026-05-09-claudegraph-implementation.md`.
+## Environment variables
+
+The server reads its connection details from the environment (set them in the
+`.mcp.json` / Desktop `env` block, or a `.env` next to `server.py`). New
+information is welcome to come to light here:
+
+| Variable          | Example                       | What it points at                                                           |
+| ----------------- | ----------------------------- | --------------------------------------------------------------------------- |
+| `QDRANT_URL`      | `http://localhost:6333`       | Your Qdrant instance (holds the `technology` collection).                   |
+| `ARANGO_URL`      | `http://localhost:8529`       | Your ArangoDB instance (holds the ServiceNow graph).                        |
+| `ARANGO_DATABASE` | `technology_kg`               | The database with `entities_v2`, `relationships_v2`, `servicenow_graph_v2`. |
+| `ARANGO_USER`     | `root`                        | The Arango user the server authenticates as.                                |
+| `ARANGO_PASSWORD` | _(required)_                  | That user's password. No default — the server refuses to start without it.  |
+| `EMBED_URL`       | `http://localhost:8100/embed` | The local embedding service, producing 1024-dim `bge-m3` vectors.           |
+
+Use LAN hostnames instead of `localhost` if Claude runs on a different machine
+than the data services.
+
+## The tools
+
+Seven of them. Maude would approve of the precise ones.
+
+| Tool                                      | What it does                                                                            | Needs embed service? |
+| ----------------------------------------- | --------------------------------------------------------------------------------------- | -------------------- |
+| `enrich(query, entity_hints, top_k)`      | The default move: vector search **and** KG entity match + 1-hop neighbors, in parallel. | Yes                  |
+| `vector_search(query, collection, limit)` | Raw vector search against an allowlisted Qdrant collection (defaults to `technology`).  | Yes                  |
+| `kg_find_entities(text, limit)`           | Fuzzy-match entity names; relevance-ranked, hub entities win.                           | No                   |
+| `kg_get_entity(entity_id)`                | Fetch one full entity document by its `_id`.                                            | No                   |
+| `kg_neighbors(entity_id, depth, types)`   | Traverse connected entities + edges around a node (depth 1–3).                          | No                   |
+| `kg_path(from_id, to_id, max_hops)`       | Shortest path between two known entities.                                               | No                   |
+| `kg_schema()`                             | List the entity types and relationship predicates in the graph.                         | No                   |
+
+`vector_search` and `enrich` embed the query first, so they need `EMBED_URL`
+reachable. The `kg_*` traversal tools talk to ArangoDB only — pure graph, no
+embeddings.
+
+Every tool returns structured JSON, never prose. Edges carry their
+`source_quote`, `confidence`, `extraction_type`, and `releases` so Claude can
+cite verbatim, treat inferred edges as tentative, and scope version-sensitive
+claims. The Stranger appreciates a man who shows his sources.
+
+## The files in this folder
+
+| File                  | Purpose                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------ |
+| `server.py`           | The MCP entry point — `FastMCP("embeddington")` and the seven `@mcp.tool` functions. Run this.   |
+| `config.py`           | Env-loaded settings, the Qdrant collection allowlist, and the Arango collection/graph names.     |
+| `embedding_client.py` | Async client for the `/embed` endpoint; turns a query into a 1024-dim vector.                    |
+| `qdrant_client.py`    | Async Qdrant client, scoped to one allowlisted collection per instance.                          |
+| `arango_client.py`    | Read-only ArangoDB client; all the KG traversal AQL lives here.                                  |
+| `enrich.py`           | The parallel vector + KG fan-out behind the `enrich` tool.                                       |
+| `requirements.txt`    | Python dependencies.                                                                             |
+| `RESPONSE_SHAPES.md`  | The authoritative contract for every tool's return shape — read it if you're consuming the JSON. |
+
+The Dude abides.
