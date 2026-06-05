@@ -4,6 +4,8 @@
 
 # embeddington
 
+> _"There's a knowledge graph here, man."_
+
 > _"Sometimes there's a graph — I won't say a hero, 'cause what's a hero? — but sometimes there's a graph that's just right for its time and place. It fits right in there. And that's embeddington, on your own machine."_
 
 A shared **ServiceNow technology knowledge graph** that installs on your machine and keeps
