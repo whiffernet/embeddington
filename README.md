@@ -31,12 +31,30 @@ Loaded in Claude, it shows up as **embeddington**.
 > _"This is not 'Nam. This is embeddington. There are rules."_
 
 - **Docker** (with the Compose plugin) — runs the local Qdrant + ArangoDB + embedder.
-- **GitHub CLI** (`gh`), logged in (`gh auth login`). You must have been **added as a
-  collaborator** on this repo — that's how access to the data is granted.
+- **GitHub CLI** (`gh`), authenticated with **read access** to this repo — either you've
+  been added as a collaborator (`gh auth login`) or you were handed a **read-only token**
+  (see below).
 - **Python 3.12+**.
 
 Cross-platform: Linux, macOS (Intel **and** Apple Silicon), and Windows via WSL2 — the
 stores and the embedder all run in Docker.
+
+---
+
+## Got a read-only key? (token access)
+
+> _"Far out."_
+
+If someone shared a **read-only access token** with you instead of adding you as a
+collaborator, just point `gh` at it once:
+
+```bash
+echo "YOUR_TOKEN" | gh auth login --with-token
+```
+
+That token can only **read this one repo** — you can pull the graph and its daily updates,
+and nothing else. Everything below (clone, stack, `embeddington-consume update`) then works
+exactly as written.
 
 ---
 
