@@ -1,6 +1,6 @@
 # embeddington MCP
 
-> _"That tablet really tied the graph together."_ — The Dude (more or less)
+> _"That tablet really tied the graph together."_
 
 This is the bundled MCP server that lets Claude reach into your local
 knowledge graph and actually look things up — the vectors, the entities, the

@@ -2,10 +2,9 @@
   <img src="assets/dude-hero.jpg" width="760" alt="A relaxed fellow in a Pendleton cardigan doing a white-Russian spit-take at a glowing tablet full of knowledge-graph data.">
 </p>
 
-# Embeddington
+# embeddington
 
-> _"Sometimes there's a graph — I won't say a hero, 'cause what's a hero? — but sometimes there's a graph that's just right for its time and place. It fits right in there. And that's Embeddington, on your own machine."_
-> — The Stranger
+> _"Sometimes there's a graph — I won't say a hero, 'cause what's a hero? — but sometimes there's a graph that's just right for its time and place. It fits right in there. And that's embeddington, on your own machine."_
 
 A shared **ServiceNow technology knowledge graph** that installs on your machine and keeps
 itself current. The data abides.
@@ -16,7 +15,7 @@ It comes in two parts that stay in sync:
 - **ArangoDB** — an entity/relationship graph (`entities_v2` / `relationships_v2`) for
   structured traversal: what depends on what, what a feature extends, the whole tied-together rug of it.
 
-You get the data, not a service. Embeddington ships the graph as a **baseline** plus small
+You get the data, not a service. embeddington ships the graph as a **baseline** plus small
 daily **diffs** on GitHub Releases. Your copy restores the baseline once, then pulls only
 what changed — idempotent and resumable, so re-running is always safe. Real easy. Just
 takin' it easy for all us data sinners.
@@ -29,7 +28,7 @@ Loaded in Claude, it shows up as **embeddington**.
 
 ## There are rules (prerequisites)
 
-> _"This is not 'Nam. This is bowling. There are rules."_ — Walter
+> _"This is not 'Nam. This is bowling. There are rules."_
 
 - **Docker** (with the Compose plugin) — runs the local Qdrant + ArangoDB + embedder.
 - **GitHub CLI** (`gh`), logged in (`gh auth login`). You must have been **added as a
@@ -75,7 +74,7 @@ pip install -e .
 
 ## New information has come to light (import & update)
 
-> _"New information has come to light, man."_ — The Dude
+> _"New information has come to light, man."_
 
 One command restores the baseline on first run, then applies any newer diffs. Later runs
 apply only what changed:
@@ -103,7 +102,7 @@ update: up_to_date, applied 0, cursor a1b2c3d…   # nothing new, man
 
 ## That tablet really ties the graph together (query with Claude)
 
-> _"That rug really tied the room together."_ — The Dude
+> _"That rug really tied the room together."_
 
 `mcp/` is a stdio MCP server exposing vector search and graph traversal over your local
 stores. The repo ships a project-scoped **`.mcp.json`** that Claude Code auto-discovers, so
@@ -128,7 +127,7 @@ outside embedding API. The `.mcp.json` already points `EMBED_URL` at it.
 
 ## How much room you'll need (storage)
 
-> _"You want a toe? I can get you a toe… with disk space. Believe me."_ — Walter (more or less)
+> _"You want a toe? I can get you a toe… with disk space. Believe me."_
 
 Plan for **~6 GB** once everything settles. Itemized:
 
@@ -148,7 +147,7 @@ restore finishes.
 
 ## What's in the box (how updating works)
 
-> _"The word you're looking for is 'Yes.'"_ — Maude
+> _"The word you're looking for is 'Yes.'"_
 
 - A **manifest** on the `diffs` release lists the current baseline and an ordered,
   SHA-chained list of diffs. The CLI tracks a local **cursor** (the last point it applied).
@@ -177,14 +176,14 @@ restore finishes.
 Auth uses `gh` by default. To use a token instead, set `GITHUB_TOKEN` to a token that can
 read this repo.
 
-> _"This is what happens when you float your version tags."_ — Walter
+> _"This is what happens when you float your version tags."_
 >
 > The `docker-compose.yml` pins Qdrant to the exact version that produced the snapshot —
 > Qdrant snapshot restore is version-sensitive. Don't float it to `:latest`.
 
 ## Run the tests
 
-> _"Mark it zero."_ — Walter
+> _"Mark it zero."_
 
 ```bash
 pip install -e .[dev]

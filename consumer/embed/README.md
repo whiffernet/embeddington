@@ -1,6 +1,6 @@
 # consumer/embed — the local bge-m3 embedding service
 
-> _"That rug really tied the room together."_ — The Dude
+> _"That rug really tied the room together."_
 
 This little service is the rug. It's the beverage that ties the whole search together. Take it away and `vector_search` has nothing to search _with_. Even though the consumer adds no data of its own, search still has to turn the user's **query** into a vector at search time — and that's this service's whole job. The Dude abides; so does the embedder.
 

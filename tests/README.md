@@ -1,6 +1,6 @@
-# Embeddington Tests
+# embeddington Tests
 
-> _"This is not 'Nam. This is bowling. There are rules."_ — Walter
+> _"This is not 'Nam. This is bowling. There are rules."_
 
 The Dude abides, but the test suite has rules. This folder is where every record,
 bundle, manifest, and apply step gets graded before it touches a real graph. Mark it

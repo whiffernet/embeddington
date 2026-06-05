@@ -1,8 +1,8 @@
 # `consumer/` — pull the shared graph down to your machine
 
-> _"New information has come to light, man."_ — The Dude
+> _"New information has come to light, man."_
 
-This is the side of Embeddington that runs on _your_ machine. It stands up a small local
+This is the side of embeddington that runs on _your_ machine. It stands up a small local
 stack (Qdrant + ArangoDB + a `bge-m3` embedding server), then pulls the published
 `servicenow` `technology` knowledge graph from GitHub Releases and applies it into those
 local stores. Nothing here ever writes to a production endpoint — it abides by your stack
