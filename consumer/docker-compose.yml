@@ -1,0 +1,39 @@
+# Embeddington consumer stack — runs Qdrant + ArangoDB locally to host the shared
+# `technology` knowledge graph you import via the consumer CLI.
+#
+# Licensing: this file only *references* the official upstream images, which Docker
+# pulls directly from their publishers — Embeddington never redistributes the engines.
+# Qdrant is Apache-2.0; ArangoDB Community is BUSL-1.1 (free for this single-node use).
+#
+# Image pins: Qdrant is pinned to v1.16.3 to EXACTLY match the version that produced the
+# shared snapshot — Qdrant snapshot restore is version-sensitive, so do not float this to
+# :latest. ArangoDB dump/restore is patch-tolerant within 3.12.x; 3.12.4 matches the source.
+#
+# Quick start:
+#   cp .env.example .env        # then set ARANGO_ROOT_PASSWORD
+#   docker compose up -d
+#   # ...then run the consumer import-baseline / update commands.
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.16.3
+    restart: unless-stopped
+    ports:
+      - "6333:6333"   # REST + snapshot upload
+      - "6334:6334"   # gRPC
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  arango:
+    image: arangodb/arangodb:3.12.4
+    restart: unless-stopped
+    environment:
+      # Required — set this in .env (compose fails fast if unset).
+      - ARANGO_ROOT_PASSWORD=${ARANGO_ROOT_PASSWORD:?set ARANGO_ROOT_PASSWORD in .env}
+    ports:
+      - "8529:8529"
+    volumes:
+      - arango_data:/var/lib/arangodb3
+
+volumes:
+  qdrant_storage:
+  arango_data:

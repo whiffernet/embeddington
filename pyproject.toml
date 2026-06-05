@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "embeddington"
+version = "0.1.0"
+description = "Install and keep current a shared Qdrant + ArangoDB knowledge graph"
+requires-python = ">=3.12"
+# Everything `embeddington-consume` needs to restore and apply updates.
+dependencies = [
+    "zstandard>=0.22",
+    "qdrant-client>=1.10",
+    "python-arango>=8.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["src", "."]
+include = ["embeddington*", "consumer*"]
+
+[project.scripts]
+embeddington-consume = "consumer.cli:main"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
