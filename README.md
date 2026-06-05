@@ -14,9 +14,10 @@ daily **diffs** published to GitHub Releases. Your local copy restores the basel
 then pulls only what changed. Updates are idempotent and resumable — re-running is always
 safe.
 
-A bundled **claudeGraph** MCP server lets Claude query the graph directly (vector search +
+A bundled MCP server (in `mcp/`) lets Claude query the graph directly (vector search +
 graph traversal). It uses your local stores and Claude for reasoning — there is no
-dependency on any external model or API.
+dependency on any external model or API. When loaded, it appears in Claude as
+**embeddington**.
 
 ---
 
@@ -34,10 +35,10 @@ in Docker.
 
 ## Install
 
-**1. Clone (with the claudeGraph submodule):**
+**1. Clone:**
 
 ```bash
-git clone --recurse-submodules https://github.com/whiffernet/embeddington.git
+git clone https://github.com/whiffernet/embeddington.git
 cd embeddington
 ```
 
@@ -85,19 +86,26 @@ update: up_to_date, applied 0, cursor a1b2c3d…   # nothing new
 
 ---
 
-## Query with Claude (claudeGraph MCP)
+## Query with Claude (the `embeddington` MCP)
 
-The `claudegraph/` submodule is a stdio MCP server exposing vector search and graph
-traversal over your local stores. See **`claudegraph/README.md`** for setup; point its
-environment at the stack you started above:
+`mcp/` is a stdio MCP server exposing vector search and graph traversal over your local
+stores. The repo ships a project-scoped **`.mcp.json`** that Claude Code auto-discovers, so
+the server appears as **embeddington** (its tools as `mcp__embeddington__…`) — no manual
+wiring of endpoints needed beyond having `ARANGO_ROOT_PASSWORD` set in your environment.
 
-| Variable          | Value                       |
-| ----------------- | --------------------------- |
-| `QDRANT_URL`      | `http://localhost:6333`     |
-| `ARANGO_URL`      | `http://localhost:8529`     |
-| `ARANGO_DATABASE` | `technology_kg`             |
-| `ARANGO_USER`     | `root`                      |
-| `ARANGO_PASSWORD` | your `ARANGO_ROOT_PASSWORD` |
+```bash
+# Install the MCP server's dependencies into your active environment:
+pip install -r mcp/requirements.txt
+```
+
+Then open this repo in Claude Code (or Claude Desktop) and approve the `embeddington` MCP
+when prompted. See **`mcp/README.md`** for details and for Claude Desktop's JSON config.
+
+> **Note — vector search needs an embedder.** The graph-traversal tools
+> (`kg_find_entities`, `kg_neighbors`, `kg_path`, `kg_schema`, `kg_get_entity`) work out of
+> the box against your local ArangoDB. `vector_search` additionally needs a `bge-m3`
+> embedding endpoint (`EMBED_URL`) to encode your query with the same model the collection
+> was built with; set `EMBED_URL` if you run one. See `mcp/README.md`.
 
 ---
 
