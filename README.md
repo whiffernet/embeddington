@@ -42,7 +42,7 @@ git clone https://github.com/whiffernet/embeddington.git
 cd embeddington
 ```
 
-**2. Start the local Qdrant + ArangoDB:**
+**2. Start the local stack (Qdrant + ArangoDB + the embedder):**
 
 ```bash
 cd consumer
@@ -50,6 +50,10 @@ cp .env.example .env          # then edit .env and set ARANGO_ROOT_PASSWORD
 docker compose up -d
 cd ..
 ```
+
+The `embed` service builds on first run and downloads the `bge-m3` model (~2 GB) the first
+time it starts — that one-time download powers semantic search. Plan for ~8 GB of disk
+across the model, the engine images, and the baseline.
 
 **3. Install the consumer CLI:**
 
@@ -101,11 +105,11 @@ pip install -r mcp/requirements.txt
 Then open this repo in Claude Code (or Claude Desktop) and approve the `embeddington` MCP
 when prompted. See **`mcp/README.md`** for details and for Claude Desktop's JSON config.
 
-> **Note — vector search needs an embedder.** The graph-traversal tools
-> (`kg_find_entities`, `kg_neighbors`, `kg_path`, `kg_schema`, `kg_get_entity`) work out of
-> the box against your local ArangoDB. `vector_search` additionally needs a `bge-m3`
-> embedding endpoint (`EMBED_URL`) to encode your query with the same model the collection
-> was built with; set `EMBED_URL` if you run one. See `mcp/README.md`.
+Both query styles work out of the box: graph traversal (`kg_find_entities`, `kg_neighbors`,
+`kg_path`, `kg_schema`, `kg_get_entity`) runs against your local ArangoDB, and
+`vector_search` / `enrich` use the local `embed` service from the stack above (the same
+`bge-m3` model the collection was built with — so a query lands in the exact vector space
+of the data, no external embedding API). The `.mcp.json` already points `EMBED_URL` at it.
 
 ---
 

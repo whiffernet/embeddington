@@ -9,6 +9,11 @@
 # shared snapshot — Qdrant snapshot restore is version-sensitive, so do not float this to
 # :latest. ArangoDB dump/restore is patch-tolerant within 3.12.x; 3.12.4 matches the source.
 #
+# The `embed` service is a local bge-m3 embedding server, built on your machine (so it runs
+# on x86_64 AND arm64). It powers vector_search: a search embeds your QUERY with the same
+# model the collection was built with. The bge-m3 weights download from Hugging Face on
+# first start (cached in the embed_models volume).
+#
 # Quick start:
 #   cp .env.example .env        # then set ARANGO_ROOT_PASSWORD
 #   docker compose up -d
@@ -34,6 +39,15 @@ services:
     volumes:
       - arango_data:/var/lib/arangodb3
 
+  embed:
+    build: ./embed
+    restart: unless-stopped
+    ports:
+      - "8100:8100"   # /embed — bge-m3 query embedding for vector_search
+    volumes:
+      - embed_models:/root/.cache/huggingface   # cache the model across restarts
+
 volumes:
   qdrant_storage:
   arango_data:
+  embed_models:

@@ -8,7 +8,8 @@
         "ARANGO_URL": "http://localhost:8529",
         "ARANGO_DATABASE": "technology_kg",
         "ARANGO_USER": "root",
-        "ARANGO_PASSWORD": "${ARANGO_ROOT_PASSWORD}"
+        "ARANGO_PASSWORD": "${ARANGO_ROOT_PASSWORD}",
+        "EMBED_URL": "http://localhost:8100/embed"
       }
     }
   }
