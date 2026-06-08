@@ -9,7 +9,10 @@ WORKDIR /app
 # Install CPU-only torch first (the default wheel bundles the multi-GB CUDA stack, dead
 # weight for a CPU embedder). sentence-transformers then reuses this already-satisfied
 # torch instead of pulling the CUDA build. GPU users can swap to a CUDA wheel.
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+# Pinned for reproducibility; --retries/--timeout harden the ~150 MB wheel pull against a
+# slow or flaky PyTorch CDN (a transient stall would otherwise kill the whole build).
+RUN pip install --no-cache-dir --retries 5 --timeout 120 \
+    torch==2.12.0 --index-url https://download.pytorch.org/whl/cpu
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

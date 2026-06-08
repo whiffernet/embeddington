@@ -102,6 +102,13 @@ cd ..
 The `embed` service builds on first run and downloads the `bge-m3` model (~2 GB) the first
 time it starts — that one-time pull is what powers semantic search.
 
+> _"New information has come to light."_ That first build also compiles a CPU embedder,
+> which pulls ~150 MB of PyTorch and takes **10–20 minutes** — Qdrant and ArangoDB are
+> quick pre-built pulls, but the embedder is built locally so it runs on both Intel and
+> Apple Silicon. **If the build times out** on a slow connection, just re-run
+> `docker compose up -d --build` — Docker doesn't cache a failed layer, so the retry picks
+> up cleanly. The Dude doesn't sweat a dropped download.
+
 **3. Install the consumer CLI:**
 
 ```bash

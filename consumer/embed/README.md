@@ -19,8 +19,9 @@ A note on being precise, as Maude would want: the request accepts an optional `i
 ## How it's built
 
 - **CPU-only torch.** The default torch wheel drags along the multi-GB CUDA stack — dead weight for a CPU embedder. We install the CPU build first, so the image lands around **~1.3 GB** instead of **~5.4 GB**. (GPU users can swap in a CUDA wheel. Careful, man — there's a beverage here.)
-- **Multi-arch.** It builds natively on **x86_64 _and_ arm64 (Apple Silicon)**, since you build it on your own machine.
+- **Multi-arch.** It builds natively on **x86*64 \_and* arm64 (Apple Silicon)**, since you build it on your own machine.
 - **No bundled model.** The bge-m3 weights (~2 GB, MIT license) download from Hugging Face on first start and are cached in a volume. This repo redistributes no model.
+- **Build time & retries.** The torch pull is ~150 MB and the whole image takes **10–20 minutes** to build the first time (it's pinned to `torch==2.12.0`, with `--retries 5 --timeout 120` so a slow PyTorch CDN doesn't kill the build). If it still times out on a flaky connection, just re-run `docker compose up -d --build` — Docker doesn't cache a failed layer, so the retry resumes cleanly.
 
 ## Files
 
