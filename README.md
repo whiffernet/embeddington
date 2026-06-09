@@ -110,7 +110,10 @@ time it starts — that one-time pull is what powers semantic search.
 > `docker compose up -d --build` — Docker doesn't cache a failed layer, so the retry picks
 > up cleanly. The Dude doesn't sweat a dropped download.
 
-**3. Install the consumer CLI:**
+**3. Install the consumer CLI** — run this from the **repo root** (where `pyproject.toml`
+lives), not from `consumer/`. The `cd ..` above already put you there. Once installed, the
+`embeddington-consume` command is on your PATH and runs from anywhere — you never need to
+`cd` into `consumer/` to use it.
 
 ```bash
 python -m venv .venv && . .venv/bin/activate    # Windows: .venv\Scripts\activate
