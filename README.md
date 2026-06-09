@@ -83,10 +83,11 @@ exactly as written.
 
 > _"The Dude abides."_
 
-**1. Clone:**
+**1. Clone** (with `gh`, so it reuses the auth from above — `gh` and `git` are different
+tools, and `gh repo clone` uses your GitHub login directly):
 
 ```bash
-git clone https://github.com/whiffernet/embeddington.git
+gh repo clone whiffernet/embeddington
 cd embeddington
 ```
 
