@@ -77,6 +77,15 @@ That token can only **read this one repo** — you can pull the graph and its da
 and nothing else. Everything below (clone, stack, `embeddington-consume update`) then works
 exactly as written.
 
+Prefer the token as an environment variable instead of `gh`? That works too — just
+`export GITHUB_TOKEN=YOUR_TOKEN` before running `embeddington-consume update`.
+
+> _"This aggression will not stand."_ One gotcha for hand-debuggers: a raw
+> `curl https://github.com/whiffernet/embeddington/releases/download/...` with the token in
+> an `Authorization` header returns **404** on a private repo — that download URL only
+> honors browser sessions, not tokens. It's not a missing file. Use `gh` or the
+> `embeddington-consume` CLI (both fetch via the GitHub API, which _does_ honor the token).
+
 ---
 
 ## Takin' 'er easy (install)
