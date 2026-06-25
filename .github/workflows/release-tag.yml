@@ -1,0 +1,49 @@
+name: release-tag
+on:
+  push:
+    branches: [main]
+concurrency:
+  group: tagging
+  cancel-in-progress: false
+permissions:
+  contents: write       # push the tag
+  pull-requests: read   # read the merged PR's labels for the bump level
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Skip if HEAD already tagged (human tagged manually)
+        id: check
+        run: |
+          if [ -n "$(git tag --points-at HEAD)" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Determine bump from merged PR label (default patch)
+        if: steps.check.outputs.skip == 'false'
+        id: bump
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          BUMP=patch
+          LABELS=$(gh pr list --state merged --base main --limit 1 --json labels --jq '.[0].labels[].name' 2>/dev/null || true)
+          echo "$LABELS" | grep -q 'release:major' && BUMP=major
+          echo "$LABELS" | grep -q 'release:minor' && BUMP=minor
+          echo "bump=$BUMP" >> "$GITHUB_OUTPUT"
+      - name: Cut tag (pure-bash semver bump)
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          LATEST=$(git tag --list 'v*' --sort=-v:refname | head -1)
+          LATEST=${LATEST:-v0.0.0}
+          IFS=. read -r MA MI PA <<< "${LATEST#v}"
+          case "${{ steps.bump.outputs.bump }}" in
+            major) MA=$((MA+1)); MI=0; PA=0;;
+            minor) MI=$((MI+1)); PA=0;;
+            *)     PA=$((PA+1));;
+          esac
+          NEXT="v${MA}.${MI}.${PA}"
+          git tag "$NEXT"
+          git push origin "$NEXT"
+          echo "Cut $NEXT"
