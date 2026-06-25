@@ -28,9 +28,7 @@ def test_fetch_manifest_parses_json():
         "baselines": [{"tag": "b", "head_sha": "c3d4", "assets": {}, "sha256": {}}],
         "diffs": [],
     }
-    fetcher = _FakeFetcher(
-        {_url(repo, "diffs", "manifest.json"): json.dumps(manifest).encode()}
-    )
+    fetcher = _FakeFetcher({_url(repo, "diffs", "manifest.json"): json.dumps(manifest).encode()})
     rc = release_client.ReleaseClient(fetcher, repo=repo)
     assert rc.fetch_manifest()["schema_version"] == "1.0"
 

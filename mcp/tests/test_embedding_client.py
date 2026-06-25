@@ -36,9 +36,7 @@ async def test_embed_sends_index_when_set():
         return httpx.Response(200, json=fake_response)
 
     transport = httpx.MockTransport(handler)
-    client = EmbeddingClient(
-        url="http://test/embed", index="technology", transport=transport
-    )
+    client = EmbeddingClient(url="http://test/embed", index="technology", transport=transport)
 
     vec = await client.embed("incident management")
     assert len(vec) == 1024

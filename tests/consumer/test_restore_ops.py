@@ -52,12 +52,8 @@ def test_make_baseline_importer_wires_ops_in_order(tmp_path, monkeypatch):
     monkeypatch.setattr(
         restore_ops, "restore_qdrant_snapshot", lambda *a: calls.append(("qdrant", a))
     )
-    monkeypatch.setattr(
-        restore_ops, "restore_arango_dump", lambda *a: calls.append(("arango", a))
-    )
-    monkeypatch.setattr(
-        restore_ops, "ensure_named_graph", lambda *a: calls.append(("graph", a))
-    )
+    monkeypatch.setattr(restore_ops, "restore_arango_dump", lambda *a: calls.append(("arango", a)))
+    monkeypatch.setattr(restore_ops, "ensure_named_graph", lambda *a: calls.append(("graph", a)))
 
     importer = restore_ops.make_baseline_importer(
         _RC(),

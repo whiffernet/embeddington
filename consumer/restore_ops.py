@@ -84,9 +84,7 @@ def restore_qdrant_snapshot(qdrant_url, collection, snapshot_path):
     )
 
 
-def restore_arango_dump(
-    arango_url, db, username, password, dump_dir, image=ARANGO_IMAGE
-):
+def restore_arango_dump(arango_url, db, username, password, dump_dir, image=ARANGO_IMAGE):
     """arangorestore a dump into the local Arango database (creating it if needed).
 
     Runs a one-shot ``arangorestore`` from the pinned Arango image on the host network,
@@ -142,9 +140,7 @@ def ensure_named_graph(arango_url, db, username, password):
     """
     from arango import ArangoClient
 
-    database = ArangoClient(hosts=arango_url).db(
-        db, username=username, password=password
-    )
+    database = ArangoClient(hosts=arango_url).db(db, username=username, password=password)
     if database.has_graph(GRAPH_NAME):
         return
     graph = database.create_graph(GRAPH_NAME)
@@ -176,9 +172,7 @@ def make_baseline_importer(
                 tag, asset, dest, sha
             ),
             decompress=decompress,
-            restore_qdrant=lambda snap: restore_qdrant_snapshot(
-                qdrant_url, collection, snap
-            ),
+            restore_qdrant=lambda snap: restore_qdrant_snapshot(qdrant_url, collection, snap),
             restore_arango=lambda dump: restore_arango_dump(
                 arango_url, db, username, password, dump
             ),

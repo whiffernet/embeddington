@@ -21,9 +21,7 @@ def test_header_roundtrip():
 
 
 def test_point_upsert_roundtrip():
-    rec = records.point_upsert(
-        point_id="p1", vector=[0.1, 0.2], payload={"filename": "a.md"}
-    )
+    rec = records.point_upsert(point_id="p1", vector=[0.1, 0.2], payload={"filename": "a.md"})
     back = records.decode(records.encode(rec))
     assert back["op"] == "upsert" and back["kind"] == "point"
     assert back["id"] == "p1" and back["vector"] == [0.1, 0.2]

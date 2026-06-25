@@ -96,9 +96,7 @@ class ArangoConsumerWriter:
         """
         from arango import ArangoClient
 
-        return cls(
-            ArangoClient(hosts=url).db(db_name, username=username, password=password)
-        )
+        return cls(ArangoClient(hosts=url).db(db_name, username=username, password=password))
 
     def upsert_entity(self, key: str, doc: dict) -> None:
         """Upsert an entity vertex into entities_v2.
@@ -121,9 +119,7 @@ class ArangoConsumerWriter:
             to: Full ArangoDB document handle for the target vertex.
             doc: Extra attributes to store on the edge (must include ``predicate``).
         """
-        self._edges.insert(
-            {**doc, "_key": key, "_from": from_, "_to": to}, overwrite=True
-        )
+        self._edges.insert({**doc, "_key": key, "_from": from_, "_to": to}, overwrite=True)
 
     def delete_entity(self, key: str) -> None:
         """Delete an entity vertex by _key, ignoring if already absent.

@@ -56,9 +56,7 @@ def test_http_fetcher_no_token_gets_url_directly(monkeypatch):
     """Without a token, get() hits the public download URL as-is (no API rerouting)."""
     calls = []
     f = fetcher.HttpFetcher(token=None)
-    monkeypatch.setattr(
-        f, "_http_get", lambda url, accept=None: calls.append(url) or b"raw"
-    )
+    monkeypatch.setattr(f, "_http_get", lambda url, accept=None: calls.append(url) or b"raw")
     url = "https://github.com/owner/name/releases/download/diffs/manifest.json"
     assert f.get(url) == b"raw"
     assert calls == [url]  # the public URL, untouched

@@ -16,11 +16,7 @@ class FakeQdrant:
         self.points.pop(point_id, None)
 
     def delete_points_by_filename(self, filename):
-        for pid in [
-            p
-            for p, v in self.points.items()
-            if v["payload"].get("filename") == filename
-        ]:
+        for pid in [p for p, v in self.points.items() if v["payload"].get("filename") == filename]:
             del self.points[pid]
 
 

@@ -10,9 +10,7 @@ def test_cli_update_parses_and_dispatches(monkeypatch, tmp_path):
         return 0
 
     monkeypatch.setattr(cli, "_cmd_update", fake_run_update)
-    rc = cli.main(
-        ["update", "--repo", "me/embeddington", "--cursor", str(tmp_path / ".cursor")]
-    )
+    rc = cli.main(["update", "--repo", "me/embeddington", "--cursor", str(tmp_path / ".cursor")])
     assert rc == 0
     assert calls["repo"] == "me/embeddington"
 

@@ -176,9 +176,7 @@ async def enrich(
             "Pass these whenever possible; falls back to regex if None."
         ),
     ] = None,
-    top_k: Annotated[
-        int, Field(ge=1, le=50, description="Vector chunks to return.")
-    ] = 10,
+    top_k: Annotated[int, Field(ge=1, le=50, description="Vector chunks to return.")] = 10,
 ) -> dict[str, Any]:
     """Default starting tool: parallel vector search + KG entity match.
 
@@ -260,9 +258,7 @@ async def vector_search(
 
 @mcp.tool
 async def kg_find_entities(
-    text: Annotated[
-        str, Field(description="Text to fuzzy-match against entity names.")
-    ],
+    text: Annotated[str, Field(description="Text to fuzzy-match against entity names.")],
     limit: Annotated[int, Field(ge=1, le=50)] = 10,
 ) -> dict[str, Any]:
     """Find KG entities whose name contains `text`.
@@ -285,9 +281,7 @@ async def kg_find_entities(
 
 @mcp.tool
 async def kg_get_entity(
-    entity_id: Annotated[
-        str, Field(description="Full document ID, e.g. 'entities_v2/abc'.")
-    ],
+    entity_id: Annotated[str, Field(description="Full document ID, e.g. 'entities_v2/abc'.")],
 ) -> dict[str, Any]:
     """Fetch a full entity document by its _id.
 
@@ -309,9 +303,7 @@ async def kg_get_entity(
 @mcp.tool
 async def kg_neighbors(
     entity_id: Annotated[str, Field(description="Full document ID.")],
-    depth: Annotated[
-        int, Field(ge=1, le=3, description="Traversal depth (capped at 3).")
-    ] = 1,
+    depth: Annotated[int, Field(ge=1, le=3, description="Traversal depth (capped at 3).")] = 1,
     types: Annotated[
         Optional[list[str]],
         Field(
@@ -355,9 +347,7 @@ async def kg_neighbors(
         `releases` for per-entity version context.
     """
     try:
-        result = _get_arango().neighbors(
-            entity_id, depth=depth, types=types, limit=limit
-        )
+        result = _get_arango().neighbors(entity_id, depth=depth, types=types, limit=limit)
         return result
     except ArangoError as exc:
         return {"nodes": [], "edges": [], "error": str(exc)}
@@ -390,11 +380,7 @@ async def kg_path(
     """
     try:
         result = _get_arango().shortest_path(from_id, to_id, max_hops=max_hops)
-        return (
-            result
-            if result is not None
-            else {"nodes": [], "edges": [], "no_path": True}
-        )
+        return result if result is not None else {"nodes": [], "edges": [], "no_path": True}
     except ArangoError as exc:
         return {"nodes": [], "edges": [], "error": str(exc)}
 
