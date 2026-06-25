@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "pytest-cov>=5", "mypy>=1.0"]
 
 [tool.setuptools.packages.find]
 where = ["src", "."]
@@ -30,6 +30,9 @@ testpaths = ["tests"]
 markers = [
   "integration: requires live infra (Postgres/Qdrant/Arango/vLLM/GPU); runs only on the self-hosted Spark runner",
 ]
+
+[tool.mypy]
+ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 100
