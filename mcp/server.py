@@ -37,17 +37,17 @@ if _ENV_PATH.exists():
 # Spark_langgraph follows the script-style precedent; we support both for test ergonomics.
 try:
     from . import config
-    from .arango_client import ArangoKGClient, ArangoError
+    from .arango_client import ArangoError, ArangoKGClient
     from .embedding_client import EmbeddingClient, EmbeddingError
     from .enrich import enrich as _enrich_impl
-    from .qdrant_client import QdrantSearchClient, QdrantError
+    from .qdrant_client import QdrantError, QdrantSearchClient
 except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import config  # type: ignore[no-redef]
-    from arango_client import ArangoKGClient, ArangoError  # type: ignore[no-redef]
+    from arango_client import ArangoError, ArangoKGClient  # type: ignore[no-redef]
     from embedding_client import EmbeddingClient, EmbeddingError  # type: ignore[no-redef]
     from enrich import enrich as _enrich_impl  # type: ignore[no-redef]
-    from qdrant_client import QdrantSearchClient, QdrantError  # type: ignore[no-redef]
+    from qdrant_client import QdrantError, QdrantSearchClient  # type: ignore[no-redef]
 
 # --- Logging — stderr only (stdout reserved for MCP stdio) ----------------
 logging.basicConfig(

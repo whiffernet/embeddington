@@ -1,7 +1,6 @@
 """Consumer-test fixtures: fake qdrant/arango clients matching the adapter call surface."""
 
 import pytest
-
 from qdrant_client import models as qmodels
 
 

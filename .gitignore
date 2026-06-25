@@ -8,3 +8,4 @@ dist/
 data/
 .env
 *.env
+.superpowers/

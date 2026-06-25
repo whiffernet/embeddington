@@ -11,7 +11,8 @@ import logging
 from typing import Any, Optional
 
 from arango import ArangoClient
-from arango.exceptions import ArangoError as _ArangoError, DocumentGetError
+from arango.exceptions import ArangoError as _ArangoError
+from arango.exceptions import DocumentGetError
 
 logger = logging.getLogger("claudegraph.arango")
 

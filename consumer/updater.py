@@ -9,10 +9,10 @@ heavy snapshot/dump restore is a separate ops adapter, Plan 3b).
 
 from pathlib import Path
 
+from consumer.cursor_store import read_cursor, write_cursor
 from embeddington import apply_diff, plan_update
 from embeddington.errors import EmbeddingtonError
 from embeddington.format import bundle as bundle_mod
-from consumer.cursor_store import read_cursor, write_cursor
 
 
 class BaselineRequired(EmbeddingtonError):

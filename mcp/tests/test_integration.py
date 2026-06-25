@@ -5,12 +5,12 @@ and exercises the full enrich() flow.
 """
 
 import os
-import pytest
 
-from embedding_client import EmbeddingClient
-from qdrant_client import QdrantSearchClient
+import pytest
 from arango_client import ArangoKGClient
+from embedding_client import EmbeddingClient
 from enrich import enrich
+from qdrant_client import QdrantSearchClient
 
 # Capture real env values at module import (before _safe_env autouse override)
 _QDRANT_URL = os.environ.get("QDRANT_URL", "http://localhost:6333")

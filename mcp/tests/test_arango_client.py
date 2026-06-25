@@ -6,10 +6,9 @@ ARANGO_TEST_PASSWORD in the env. Skipped if not provided.
 """
 
 import os
+
 import pytest
-
 from arango_client import ArangoKGClient
-
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("ARANGO_TEST_PASSWORD"),

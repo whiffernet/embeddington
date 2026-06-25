@@ -2,9 +2,8 @@
 
 import json
 
-import pytest
 import httpx
-
+import pytest
 from embedding_client import EmbeddingClient, EmbeddingError
 
 

@@ -10,9 +10,9 @@ plan's ``srv.<tool>.fn(...)`` form, which would require FastMCP to return
 a Tool wrapper from the decorator (it does not in 3.x).
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 import server as srv
 
 
