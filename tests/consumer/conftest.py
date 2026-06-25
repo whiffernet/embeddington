@@ -21,9 +21,7 @@ class FakeQdrantClient:
         else:  # FilterSelector on payload.filename
             cond = points_selector.filter.must[0]
             fn = cond.match.value
-            for pid in [
-                p for p, v in self.points.items() if v["payload"].get("filename") == fn
-            ]:
+            for pid in [p for p, v in self.points.items() if v["payload"].get("filename") == fn]:
                 del self.points[pid]
 
 

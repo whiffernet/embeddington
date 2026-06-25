@@ -44,18 +44,14 @@ def _chain_from(start_sha, diffs):
     Raises:
         ChainGapError: If the chain starts but then has a broken prev_sha link.
     """
-    start_idx = next(
-        (i for i, d in enumerate(diffs) if d["prev_sha"] == start_sha), None
-    )
+    start_idx = next((i for i, d in enumerate(diffs) if d["prev_sha"] == start_sha), None)
     if start_idx is None:
         return None
     chain = []
     running = start_sha
     for diff in diffs[start_idx:]:
         if diff["prev_sha"] != running:
-            raise ChainGapError(
-                f"diff chain gap: expected prev {running}, got {diff['prev_sha']}"
-            )
+            raise ChainGapError(f"diff chain gap: expected prev {running}, got {diff['prev_sha']}")
         chain.append(diff)
         running = diff["head_sha"]
     return chain

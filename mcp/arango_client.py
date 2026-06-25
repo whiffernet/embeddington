@@ -113,9 +113,7 @@ class ArangoKGClient:
             ArangoError: If ``entity_id`` is malformed or on query failure.
         """
         if "/" not in entity_id:
-            raise ArangoError(
-                f"invalid entity_id (must include collection): {entity_id}"
-            )
+            raise ArangoError(f"invalid entity_id (must include collection): {entity_id}")
         try:
             doc = self._db.collection(ENTITIES).get(entity_id.split("/", 1)[1])
         except DocumentGetError:
@@ -298,9 +296,7 @@ class ArangoKGClient:
                 self._db.aql.execute(f"FOR e IN {ENTITIES} COLLECT t = e.type RETURN t")
             )
             predicates = list(
-                self._db.aql.execute(
-                    f"FOR r IN {RELATIONSHIPS} COLLECT p = r.predicate RETURN p"
-                )
+                self._db.aql.execute(f"FOR r IN {RELATIONSHIPS} COLLECT p = r.predicate RETURN p")
             )
         except _ArangoError as exc:
             raise ArangoError(f"schema failed: {exc}") from exc

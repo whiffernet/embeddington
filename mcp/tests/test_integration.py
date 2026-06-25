@@ -54,10 +54,7 @@ async def test_enrich_against_live_servicenow_data():
     )
 
     # If embedding service is down, skip cleanly
-    if (
-        "qdrant" in result["errors"]
-        and "embedding" in result["errors"]["qdrant"].lower()
-    ):
+    if "qdrant" in result["errors"] and "embedding" in result["errors"]["qdrant"].lower():
         await embed.close()
         await qdrant.close()
         pytest.skip(
@@ -72,9 +69,7 @@ async def test_enrich_against_live_servicenow_data():
     if not result["kg_matches"]:
         await embed.close()
         await qdrant.close()
-        pytest.skip(
-            "KG has no 'Incident Management' entity — enrich worked but no KG data"
-        )
+        pytest.skip("KG has no 'Incident Management' entity — enrich worked but no KG data")
     assert "entity" in result["kg_matches"][0]
     assert "neighbors" in result["kg_matches"][0]
 

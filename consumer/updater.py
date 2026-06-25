@@ -58,9 +58,7 @@ def update(
 
     if plan.mode == "baseline":
         if baseline_importer is None:
-            raise BaselineRequired(
-                f"baseline {plan.baseline['tag']} required; run import-baseline"
-            )
+            raise BaselineRequired(f"baseline {plan.baseline['tag']} required; run import-baseline")
         baseline_importer(plan.baseline)
         write_cursor(cursor_path, plan.baseline["head_sha"])
 

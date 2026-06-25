@@ -45,12 +45,8 @@ def import_baseline(
 
     q_asset = baseline_entry["assets"]["qdrant"]
     a_asset = baseline_entry["assets"]["arango"]
-    q_zst = download_asset(
-        tag, q_asset, work / q_asset, baseline_entry["sha256"]["qdrant"]
-    )
-    a_zst = download_asset(
-        tag, a_asset, work / a_asset, baseline_entry["sha256"]["arango"]
-    )
+    q_zst = download_asset(tag, q_asset, work / q_asset, baseline_entry["sha256"]["qdrant"])
+    a_zst = download_asset(tag, a_asset, work / a_asset, baseline_entry["sha256"]["arango"])
 
     snapshot_path = decompress(q_zst)
     dump_dir = decompress(a_zst)

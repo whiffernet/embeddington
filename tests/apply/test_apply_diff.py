@@ -50,9 +50,7 @@ def test_apply_rejects_bad_record(fake_qdrant, fake_arango):
 
 
 def test_apply_deletes_edge_by_key(fake_qdrant, fake_arango):
-    fake_arango.upsert_edge(
-        "R_old", "entities_v2/E1", "entities_v2/E2", {"predicate": "OLD"}
-    )
+    fake_arango.upsert_edge("R_old", "entities_v2/E1", "entities_v2/E2", {"predicate": "OLD"})
     bundle = [
         records.header("1.0", "a1", "b2", points=0, entities=0, edges=0),
         records.edge_delete("R_old"),

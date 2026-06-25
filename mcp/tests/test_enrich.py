@@ -37,9 +37,7 @@ async def test_enrich_combines_vector_and_kg_results():
     )
     arango.neighbors = MagicMock(
         return_value={
-            "nodes": [
-                {"id": "entities_v2/incident", "name": "Incident", "type": "Process"}
-            ],
+            "nodes": [{"id": "entities_v2/incident", "name": "Incident", "type": "Process"}],
             "edges": [
                 {
                     "source": "entities_v2/itsm",
@@ -153,9 +151,7 @@ def test_extract_hints_catches_standalone_proper_noun():
 
 def test_extract_hints_evidence_case_prompt_07():
     """Regression for the reported bug: this query previously extracted []."""
-    hints = _extract_entity_hints(
-        "what connects IntegrationHub and Discovery in ServiceNow"
-    )
+    hints = _extract_entity_hints("what connects IntegrationHub and Discovery in ServiceNow")
     assert "IntegrationHub" in hints
     assert "Discovery" in hints
     assert "ServiceNow" in hints  # CamelCase

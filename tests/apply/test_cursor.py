@@ -116,9 +116,7 @@ def test_multiple_baselines_picks_latest():
     assert plan.baseline["tag"] == "baseline-new"
     assert [d["head_sha"] for d in plan.diffs] == ["new2"]
 
-    fallback = cursor.plan_update(
-        "old1", m
-    )  # old baseline SHA is unreachable -> latest baseline
+    fallback = cursor.plan_update("old1", m)  # old baseline SHA is unreachable -> latest baseline
     assert fallback.mode == "baseline"
     assert fallback.baseline["tag"] == "baseline-new"
 

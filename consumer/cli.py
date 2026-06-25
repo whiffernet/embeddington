@@ -36,15 +36,11 @@ def _cmd_update(args):
         args.arango_password,
     )
     try:
-        result = updater.update(
-            rc, qdrant, arango, args.cursor, args.work_dir, baseline_importer
-        )
+        result = updater.update(rc, qdrant, arango, args.cursor, args.work_dir, baseline_importer)
     except updater.BaselineRequired as exc:
         print(f"{exc}", file=sys.stderr)
         return 2
-    print(
-        f"update: {result['mode']}, applied {result['applied']}, cursor {result['cursor']}"
-    )
+    print(f"update: {result['mode']}, applied {result['applied']}, cursor {result['cursor']}")
     return 0
 
 
@@ -65,8 +61,7 @@ def main(argv=None):
     p_up.add_argument(
         "--arango-password",
         # Same var the consumer docker-compose uses, so one .env serves both.
-        default=os.environ.get("ARANGO_ROOT_PASSWORD")
-        or os.environ.get("ARANGO_PASSWORD", ""),
+        default=os.environ.get("ARANGO_ROOT_PASSWORD") or os.environ.get("ARANGO_PASSWORD", ""),
     )
     p_up.set_defaults(func=_cmd_update)
 

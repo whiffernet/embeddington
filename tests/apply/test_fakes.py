@@ -17,9 +17,7 @@ def test_fake_arango_entity_and_edge(fake_arango):
     fake_arango.upsert_entity("E1", {"name": "CMDB"})
     fake_arango.upsert_entity("E1", {"name": "CMDB2"})  # overwrite
     assert fake_arango.entities["E1"]["name"] == "CMDB2"
-    fake_arango.upsert_edge(
-        "R1", "entities_v2/E1", "entities_v2/E2", {"predicate": "USES"}
-    )
+    fake_arango.upsert_edge("R1", "entities_v2/E1", "entities_v2/E2", {"predicate": "USES"})
     fake_arango.delete_edge("R1")
     fake_arango.delete_edge("R1")  # idempotent, no error
     assert fake_arango.edges == {}

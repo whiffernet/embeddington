@@ -84,9 +84,7 @@ class QdrantSearchClient:
             )
         return self._client
 
-    async def search(
-        self, vector: list[float], limit: int = 10
-    ) -> list[dict[str, Any]]:
+    async def search(self, vector: list[float], limit: int = 10) -> list[dict[str, Any]]:
         """Search the scoped collection by vector similarity.
 
         Returns:
@@ -130,9 +128,7 @@ class QdrantSearchClient:
                     "text": text,
                     "source": (payload.get("source") or payload.get("file_name") or ""),
                     "metadata": {
-                        k: v
-                        for k, v in payload.items()
-                        if k not in ("text", "_node_content")
+                        k: v for k, v in payload.items() if k not in ("text", "_node_content")
                     },
                 }
             )

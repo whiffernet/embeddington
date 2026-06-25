@@ -36,9 +36,7 @@ def test_main_resets_singletons_after_sanity_check(monkeypatch):
 
     assert ran["mcp_run_called"] is True
     assert srv._embed_clients == {}, "expected embed registry reset after sanity check"
-    assert srv._qdrant_clients == {}, (
-        "expected qdrant registry reset after sanity check"
-    )
+    assert srv._qdrant_clients == {}, "expected qdrant registry reset after sanity check"
 
 
 def test_main_aborts_when_arango_password_missing(monkeypatch):

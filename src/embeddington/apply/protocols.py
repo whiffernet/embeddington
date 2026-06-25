@@ -6,9 +6,7 @@ from typing import Protocol
 class QdrantWriter(Protocol):
     """Minimal write surface for the technology collection."""
 
-    def upsert_point(
-        self, point_id: str, vector: list[float], payload: dict
-    ) -> None: ...
+    def upsert_point(self, point_id: str, vector: list[float], payload: dict) -> None: ...
 
     def delete_point(self, point_id: str) -> None: ...
 

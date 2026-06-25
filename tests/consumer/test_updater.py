@@ -136,9 +136,7 @@ def test_mid_chain_applies_only_remaining(tmp_path, fake_qdrant_client, fake_ara
     assert cursor_store.read_cursor(cursor_path) == "a7b8"
 
 
-def test_baseline_required_without_importer_raises(
-    tmp_path, fake_qdrant_client, fake_arango_db
-):
+def test_baseline_required_without_importer_raises(tmp_path, fake_qdrant_client, fake_arango_db):
     rc, _ = _setup(tmp_path)
     qw = writers.QdrantConsumerWriter(fake_qdrant_client, "technology")
     aw = writers.ArangoConsumerWriter(fake_arango_db)

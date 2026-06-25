@@ -103,9 +103,7 @@ def _extract_entity_hints(query: str) -> list[str]:
     candidates.extend(_REGEX_ACRONYM.findall(query))
 
     phrase_words = {w for p in phrases for w in p.split()}
-    candidates.extend(
-        w for w in _REGEX_PROPER_NOUN.findall(query) if w not in phrase_words
-    )
+    candidates.extend(w for w in _REGEX_PROPER_NOUN.findall(query) if w not in phrase_words)
 
     seen: set[str] = set()
     out: list[str] = []
@@ -165,9 +163,7 @@ async def enrich(
 
     # Embedding is required for vector search — if it fails, vector side dies
     # but we still try KG (KG doesn't need embedding).
-    vector_task = asyncio.create_task(
-        _vector_side(query, top_k, embedding_client, qdrant_client)
-    )
+    vector_task = asyncio.create_task(_vector_side(query, top_k, embedding_client, qdrant_client))
     kg_task = asyncio.create_task(_kg_side(hints, arango_client))
 
     vector_result, kg_result = await asyncio.gather(vector_task, kg_task)
