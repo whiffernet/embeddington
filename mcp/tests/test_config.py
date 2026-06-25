@@ -3,9 +3,8 @@ Qdrant collections are reachable and which encoder each uses."""
 
 import importlib
 
-import pytest
-
 import config
+import pytest
 
 
 def test_allowlist_has_technology_collection():

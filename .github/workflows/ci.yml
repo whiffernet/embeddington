@@ -32,7 +32,6 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    continue-on-error: true   # advisory until embeddington is ruff-clean
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/ruff-action@v3

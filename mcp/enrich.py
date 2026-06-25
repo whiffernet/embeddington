@@ -16,11 +16,11 @@ from typing import Any, Optional, Protocol
 # (tests, python -m) and direct script invocation (when server.py is run as
 # a file path by Claude Desktop, this module gets loaded via sys.path).
 try:
-    from .qdrant_client import QdrantError
     from .arango_client import ArangoError
+    from .qdrant_client import QdrantError
 except ImportError:
-    from qdrant_client import QdrantError  # type: ignore[no-redef]
     from arango_client import ArangoError  # type: ignore[no-redef]
+    from qdrant_client import QdrantError  # type: ignore[no-redef]
 
 logger = logging.getLogger("claudegraph.enrich")
 

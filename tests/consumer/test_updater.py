@@ -1,7 +1,8 @@
 import pytest
 
-from consumer import updater, writers, cursor_store, release_client
-from embeddington.format import bundle as bundle_mod, records
+from consumer import cursor_store, release_client, updater, writers
+from embeddington.format import bundle as bundle_mod
+from embeddington.format import records
 from embeddington.format.manifest import sha256_file
 
 

@@ -1,9 +1,9 @@
 """Tests for the bundled enrich() tool."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from enrich import enrich, _extract_entity_hints
+import pytest
+from enrich import _extract_entity_hints, enrich
 
 
 @pytest.mark.asyncio

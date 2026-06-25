@@ -2,9 +2,9 @@ import json
 
 import pytest
 
+from consumer import release_client
 from embeddington.errors import ChecksumError
 from embeddington.format.manifest import sha256_file
-from consumer import release_client
 
 
 class _FakeFetcher:

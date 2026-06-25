@@ -2,12 +2,11 @@
 
 import json
 
-import pytest
 import httpx
-
+import pytest
 from qdrant_client import (
-    QdrantSearchClient,
     QdrantError,
+    QdrantSearchClient,
     _extract_payload_text,
 )
 
