@@ -40,8 +40,44 @@ def _cmd_update(args):
     except updater.BaselineRequired as exc:
         print(f"{exc}", file=sys.stderr)
         return 2
-    print(f"update: {result['mode']}, applied {result['applied']}, cursor {result['cursor']}")
+    print(_format_update(result))
     return 0
+
+
+def _format_update(result):
+    """Render an update result as a human-readable, mode-specific summary block.
+
+    Leads with the *action* taken (not the diff count) so a full baseline restore never
+    reads as a no-op — "applied 0" alone had misled users into thinking nothing happened.
+
+    Args:
+        result: The dict returned by ``updater.update`` (mode/applied/cursor/baseline).
+
+    Returns:
+        A multi-line string suitable for printing to a terminal or a cron log.
+    """
+    mode = result["mode"]
+    lines = ["Embeddington update complete."]
+    if mode == "baseline":
+        b = result["baseline"]
+        lines.append(f"  Action:  restored full baseline ({b['tag']})")
+        lines.append(
+            f"  Loaded:  {b['points']:,} vectors · {b['entities']:,} entities · "
+            f"{b['edges']:,} edges"
+        )
+        lines.append(f"  Version: {result['cursor']}")
+        lines.append(f"  Diffs:   {result['applied']} applied on top of the baseline")
+        lines.append(
+            "  Note:    a one-time full re-download is expected after a compaction — "
+            "existing installs re-restore the latest snapshot in a single step."
+        )
+    elif mode == "diffs":
+        lines.append(f"  Action:  applied {result['applied']} incremental update(s)")
+        lines.append(f"  Version: {result['cursor']}")
+    else:  # up_to_date
+        lines.append("  Action:  no changes — already the latest")
+        lines.append(f"  Version: {result['cursor']}")
+    return "\n".join(lines)
 
 
 def main(argv=None):
