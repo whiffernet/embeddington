@@ -93,6 +93,7 @@ def test_fresh_install_calls_baseline_then_applies_diffs(
 
     assert imported == ["baseline-2026-06"]  # baseline restored first
     assert result["applied"] == 2  # then both diffs
+    assert result["baseline"]["tag"] == "baseline-2026-06"  # entry surfaced for messaging
     assert cursor_store.read_cursor(cursor_path) == "a7b8"
     assert set(fake_qdrant_client.points) == {"pt-e5f6", "pt-a7b8"}
 

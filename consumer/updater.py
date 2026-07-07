@@ -43,7 +43,8 @@ def update(
         diffs_tag: The release tag holding diff assets + manifest.
 
     Returns:
-        dict {"mode": ..., "applied": <int>, "cursor": <head_sha or None>}.
+        dict {"mode": ..., "applied": <int>, "cursor": <head_sha or None>,
+        "baseline": <the baseline entry restored this run (tag + counts), or None>}.
 
     Raises:
         BaselineRequired: If a baseline is needed but no importer was given.
@@ -54,13 +55,15 @@ def update(
     plan = plan_update(cursor, manifest, supported_major)
 
     if plan.mode == "up_to_date":
-        return {"mode": "up_to_date", "applied": 0, "cursor": cursor}
+        return {"mode": "up_to_date", "applied": 0, "cursor": cursor, "baseline": None}
 
+    baseline = None
     if plan.mode == "baseline":
         if baseline_importer is None:
             raise BaselineRequired(f"baseline {plan.baseline['tag']} required; run import-baseline")
         baseline_importer(plan.baseline)
         write_cursor(cursor_path, plan.baseline["head_sha"])
+        baseline = plan.baseline
 
     applied = 0
     for diff in plan.diffs:
@@ -70,4 +73,9 @@ def update(
         write_cursor(cursor_path, diff["head_sha"])  # advance only after full apply
         applied += 1
 
-    return {"mode": plan.mode, "applied": applied, "cursor": read_cursor(cursor_path)}
+    return {
+        "mode": plan.mode,
+        "applied": applied,
+        "cursor": read_cursor(cursor_path),
+        "baseline": baseline,
+    }
