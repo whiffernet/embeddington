@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from consumer import cursor_store, release_client, updater, writers
@@ -12,6 +14,13 @@ class _FakeFetcher:
 
     def get(self, url):
         return self._urls[url]
+
+    def download(self, url, dest):
+        data = self._urls[url]
+        dest = Path(dest)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(data)
+        return dest
 
 
 def _diff_bundle_bytes(tmp_path, prev, head):
