@@ -207,12 +207,12 @@ docker compose ps         # all services should read "running" / "healthy"
 The `embed` service builds on first run and downloads the `bge-m3` model (~2 GB) the first
 time it starts — that one-time pull is what powers semantic search.
 
-> _"New information has come to light."_ That first build also compiles a CPU embedder,
-> which pulls ~150 MB of PyTorch and takes **10–20 minutes** — Qdrant and ArangoDB are
-> quick pre-built pulls, but the embedder is built locally so it runs on both Intel and
-> Apple Silicon. **If the build times out** on a slow connection, just re-run
-> `docker compose up -d --build` — Docker doesn't cache a failed layer, so the retry picks
-> up cleanly. The Dude doesn't sweat a dropped download.
+> _"Sometimes you eat the bar, and sometimes, well, the bar eats you."_ That first build
+> also compiles a CPU embedder, which pulls ~150 MB of PyTorch and takes **10–20 minutes**
+> — Qdrant and ArangoDB are quick pre-built pulls, but the embedder is built locally so it
+> runs on both Intel and Apple Silicon. **If the build times out** on a slow connection,
+> just re-run `docker compose up -d --build` — Docker doesn't cache a failed layer, so the
+> retry picks up cleanly. The Dude doesn't sweat a dropped download.
 
 **3. Install the consumer CLI.** This one needs the **repo root** (where `pyproject.toml`
 lives) — the `cd ..` in step 2 already put you there:
@@ -315,7 +315,7 @@ stores. The repo ships a project-scoped **`.mcp.json`** that Claude Code auto-di
 the server appears as **embeddington** (its tools as `mcp__embeddington__…`) — no manual
 endpoint wiring beyond having `ARANGO_ROOT_PASSWORD` set.
 
-> _"Is this your homework, Larry?"_ `.mcp.json` connects as `ARANGO_USER: root`. That's
+> _"This is a private residence, man."_ `.mcp.json` connects as `ARANGO_USER: root`. That's
 > **your own** ArangoDB container — the one `consumer/docker-compose.yml` started, with the
 > password you chose in `consumer/.env`. No shared credential ships with this repo, and
 > nothing here reaches a database you don't own.
