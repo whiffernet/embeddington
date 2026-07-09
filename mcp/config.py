@@ -18,7 +18,7 @@ ARANGO_PASSWORD = os.environ.get("ARANGO_PASSWORD", "")
 
 EMBED_URL = os.environ.get("EMBED_URL", "http://localhost:8100/embed")
 
-HTTP_TIMEOUT = float(os.environ.get("CLAUDEGRAPH_TIMEOUT", "30"))
+HTTP_TIMEOUT = float(os.environ.get("EMBEDDINGTON_TIMEOUT", "30"))
 
 # --- Hardcoded scope (defense-in-depth) -----------------------------------
 # In v1, only the Arango user is credential-isolated. The Qdrant collection
