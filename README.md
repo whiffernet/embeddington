@@ -236,7 +236,7 @@ embeddington-consume --help
 
 ---
 
-## New information has come to light (import & update)
+## Roll it forward (import & update)
 
 > _"New information has come to light, man."_
 
