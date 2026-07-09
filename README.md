@@ -37,7 +37,7 @@ Loaded in Claude, it shows up as **embeddington**.
 
 ## Why the juice is worth the squeeze (graph vs. search vs. the docs)
 
-> _"You're not wrong, Walter. You're just an asshole."_ — being right about where the
+> _"You're not wrong, Walter. You're just unindexed."_ — being right about where the
 > answer lives isn't the same as getting it out.
 
 The ServiceNow docs are authoritative and public. So why build anything at all?
