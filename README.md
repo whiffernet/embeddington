@@ -477,4 +477,63 @@ This project is not affiliated with, endorsed by, or supported by ServiceNow.
 
 ---
 
+## Careful, man (third-party components)
+
+> _"Careful, man, there's a beverage here!"_
+
+The `LICENSE` at the root of this repo covers **embeddington's own code** — the consumer CLI
+and the bundled MCP server — under Apache 2.0. It does **not** cover the databases
+embeddington talks to, and one of them has terms you'll want to know about before you go
+building a business on it.
+
+Nothing here ships you a database. `consumer/docker-compose.yml` names two images; your
+Docker pulls them from their vendors, and you accept their terms directly from them. What
+embeddington distributes is **data** — a Qdrant snapshot, an ArangoDB dump, and daily diffs.
+No engine source, no binaries, no images.
+
+| Component           | Pinned version     | License      | The short of it                                                            |
+| ------------------- | ------------------ | ------------ | -------------------------------------------------------------------------- |
+| **Qdrant**          | `v1.16.3`          | Apache 2.0   | No strings. Use it, ship it, sell it.                                      |
+| **ArangoDB**        | `3.12.4`           | **BUSL 1.1** | Not an open-source license. Read the next bit.                             |
+| **BAAI/bge-m3**     | —                  | MIT          | Weights download from Hugging Face on first run; nothing is redistributed. |
+| **ServiceNow docs** | branch `australia` | Apache 2.0   | The source of truth. See the provenance section above.                     |
+
+### The ArangoDB bit
+
+ArangoDB moved to the **Business Source License 1.1** in the 3.12 line. Its own text is
+refreshingly blunt:
+
+> The Business Source License … is not an Open Source license.
+
+What it grants you, verbatim:
+
+> you may make use of the Licensed Work internally in production, provided that you may not
+> use the Licensed Work in a commercial offering that allows one or more third parties
+> (other than your contractors) to access, create or manage databases including data that is
+> controlled by any such third parties.
+
+In the parlance of our times:
+
+- **Running embeddington on your own machine, or inside your own company?** That's the whole
+  point. Go nuts.
+- **Selling a hosted service where your customers' data lives in that ArangoDB?** That's the
+  thing it says no to. You'd need a commercial license from ArangoDB.
+- **Waiting it out?** BUSL converts to Apache 2.0 on its Change Date — the fourth
+  anniversary of the March 2024 release, so roughly **March 2028** for the 3.12 line. The
+  clock is per-version: upgrade the engine, restart the clock.
+
+This obligation runs between **you and ArangoDB**, not between you and this repo.
+embeddington hands you a compose file, not a database.
+
+### Not a lawyer, man
+
+> _"That's just, like, your opinion, man."_
+
+This section is a summary written in good faith, not legal advice. The licenses themselves
+are the authority: [Qdrant](https://github.com/qdrant/qdrant/blob/master/LICENSE),
+[ArangoDB](https://github.com/arangodb/arangodb/blob/devel/LICENSE). If real money is riding
+on that DBaaS clause, spend ten minutes with someone who does this for a living.
+
+---
+
 <p align="center"><em>The graph abides.</em></p>
