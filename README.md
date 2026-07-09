@@ -30,17 +30,17 @@ Loaded in Claude, it shows up as **embeddington**.
 
 > _"There's a lot of strands to keep in old Duder's head."_
 
-Snapshot of the **`baseline-2026-06`** baseline (as of **2026-06-04**). The graph grows as
+Snapshot of the **`baseline-2026-07`** baseline (as of **2026-07-02**). The graph grows as
 daily diffs land, so a fresh install will already be a touch bigger than this.
 
 | Metric                                      | Count       |
 | ------------------------------------------- | ----------- |
-| Vectors (Qdrant chunks, `bge-m3`, 1024-dim) | **62,717**  |
-| Entities (graph nodes)                      | **242,937** |
-| Relationships / triples (graph edges)       | **499,836** |
+| Vectors (Qdrant chunks, `bge-m3`, 1024-dim) | **150,822** |
+| Entities (graph nodes)                      | **309,773** |
+| Relationships / triples (graph edges)       | **682,068** |
 | Entity types                                | 14          |
 | Relationship predicates                     | 14          |
-| Avg. relationships per entity               | ~2.1        |
+| Avg. relationships per entity               | ~2.2        |
 
 Each edge is one subject–predicate–object triple, so "relationships" and "triples" are the
 same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
@@ -149,19 +149,41 @@ First run downloads and restores the full baseline (a few hundred MB), so it tak
 minutes. After that, updates are tiny. Run it on whatever schedule you like (a daily cron,
 say) to stay current.
 
-What it prints:
+What it prints. **First run** (or the first run after a new baseline is cut) restores the
+whole graph:
 
 ```
-update: baseline, applied 3, cursor 0ba98cd…    # first run: baseline + 3 diffs
-update: diffs, applied 1, cursor a1b2c3d…        # later: just new diffs
-update: up_to_date, applied 0, cursor a1b2c3d…   # nothing new, man
+Embeddington update complete.
+  Action:  restored full baseline (baseline-2026-07)
+  Loaded:  150,822 vectors · 309,773 entities · 682,068 edges
+  Version: cb48b5c3e046f240aa0b7b9656c8505d6cbb98b7
+  Diffs:   0 applied on top of the baseline
+  Note:    a one-time full re-download is expected after a compaction — existing
+           installs re-restore the latest snapshot in a single step.
 ```
+
+**Later runs** apply only what changed, and say so when there's nothing to do:
+
+```
+Embeddington update complete.
+  Action:  applied 3 incremental update(s)
+  Version: 9f2a1c7e0b4d8a6f3e5c1b9d7a2f4e6c8b0d3a5f
+```
+
+```
+Embeddington update complete.
+  Action:  no changes — already the latest
+  Version: 9f2a1c7e0b4d8a6f3e5c1b9d7a2f4e6c8b0d3a5f
+```
+
+A baseline restore reporting `Diffs: 0` is a **success**, not a no-op — it means the snapshot
+it just loaded was already current. Nothing more to fetch, man.
 
 ---
 
 ## That tablet really ties the graph together (query with Claude)
 
-> _"That rug really tied the room together."_
+> _"That RAG really tied the room together."_
 
 `mcp/` is a stdio MCP server exposing vector search and graph traversal over your local
 stores. The repo ships a project-scoped **`.mcp.json`** that Claude Code auto-discovers, so
@@ -220,19 +242,22 @@ tools are there for when you want to drill into one specific entity or trace a s
 
 > _"You want a toe? I can get you a toe… with disk space. Believe me."_
 
-Plan for **~6 GB** once everything settles. Itemized:
+Plan for **~8.5 GB** once everything settles. Itemized:
 
-| Component                                       | Disk    |
-| ----------------------------------------------- | ------- |
-| `bge-m3` model (first boot, in a volume)        | ~2.2 GB |
-| `embed` service image (CPU-only torch)          | ~1.3 GB |
-| Qdrant + ArangoDB engine images                 | ~0.6 GB |
-| Restored graph (Qdrant ~1 GB + Arango ~0.55 GB) | ~1.6 GB |
-| Baseline download (transient — deletable)       | ~0.5 GB |
+| Component                                        | Disk    |
+| ------------------------------------------------ | ------- |
+| `bge-m3` model (first boot, in a volume)         | ~2.2 GB |
+| `embed` service image (CPU-only torch)           | ~1.3 GB |
+| Qdrant + ArangoDB engine images                  | ~0.7 GB |
+| Restored graph (Qdrant ~2.4 GB + Arango ~0.9 GB) | ~3.3 GB |
+| Baseline download (transient — deletable)        | ~0.9 GB |
 
-Figure a little extra headroom during the first download, plus **~3–4 GB RAM** to run the
-embedder and the two stores. The baseline download in `data/work/` can be cleared once the
-restore finishes.
+Figure a little extra headroom during the first download — the compressed baseline and the
+restored copy coexist until you clear `data/work/` — plus **~3–4 GB RAM** to run the embedder
+and the two stores.
+
+Sizes track the baseline, so they grow over time: `baseline-2026-07` roughly doubled the
+vector count over `baseline-2026-06`, and the disk figures moved with it.
 
 ---
 
