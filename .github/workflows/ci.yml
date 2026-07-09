@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
 
-# v2 checks: unit (+coverage report), secret-scan, lint, format, typecheck, semgrep.
-# Blocking: unit, secret-scan, lint, format, semgrep, typecheck (all green locally).
+# v2 checks: unit (+coverage report), unit-mcp, secret-scan, lint, format, typecheck, semgrep.
+# Blocking: all of the above (green locally).
 jobs:
   unit:
     runs-on: ubuntu-latest
@@ -15,6 +15,19 @@ jobs:
         with: { python-version: "3.12" }
       - run: pip install -e ".[dev]"
       - run: pytest --cov=embeddington --cov-report=term-missing -q -m "not integration"
+
+  # Separate job because the MCP server's suite must run with mcp/ as pytest's rootdir --
+  # see the comment in mcp/pytest.ini. The root `unit` job never collected these.
+  unit-mcp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements-dev.txt
+        working-directory: mcp
+      - run: pytest -q
+        working-directory: mcp
 
   secret-scan:
     runs-on: ubuntu-latest
