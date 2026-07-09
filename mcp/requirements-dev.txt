@@ -1,0 +1,5 @@
+-r requirements.txt
+pytest>=8.0
+# The suite marks async tests with @pytest.mark.asyncio; without this plugin they are
+# collected and then fail rather than run.
+pytest-asyncio>=0.24
