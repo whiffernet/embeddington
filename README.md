@@ -315,6 +315,11 @@ stores. The repo ships a project-scoped **`.mcp.json`** that Claude Code auto-di
 the server appears as **embeddington** (its tools as `mcp__embeddington__…`) — no manual
 endpoint wiring beyond having `ARANGO_ROOT_PASSWORD` set.
 
+> _"Is this your homework, Larry?"_ `.mcp.json` connects as `ARANGO_USER: root`. That's
+> **your own** ArangoDB container — the one `consumer/docker-compose.yml` started, with the
+> password you chose in `consumer/.env`. No shared credential ships with this repo, and
+> nothing here reaches a database you don't own.
+
 ```bash
 # run from: repo root — installs the MCP server's deps into your active venv
 pip install -r mcp/requirements.txt
@@ -447,6 +452,28 @@ pip install -r requirements-dev.txt
 pytest
 cd ..
 ```
+
+---
+
+## Who's got the papers (license & data provenance)
+
+> _"Is this your homework, Larry?"_
+
+The **code** in this repository — the consumer CLI and the bundled MCP server — is licensed
+under the **Apache License 2.0**. See [`LICENSE`](LICENSE).
+
+The **data** is derived, not original. Both the vectors and the graph are extracted from
+**[ServiceNow/ServiceNowDocs](https://github.com/ServiceNow/ServiceNowDocs)** — ServiceNow's
+own platform documentation, © ServiceNow, published under the Apache License 2.0. The
+derived artifacts shipped here (Qdrant chunk embeddings, `entities_v2`, `relationships_v2`)
+are redistributed under those same terms.
+
+Nothing in this graph is authoritative on its own. Every relationship carries the
+`source_document` it came from and the `source_quote` that produced it, precisely so a claim
+can be checked against the sentence that produced it. When the graph and the docs disagree,
+**the docs are right** — extraction is lossy, and an edge is a compression of a sentence.
+
+This project is not affiliated with, endorsed by, or supported by ServiceNow.
 
 ---
 

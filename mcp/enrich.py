@@ -1,8 +1,8 @@
 """Bundled vector + KG enrichment tool.
 
-Mirrors the parallel-fanout flow in /home/e/langchain/my_agent/tools/core.py
-search_knowledge_base(), but returns structured JSON instead of a synthesized
-text blob — Claude Desktop's LLM does the synthesis.
+Runs the vector search and the graph lookup as a parallel fan-out, then returns
+structured JSON rather than a synthesized text blob — the calling LLM does the
+synthesis.
 """
 
 from __future__ import annotations
