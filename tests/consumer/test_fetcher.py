@@ -8,6 +8,7 @@ the old private-repo path 404 and grow a REST-API workaround.
 
 import io
 import urllib.error
+from pathlib import Path
 
 import pytest
 
@@ -138,3 +139,31 @@ def test_no_auth_machinery_survives():
     assert not hasattr(f, "_parse_release_url")
     assert not hasattr(f, "_DropAuthOnRedirect")
     assert "token" not in HttpFetcher.__init__.__doc__.lower()
+
+
+def test_release_client_streams_large_assets(monkeypatch, tmp_path):
+    """download_asset must go through fetcher.download (streaming), not get()."""
+    import hashlib
+
+    from consumer.release_client import ReleaseClient
+
+    calls = []
+
+    class _SpyFetcher:
+        def get(self, url):
+            calls.append(("get", url))
+            return b"{}"
+
+        def download(self, url, dest):
+            calls.append(("download", url))
+            p = Path(dest)
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_bytes(b"data")
+            return p
+
+    rc = ReleaseClient(_SpyFetcher(), repo="o/r")
+    sha = hashlib.sha256(b"data").hexdigest()
+    out = rc.download_asset("t", "a.bin", tmp_path / "a.bin", sha)
+
+    assert out == tmp_path / "a.bin"
+    assert calls == [("download", "https://github.com/o/r/releases/download/t/a.bin")]
