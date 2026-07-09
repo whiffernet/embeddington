@@ -1,98 +1,140 @@
-"""Tests for consumer.fetcher — the gh-based and token-based release fetchers."""
+"""Tests for the release-asset fetcher.
+
+embeddington is a public repo. A release asset is a plain HTTPS GET of a public
+URL: no credentials, no GitHub CLI, no flags. The fetcher must never send an
+Authorization header -- presenting one to a release-download URL is what made
+the old private-repo path 404 and grow a REST-API workaround.
+"""
+
+import io
+import urllib.error
 
 import pytest
 
-from consumer import fetcher
+from consumer.fetcher import HttpFetcher
 
 
-def test_gh_fetcher_parses_tag_and_asset(monkeypatch):
+class _FakeResponse(io.BytesIO):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+        return False
+
+
+def test_get_returns_body_bytes(monkeypatch):
     captured = {}
 
-    class _Completed:
-        stdout = b"asset-bytes"
+    def fake_urlopen(req, timeout=None):
+        captured["url"] = req.full_url
+        captured["timeout"] = timeout
+        return _FakeResponse(b"asset-bytes")
 
-    def fake_run(argv, **kw):
-        captured["argv"] = argv
-        return _Completed()
+    monkeypatch.setattr("consumer.fetcher.urllib.request.urlopen", fake_urlopen)
+    body = HttpFetcher(timeout=42).get("https://github.com/o/r/releases/download/t/a.bin")
 
-    monkeypatch.setattr(fetcher.subprocess, "run", fake_run)
-    f = fetcher.GhFetcher("owner/repo")
-    out = f.get(
-        "https://github.com/owner/repo/releases/download/baseline-2026-06/technology.snapshot.zst"
-    )
-    assert out == b"asset-bytes"
-    argv = captured["argv"]
-    assert argv[:4] == ["gh", "release", "download", "baseline-2026-06"]
-    assert "--repo" in argv and "owner/repo" in argv
-    # asset name passed via -p, streamed to stdout via -O -
-    assert "technology.snapshot.zst" in argv and argv[-2:] == ["-O", "-"]
+    assert body == b"asset-bytes"
+    assert captured["url"] == "https://github.com/o/r/releases/download/t/a.bin"
+    assert captured["timeout"] == 42
 
 
-def test_gh_fetcher_rejects_non_release_url():
-    with pytest.raises(ValueError):
-        fetcher.GhFetcher("owner/repo").get("https://github.com/owner/repo/blob/main/x")
+def test_get_never_sends_an_authorization_header(monkeypatch):
+    seen = {}
+
+    def fake_urlopen(req, timeout=None):
+        seen["headers"] = dict(req.header_items())
+        return _FakeResponse(b"x")
+
+    monkeypatch.setattr("consumer.fetcher.urllib.request.urlopen", fake_urlopen)
+    HttpFetcher().get("https://github.com/o/r/releases/download/t/a.bin")
+
+    assert "authorization" not in {k.lower() for k in seen["headers"]}
 
 
-def test_parse_release_url():
-    assert fetcher._parse_release_url(
-        "https://github.com/owner/name/releases/download/diffs/manifest.json"
-    ) == ("owner/name", "diffs", "manifest.json")
+def test_download_streams_to_disk_not_ram(monkeypatch, tmp_path):
+    """download() must write chunks as they arrive, never buffer the whole body.
 
+    The baseline is 828 MB; one bytes object of it can OOM an 8 GB laptop that
+    is also running the embedder.
+    """
+    reads = []
 
-@pytest.mark.parametrize(
-    "url",
-    [
-        "https://github.com/owner/name/blob/main/x",  # not a release-download URL
-        "https://github.com/owner/releases/download/diffs/manifest.json",  # missing name
-        "https://example.com/owner/name/releases/download/diffs/manifest.json",  # not github
-    ],
-)
-def test_parse_release_url_rejects_bad(url):
-    with pytest.raises(ValueError):
-        fetcher._parse_release_url(url)
+    class _ChunkedResponse:
+        def __init__(self):
+            self._chunks = [b"a" * 10, b"b" * 10, b""]
 
+        def read(self, n=-1):
+            chunk = self._chunks.pop(0)
+            reads.append(len(chunk))
+            return chunk
 
-def test_http_fetcher_no_token_gets_url_directly(monkeypatch):
-    """Without a token, get() hits the public download URL as-is (no API rerouting)."""
-    calls = []
-    f = fetcher.HttpFetcher(token=None)
-    monkeypatch.setattr(f, "_http_get", lambda url, accept=None: calls.append(url) or b"raw")
-    url = "https://github.com/owner/name/releases/download/diffs/manifest.json"
-    assert f.get(url) == b"raw"
-    assert calls == [url]  # the public URL, untouched
+        def __enter__(self):
+            return self
 
+        def __exit__(self, *exc):
+            return False
 
-def test_http_fetcher_token_routes_through_api(monkeypatch):
-    """With a token, get() resolves the asset id and downloads via the REST API."""
-    f = fetcher.HttpFetcher(token="t0ken")
-    calls = []
-
-    def fake_http_get(url, accept=None):
-        calls.append((url, accept))
-        if url.endswith("/releases/tags/diffs"):
-            return b'{"assets": [{"id": 42, "name": "manifest.json"}]}'
-        return b"asset-bytes"
-
-    monkeypatch.setattr(f, "_http_get", fake_http_get)
-    out = f.get("https://github.com/owner/name/releases/download/diffs/manifest.json")
-    assert out == b"asset-bytes"
-    # 1) resolved the release by tag, 2) downloaded the asset by id as an octet-stream
-    assert calls[0] == (
-        "https://api.github.com/repos/owner/name/releases/tags/diffs",
-        "application/vnd.github+json",
-    )
-    assert calls[1] == (
-        "https://api.github.com/repos/owner/name/releases/assets/42",
-        "application/octet-stream",
-    )
-
-
-def test_http_fetcher_token_missing_asset_raises(monkeypatch):
-    f = fetcher.HttpFetcher(token="t0ken")
     monkeypatch.setattr(
-        f,
-        "_http_get",
-        lambda url, accept=None: b'{"assets": [{"id": 1, "name": "other"}]}',
+        "consumer.fetcher.urllib.request.urlopen", lambda req, timeout=None: _ChunkedResponse()
     )
-    with pytest.raises(FileNotFoundError):
-        f.get("https://github.com/owner/name/releases/download/diffs/manifest.json")
+    dest = tmp_path / "sub" / "asset.bin"
+    out = HttpFetcher().download("https://github.com/o/r/releases/download/t/a.bin", dest)
+
+    assert out == dest
+    assert dest.read_bytes() == b"a" * 10 + b"b" * 10
+    assert len(reads) >= 3, "body must be consumed in multiple reads, not one .read()"
+
+
+def test_download_is_atomic_on_failure(monkeypatch, tmp_path):
+    """A death mid-download must not leave a plausible-looking partial file at dest."""
+
+    class _DyingResponse:
+        def read(self, n=-1):
+            raise OSError("connection reset")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    monkeypatch.setattr(
+        "consumer.fetcher.urllib.request.urlopen", lambda req, timeout=None: _DyingResponse()
+    )
+    dest = tmp_path / "asset.bin"
+    with pytest.raises(OSError):
+        HttpFetcher().download("https://github.com/o/r/releases/download/t/a.bin", dest)
+    assert not dest.exists(), "failed download must not leave dest behind"
+
+
+def test_missing_asset_raises_file_not_found(monkeypatch):
+    def fake_urlopen(req, timeout=None):
+        raise urllib.error.HTTPError(req.full_url, 404, "Not Found", {}, None)
+
+    monkeypatch.setattr("consumer.fetcher.urllib.request.urlopen", fake_urlopen)
+    with pytest.raises(FileNotFoundError, match="a.bin"):
+        HttpFetcher().get("https://github.com/o/r/releases/download/t/a.bin")
+
+
+def test_other_http_errors_propagate(monkeypatch):
+    def fake_urlopen(req, timeout=None):
+        raise urllib.error.HTTPError(req.full_url, 500, "Server Error", {}, None)
+
+    monkeypatch.setattr("consumer.fetcher.urllib.request.urlopen", fake_urlopen)
+    with pytest.raises(urllib.error.HTTPError):
+        HttpFetcher().get("https://github.com/o/r/releases/download/t/a.bin")
+
+
+def test_no_auth_machinery_survives():
+    """Guard the deletion: nothing may reintroduce an auth path here.
+
+    Checked structurally (symbols), NOT by grepping the docstring -- the
+    docstring legitimately explains WHY there is no token path.
+    """
+    import consumer.fetcher as f
+
+    assert not hasattr(f, "GhFetcher")
+    assert not hasattr(f, "_parse_release_url")
+    assert not hasattr(f, "_DropAuthOnRedirect")
+    assert "token" not in HttpFetcher.__init__.__doc__.lower()

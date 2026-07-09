@@ -4,9 +4,7 @@ A single ``update`` brings the local stack current: on a fresh install it restor
 latest baseline (snapshot + dump + named graph), then applies any newer diffs; on later
 runs it applies only the diffs since the local cursor. It is idempotent and resumable.
 
-Auth: by default it fetches releases via the GitHub CLI (``gh``), so it works against the
-PRIVATE shared repo using your own ``gh auth login`` credentials (you must have been added
-as a collaborator). Set ``GITHUB_TOKEN`` to use a bearer token instead of ``gh``.
+The repo is public; release assets are fetched via plain HTTPS GET, no credentials required.
 """
 
 import argparse
@@ -14,12 +12,11 @@ import os
 import sys
 
 from consumer import release_client, restore_ops, updater, writers
-from consumer.fetcher import GhFetcher, HttpFetcher
+from consumer.fetcher import HttpFetcher
 
 
 def _cmd_update(args):
-    token = os.environ.get("GITHUB_TOKEN")
-    fetcher = HttpFetcher(token=token) if token else GhFetcher(args.repo)
+    fetcher = HttpFetcher()
     rc = release_client.ReleaseClient(fetcher, repo=args.repo)
     qdrant = writers.QdrantConsumerWriter.connect(args.qdrant_url, args.collection)
     arango = writers.ArangoConsumerWriter.connect(
