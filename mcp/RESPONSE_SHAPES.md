@@ -1,13 +1,13 @@
-# claudeGraph — Response Shapes (consumer contract)
+# embeddington — Response Shapes (consumer contract)
 
-**Single source of truth for what every claudeGraph tool returns.** If you
-consume claudeGraph (as a registered MCP, by importing the modules, or by
+**Single source of truth for what every embeddington tool returns.** If you
+consume embeddington (as a registered MCP, by importing the modules, or by
 hand-rolling clients against the same data), diff your assumptions against this
 file. It is versioned with the code, so `git pull` keeps it current.
 
 - **Current as of:** `v0.3.7`
 - **Executable spec:** the shapes here are asserted by
-  `servers/claudegraph/tests/` (notably `test_arango_client.py`,
+  `mcp/tests/` (notably `test_arango_client.py`,
   `test_tools.py`, `test_enrich.py`) — those tests are the enforcement; this
   doc is the human-readable mirror. If they disagree, the tests win and this
   doc is stale (please fix it).
@@ -133,7 +133,7 @@ Surfacing these fields only helps if the synthesizing prompt uses them:
 ## Size guards (why things are capped)
 
 Consumers (Claude Code / Desktop) have a ~75–100 KB single-tool-result cap.
-claudeGraph bounds responses by: `source_quote` truncated to 240 chars,
+embeddington bounds responses by: `source_quote` truncated to 240 chars,
 `source_documents` capped to the first 5, `kg_neighbors`/`kg_path` row counts
 capped by `limit` (default 100 / max 500 for neighbors). Don't raise `limit`
 on dense hub entities without `types` filtering.

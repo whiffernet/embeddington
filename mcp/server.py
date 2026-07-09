@@ -1,4 +1,4 @@
-"""claudeGraph MCP server — direct RAG + KG access for Claude Desktop.
+"""embeddington MCP server — direct RAG + KG access for Claude Desktop.
 
 Exposes 7 tools. Arango access is via a scoped read-only user; Qdrant access
 is via a code-scoped client (no JWT in v1 — see spec §5). Returns structured
@@ -33,8 +33,8 @@ if _ENV_PATH.exists():
 
 # Imports work in two contexts:
 #   1. As a package (tests, `python -m server`) — relative imports
-#   2. As a direct script (Claude Desktop calling `python .../server.py`) — script-style
-# Spark_langgraph follows the script-style precedent; we support both for test ergonomics.
+#   2. As a direct script (Claude Desktop calling `python3 .../server.py`) — script-style
+# We support both for test ergonomics.
 try:
     from . import config
     from .arango_client import ArangoError, ArangoKGClient
@@ -55,7 +55,7 @@ logging.basicConfig(
     format="%(levelname)s %(name)s: %(message)s",
     stream=sys.stderr,
 )
-logger = logging.getLogger("mcp.claudegraph")
+logger = logging.getLogger("mcp.embeddington")
 
 # --- Lazy client init -----------------------------------------------------
 _embed_clients: dict[str, EmbeddingClient] = {}
@@ -407,7 +407,7 @@ async def kg_schema() -> dict[str, Any]:
 
 
 def main() -> None:
-    """Start the claudeGraph MCP server after running isolation sanity checks.
+    """Start the embeddington MCP server after running isolation sanity checks.
 
     Raises:
         SystemExit: If ARANGO_PASSWORD is missing or isolation check fails.
@@ -431,7 +431,7 @@ def main() -> None:
     _embed_clients = {}
     _qdrant_clients = {}
 
-    logger.info("Starting claudeGraph MCP (stdio)")
+    logger.info("Starting embeddington MCP (stdio)")
     mcp.run()
 
 

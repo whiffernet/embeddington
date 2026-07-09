@@ -1,4 +1,4 @@
-"""Qdrant client for claudeGraph.
+"""Qdrant client for embeddington.
 
 v1: code-level scoping only. The collection name is hardcoded at construction
 time and never accepted from external input. No JWT in v1 (Qdrant has no
@@ -14,7 +14,7 @@ from typing import Any, Optional
 
 import httpx
 
-logger = logging.getLogger("claudegraph.qdrant")
+logger = logging.getLogger("embeddington.qdrant")
 
 
 class QdrantError(Exception):

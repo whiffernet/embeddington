@@ -1,4 +1,4 @@
-"""End-to-end integration tests against the live spark.
+"""End-to-end integration tests against a live local stack.
 
 Skipped unless ARANGO_TEST_PASSWORD is set. Hits real Qdrant + Arango + /embed
 and exercises the full enrich() flow.
@@ -15,7 +15,7 @@ from qdrant_client import QdrantSearchClient
 # Capture real env values at module import (before _safe_env autouse override)
 _QDRANT_URL = os.environ.get("QDRANT_URL", "http://localhost:6333")
 _ARANGO_URL = os.environ.get("ARANGO_TEST_URL", "http://localhost:8529")
-_ARANGO_USER = os.environ.get("ARANGO_TEST_USER", "arango_reader")
+_ARANGO_USER = os.environ.get("ARANGO_TEST_USER", "root")
 _ARANGO_PW = os.environ.get("ARANGO_TEST_PASSWORD", "")
 _EMBED_URL = os.environ.get("EMBED_URL", "http://localhost:8100/embed")
 
@@ -39,7 +39,7 @@ async def test_enrich_against_live_servicenow_data():
     qdrant = QdrantSearchClient(url=_QDRANT_URL, collection="technology")
     arango = ArangoKGClient(
         url=_ARANGO_URL,
-        database="knowledge_graph",
+        database="technology_kg",
         username=_ARANGO_USER,
         password=_ARANGO_PW,
     )

@@ -1,7 +1,7 @@
-"""claudeGraph configuration — env-loaded constants.
+"""embeddington MCP configuration — env-loaded constants.
 
 All values come from environment variables (injected by Claude Desktop via
-claude_desktop_config.json), matching the spark_langgraph pattern. No .env
+claude_desktop_config.json) — env-var config with .env fallback. No .env
 file; no python-dotenv dependency.
 """
 
@@ -12,8 +12,8 @@ QDRANT_URL = os.environ.get("QDRANT_URL", "http://localhost:6333")
 # v1: no QDRANT_JWT — JWT auth deferred (see spec §5). Future variable: QDRANT_JWT.
 
 ARANGO_URL = os.environ.get("ARANGO_URL", "http://localhost:8529")
-ARANGO_DATABASE = os.environ.get("ARANGO_DATABASE", "knowledge_graph")
-ARANGO_USER = os.environ.get("ARANGO_USER", "arango_reader")
+ARANGO_DATABASE = os.environ.get("ARANGO_DATABASE", "technology_kg")
+ARANGO_USER = os.environ.get("ARANGO_USER", "root")
 ARANGO_PASSWORD = os.environ.get("ARANGO_PASSWORD", "")
 
 EMBED_URL = os.environ.get("EMBED_URL", "http://localhost:8100/embed")
