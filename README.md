@@ -105,7 +105,7 @@ same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
 
 ---
 
-## There are rules (prerequisites)
+## Before you roll (prerequisites)
 
 > _"This is not Docs. This is embeddington. There are rules."_
 
