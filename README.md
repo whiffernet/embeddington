@@ -89,14 +89,14 @@ you where to look. The docs are still the truth.
 
 > _"There's a lot of strands to keep in old Duder's head."_
 
-Snapshot of the **`baseline-2026-07`** baseline (as of **2026-07-02**). The graph grows as
+Snapshot of the **`baseline-2026-07b`** baseline (as of **2026-07-09**). The graph grows as
 daily diffs land, so a fresh install will already be a touch bigger than this.
 
 | Metric                                      | Count       |
 | ------------------------------------------- | ----------- |
-| Vectors (Qdrant chunks, `bge-m3`, 1024-dim) | **150,822** |
-| Entities (graph nodes)                      | **309,773** |
-| Relationships / triples (graph edges)       | **682,068** |
+| Vectors (Qdrant chunks, `bge-m3`, 1024-dim) | **152,194** |
+| Entities (graph nodes)                      | **310,364** |
+| Relationships / triples (graph edges)       | **683,651** |
 | Entity types                                | 14          |
 | Relationship predicates                     | 14          |
 | Avg. relationships per entity               | ~2.2        |
@@ -251,9 +251,9 @@ whole graph:
 
 ```
 Embeddington update complete.
-  Action:  restored full baseline (baseline-2026-07)
-  Loaded:  150,822 vectors · 309,773 entities · 682,068 edges
-  Version: cb48b5c3e046f240aa0b7b9656c8505d6cbb98b7
+  Action:  restored full baseline (baseline-2026-07b)
+  Loaded:  152,194 vectors · 310,364 entities · 683,651 edges
+  Version: fd852b53bb07998ddc8e385971c25b94028fdf62
   Diffs:   0 applied on top of the baseline
   Note:    a one-time full re-download is expected after a compaction — existing
            installs re-restore the latest snapshot in a single step.
@@ -364,7 +364,7 @@ Plan for **~8.5 GB** once everything settles. Itemized:
 | `embed` service image (CPU-only torch)           | ~1.3 GB |
 | Qdrant + ArangoDB engine images                  | ~0.7 GB |
 | Restored graph (Qdrant ~2.4 GB + Arango ~0.9 GB) | ~3.3 GB |
-| Baseline download (transient — deletable)        | ~0.9 GB |
+| Baseline download (transient — deletable)        | ~1.0 GB |
 
 Figure a little extra headroom during the first download — the compressed baseline and the
 restored copy coexist until you clear `data/work/` — plus **~6–8 GB RAM** — the embedder
