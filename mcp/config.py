@@ -21,9 +21,10 @@ EMBED_URL = os.environ.get("EMBED_URL", "http://localhost:8100/embed")
 HTTP_TIMEOUT = float(os.environ.get("EMBEDDINGTON_TIMEOUT", "30"))
 
 # --- Hardcoded scope (defense-in-depth) -----------------------------------
-# In v1, only the Arango user is credential-isolated. The Qdrant collection
-# allowlist below is the *only* layer of protection for Qdrant — a collection
-# absent from it is never reachable. See spec §5 for why JWT is deferred.
+# The default configuration uses the consumer's own container root user for
+# both Qdrant and Arango. A scoped read-only user is optional hardening an
+# operator can configure. The Qdrant collection allowlist below is a static
+# layer of protection — a collection absent from it is never reachable.
 #
 # Map: collection name -> /embed index (encoder routing). The llamaindex
 # /embed endpoint routes by index name; passing the index ensures the query
