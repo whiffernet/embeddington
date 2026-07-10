@@ -1,8 +1,8 @@
 """embeddington MCP configuration — env-loaded constants.
 
-All values come from environment variables (injected by Claude Desktop via
-claude_desktop_config.json) — env-var config with .env fallback. No .env
-file; no python-dotenv dependency.
+All values come from environment variables. server.py loads mcp/.env via
+python-dotenv before importing this module (process env wins), so both config
+styles work: env vars injected by Claude's JSON config, or a local mcp/.env.
 """
 
 import os
