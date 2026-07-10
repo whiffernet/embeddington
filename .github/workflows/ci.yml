@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
 
+# Every job below only checks out code and runs a linter, type-checker, or test suite:
+# none reads a secret, calls the API, or writes anything back. Stated explicitly so a
+# change to the repository-wide default cannot silently widen the token.
+permissions:
+  contents: read
+
 # v2 checks: unit (+coverage report), unit-mcp, secret-scan, lint, format, typecheck, semgrep.
 # Blocking: all of the above (green locally).
 jobs:
