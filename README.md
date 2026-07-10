@@ -325,25 +325,44 @@ outside embedding API. The `.mcp.json` already points `EMBED_URL` at it.
 > _"This is a very complicated case. A lotta ins, a lotta outs, a lotta what-have-yous."_
 
 With the embeddington MCP loaded, ask Claude the kind of deep, multi-hop ServiceNow
-architecture questions that need the graph **and** the docs together. Two examples:
+architecture questions that need the graph **and** the docs together. Talk to it like you'd
+talk to a colleague who's read everything: describe the mess you're actually in, then say
+what you want back — a recommendation, the trade-offs, a decision framework, whatever helps.
+Two examples to steal from:
 
 **1. CI identification & deduplication strategy**
 
-> A customer populates CMDB from Discovery, a Service Graph Connector, and a legacy import,
-> and is accumulating duplicate CIs. Give a decision framework to reconcile identification:
-> when to rely on Discovery identification rules vs connector-provided identifiers vs custom
-> IRE rules, how datasource precedence resolves conflicting attribute ownership, the criteria
-> for dependent vs independent CI identification, and the governance to prevent future
-> duplication. Recommend a default authoritative-source model and name the exceptions.
+> We're loading CMDB from three places — Discovery, a Service Graph Connector, and a legacy
+> import that predates all of us — and we're drowning in duplicate CIs. Can you help me work
+> out how identification _should_ be settled here?
+>
+> The parts I keep going back and forth on: when to trust Discovery's identification rules
+> versus the identifiers a connector hands us versus writing our own IRE rules, and how
+> datasource precedence is supposed to resolve it when two sources claim the same attribute.
+> I'm also never sure where the line falls between dependent and independent CI
+> identification.
+>
+> Reason it through with me rather than jumping to an answer, then land on a default
+> authoritative-source model and name the exceptions where it shouldn't apply. If you can
+> point at the docs behind the big calls, that'd help me sell this internally.
 
 **2. Multi-instance platform & domain strategy at scale**
 
-> A global enterprise with 12 business units and 200k+ employees must choose its platform
-> topology: single instance with domain separation vs separate production instances vs a
-> hub-and-spoke model, the table-rotation/archiving strategy for high-volume tables, the
-> cross-instance integration pattern, the performance levers, the license implications, and
-> the top 3 architectural risks. Constraint: per-BU isolation with a shared CMDB, GA features
-> only.
+> I'm advising a global enterprise — 12 business units, a bit over 200k employees — and we
+> have to settle the platform topology before anything else can move. Single instance with
+> domain separation? Separate production instances? Something hub-and-spoke? I'd honestly
+> rather see the trade-offs laid out than be handed a verdict.
+>
+> Two things are fixed: each BU needs its own isolation, but they share a CMDB. And please
+> stick to GA features — I can't build a plan on what's coming next year.
+>
+> Once you've picked a direction, I'll need the rest of the story: how we handle archiving
+> and table rotation on the high-volume tables, what the cross-instance integration pattern
+> looks like, which performance levers are actually worth pulling, and what any of this does
+> to our licensing.
+>
+> Give me the short recommendation first, then the detail behind it. Close with the three
+> architectural risks you'd lose sleep over.
 
 **Start with `enrich`** — it's the fullest, most robust tool in the box. One call runs
 vector search **and** graph traversal (entity match + neighbors) in parallel and hands Claude
