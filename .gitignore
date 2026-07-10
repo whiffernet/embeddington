@@ -8,5 +8,6 @@ dist/
 data/
 .env
 *.env
+.env.*
 .superpowers/
 .coverage

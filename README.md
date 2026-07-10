@@ -26,8 +26,9 @@ It comes in two parts that stay in sync:
 
 You get the data, not a service. embeddington ships the graph as a **baseline** plus small
 daily **diffs** on GitHub Releases. Your copy restores the baseline once, then pulls only
-what changed — idempotent and resumable, so re-running is always safe. Real easy. Just
-takin' it easy for all us data sinners.
+what changed — idempotent, and resumable at _diff_ granularity — an interrupted baseline
+download restarts that one asset from zero (it streams to disk, so it won't eat your RAM
+doing it). Real easy. Just takin' it easy for all us data sinners.
 
 A bundled MCP server (`mcp/`) lets Claude query the graph directly — vector search and
 graph traversal, reasoned over by Claude, with no dependency on any outside model or API.
@@ -110,40 +111,13 @@ same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
 > _"This is not Docs. This is embeddington. There are rules."_
 
 - **Docker** (with the Compose plugin) — runs the local Qdrant + ArangoDB + embedder.
-- **GitHub CLI** (`gh`), authenticated with **read access** to this repo — either you've
-  been added as a collaborator (`gh auth login`) or you were handed a **read-only token**
-  (see below).
 - **Python 3.12+**.
+
+That's the whole list. No account, no token, no access request — the graph is public and
+the download is a plain HTTPS GET.
 
 Cross-platform: Linux, macOS (Intel **and** Apple Silicon), and Windows via WSL2 — the
 stores and the embedder all run in Docker.
-
----
-
-## Got a read-only key? (token access)
-
-> _"Far out."_
-
-If someone shared a **read-only access token** with you instead of adding you as a
-collaborator, just point `gh` at it once:
-
-```bash
-# run from: anywhere — this configures gh itself, not the repo
-echo "YOUR_TOKEN" | gh auth login --with-token
-```
-
-That token can only **read this one repo** — you can pull the graph and its daily updates,
-and nothing else. Everything below (clone, stack, `embeddington-consume update`) then works
-exactly as written.
-
-Prefer the token as an environment variable instead of `gh`? That works too — just
-`export GITHUB_TOKEN=YOUR_TOKEN` before running `embeddington-consume update`.
-
-> _"This aggression will not stand."_ One gotcha for hand-debuggers: a raw
-> `curl https://github.com/whiffernet/embeddington/releases/download/...` with the token in
-> an `Authorization` header returns **404** on a private repo — that download URL only
-> honors browser sessions, not tokens. It's not a missing file. Use `gh` or the
-> `embeddington-consume` CLI (both fetch via the GitHub API, which _does_ honor the token).
 
 ---
 
@@ -174,13 +148,11 @@ answer. `~/embeddington` is used as the example clone location — substitute yo
 
 ### The steps
 
-**1. Clone.** Use `gh` rather than `git`, so it reuses the login from above — they're
-different tools with different credentials, and `gh repo clone` uses your GitHub auth
-directly:
+**1. Clone.** Nothing to authenticate — it's a public repo:
 
 ```bash
 # run from: anywhere you keep code (e.g. ~)
-gh repo clone whiffernet/embeddington
+git clone https://github.com/whiffernet/embeddington.git
 cd embeddington          # <- you are now at the REPO ROOT
 ```
 
@@ -201,7 +173,7 @@ Check it came up before moving on:
 
 ```bash
 # run from: consumer/
-docker compose ps         # all services should read "running" / "healthy"
+docker compose ps   # all services should read "running" — the embed service keeps building/downloading for a while after
 ```
 
 The `embed` service builds on first run and downloads the `bge-m3` model (~2 GB) the first
@@ -250,7 +222,7 @@ put in `consumer/.env` during install. The first line below loads it. That relat
 ```bash
 # run from: repo root
 set -a; . consumer/.env; set +a       # loads ARANGO_ROOT_PASSWORD into this shell
-embeddington-consume update --repo whiffernet/embeddington
+embeddington-consume update
 ```
 
 Running it from somewhere else? Point at the file absolutely, and the command itself no
@@ -259,7 +231,7 @@ longer cares where you are:
 ```bash
 # run from: anywhere
 set -a; . ~/embeddington/consumer/.env; set +a
-embeddington-consume update --repo whiffernet/embeddington
+embeddington-consume update
 ```
 
 You only need the `set -a` line once per shell. For a cron job, keep both lines together —
@@ -267,7 +239,7 @@ cron starts a fresh shell with none of your environment:
 
 ```bash
 # crontab -e   — update daily at 06:00
-0 6 * * * set -a; . $HOME/embeddington/consumer/.env; set +a; $HOME/embeddington/.venv/bin/embeddington-consume update --repo whiffernet/embeddington >> $HOME/embeddington-update.log 2>&1
+0 6 * * * set -a; . $HOME/embeddington/consumer/.env; set +a; $HOME/embeddington/.venv/bin/embeddington-consume update >> $HOME/embeddington-update.log 2>&1
 ```
 
 First run downloads and restores the full baseline (a few hundred MB), so it takes a few
@@ -314,6 +286,18 @@ it just loaded was already current. Nothing more to fetch, man.
 stores. The repo ships a project-scoped **`.mcp.json`** that Claude Code auto-discovers, so
 the server appears as **embeddington** (its tools as `mcp__embeddington__…`) — no manual
 endpoint wiring beyond having `ARANGO_ROOT_PASSWORD` set.
+
+The one bit of wiring: the server needs `ARANGO_ROOT_PASSWORD` in the environment Claude
+launches it from — a GUI app doesn't inherit your shell's exports. Easiest path:
+
+```bash
+# run from: repo root — launch Claude Code with the password loaded
+set -a; . consumer/.env; set +a
+claude
+```
+
+For Claude Desktop, put the value in `mcp/.env` instead (`cp mcp/.env.example mcp/.env`,
+fill in `ARANGO_PASSWORD`) — `server.py` reads it at startup.
 
 > _"This is a private residence, man."_ `.mcp.json` connects as `ARANGO_USER: root`. That's
 > **your own** ArangoDB container — the one `consumer/docker-compose.yml` started, with the
@@ -383,8 +367,8 @@ Plan for **~8.5 GB** once everything settles. Itemized:
 | Baseline download (transient — deletable)        | ~0.9 GB |
 
 Figure a little extra headroom during the first download — the compressed baseline and the
-restored copy coexist until you clear `data/work/` — plus **~3–4 GB RAM** to run the embedder
-and the two stores.
+restored copy coexist until you clear `data/work/` — plus **~6–8 GB RAM** — the embedder
+alone holds ~2.3 GB once bge-m3 loads, on top of Qdrant + ArangoDB serving the full graph.
 
 Sizes track the baseline, so they grow over time: `baseline-2026-07` roughly doubled the
 vector count over `baseline-2026-06`, and the disk figures moved with it.
@@ -400,27 +384,27 @@ vector count over `baseline-2026-06`, and the disk figures moved with it.
 - On each run it computes the shortest path to current: restore the latest baseline if it
   has no usable cursor, otherwise apply the contiguous diffs after its cursor.
 - Every download is checksum-verified, every write is keyed (upsert/delete by id), and the
-  cursor only advances after a diff fully applies — so an interrupted run resumes cleanly.
-  This aggression toward data loss will not stand.
+  cursor only advances after a diff fully applies — so an interrupted diff-apply run resumes
+  cleanly at the next diff. An interrupted baseline download restarts that one asset from
+  zero (it streams to disk, so it won't eat your RAM doing it). This aggression toward data
+  loss will not stand.
 
 ## Configuration
 
-`embeddington-consume update` flags (all optional except `--repo`):
+`embeddington-consume update` flags (all optional — `--repo` defaults to
+`whiffernet/embeddington`; override it only if you've forked):
 
-| Flag                | Default                 | Purpose                            |
-| ------------------- | ----------------------- | ---------------------------------- |
-| `--repo`            | _(required)_            | `owner/name` of this releases repo |
-| `--cursor`          | `data/.cursor`          | Local cursor file                  |
-| `--work-dir`        | `data/work`             | Scratch dir for downloads          |
-| `--qdrant-url`      | `http://localhost:6333` | Local Qdrant                       |
-| `--collection`      | `technology`            | Qdrant collection name             |
-| `--arango-url`      | `http://localhost:8529` | Local ArangoDB                     |
-| `--arango-db`       | `technology_kg`         | Target database                    |
-| `--arango-user`     | `root`                  | ArangoDB user                      |
-| `--arango-password` | `$ARANGO_ROOT_PASSWORD` | ArangoDB password                  |
-
-Auth uses `gh` by default. To use a token instead, set `GITHUB_TOKEN` to a token that can
-read this repo.
+| Flag                | Default                   | Purpose                            |
+| ------------------- | ------------------------- | ---------------------------------- |
+| `--repo`            | `whiffernet/embeddington` | `owner/name` of this releases repo |
+| `--cursor`          | `data/.cursor`            | Local cursor file                  |
+| `--work-dir`        | `data/work`               | Scratch dir for downloads          |
+| `--qdrant-url`      | `http://localhost:6333`   | Local Qdrant                       |
+| `--collection`      | `technology`              | Qdrant collection name             |
+| `--arango-url`      | `http://localhost:8529`   | Local ArangoDB                     |
+| `--arango-db`       | `technology_kg`           | Target database                    |
+| `--arango-user`     | `root`                    | ArangoDB user                      |
+| `--arango-password` | `$ARANGO_ROOT_PASSWORD`   | ArangoDB password                  |
 
 > _"This is what happens when you float your version tags."_
 >

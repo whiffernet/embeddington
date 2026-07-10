@@ -11,8 +11,9 @@ and your stack alone.
 The whole thing runs from one command: **`embeddington-consume update`**. On a fresh
 install it restores the latest _baseline_ (a full Qdrant snapshot + Arango dump + the
 `servicenow_graph_v2` named graph), then applies any newer _diffs_. On later runs it
-applies only the diffs since your local cursor. It's idempotent and resumable, so an
-interrupted run picks right back up.
+applies only the diffs since your local cursor. It's idempotent, and resumable at _diff_
+granularity — an interrupted baseline download restarts that one asset from zero (it
+streams to disk, so it won't eat your RAM doing it).
 
 ## What's in the folder
 
@@ -24,7 +25,7 @@ Brandt would want you oriented, so here's the tour — he's a good man, and thor
 | `.env.example`       | Copy to `.env` and set `ARANGO_ROOT_PASSWORD` before bringing the stack up.                                                                                              |
 | `cli.py`             | The entry point (`embeddington-consume update`). Parses args and wires the release client + writers + restore ops together.                                              |
 | `release_client.py`  | Resolves GitHub Release asset URLs, fetches the `manifest.json`, and downloads + checksum-verifies each asset.                                                           |
-| `fetcher.py`         | The transport the release client uses: `GhFetcher` (via the `gh` CLI, default, works on private repos) or `HttpFetcher` (urllib + optional `GITHUB_TOKEN`).              |
+| `fetcher.py`         | The transport the release client uses: `HttpFetcher` (anonymous HTTPS; streams large assets to disk).                                                                    |
 | `updater.py`         | The orchestrator. Plans baseline-vs-diffs from the manifest, applies each bundle, and advances the cursor only after a full apply.                                       |
 | `writers.py`         | The local write adapters — `QdrantConsumerWriter` and `ArangoConsumerWriter` — that upsert/delete points, entities, and edges in your stores.                            |
 | `cursor_store.py`    | Reads/writes the local `.cursor` file that tracks your current `head_sha` (your position in the diff chain).                                                             |
