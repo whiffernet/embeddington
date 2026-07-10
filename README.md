@@ -278,9 +278,9 @@ it just loaded was already current. Nothing more to fetch, man.
 
 ---
 
-## That tablet really ties the graph together (query with Claude)
+## In the parlance of our times (query with Claude)
 
-> _"That RAG really tied the room together."_
+> _"You're entering a world of context."_
 
 `mcp/` is a stdio MCP server exposing vector search and graph traversal over your local
 stores. The repo ships a project-scoped **`.mcp.json`** that Claude Code auto-discovers, so
