@@ -113,8 +113,8 @@ same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
 - **Docker** (with the Compose plugin) — runs the local Qdrant + ArangoDB + embedder.
 - **Python 3.12+**.
 
-That's the whole list. No account, no token, no access request — the graph is public and
-the download is a plain HTTPS GET.
+That's the whole list. No account, no token, no access request — the download is a plain
+HTTPS GET.
 
 Cross-platform: Linux, macOS (Intel **and** Apple Silicon), and Windows via WSL2 — the
 stores and the embedder all run in Docker.
@@ -148,7 +148,7 @@ answer. `~/embeddington` is used as the example clone location — substitute yo
 
 ### The steps
 
-**1. Clone.** Nothing to authenticate — it's a public repo:
+**1. Clone.**
 
 ```bash
 # run from: anywhere you keep code (e.g. ~)

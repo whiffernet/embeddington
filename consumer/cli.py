@@ -4,7 +4,7 @@ A single ``update`` brings the local stack current: on a fresh install it restor
 latest baseline (snapshot + dump + named graph), then applies any newer diffs; on later
 runs it applies only the diffs since the local cursor. It is idempotent and resumable.
 
-The repo is public; release assets are fetched via plain HTTPS GET, no credentials required.
+Release assets are fetched via plain HTTPS GET; no credentials required.
 """
 
 import argparse

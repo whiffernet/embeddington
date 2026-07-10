@@ -1,17 +1,12 @@
-"""Release-asset fetching for the public embeddington repo.
+"""Release-asset fetching.
 
-A GitHub release asset on a **public** repo is a plain HTTPS GET of
+A release asset is a plain HTTPS GET of
 ``https://github.com/<owner>/<repo>/releases/download/<tag>/<asset>``. No
 credentials, no GitHub CLI, no REST API.
 
-This file used to carry a ``GhFetcher`` (shelling out to ``gh release
-download``) and a token path that resolved assets through the REST API, because
-the public download URL returns 404 for a *private* repo when you present a
-bearer token -- a 404, not a 403, indistinguishable from a missing asset. Both
-existed only to work around the repo being private; they are gone. If you are
-restoring a private path: do not forward an Authorization header through the
-download redirect -- GitHub redirects to a signed object-storage URL that
-carries its own auth and rejects a forwarded token.
+Do not add an ``Authorization`` header to these requests: GitHub answers a
+release download with a redirect to signed object storage, which carries its
+own auth and rejects a forwarded token.
 
 The download timeout is a per-read socket timeout, not a whole-transfer
 deadline: a slow-but-alive link keeps going; only a stall kills it.
@@ -25,7 +20,7 @@ _CHUNK = 1 << 20  # 1 MiB
 
 
 class HttpFetcher:
-    """Fetches public release assets over HTTPS."""
+    """Fetches release assets over HTTPS."""
 
     def __init__(self, timeout=600):
         """Args: timeout: per-read socket timeout in seconds."""
@@ -35,7 +30,7 @@ class HttpFetcher:
         """GET a small asset (the manifest) and return its bytes.
 
         Args:
-            url: A public release-download URL.
+            url: A release-download URL.
 
         Returns:
             The asset body as bytes.
@@ -52,11 +47,11 @@ class HttpFetcher:
 
         Writes to ``dest.part`` and renames on success, so a died download never
         leaves a plausible-looking partial file where the caller expects a
-        verified asset. The baseline is ~828 MB; one bytes object of it can OOM
+        verified asset. The baseline is ~900 MB; one bytes object of it can OOM
         a laptop that is also running the embedder.
 
         Args:
-            url: A public release-download URL.
+            url: A release-download URL.
             dest: Target path; parent directories are created.
 
         Returns:
