@@ -1,4 +1,4 @@
-"""Tool-level tests for claudeGraph.
+"""Tool-level tests for embeddington.
 
 Tests each MCP tool function returns the documented JSON shape, with
 clients mocked. Validates the tool surface contract.

@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for claudeGraph tests."""
+"""Shared pytest fixtures for embeddington tests."""
 
 import pytest
 

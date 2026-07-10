@@ -22,7 +22,7 @@ except ImportError:
     from arango_client import ArangoError  # type: ignore[no-redef]
     from qdrant_client import QdrantError  # type: ignore[no-redef]
 
-logger = logging.getLogger("claudegraph.enrich")
+logger = logging.getLogger("embeddington.enrich")
 
 # Multi-word capitalized phrase: "Hardware Asset Management"
 _REGEX_CAPITALIZED_SEQ = re.compile(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b")

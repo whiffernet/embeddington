@@ -8,5 +8,10 @@ dist/
 data/
 .env
 *.env
+.env.*
+# .env.* would swallow future config templates; tracked ones only survive
+# because tracking overrides ignore. Keep templates addable:
+!.env.example
+!*.env.example
 .superpowers/
 .coverage

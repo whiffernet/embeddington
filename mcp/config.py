@@ -1,8 +1,8 @@
-"""claudeGraph configuration — env-loaded constants.
+"""embeddington MCP configuration — env-loaded constants.
 
-All values come from environment variables (injected by Claude Desktop via
-claude_desktop_config.json), matching the spark_langgraph pattern. No .env
-file; no python-dotenv dependency.
+All values come from environment variables. server.py loads mcp/.env via
+python-dotenv before importing this module (process env wins), so both config
+styles work: env vars injected by Claude's JSON config, or a local mcp/.env.
 """
 
 import os
@@ -12,18 +12,19 @@ QDRANT_URL = os.environ.get("QDRANT_URL", "http://localhost:6333")
 # v1: no QDRANT_JWT — JWT auth deferred (see spec §5). Future variable: QDRANT_JWT.
 
 ARANGO_URL = os.environ.get("ARANGO_URL", "http://localhost:8529")
-ARANGO_DATABASE = os.environ.get("ARANGO_DATABASE", "knowledge_graph")
-ARANGO_USER = os.environ.get("ARANGO_USER", "arango_reader")
+ARANGO_DATABASE = os.environ.get("ARANGO_DATABASE", "technology_kg")
+ARANGO_USER = os.environ.get("ARANGO_USER", "root")
 ARANGO_PASSWORD = os.environ.get("ARANGO_PASSWORD", "")
 
 EMBED_URL = os.environ.get("EMBED_URL", "http://localhost:8100/embed")
 
-HTTP_TIMEOUT = float(os.environ.get("CLAUDEGRAPH_TIMEOUT", "30"))
+HTTP_TIMEOUT = float(os.environ.get("EMBEDDINGTON_TIMEOUT", "30"))
 
 # --- Hardcoded scope (defense-in-depth) -----------------------------------
-# In v1, only the Arango user is credential-isolated. The Qdrant collection
-# allowlist below is the *only* layer of protection for Qdrant — a collection
-# absent from it is never reachable. See spec §5 for why JWT is deferred.
+# The default configuration uses the consumer's own container root user for
+# both Qdrant and Arango. A scoped read-only user is optional hardening an
+# operator can configure. The Qdrant collection allowlist below is a static
+# layer of protection — a collection absent from it is never reachable.
 #
 # Map: collection name -> /embed index (encoder routing). The llamaindex
 # /embed endpoint routes by index name; passing the index ensures the query

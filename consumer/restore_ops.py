@@ -6,7 +6,7 @@ These turn a downloaded baseline into a live local stack:
   * ``restore_qdrant_snapshot`` — recovers a Qdrant snapshot via the upload API.
   * ``restore_arango_dump`` — ``arangorestore`` into the local Arango (creates the db).
   * ``ensure_named_graph`` — creates ``servicenow_graph_v2`` (arangodump can't carry it,
-    but claudeGraph's traversal tools require it).
+    but embeddington's traversal tools require it).
   * ``make_baseline_importer`` — composes the above into the ``baseline_importer``
     callable that ``consumer.updater.update`` invokes on a fresh install.
 
@@ -130,7 +130,7 @@ def restore_arango_dump(arango_url, db, username, password, dump_dir, image=ARAN
 def ensure_named_graph(arango_url, db, username, password):
     """Create the ``servicenow_graph_v2`` named graph if absent (idempotent).
 
-    arangodump does not carry named-graph definitions, but claudeGraph's traversal
+    arangodump does not carry named-graph definitions, but embeddington's traversal
     tools (kg_neighbors / kg_path) require this one over relationships_v2.
 
     Args:

@@ -4,22 +4,67 @@ A single ``update`` brings the local stack current: on a fresh install it restor
 latest baseline (snapshot + dump + named graph), then applies any newer diffs; on later
 runs it applies only the diffs since the local cursor. It is idempotent and resumable.
 
-Auth: by default it fetches releases via the GitHub CLI (``gh``), so it works against the
-PRIVATE shared repo using your own ``gh auth login`` credentials (you must have been added
-as a collaborator). Set ``GITHUB_TOKEN`` to use a bearer token instead of ``gh``.
+The repo is public; release assets are fetched via plain HTTPS GET, no credentials required.
 """
 
 import argparse
+import base64
 import os
 import sys
+import urllib.error
+import urllib.request
 
 from consumer import release_client, restore_ops, updater, writers
-from consumer.fetcher import GhFetcher, HttpFetcher
+from consumer.fetcher import HttpFetcher
+
+
+def _preflight(args):
+    """Fail fast -- before any download -- on the two mistakes strangers make.
+
+    ``writers.*.connect`` are lazy (python-arango defers auth to the first
+    request), so without this check a wrong password surfaces only AFTER the
+    828 MB baseline has been pulled, inside a subprocess whose stderr is
+    captured. Ten seconds of checking saves that.
+
+    Args:
+        args: Parsed CLI namespace (urls + credentials).
+
+    Raises:
+        SystemExit: With an actionable message when Qdrant is unreachable,
+            ArangoDB is unreachable, or the Arango credentials are rejected.
+    """
+    try:
+        with urllib.request.urlopen(f"{args.qdrant_url}/collections", timeout=10):
+            pass
+    except (urllib.error.URLError, OSError) as exc:
+        raise SystemExit(
+            f"Qdrant is not reachable at {args.qdrant_url} — is the local stack up?\n"
+            f"  cd consumer && docker compose up -d\n  ({exc})"
+        )
+
+    req = urllib.request.Request(f"{args.arango_url}/_api/version")
+    cred = base64.b64encode(f"{args.arango_user}:{args.arango_password}".encode()).decode()
+    req.add_header("Authorization", f"Basic {cred}")
+    try:
+        with urllib.request.urlopen(req, timeout=10):
+            pass
+    except urllib.error.HTTPError as exc:
+        if exc.code == 401:
+            raise SystemExit(
+                "ArangoDB rejected the credentials. Did you load consumer/.env into "
+                "this shell first?\n  set -a; . consumer/.env; set +a"
+            )
+        raise
+    except (urllib.error.URLError, OSError) as exc:
+        raise SystemExit(
+            f"ArangoDB is not reachable at {args.arango_url} — is the local stack up?\n"
+            f"  cd consumer && docker compose up -d\n  ({exc})"
+        )
 
 
 def _cmd_update(args):
-    token = os.environ.get("GITHUB_TOKEN")
-    fetcher = HttpFetcher(token=token) if token else GhFetcher(args.repo)
+    _preflight(args)
+    fetcher = HttpFetcher()
     rc = release_client.ReleaseClient(fetcher, repo=args.repo)
     qdrant = writers.QdrantConsumerWriter.connect(args.qdrant_url, args.collection)
     arango = writers.ArangoConsumerWriter.connect(
@@ -80,13 +125,21 @@ def _format_update(result):
     return "\n".join(lines)
 
 
-def main(argv=None):
-    """Parse args and dispatch. Returns a process exit code."""
+def _build_parser():
+    """Build the argument parser (separate so tests can reach it).
+
+    Returns:
+        The configured ``argparse.ArgumentParser``.
+    """
     parser = argparse.ArgumentParser(prog="embeddington-consume")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_up = sub.add_parser("update", help="pull and apply the latest diffs")
-    p_up.add_argument("--repo", required=True, help="owner/name of the releases repo")
+    p_up.add_argument(
+        "--repo",
+        default="whiffernet/embeddington",
+        help="owner/name of the releases repo (default: %(default)s)",
+    )
     p_up.add_argument("--cursor", default="data/.cursor")
     p_up.add_argument("--work-dir", default="data/work")
     p_up.add_argument("--qdrant-url", default="http://localhost:6333")
@@ -100,8 +153,12 @@ def main(argv=None):
         default=os.environ.get("ARANGO_ROOT_PASSWORD") or os.environ.get("ARANGO_PASSWORD", ""),
     )
     p_up.set_defaults(func=_cmd_update)
+    return parser
 
-    args = parser.parse_args(argv)
+
+def main(argv=None):
+    """Parse args and dispatch. Returns a process exit code."""
+    args = _build_parser().parse_args(argv)
     return args.func(args)
 
 

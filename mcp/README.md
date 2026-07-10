@@ -31,7 +31,7 @@ in the code:
 {
   "mcpServers": {
     "embeddington": {
-      "command": "python",
+      "command": "python3",
       "args": ["mcp/server.py"],
       "env": {
         "QDRANT_URL": "http://localhost:6333",

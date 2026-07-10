@@ -15,7 +15,7 @@ from typing import Optional
 
 import httpx
 
-logger = logging.getLogger("claudegraph.embedding")
+logger = logging.getLogger("embeddington.embedding")
 
 EXPECTED_DIM = 1024
 

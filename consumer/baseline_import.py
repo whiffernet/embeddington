@@ -3,7 +3,7 @@
 The first-run path (Plan 3b): download the baseline assets (checksum-verified by the
 release client), decompress, restore the Qdrant snapshot + Arango dump into the user's
 local stores, and create the named graph ``servicenow_graph_v2`` — which ``arangodump``
-does NOT capture but claudeGraph's traversal tools require. Returns the baseline's
+does NOT capture but embeddington's traversal tools require. Returns the baseline's
 head_sha so the caller can seed the local cursor.
 
 All heavy operations are injected, so the orchestration is pure and unit-testable; the
@@ -53,6 +53,6 @@ def import_baseline(
 
     restore_qdrant(snapshot_path)
     restore_arango(dump_dir)
-    ensure_graph()  # the named graph arangodump can't carry — required for claudeGraph
+    ensure_graph()  # the named graph arangodump can't carry — required for embeddington
 
     return baseline_entry["head_sha"]

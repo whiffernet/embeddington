@@ -1,8 +1,8 @@
-"""Scoped ArangoDB client for claudeGraph.
+"""ArangoDB client for embeddington knowledge graph queries.
 
-Wraps python-arango with a read-only user constrained to ServiceNow KG
-collections. All queries are AQL templates with bound parameters — never
-string-interpolated user input.
+Wraps python-arango to query only ServiceNow KG collections (entity/relationship/graph
+names are hardcoded constants). All queries are AQL templates with bound parameters —
+never string-interpolated user input.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from arango import ArangoClient
 from arango.exceptions import ArangoError as _ArangoError
 from arango.exceptions import DocumentGetError
 
-logger = logging.getLogger("claudegraph.arango")
+logger = logging.getLogger("embeddington.arango")
 
 ENTITIES = "entities_v2"
 RELATIONSHIPS = "relationships_v2"
@@ -26,12 +26,15 @@ class ArangoError(Exception):
 
 
 class ArangoKGClient:
-    """Read-only client for the ServiceNow knowledge graph.
+    """Query interface for the ServiceNow knowledge graph.
+
+    Queries only the hardcoded KG collections (entities_v2, relationships_v2,
+    servicenow_graph_v2) by construction.
 
     Args:
         url: ArangoDB endpoint (e.g. http://localhost:8529).
-        database: Target database (default: knowledge_graph).
-        username: Scoped read-only user for the KG database.
+        database: Target database (default: technology_kg).
+        username: Credentials for accessing the KG database.
         password: User's password.
     """
 

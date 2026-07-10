@@ -20,8 +20,8 @@ pytestmark = pytest.mark.skipif(
 def client():
     return ArangoKGClient(
         url=os.environ.get("ARANGO_TEST_URL", "http://localhost:8529"),
-        database="knowledge_graph",
-        username=os.environ.get("ARANGO_TEST_USER", "arango_reader"),
+        database="technology_kg",
+        username=os.environ.get("ARANGO_TEST_USER", "root"),
         password=os.environ["ARANGO_TEST_PASSWORD"],
     )
 

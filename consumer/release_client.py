@@ -6,7 +6,6 @@ injected (consumer.fetcher.HttpFetcher in production, a fake in tests).
 """
 
 import json
-from pathlib import Path
 
 from embeddington.format.manifest import verify_asset
 
@@ -30,14 +29,11 @@ class ReleaseClient:
         return json.loads(raw.decode("utf-8"))
 
     def download_asset(self, tag, asset, dest, expected_sha256):
-        """Download one asset to ``dest`` and verify its sha256.
+        """Download one asset to ``dest`` (streamed) and verify its sha256.
 
         Raises:
             embeddington.errors.ChecksumError: If the downloaded bytes don't match.
         """
-        data = self._fetcher.get(self._asset_url(tag, asset))
-        dest = Path(dest)
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_bytes(data)
+        dest = self._fetcher.download(self._asset_url(tag, asset), dest)
         verify_asset(dest, expected_sha256)
         return dest

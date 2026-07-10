@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 
@@ -15,6 +16,13 @@ class _FakeFetcher:
 
     def get(self, url):
         return self._urls[url]
+
+    def download(self, url, dest):
+        data = self._urls[url]
+        dest = Path(dest)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(data)
+        return dest
 
 
 def _url(repo, tag, name):

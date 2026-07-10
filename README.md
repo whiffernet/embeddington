@@ -26,8 +26,9 @@ It comes in two parts that stay in sync:
 
 You get the data, not a service. embeddington ships the graph as a **baseline** plus small
 daily **diffs** on GitHub Releases. Your copy restores the baseline once, then pulls only
-what changed — idempotent and resumable, so re-running is always safe. Real easy. Just
-takin' it easy for all us data sinners.
+what changed — idempotent, and resumable at _diff_ granularity — an interrupted baseline
+download restarts that one asset from zero (it streams to disk, so it won't eat your RAM
+doing it). Real easy. Just takin' it easy for all us data sinners.
 
 A bundled MCP server (`mcp/`) lets Claude query the graph directly — vector search and
 graph traversal, reasoned over by Claude, with no dependency on any outside model or API.
@@ -88,14 +89,14 @@ you where to look. The docs are still the truth.
 
 > _"There's a lot of strands to keep in old Duder's head."_
 
-Snapshot of the **`baseline-2026-07`** baseline (as of **2026-07-02**). The graph grows as
+Snapshot of the **`baseline-2026-07b`** baseline (as of **2026-07-09**). The graph grows as
 daily diffs land, so a fresh install will already be a touch bigger than this.
 
 | Metric                                      | Count       |
 | ------------------------------------------- | ----------- |
-| Vectors (Qdrant chunks, `bge-m3`, 1024-dim) | **150,822** |
-| Entities (graph nodes)                      | **309,773** |
-| Relationships / triples (graph edges)       | **682,068** |
+| Vectors (Qdrant chunks, `bge-m3`, 1024-dim) | **152,194** |
+| Entities (graph nodes)                      | **310,364** |
+| Relationships / triples (graph edges)       | **683,651** |
 | Entity types                                | 14          |
 | Relationship predicates                     | 14          |
 | Avg. relationships per entity               | ~2.2        |
@@ -105,45 +106,18 @@ same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
 
 ---
 
-## There are rules (prerequisites)
+## Before you roll (prerequisites)
 
 > _"This is not Docs. This is embeddington. There are rules."_
 
 - **Docker** (with the Compose plugin) — runs the local Qdrant + ArangoDB + embedder.
-- **GitHub CLI** (`gh`), authenticated with **read access** to this repo — either you've
-  been added as a collaborator (`gh auth login`) or you were handed a **read-only token**
-  (see below).
 - **Python 3.12+**.
+
+That's the whole list. No account, no token, no access request — the graph is public and
+the download is a plain HTTPS GET.
 
 Cross-platform: Linux, macOS (Intel **and** Apple Silicon), and Windows via WSL2 — the
 stores and the embedder all run in Docker.
-
----
-
-## Got a read-only key? (token access)
-
-> _"Far out."_
-
-If someone shared a **read-only access token** with you instead of adding you as a
-collaborator, just point `gh` at it once:
-
-```bash
-# run from: anywhere — this configures gh itself, not the repo
-echo "YOUR_TOKEN" | gh auth login --with-token
-```
-
-That token can only **read this one repo** — you can pull the graph and its daily updates,
-and nothing else. Everything below (clone, stack, `embeddington-consume update`) then works
-exactly as written.
-
-Prefer the token as an environment variable instead of `gh`? That works too — just
-`export GITHUB_TOKEN=YOUR_TOKEN` before running `embeddington-consume update`.
-
-> _"This aggression will not stand."_ One gotcha for hand-debuggers: a raw
-> `curl https://github.com/whiffernet/embeddington/releases/download/...` with the token in
-> an `Authorization` header returns **404** on a private repo — that download URL only
-> honors browser sessions, not tokens. It's not a missing file. Use `gh` or the
-> `embeddington-consume` CLI (both fetch via the GitHub API, which _does_ honor the token).
 
 ---
 
@@ -174,13 +148,11 @@ answer. `~/embeddington` is used as the example clone location — substitute yo
 
 ### The steps
 
-**1. Clone.** Use `gh` rather than `git`, so it reuses the login from above — they're
-different tools with different credentials, and `gh repo clone` uses your GitHub auth
-directly:
+**1. Clone.** Nothing to authenticate — it's a public repo:
 
 ```bash
 # run from: anywhere you keep code (e.g. ~)
-gh repo clone whiffernet/embeddington
+git clone https://github.com/whiffernet/embeddington.git
 cd embeddington          # <- you are now at the REPO ROOT
 ```
 
@@ -201,18 +173,18 @@ Check it came up before moving on:
 
 ```bash
 # run from: consumer/
-docker compose ps         # all services should read "running" / "healthy"
+docker compose ps   # all services should read "running" — the embed service keeps building/downloading for a while after
 ```
 
 The `embed` service builds on first run and downloads the `bge-m3` model (~2 GB) the first
 time it starts — that one-time pull is what powers semantic search.
 
-> _"New information has come to light."_ That first build also compiles a CPU embedder,
-> which pulls ~150 MB of PyTorch and takes **10–20 minutes** — Qdrant and ArangoDB are
-> quick pre-built pulls, but the embedder is built locally so it runs on both Intel and
-> Apple Silicon. **If the build times out** on a slow connection, just re-run
-> `docker compose up -d --build` — Docker doesn't cache a failed layer, so the retry picks
-> up cleanly. The Dude doesn't sweat a dropped download.
+> _"Sometimes you eat the bar, and sometimes, well, the bar eats you."_ That first build
+> also compiles a CPU embedder, which pulls ~150 MB of PyTorch and takes **10–20 minutes**
+> — Qdrant and ArangoDB are quick pre-built pulls, but the embedder is built locally so it
+> runs on both Intel and Apple Silicon. **If the build times out** on a slow connection,
+> just re-run `docker compose up -d --build` — Docker doesn't cache a failed layer, so the
+> retry picks up cleanly. The Dude doesn't sweat a dropped download.
 
 **3. Install the consumer CLI.** This one needs the **repo root** (where `pyproject.toml`
 lives) — the `cd ..` in step 2 already put you there:
@@ -236,7 +208,7 @@ embeddington-consume --help
 
 ---
 
-## New information has come to light (import & update)
+## Roll it forward (import & update)
 
 > _"New information has come to light, man."_
 
@@ -250,7 +222,7 @@ put in `consumer/.env` during install. The first line below loads it. That relat
 ```bash
 # run from: repo root
 set -a; . consumer/.env; set +a       # loads ARANGO_ROOT_PASSWORD into this shell
-embeddington-consume update --repo whiffernet/embeddington
+embeddington-consume update
 ```
 
 Running it from somewhere else? Point at the file absolutely, and the command itself no
@@ -259,7 +231,7 @@ longer cares where you are:
 ```bash
 # run from: anywhere
 set -a; . ~/embeddington/consumer/.env; set +a
-embeddington-consume update --repo whiffernet/embeddington
+embeddington-consume update
 ```
 
 You only need the `set -a` line once per shell. For a cron job, keep both lines together —
@@ -267,7 +239,7 @@ cron starts a fresh shell with none of your environment:
 
 ```bash
 # crontab -e   — update daily at 06:00
-0 6 * * * set -a; . $HOME/embeddington/consumer/.env; set +a; $HOME/embeddington/.venv/bin/embeddington-consume update --repo whiffernet/embeddington >> $HOME/embeddington-update.log 2>&1
+0 6 * * * set -a; . $HOME/embeddington/consumer/.env; set +a; $HOME/embeddington/.venv/bin/embeddington-consume update >> $HOME/embeddington-update.log 2>&1
 ```
 
 First run downloads and restores the full baseline (a few hundred MB), so it takes a few
@@ -279,9 +251,9 @@ whole graph:
 
 ```
 Embeddington update complete.
-  Action:  restored full baseline (baseline-2026-07)
-  Loaded:  150,822 vectors · 309,773 entities · 682,068 edges
-  Version: cb48b5c3e046f240aa0b7b9656c8505d6cbb98b7
+  Action:  restored full baseline (baseline-2026-07b)
+  Loaded:  152,194 vectors · 310,364 entities · 683,651 edges
+  Version: fd852b53bb07998ddc8e385971c25b94028fdf62
   Diffs:   0 applied on top of the baseline
   Note:    a one-time full re-download is expected after a compaction — existing
            installs re-restore the latest snapshot in a single step.
@@ -315,7 +287,19 @@ stores. The repo ships a project-scoped **`.mcp.json`** that Claude Code auto-di
 the server appears as **embeddington** (its tools as `mcp__embeddington__…`) — no manual
 endpoint wiring beyond having `ARANGO_ROOT_PASSWORD` set.
 
-> _"Is this your homework, Larry?"_ `.mcp.json` connects as `ARANGO_USER: root`. That's
+The one bit of wiring: the server needs `ARANGO_ROOT_PASSWORD` in the environment Claude
+launches it from — a GUI app doesn't inherit your shell's exports. Easiest path:
+
+```bash
+# run from: repo root — launch Claude Code with the password loaded
+set -a; . consumer/.env; set +a
+claude
+```
+
+For Claude Desktop, put the value in `mcp/.env` instead (`cp mcp/.env.example mcp/.env`,
+fill in `ARANGO_PASSWORD`) — `server.py` reads it at startup.
+
+> _"This is a private residence, man."_ `.mcp.json` connects as `ARANGO_USER: root`. That's
 > **your own** ArangoDB container — the one `consumer/docker-compose.yml` started, with the
 > password you chose in `consumer/.env`. No shared credential ships with this repo, and
 > nothing here reaches a database you don't own.
@@ -380,11 +364,11 @@ Plan for **~8.5 GB** once everything settles. Itemized:
 | `embed` service image (CPU-only torch)           | ~1.3 GB |
 | Qdrant + ArangoDB engine images                  | ~0.7 GB |
 | Restored graph (Qdrant ~2.4 GB + Arango ~0.9 GB) | ~3.3 GB |
-| Baseline download (transient — deletable)        | ~0.9 GB |
+| Baseline download (transient — deletable)        | ~1.0 GB |
 
 Figure a little extra headroom during the first download — the compressed baseline and the
-restored copy coexist until you clear `data/work/` — plus **~3–4 GB RAM** to run the embedder
-and the two stores.
+restored copy coexist until you clear `data/work/` — plus **~6–8 GB RAM** — the embedder
+alone holds ~2.3 GB once bge-m3 loads, on top of Qdrant + ArangoDB serving the full graph.
 
 Sizes track the baseline, so they grow over time: `baseline-2026-07` roughly doubled the
 vector count over `baseline-2026-06`, and the disk figures moved with it.
@@ -400,27 +384,27 @@ vector count over `baseline-2026-06`, and the disk figures moved with it.
 - On each run it computes the shortest path to current: restore the latest baseline if it
   has no usable cursor, otherwise apply the contiguous diffs after its cursor.
 - Every download is checksum-verified, every write is keyed (upsert/delete by id), and the
-  cursor only advances after a diff fully applies — so an interrupted run resumes cleanly.
-  This aggression toward data loss will not stand.
+  cursor only advances after a diff fully applies — so an interrupted diff-apply run resumes
+  cleanly at the next diff. An interrupted baseline download restarts that one asset from
+  zero (it streams to disk, so it won't eat your RAM doing it). This aggression toward data
+  loss will not stand.
 
 ## Configuration
 
-`embeddington-consume update` flags (all optional except `--repo`):
+`embeddington-consume update` flags (all optional — `--repo` defaults to
+`whiffernet/embeddington`; override it only if you've forked):
 
-| Flag                | Default                 | Purpose                            |
-| ------------------- | ----------------------- | ---------------------------------- |
-| `--repo`            | _(required)_            | `owner/name` of this releases repo |
-| `--cursor`          | `data/.cursor`          | Local cursor file                  |
-| `--work-dir`        | `data/work`             | Scratch dir for downloads          |
-| `--qdrant-url`      | `http://localhost:6333` | Local Qdrant                       |
-| `--collection`      | `technology`            | Qdrant collection name             |
-| `--arango-url`      | `http://localhost:8529` | Local ArangoDB                     |
-| `--arango-db`       | `technology_kg`         | Target database                    |
-| `--arango-user`     | `root`                  | ArangoDB user                      |
-| `--arango-password` | `$ARANGO_ROOT_PASSWORD` | ArangoDB password                  |
-
-Auth uses `gh` by default. To use a token instead, set `GITHUB_TOKEN` to a token that can
-read this repo.
+| Flag                | Default                   | Purpose                            |
+| ------------------- | ------------------------- | ---------------------------------- |
+| `--repo`            | `whiffernet/embeddington` | `owner/name` of this releases repo |
+| `--cursor`          | `data/.cursor`            | Local cursor file                  |
+| `--work-dir`        | `data/work`               | Scratch dir for downloads          |
+| `--qdrant-url`      | `http://localhost:6333`   | Local Qdrant                       |
+| `--collection`      | `technology`              | Qdrant collection name             |
+| `--arango-url`      | `http://localhost:8529`   | Local ArangoDB                     |
+| `--arango-db`       | `technology_kg`           | Target database                    |
+| `--arango-user`     | `root`                    | ArangoDB user                      |
+| `--arango-password` | `$ARANGO_ROOT_PASSWORD`   | ArangoDB password                  |
 
 > _"This is what happens when you float your version tags."_
 >
@@ -474,6 +458,65 @@ can be checked against the sentence that produced it. When the graph and the doc
 **the docs are right** — extraction is lossy, and an edge is a compression of a sentence.
 
 This project is not affiliated with, endorsed by, or supported by ServiceNow.
+
+---
+
+## Careful, man (third-party components)
+
+> _"Careful, man, there's a beverage here!"_
+
+The `LICENSE` at the root of this repo covers **embeddington's own code** — the consumer CLI
+and the bundled MCP server — under Apache 2.0. It does **not** cover the databases
+embeddington talks to, and one of them has terms you'll want to know about before you go
+building a business on it.
+
+Nothing here ships you a database. `consumer/docker-compose.yml` names two images; your
+Docker pulls them from their vendors, and you accept their terms directly from them. What
+embeddington distributes is **data** — a Qdrant snapshot, an ArangoDB dump, and daily diffs.
+No engine source, no binaries, no images.
+
+| Component           | Pinned version     | License      | The short of it                                                            |
+| ------------------- | ------------------ | ------------ | -------------------------------------------------------------------------- |
+| **Qdrant**          | `v1.16.3`          | Apache 2.0   | No strings. Use it, ship it, sell it.                                      |
+| **ArangoDB**        | `3.12.4`           | **BUSL 1.1** | Not an open-source license. Read the next bit.                             |
+| **BAAI/bge-m3**     | —                  | MIT          | Weights download from Hugging Face on first run; nothing is redistributed. |
+| **ServiceNow docs** | branch `australia` | Apache 2.0   | The source of truth. See the provenance section above.                     |
+
+### The ArangoDB bit
+
+ArangoDB moved to the **Business Source License 1.1** in the 3.12 line. Its own text is
+refreshingly blunt:
+
+> The Business Source License … is not an Open Source license.
+
+What it grants you, verbatim:
+
+> you may make use of the Licensed Work internally in production, provided that you may not
+> use the Licensed Work in a commercial offering that allows one or more third parties
+> (other than your contractors) to access, create or manage databases including data that is
+> controlled by any such third parties.
+
+In the parlance of our times:
+
+- **Running embeddington on your own machine, or inside your own company?** That's the whole
+  point. Go nuts.
+- **Selling a hosted service where your customers' data lives in that ArangoDB?** That's the
+  thing it says no to. You'd need a commercial license from ArangoDB.
+- **Waiting it out?** BUSL converts to Apache 2.0 on its Change Date — the fourth
+  anniversary of the March 2024 release, so roughly **March 2028** for the 3.12 line. The
+  clock is per-version: upgrade the engine, restart the clock.
+
+This obligation runs between **you and ArangoDB**, not between you and this repo.
+embeddington hands you a compose file, not a database.
+
+### Not a lawyer, man
+
+> _"That's just, like, your opinion, man."_
+
+This section is a summary written in good faith, not legal advice. The licenses themselves
+are the authority: [Qdrant](https://github.com/qdrant/qdrant/blob/master/LICENSE),
+[ArangoDB](https://github.com/arangodb/arangodb/blob/devel/LICENSE). If real money is riding
+on that DBaaS clause, spend ten minutes with someone who does this for a living.
 
 ---
 
