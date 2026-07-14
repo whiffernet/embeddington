@@ -139,9 +139,13 @@ Two rules that follow from the table, and cover ~all of it:
 
 - **`docker compose` only works inside `consumer/`.** That's where the compose file is. Run
   it from the root and Docker will tell you it can't find a configuration file.
-- **`embeddington-consume` works from anywhere**, once installed. It's a real command on
-  your `PATH`, not a script you have to be next to. You never need to `cd` into `consumer/`
-  to use it.
+- **`embeddington-consume` should be run from the repo root.** Once installed it's a real
+  command on your `PATH`, so it will _launch_ from anywhere — but it keeps its bookkeeping
+  in `data/`, resolved **relative to the directory you run it from**. Run it somewhere
+  else and it won't find your cursor, will conclude you have nothing installed, and will
+  cheerfully re-download the entire baseline into a second `data/` folder. You never need
+  to `cd` into `consumer/` to use it — but do stay at the root. (Running it from elsewhere
+  on purpose? See [From another directory](#from-another-directory).)
 
 Every code block below starts with a `# run from:` comment. When in doubt, that's the
 answer. `~/embeddington` is used as the example clone location — substitute your own.
@@ -225,21 +229,41 @@ set -a; . consumer/.env; set +a       # loads ARANGO_ROOT_PASSWORD into this she
 embeddington-consume update
 ```
 
-Running it from somewhere else? Point at the file absolutely, and the command itself no
-longer cares where you are:
+#### From another directory
+
+Running it from somewhere else takes more than relocating the `.env`. `--cursor` and
+`--work-dir` default to `data/.cursor` and `data/work`, and those are relative to your
+**current directory** — not to where the repo lives. Point at the `.env` absolutely but
+leave those two alone, and the command lands in a stranger's `data/`, finds no cursor,
+and re-restores the whole baseline from scratch.
+
+The simple fix is to `cd` first:
+
+```bash
+# run from: anywhere
+cd ~/embeddington
+set -a; . consumer/.env; set +a
+embeddington-consume update
+```
+
+If you truly can't `cd` (some job runners won't let you), pin all three paths absolutely:
 
 ```bash
 # run from: anywhere
 set -a; . ~/embeddington/consumer/.env; set +a
-embeddington-consume update
+embeddington-consume update \
+  --cursor ~/embeddington/data/.cursor \
+  --work-dir ~/embeddington/data/work
 ```
 
 You only need the `set -a` line once per shell. For a cron job, keep both lines together —
-cron starts a fresh shell with none of your environment:
+cron starts a fresh shell with none of your environment, **and starts it in your home
+directory**, so lead with a `cd` or the job will look for its cursor in `$HOME/data/` and
+re-restore the baseline on every fresh install:
 
 ```bash
 # crontab -e   — update daily at 06:00
-0 6 * * * set -a; . $HOME/embeddington/consumer/.env; set +a; $HOME/embeddington/.venv/bin/embeddington-consume update >> $HOME/embeddington-update.log 2>&1
+0 6 * * * cd $HOME/embeddington && set -a && . consumer/.env && set +a && .venv/bin/embeddington-consume update >> $HOME/embeddington-update.log 2>&1
 ```
 
 First run downloads and restores the full baseline (a few hundred MB), so it takes a few
@@ -413,17 +437,17 @@ vector count over `baseline-2026-06`, and the disk figures moved with it.
 `embeddington-consume update` flags (all optional — `--repo` defaults to
 `whiffernet/embeddington`; override it only if you've forked):
 
-| Flag                | Default                   | Purpose                            |
-| ------------------- | ------------------------- | ---------------------------------- |
-| `--repo`            | `whiffernet/embeddington` | `owner/name` of this releases repo |
-| `--cursor`          | `data/.cursor`            | Local cursor file                  |
-| `--work-dir`        | `data/work`               | Scratch dir for downloads          |
-| `--qdrant-url`      | `http://localhost:6333`   | Local Qdrant                       |
-| `--collection`      | `technology`              | Qdrant collection name             |
-| `--arango-url`      | `http://localhost:8529`   | Local ArangoDB                     |
-| `--arango-db`       | `technology_kg`           | Target database                    |
-| `--arango-user`     | `root`                    | ArangoDB user                      |
-| `--arango-password` | `$ARANGO_ROOT_PASSWORD`   | ArangoDB password                  |
+| Flag                | Default                   | Purpose                                                            |
+| ------------------- | ------------------------- | ------------------------------------------------------------------ |
+| `--repo`            | `whiffernet/embeddington` | `owner/name` of this releases repo                                 |
+| `--cursor`          | `data/.cursor`            | Local cursor file — **relative to your current directory**         |
+| `--work-dir`        | `data/work`               | Scratch dir for downloads — **relative to your current directory** |
+| `--qdrant-url`      | `http://localhost:6333`   | Local Qdrant                                                       |
+| `--collection`      | `technology`              | Qdrant collection name                                             |
+| `--arango-url`      | `http://localhost:8529`   | Local ArangoDB                                                     |
+| `--arango-db`       | `technology_kg`           | Target database                                                    |
+| `--arango-user`     | `root`                    | ArangoDB user                                                      |
+| `--arango-password` | `$ARANGO_ROOT_PASSWORD`   | ArangoDB password                                                  |
 
 > _"This is what happens when you float your version tags."_
 >
