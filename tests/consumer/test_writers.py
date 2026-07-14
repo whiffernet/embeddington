@@ -52,3 +52,27 @@ def test_apply_diff_through_real_writers(fake_qdrant_client, fake_arango_db):
     assert "p1" in fake_qdrant_client.points
     assert "E1" in fake_arango_db.collections["entities_v2"]
     assert fake_arango_db.collections["relationships_v2"]["R1"]["predicate"] == "USES"
+
+
+def test_point_count_returns_zero_when_collection_missing(fake_qdrant_client):
+    fake_qdrant_client.exists = False
+    qw = writers.QdrantConsumerWriter(fake_qdrant_client, "technology")
+    assert qw.point_count() == 0
+
+
+def test_point_count_returns_number_of_points(fake_qdrant_client):
+    qw = writers.QdrantConsumerWriter(fake_qdrant_client, "technology")
+    qw.upsert_point("p1", [0.1], {"filename": "a.md"})
+    qw.upsert_point("p2", [0.2], {"filename": "b.md"})
+    assert qw.point_count() == 2
+
+
+def test_collection_property_exposes_name(fake_qdrant_client):
+    assert writers.QdrantConsumerWriter(fake_qdrant_client, "technology").collection == "technology"
+
+
+def test_entity_count_counts_entities(fake_arango_db):
+    aw = writers.ArangoConsumerWriter(fake_arango_db)
+    assert aw.entity_count() == 0
+    aw.upsert_entity("e1", {"name": "ServiceNow"})
+    assert aw.entity_count() == 1

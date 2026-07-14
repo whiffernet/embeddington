@@ -30,6 +30,25 @@ class QdrantConsumerWriter:
 
         return cls(QdrantClient(url=url), collection)
 
+    @property
+    def collection(self):
+        """The name of the Qdrant collection this writer targets."""
+        return self._collection
+
+    def point_count(self) -> int:
+        """Return how many points the collection holds.
+
+        The updater uses this to refuse a baseline restore into a store that already has
+        the data (which would re-download ~828 MB for nothing). A collection that does not
+        exist yet counts as 0, so a genuinely fresh install is never blocked.
+
+        Returns:
+            The exact number of points, or 0 if the collection does not exist.
+        """
+        if not self._client.collection_exists(self._collection):
+            return 0
+        return self._client.count(self._collection, exact=True).count
+
     def upsert_point(self, point_id: str, vector: list[float], payload: dict) -> None:
         """Upsert a single point into the collection.
 
@@ -97,6 +116,19 @@ class ArangoConsumerWriter:
         from arango import ArangoClient
 
         return cls(ArangoClient(hosts=url).db(db_name, username=username, password=password))
+
+    def entity_count(self) -> int:
+        """Return how many entities the graph holds.
+
+        Paired with QdrantConsumerWriter.point_count() by the updater's guard. Both stores
+        must look populated before a restore is refused: a baseline import writes Qdrant
+        first, so "Qdrant full, Arango empty" means an INTERRUPTED import, which must stay
+        re-runnable rather than being mistaken for a healthy install.
+
+        Returns:
+            The number of documents in entities_v2.
+        """
+        return self._entities.count()
 
     def upsert_entity(self, key: str, doc: dict) -> None:
         """Upsert an entity vertex into entities_v2.

@@ -1,5 +1,7 @@
 """Consumer-test fixtures: fake qdrant/arango clients matching the adapter call surface."""
 
+import types
+
 import pytest
 from qdrant_client import models as qmodels
 
@@ -9,6 +11,13 @@ class FakeQdrantClient:
 
     def __init__(self):
         self.points = {}  # id -> {"vector","payload"}
+        self.exists = True  # flip to False to simulate a missing collection
+
+    def collection_exists(self, collection_name):
+        return self.exists
+
+    def count(self, collection_name, exact=True):
+        return types.SimpleNamespace(count=len(self.points))
 
     def upsert(self, collection_name, points):
         for p in points:
@@ -28,6 +37,9 @@ class FakeQdrantClient:
 class _FakeCollection:
     def __init__(self, store):
         self._store = store
+
+    def count(self):
+        return len(self._store)
 
     def insert(self, doc, overwrite=False):
         self._store[doc["_key"]] = doc
