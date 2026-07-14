@@ -5,6 +5,7 @@ record's ``doc`` and persisted as an attribute on the relationships_v2 edge (the
 consumer half of Plan-1 I1 — no protocol change needed).
 """
 
+from arango.exceptions import CollectionListError, DocumentCountError
 from qdrant_client import models as qmodels
 
 
@@ -97,6 +98,10 @@ class ArangoConsumerWriter:
     """Implements embeddington.apply.protocols.ArangoWriter against a python-arango db."""
 
     def __init__(self, db):
+        # db.collection() is LAZY in python-arango (no server round-trip), so holding these
+        # handles says nothing about whether the database or collections actually exist.
+        # Keep the db handle too: it is the only way to ask (has_collection).
+        self._db = db
         self._entities = db.collection("entities_v2")
         self._edges = db.collection("relationships_v2")
 
@@ -125,10 +130,23 @@ class ArangoConsumerWriter:
         first, so "Qdrant full, Arango empty" means an INTERRUPTED import, which must stay
         re-runnable rather than being mistaken for a healthy install.
 
+        Mirrors point_count()'s existence guard. On a fresh consumer stack neither the
+        ``technology_kg`` database nor entities_v2 exists yet (arangorestore --create-database
+        makes them), and ``StandardCollection.count()`` raises rather than returning 0 in that
+        state -- so an unguarded count would crash the very first run.
+
         Returns:
-            The number of documents in entities_v2.
+            The number of documents in entities_v2, or 0 if the collection (or the whole
+            database) does not exist yet.
         """
-        return self._entities.count()
+        try:
+            if not self._db.has_collection("entities_v2"):
+                return 0
+            return self._entities.count()
+        except CollectionListError:
+            return 0  # database itself absent (HTTP 404 on /_api/collection) -> nothing stored
+        except DocumentCountError:
+            return 0  # collection vanished between the check and the count
 
     def upsert_entity(self, key: str, doc: dict) -> None:
         """Upsert an entity vertex into entities_v2.

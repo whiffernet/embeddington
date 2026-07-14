@@ -81,3 +81,22 @@ def test_entity_count_counts_entities(fake_arango_db):
     assert aw.entity_count() == 0
     aw.upsert_entity("e1", {"name": "ServiceNow"})
     assert aw.entity_count() == 1
+
+
+def test_entity_count_returns_zero_when_the_database_does_not_exist(fake_arango_db):
+    """The fresh-install state: technology_kg is created BY arangorestore, not before it.
+
+    python-arango's db.collection() is lazy, so the writer constructs fine, and count() then
+    404s ("database not found"). Without the existence guard the updater's populated-store
+    check dies with an unhandled DocumentCountError on the very first run.
+    """
+    aw = writers.ArangoConsumerWriter(fake_arango_db)  # handles built while the db "exists"
+    fake_arango_db.db_exists = False
+    assert aw.entity_count() == 0
+
+
+def test_entity_count_returns_zero_when_the_collection_is_missing(fake_arango_db):
+    """The database exists (an empty Arango) but entities_v2 has never been created."""
+    aw = writers.ArangoConsumerWriter(fake_arango_db)
+    del fake_arango_db.collections["entities_v2"]
+    assert aw.entity_count() == 0

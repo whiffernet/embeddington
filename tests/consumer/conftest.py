@@ -3,7 +3,34 @@
 import types
 
 import pytest
+from arango.exceptions import CollectionListError, DocumentCountError
+from arango.request import Request
+from arango.response import Response
 from qdrant_client import models as qmodels
+
+
+def _arango_server_error(exc_cls, error_code, message):
+    """Build a real python-arango server error, as the driver would raise it on a 404.
+
+    Args:
+        exc_cls: The python-arango exception class to construct.
+        error_code: ArangoDB ERR code (e.g. 1228 = database not found).
+        message: The server's error message.
+
+    Returns:
+        An instance of exc_cls carrying an HTTP 404 response.
+    """
+    resp = Response(
+        method="get",
+        url="http://fake/_api/collection",
+        headers={},
+        status_code=404,
+        status_text="Not Found",
+        raw_body="",
+    )
+    resp.error_code = error_code
+    resp.error_message = message
+    return exc_cls(resp, Request(method="get", endpoint="/_api/collection"))
 
 
 class FakeQdrantClient:
@@ -39,10 +66,26 @@ class FakeQdrantClient:
 
 
 class _FakeCollection:
-    def __init__(self, store):
-        self._store = store
+    """Mimics python-arango's StandardCollection, including its 404 behavior.
+
+    The real handle is LAZY: db.collection(name) never touches the server, so a handle to a
+    missing collection (or one in a database that does not exist) constructs happily and only
+    blows up on first use. count() raises DocumentCountError; it does NOT return 0.
+    """
+
+    def __init__(self, db, name):
+        self._db = db
+        self._name = name
+
+    @property
+    def _store(self):
+        return self._db.collections[self._name]
 
     def count(self):
+        if not self._db.db_exists:
+            raise _arango_server_error(DocumentCountError, 1228, "database not found")
+        if self._name not in self._db.collections:
+            raise _arango_server_error(DocumentCountError, 1203, "collection or view not found")
         return len(self._store)
 
     def insert(self, doc, overwrite=False):
@@ -53,13 +96,27 @@ class _FakeCollection:
 
 
 class FakeArangoDb:
-    """Mimics db.collection(name) returning a collection with insert/delete."""
+    """Mimics db.collection(name) / db.has_collection(name) on a python-arango database.
+
+    Two knobs reproduce the states a consumer really passes through:
+      * ``db_exists = False`` -- the fresh consumer stack, before arangorestore
+        ``--create-database`` has made ``technology_kg``. has_collection() and count() both
+        raise (HTTP 404), exactly as the driver does.
+      * dropping a key from ``collections`` -- the database exists but the collection does
+        not; count() on its (lazy) handle raises.
+    """
 
     def __init__(self):
         self.collections = {"entities_v2": {}, "relationships_v2": {}}
+        self.db_exists = True  # flip to False to simulate "database not found"
+
+    def has_collection(self, name):
+        if not self.db_exists:
+            raise _arango_server_error(CollectionListError, 1228, "database not found")
+        return name in self.collections
 
     def collection(self, name):
-        return _FakeCollection(self.collections[name])
+        return _FakeCollection(self, name)  # lazy: no existence check, like the real client
 
 
 @pytest.fixture
