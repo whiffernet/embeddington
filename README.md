@@ -448,15 +448,22 @@ per machine — which is why the working directory no longer matters.
 Upgrading from a version that kept its cursor in `data/.cursor`? The first run adopts it and
 says so — nothing is re-downloaded — **provided that old cursor is somewhere the CLI looks**:
 the current directory, the install root (your clone, for the documented `pip install -e .`),
-or `$HOME`. If you once ran the tool from a fourth place (say `~/work`), point the first run
-at that file yourself and it will be migrated forward:
+or `$HOME`. If you once ran the tool from a fourth place (say `~/work`), copy that file into
+the state directory yourself before the first run:
 
 ```bash
-embeddington-consume update --cursor ~/work/data/.cursor
+mkdir -p ~/.local/share/embeddington
+cp ~/work/data/.cursor ~/.local/share/embeddington/.cursor
+embeddington-consume update
 ```
 
-Once adopted, the old file is renamed to `data/.cursor.migrated` (kept, not deleted) so it
-can never be mistaken for a live cursor later.
+(Use `$EMBEDDINGTON_HOME` or `$XDG_DATA_HOME/embeddington` instead if you've set either.)
+A copy — not `--cursor ~/work/data/.cursor`: that flag only tells this one run where the
+cursor file lives, and keeps using it in place. It's a permanent flag, not a migration.
+
+Every old cursor the first run _does_ find is renamed to `data/.cursor.migrated` (kept, not
+deleted) — all of them, not just the one it adopts, so none can be mistaken for a live cursor
+later.
 
 Two more upgrade housekeeping notes:
 
@@ -464,12 +471,14 @@ Two more upgrade housekeeping notes:
   `<state dir>/work/`. It can hold up to ~1 GB of baseline leftovers; delete it.
 - **Exit codes**, for anyone wrapping this in a job runner:
 
-  | Code | Meaning                                                                                                                                                                                                                         |
-  | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-  | `0`  | Success (restored, applied diffs, or already up to date)                                                                                                                                                                        |
-  | `1`  | Unhandled error                                                                                                                                                                                                                 |
-  | `2`  | A baseline restore is required but no importer is available                                                                                                                                                                     |
-  | `3`  | **Refused**: a baseline was needed, but the stores already hold data and no cursor was found. Nothing was downloaded. Pass `--cursor` at your old cursor file, or `--force-baseline` if you really want the ~828 MB re-restore. |
+  | Code | Meaning                                                                                                                                                                                                                                                 |
+  | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `0`  | Success (restored, applied diffs, or already up to date)                                                                                                                                                                                                |
+  | `1`  | Unhandled error                                                                                                                                                                                                                                         |
+  | `3`  | **Refused**: a baseline was needed, but the stores already hold data and no cursor was found. Nothing was downloaded. Copy your old cursor into the state dir (above) and re-run, or pass `--force-baseline` if you really want the ~828 MB re-restore. |
+
+  (There is no `2`: it's reserved for `BaselineRequired`, which only the library can raise —
+  the CLI always supplies a baseline importer.)
 
 > _"This is what happens when you float your version tags."_
 >
