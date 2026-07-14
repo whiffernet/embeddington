@@ -1,6 +1,9 @@
+import os
+import shutil
 from pathlib import Path
 
 import pytest
+from arango.exceptions import ArangoServerError
 
 from consumer import cursor_store, release_client, state_paths, updater, writers
 from embeddington.format import bundle as bundle_mod
@@ -592,6 +595,243 @@ def test_a_lost_state_cursor_after_migration_hits_the_guard_not_a_re_baseline(
         )
 
     assert imported == []  # no silent 828 MB re-download
+
+
+def test_an_orphaned_sentinel_does_not_survive_a_run_with_a_good_cursor(
+    tmp_path, fake_qdrant_client, fake_arango_db
+):
+    """The sentinel must never outlive the restore it describes.
+
+    A baseline dies mid-flight and leaves the sentinel (by design). The user then recovers some
+    OTHER way -- an old cursor is adopted, or they copy one into place -- so the next run never
+    reaches the baseline branch that used to be the sentinel's only unlink. Any run that ends
+    up with a known-good cursor must clear it, or it sits there forever with the guard off.
+    """
+    rc, _ = _setup(tmp_path)
+    qw, aw = _writers(fake_qdrant_client, fake_arango_db)
+    _populate(fake_qdrant_client, fake_arango_db)
+    cursor_path = tmp_path / "state" / ".cursor"
+    cursor_store.write_cursor(cursor_path, "a7b8")  # at HEAD -> up_to_date, an early return
+    sentinel = updater.restore_sentinel_path(cursor_path)
+    sentinel.write_text("pid=1 started=whenever\n", encoding="utf-8")  # orphan from a dead run
+
+    result = updater.update(
+        rc,
+        qw,
+        aw,
+        cursor_path,
+        work_dir=tmp_path / "w",
+        baseline_importer=lambda b: None,
+    )
+
+    assert result["mode"] == "up_to_date"
+    assert not sentinel.exists()  # cleared on the known-good-cursor path, not just after import
+
+
+def test_an_orphaned_sentinel_cannot_disable_the_guard_for_a_later_missing_cursor(
+    tmp_path, fake_qdrant_client, fake_arango_db
+):
+    """The 828 MB hole, end to end.
+
+    Crash mid-restore (sentinel left) -> recover via a legacy cursor -> months later the state
+    cursor goes missing (cron not inheriting EMBEDDINGTON_HOME) while the stores are healthy.
+    With a stale sentinel around, the guard is skipped and the baseline lands on live data,
+    silently, exit 0. The recovery run must have cleared it, so this ends in a refusal.
+    """
+    rc, _ = _setup(tmp_path)
+    qw, aw = _writers(fake_qdrant_client, fake_arango_db)
+    _populate(fake_qdrant_client, fake_arango_db)
+    cursor_path = tmp_path / "state" / ".cursor"
+    sentinel = updater.restore_sentinel_path(cursor_path)
+    sentinel.parent.mkdir(parents=True)
+    sentinel.write_text("pid=999 started=2026-07-01T00:00:00\n", encoding="utf-8")
+    legacy = _legacy(tmp_path, "clone", "a7b8")  # the user's real recovery: an adoptable cursor
+
+    updater.update(  # run 1: recovers WITHOUT taking the baseline branch
+        rc,
+        qw,
+        aw,
+        cursor_path,
+        work_dir=tmp_path / "w",
+        baseline_importer=lambda b: None,
+        legacy_cursors=[legacy],
+    )
+    assert not sentinel.exists()
+
+    cursor_path.unlink()  # run 2: the state cursor vanishes; the stores are still healthy
+    imported = []
+
+    with pytest.raises(updater.BaselineRefused):
+        updater.update(
+            rc,
+            qw,
+            aw,
+            cursor_path,
+            work_dir=tmp_path / "w",
+            baseline_importer=lambda b: imported.append(b["tag"]),
+        )
+
+    assert imported == []  # no silent 828 MB over live data
+
+
+def test_the_sentinel_says_who_wrote_it_and_when(tmp_path, fake_qdrant_client, fake_arango_db):
+    """A guard-disabling file with no owner is undebuggable; make it self-describing."""
+    rc, _ = _setup(tmp_path)
+    qw, aw = _writers(fake_qdrant_client, fake_arango_db)
+    cursor_path = tmp_path / "state" / ".cursor"
+    seen = {}
+
+    def importer(baseline):
+        seen["content"] = updater.restore_sentinel_path(cursor_path).read_text(encoding="utf-8")
+
+    updater.update(rc, qw, aw, cursor_path, work_dir=tmp_path / "w", baseline_importer=importer)
+
+    assert f"pid={os.getpid()}" in seen["content"]
+    assert "started=" in seen["content"]
+
+
+def test_adoption_retires_every_candidate_it_read_not_just_the_winner(
+    tmp_path, fake_qdrant_client, fake_arango_db
+):
+    """The losers are future adoption candidates too -- and the stalest one wins later.
+
+    Adopt the clone's cursor (at HEAD); $HOME's stale one (the old cron line's, now off-chain)
+    loses. Left on disk it stays fully eligible: when the state cursor later goes missing, it
+    is adopted as the off-chain FALLBACK, the cursor is truthy, the guard is SKIPPED, and the
+    baseline is re-imported over a healthy store. Every file read must be retired.
+    """
+    rc, _ = _setup(tmp_path)
+    qw, aw = _writers(fake_qdrant_client, fake_arango_db)
+    _populate(fake_qdrant_client, fake_arango_db)
+    clone = _legacy(tmp_path, "clone", "a7b8")  # at HEAD -> adopted
+    home = _legacy(tmp_path, "home", "0ldc0mpacted")  # off-chain -> the loser
+    cursor_path = tmp_path / "state" / ".cursor"
+
+    result = updater.update(
+        rc,
+        qw,
+        aw,
+        cursor_path,
+        work_dir=tmp_path / "w",
+        baseline_importer=lambda b: None,
+        legacy_cursors=[clone, home],
+    )
+    assert result["adopted_from"] == clone
+    assert not home.exists()  # the LOSER is retired too...
+    assert home.with_name(".cursor.migrated").read_text(encoding="utf-8").strip() == "0ldc0mpacted"
+
+    cursor_path.unlink()  # ...so a later missing state cursor lands on the guard
+    imported = []
+    with pytest.raises(updater.BaselineRefused):
+        updater.update(
+            rc,
+            qw,
+            aw,
+            cursor_path,
+            work_dir=tmp_path / "w",
+            baseline_importer=lambda b: imported.append(b["tag"]),
+            legacy_cursors=state_paths.legacy_cursor_candidates(
+                tmp_path / "clone", tmp_path / "home", install_root_dir=tmp_path / "clone"
+            ),
+        )
+    assert imported == []
+
+
+def test_a_failed_retirement_warns_instead_of_failing_silently(
+    tmp_path, fake_qdrant_client, fake_arango_db, capsys, monkeypatch
+):
+    """A read-only clone cannot be retired. The update still succeeds -- but say so."""
+    rc, _ = _setup(tmp_path)
+    qw, aw = _writers(fake_qdrant_client, fake_arango_db)
+    legacy = _legacy(tmp_path, "clone", "a7b8")
+
+    def boom(self, target):
+        raise OSError("Read-only file system")
+
+    monkeypatch.setattr(Path, "rename", boom)
+
+    result = updater.update(
+        rc,
+        qw,
+        aw,
+        tmp_path / "state" / ".cursor",
+        work_dir=tmp_path / "w",
+        baseline_importer=lambda b: None,
+        legacy_cursors=[legacy],
+    )
+
+    assert result["mode"] == "up_to_date"  # not fatal
+    err = capsys.readouterr().err
+    assert "could not retire" in err and str(legacy) in err
+
+
+def test_the_refusal_tells_the_user_to_copy_the_cursor_and_that_actually_works(
+    tmp_path, fake_qdrant_client, fake_arango_db
+):
+    """The remedy the message advertises must be a real one.
+
+    It used to say "point --cursor at the old file and it will be migrated forward". It was
+    not: --cursor only sets the PATH, so nothing ever reached the state dir and every later
+    plain run refused again. The honest remedy is to COPY the file into place -- so the message
+    says that, and this test performs literally what it says and checks the next run is clean.
+    """
+    rc, _ = _setup(tmp_path)
+    qw, aw = _writers(fake_qdrant_client, fake_arango_db)
+    _populate(fake_qdrant_client, fake_arango_db)
+    cursor_path = tmp_path / "state" / ".cursor"
+    old = _legacy(tmp_path, "work", "e5f6")  # a fourth directory the CLI does not probe
+
+    with pytest.raises(updater.BaselineRefused) as exc:
+        updater.update(rc, qw, aw, cursor_path, work_dir=tmp_path / "w", baseline_importer=None)
+
+    message = str(exc.value)
+    assert "cp " in message and str(cursor_path) in message
+    assert "--cursor" not in message  # the old, untrue advice is gone
+
+    cursor_path.parent.mkdir(parents=True, exist_ok=True)  # do exactly what it says
+    shutil.copyfile(old, cursor_path)
+    imported = []
+
+    result = updater.update(
+        rc,
+        qw,
+        aw,
+        cursor_path,
+        work_dir=tmp_path / "w",
+        baseline_importer=lambda b: imported.append(b["tag"]),
+    )
+
+    assert imported == []  # remedied for good: no baseline, now or ever after
+    assert result["mode"] == "diffs" and result["applied"] == 1
+    assert cursor_store.read_cursor(cursor_path) == "a7b8"
+
+
+def test_a_broken_arango_propagates_instead_of_looking_like_an_empty_store(
+    tmp_path, fake_qdrant_client, fake_arango_db
+):
+    """The guard's false-negative: a live-but-unreachable Arango must not read as empty.
+
+    Qdrant is full, no cursor, and Arango answers 503 (still replaying its WAL). If entity_count()
+    swallowed that as 0, the guard would take it for an interrupted import and re-restore over
+    live data. It must blow up instead.
+    """
+    rc, _ = _setup(tmp_path)
+    qw, aw = _writers(fake_qdrant_client, fake_arango_db)
+    _populate(fake_qdrant_client, fake_arango_db)
+    fake_arango_db.server_error = (0, "service unavailable", 503)
+    imported = []
+
+    with pytest.raises(ArangoServerError):
+        updater.update(
+            rc,
+            qw,
+            aw,
+            tmp_path / "state" / ".cursor",
+            work_dir=tmp_path / "w",
+            baseline_importer=lambda b: imported.append(b["tag"]),
+        )
+
+    assert imported == []  # nothing was downloaded over the live store
 
 
 def test_force_baseline_restores_even_when_the_cursor_says_up_to_date(
