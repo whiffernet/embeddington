@@ -12,7 +12,9 @@ baseline route:
   * ADOPTION -- when the cursor file is absent, a pre-v0.2 ``data/.cursor`` is adopted
     rather than treating the install as fresh. Existing users migrate without re-downloading.
   * THE GUARD -- when no cursor is found anywhere AND both stores already hold data, refuse
-    instead of silently re-downloading ~828 MB over data that is already present.
+    instead of silently re-downloading ~828 MB over data that is already present. A restore
+    we started ourselves and never finished is exempted via a ``<cursor>.restoring`` sentinel,
+    so an interrupted baseline stays re-runnable.
 
 ``force_baseline`` deliberately bypasses both.
 """
@@ -32,10 +34,29 @@ class BaselineRequired(EmbeddingtonError):
 class BaselineRefused(EmbeddingtonError):
     """A baseline restore was needed, but both stores already hold data.
 
-    Almost always means the command ran somewhere other than the user's install, so the
-    cursor was not found. Restoring would re-download the whole baseline over data that is
-    already present.
+    Almost always means the cursor file went missing (or lives somewhere this run did not
+    look) while the data is still there. Restoring would re-download the whole baseline over
+    data that is already present.
     """
+
+
+def restore_sentinel_path(cursor_path):
+    """Return the marker file that says "a baseline restore is in progress".
+
+    A baseline restore takes minutes (Qdrant snapshot, then arangorestore) and writes the
+    cursor only at the very end. Killed mid-arangorestore, it leaves BOTH stores looking
+    populated with no cursor -- indistinguishable, from counts alone, from a healthy install
+    whose cursor was lost. The sentinel removes the ambiguity: if it is there, WE started a
+    restore that never finished, so the retry must be allowed through the guard.
+
+    Args:
+        cursor_path: Path to the cursor file.
+
+    Returns:
+        The sentinel path (``<cursor_path>.restoring``).
+    """
+    p = Path(cursor_path)
+    return p.with_name(p.name + ".restoring")
 
 
 def _adopt_legacy_cursor(legacy_cursors, manifest, supported_major):
@@ -80,6 +101,29 @@ def _adopt_legacy_cursor(legacy_cursors, manifest, supported_major):
     if fallback is not None:
         return fallback
     return None, None
+
+
+def _retire_legacy_cursor(path):
+    """Rename an adopted pre-v0.2 cursor to ``<name>.migrated`` so it is never re-adopted.
+
+    Left in place, the stale sha lingers forever. Once the chain compacts past it and the
+    state cursor goes missing (a $HOME restore that skipped ~/.local/share; EMBEDDINGTON_HOME
+    exported in .bashrc but not inherited by cron), adoption would pick that dead sha up as
+    its off-chain fallback, the cursor would be truthy, THE GUARD WOULD BE SKIPPED, and the
+    baseline would be re-downloaded over a healthy store. Retiring the file means a missing
+    state cursor always lands on the guard instead.
+
+    The rename preserves the user's file (nothing is deleted). Failure to rename is not fatal:
+    the migration itself already succeeded, and aborting the update over a read-only clone
+    would be worse than the (rare, recoverable) staleness this prevents.
+
+    Args:
+        path: Path to the legacy cursor file that was just adopted.
+    """
+    try:
+        path.rename(path.with_name(path.name + ".migrated"))
+    except OSError:
+        pass
 
 
 def update(
@@ -132,7 +176,8 @@ def update(
         if not cursor:
             cursor, adopted_from = _adopt_legacy_cursor(legacy_cursors, manifest, supported_major)
             if cursor:
-                write_cursor(cursor_path, cursor)
+                write_cursor(cursor_path, cursor)  # persist it: an at-HEAD sha writes nothing else
+                _retire_legacy_cursor(adopted_from)
 
     plan = plan_update(cursor, manifest, supported_major)
 
@@ -149,24 +194,35 @@ def update(
         # Guard ONLY the "no cursor found anywhere" case. A cursor that exists but has
         # fallen off the retained chain is a legitimate post-compaction re-baseline, and a
         # half-restored store (Qdrant written, Arango not, cursor not yet advanced) must
-        # stay re-runnable -- hence BOTH stores must look populated to refuse.
-        if not cursor and not force_baseline:
+        # stay re-runnable -- hence BOTH stores must look populated to refuse. The sentinel
+        # covers the other half of that window: a restore killed DURING arangorestore leaves
+        # both stores populated, and refusing THAT would strand the user on --force-baseline.
+        sentinel = restore_sentinel_path(cursor_path)
+        if not cursor and not force_baseline and not sentinel.exists():
             points = qdrant.point_count()
             if points > 0 and arango.entity_count() > 0:
                 raise BaselineRefused(
-                    f"Qdrant collection '{qdrant.collection}' already has {points:,} points, "
-                    f"but no cursor was found at {cursor_path}.\n\n"
-                    "  You are probably running from a directory that isn't your install, "
-                    "or the cursor was deleted.\n\n"
-                    "  - upgrading?   cd to your clone and re-run (it will adopt the old\n"
-                    "                 data/.cursor automatically)\n"
-                    "  - deliberate?  re-run with --force-baseline to re-restore the full\n"
-                    "                 baseline (~828 MB)"
+                    f"Qdrant collection '{qdrant.collection}' already has {points:,} points "
+                    f"and ArangoDB already holds entities, but no cursor was found at "
+                    f"{cursor_path}.\n\n"
+                    "  Your data is there; only the file recording its version is missing.\n"
+                    "  Restoring now would re-download the full baseline (~828 MB) for nothing.\n\n"
+                    "  - cursor elsewhere?  If an older install left a cursor in some other\n"
+                    "                       directory, point at it and it will be migrated:\n"
+                    "                         embeddington-consume update --cursor "
+                    "/path/to/data/.cursor\n"
+                    "  - really want it?    Re-run with --force-baseline to discard the local\n"
+                    "                       version and re-restore the full baseline (~828 MB)."
                 )
         if baseline_importer is None:
             raise BaselineRequired(f"baseline {plan.baseline['tag']} required; run import-baseline")
+        # Mark the restore as in-flight BEFORE it starts, so a kill anywhere inside it (the
+        # multi-minute arangorestore especially) is recognisable as our own unfinished work.
+        sentinel.parent.mkdir(parents=True, exist_ok=True)
+        sentinel.write_text("", encoding="utf-8")
         baseline_importer(plan.baseline)
         write_cursor(cursor_path, plan.baseline["head_sha"])
+        sentinel.unlink(missing_ok=True)  # cursor is durable now: the restore is complete
 
     applied = 0
     for diff in plan.diffs:

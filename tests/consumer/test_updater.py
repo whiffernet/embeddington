@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from consumer import cursor_store, release_client, updater, writers
+from consumer import cursor_store, release_client, state_paths, updater, writers
 from embeddington.format import bundle as bundle_mod
 from embeddington.format import records
 from embeddington.format.manifest import sha256_file
@@ -214,12 +214,14 @@ def test_adopts_the_candidate_furthest_along_the_chain(
     """Ranking is by chain position, NOT by list order."""
     rc, _ = _setup(tmp_path)
     qw, aw = _writers(fake_qdrant_client, fake_arango_db)
-    stale = _legacy(tmp_path, "home", "c3d4")  # two diffs behind (the cron-bug cursor)
-    fresh = _legacy(tmp_path, "clone", "e5f6")  # one diff behind
 
-    # fresh is LAST here and FIRST in the reversed case; a "first wins" or "last wins"
-    # implementation passes one and fails the other. Only true ranking passes both.
-    for order in ([stale, fresh], [fresh, stale]):
+    # fresh is LAST in the first pass and FIRST in the second; a "first wins" or "last wins"
+    # implementation passes one and fails the other. Only true ranking passes both. The files
+    # are re-written each pass because adoption retires (renames) the one it takes.
+    for reverse in (False, True):
+        stale = _legacy(tmp_path, "home", "c3d4")  # two diffs behind (the cron-bug cursor)
+        fresh = _legacy(tmp_path, "clone", "e5f6")  # one diff behind
+        order = [fresh, stale] if reverse else [stale, fresh]
         result = updater.update(
             rc,
             qw,
@@ -411,12 +413,15 @@ def test_guard_allows_retry_of_an_interrupted_baseline_import(
 ):
     """Qdrant restores before Arango and the cursor is written last.
 
-    So an interrupted import leaves Qdrant populated, Arango empty, no cursor. That state
-    is re-runnable today and must stay that way -- refusing it would strand the user.
+    So an import interrupted between the two leaves Qdrant populated and Arango not merely
+    empty but ABSENT -- technology_kg is created by arangorestore --create-database, which
+    never ran. entity_count() must survive that (404) and report 0, or the retry of an
+    828 MB import dies in a DocumentCountError traceback instead of restoring.
     """
     rc, _ = _setup(tmp_path)
     qw, aw = _writers(fake_qdrant_client, fake_arango_db)
-    fake_qdrant_client.points = {"half": {"vector": [0.1], "payload": {}}}  # Arango still empty
+    fake_qdrant_client.points = {"half": {"vector": [0.1], "payload": {}}}
+    fake_arango_db.db_exists = False  # arangorestore never got to create it
     imported = []
 
     result = updater.update(
@@ -430,6 +435,163 @@ def test_guard_allows_retry_of_an_interrupted_baseline_import(
 
     assert imported == ["baseline-2026-06"]  # the retry completes
     assert result["mode"] == "baseline"
+
+
+def test_sentinel_lets_a_restore_killed_mid_arangorestore_retry(
+    tmp_path, fake_qdrant_client, fake_arango_db
+):
+    """Killed DURING arangorestore: both stores populated, no cursor -- counts can't tell.
+
+    entities_v2 exists and is partially filled, so the populated-store guard would refuse
+    the retry and send the user to --force-baseline. The sentinel says "this half-restore is
+    OURS", and the retry is allowed through.
+    """
+    rc, _ = _setup(tmp_path)
+    qw, aw = _writers(fake_qdrant_client, fake_arango_db)
+    _populate(fake_qdrant_client, fake_arango_db)  # both stores look full: partial arangorestore
+    cursor_path = tmp_path / "state" / ".cursor"
+    sentinel = updater.restore_sentinel_path(cursor_path)
+    sentinel.parent.mkdir(parents=True)
+    sentinel.write_text("", encoding="utf-8")
+    imported = []
+
+    result = updater.update(
+        rc,
+        qw,
+        aw,
+        cursor_path,
+        work_dir=tmp_path / "w",
+        baseline_importer=lambda b: imported.append(b["tag"]),
+    )
+
+    assert imported == ["baseline-2026-06"]  # not refused
+    assert result["mode"] == "baseline"
+    assert not sentinel.exists()  # and cleared once the cursor is durable
+
+
+def test_baseline_writes_a_sentinel_while_restoring_and_clears_it_after(
+    tmp_path, fake_qdrant_client, fake_arango_db
+):
+    """The sentinel must exist DURING the import (that is the whole point) and not after."""
+    rc, _ = _setup(tmp_path)
+    qw, aw = _writers(fake_qdrant_client, fake_arango_db)
+    cursor_path = tmp_path / "state" / ".cursor"
+    sentinel = updater.restore_sentinel_path(cursor_path)
+    seen = {}
+
+    def importer(baseline):
+        seen["during"] = sentinel.exists()
+        seen["cursor_during"] = cursor_store.read_cursor(cursor_path)
+
+    updater.update(
+        rc,
+        qw,
+        aw,
+        cursor_path,
+        work_dir=tmp_path / "w",
+        baseline_importer=importer,
+    )
+
+    assert seen["during"] is True  # written before the importer runs
+    assert seen["cursor_during"] is None  # cursor still last
+    assert not sentinel.exists()  # a completed run leaves nothing behind
+
+
+def test_adopted_cursor_is_persisted_even_when_there_are_no_diffs_to_apply(
+    tmp_path, fake_qdrant_client, fake_arango_db
+):
+    """The unprotected half of the migration: a legacy cursor already AT HEAD.
+
+    Every other adoption path writes the cursor again per applied diff, which masks a missing
+    write at adoption time. Here plan_update returns up_to_date and returns early -- if the
+    adopted sha is not persisted right where it is adopted, the migration silently never
+    happens and the next run starts the whole dance over.
+    """
+    rc, _ = _setup(tmp_path)
+    qw, aw = _writers(fake_qdrant_client, fake_arango_db)
+    _populate(fake_qdrant_client, fake_arango_db)
+    legacy = _legacy(tmp_path, "clone", "a7b8")  # already at HEAD: nothing to apply
+    cursor_path = tmp_path / "state" / ".cursor"
+
+    result = updater.update(
+        rc,
+        qw,
+        aw,
+        cursor_path,
+        work_dir=tmp_path / "w",
+        baseline_importer=lambda b: None,
+        legacy_cursors=[legacy],
+    )
+
+    assert result["mode"] == "up_to_date"
+    assert cursor_store.read_cursor(cursor_path) == "a7b8"  # the migration is on disk
+
+
+def test_adoption_retires_the_legacy_cursor_file(tmp_path, fake_qdrant_client, fake_arango_db):
+    """The adopted file is renamed, not deleted -- and is never adopted again."""
+    rc, _ = _setup(tmp_path)
+    qw, aw = _writers(fake_qdrant_client, fake_arango_db)
+    _populate(fake_qdrant_client, fake_arango_db)
+    legacy = _legacy(tmp_path, "clone", "a7b8")
+
+    updater.update(
+        rc,
+        qw,
+        aw,
+        tmp_path / "state" / ".cursor",
+        work_dir=tmp_path / "w",
+        baseline_importer=lambda b: None,
+        legacy_cursors=[legacy],
+    )
+
+    assert not legacy.exists()  # retired...
+    retired = legacy.with_name(legacy.name + ".migrated")
+    assert retired.read_text(encoding="utf-8").strip() == "a7b8"  # ...but not destroyed
+
+
+def test_a_lost_state_cursor_after_migration_hits_the_guard_not_a_re_baseline(
+    tmp_path, fake_qdrant_client, fake_arango_db
+):
+    """The whole reason the legacy file must be retired.
+
+    Left in place it goes stale, the chain compacts past it, and a state cursor that later
+    goes missing (cron not inheriting EMBEDDINGTON_HOME; a $HOME restore that skipped
+    ~/.local/share) resurrects that dead sha as adoption's off-chain fallback. The cursor is
+    then truthy, the guard is SKIPPED, and 828 MB lands on top of a healthy store. With the
+    file retired, the same situation lands on the guard -- an actionable exit 3.
+    """
+    rc, _ = _setup(tmp_path)
+    qw, aw = _writers(fake_qdrant_client, fake_arango_db)
+    _populate(fake_qdrant_client, fake_arango_db)
+    legacy = _legacy(tmp_path, "clone", "a7b8")
+    cursor_path = tmp_path / "state" / ".cursor"
+
+    updater.update(  # first run: migrate
+        rc,
+        qw,
+        aw,
+        cursor_path,
+        work_dir=tmp_path / "w",
+        baseline_importer=lambda b: None,
+        legacy_cursors=[legacy],
+    )
+    cursor_path.unlink()  # the state cursor goes missing; the stores are still healthy
+    imported = []
+
+    with pytest.raises(updater.BaselineRefused):
+        updater.update(
+            rc,
+            qw,
+            aw,
+            cursor_path,
+            work_dir=tmp_path / "w",
+            baseline_importer=lambda b: imported.append(b["tag"]),
+            legacy_cursors=state_paths.legacy_cursor_candidates(
+                tmp_path / "clone", tmp_path, install_root_dir=tmp_path / "clone"
+            ),
+        )
+
+    assert imported == []  # no silent 828 MB re-download
 
 
 def test_force_baseline_restores_even_when_the_cursor_says_up_to_date(
