@@ -139,13 +139,10 @@ Two rules that follow from the table, and cover ~all of it:
 
 - **`docker compose` only works inside `consumer/`.** That's where the compose file is. Run
   it from the root and Docker will tell you it can't find a configuration file.
-- **`embeddington-consume` should be run from the repo root.** Once installed it's a real
-  command on your `PATH`, so it will _launch_ from anywhere — but it keeps its bookkeeping
-  in `data/`, resolved **relative to the directory you run it from**. Run it somewhere
-  else and it won't find your cursor, will conclude you have nothing installed, and will
-  cheerfully re-download the entire baseline into a second `data/` folder. You never need
-  to `cd` into `consumer/` to use it — but do stay at the root. (Running it from elsewhere
-  on purpose? See [From another directory](#from-another-directory).)
+- **`embeddington-consume` works from anywhere**, once installed. It's a real command on
+  your `PATH`, and it keeps its bookkeeping in one per-user state directory
+  (`~/.local/share/embeddington/`, or `$EMBEDDINGTON_HOME` if you set it) — not in whatever
+  folder you happen to be standing in. You never need to `cd` into `consumer/` to use it.
 
 Every code block below starts with a `# run from:` comment. When in doubt, that's the
 answer. `~/embeddington` is used as the example clone location — substitute your own.
@@ -229,37 +226,19 @@ set -a; . consumer/.env; set +a       # loads ARANGO_ROOT_PASSWORD into this she
 embeddington-consume update
 ```
 
-#### From another directory
-
-Running it from somewhere else takes more than relocating the `.env`. `--cursor` and
-`--work-dir` default to `data/.cursor` and `data/work`, and those are relative to your
-**current directory** — not to where the repo lives. Point at the `.env` absolutely but
-leave those two alone, and the command lands in a stranger's `data/`, finds no cursor,
-and re-restores the whole baseline from scratch.
-
-The simple fix is to `cd` first:
-
-```bash
-# run from: anywhere
-cd ~/embeddington
-set -a; . consumer/.env; set +a
-embeddington-consume update
-```
-
-If you truly can't `cd` (some job runners won't let you), pin all three paths absolutely:
+Running it from somewhere else? Point at the `.env` absolutely — the command itself no longer
+cares where you are, because its cursor lives in the state directory, not the current one:
 
 ```bash
 # run from: anywhere
 set -a; . ~/embeddington/consumer/.env; set +a
-embeddington-consume update \
-  --cursor ~/embeddington/data/.cursor \
-  --work-dir ~/embeddington/data/work
+embeddington-consume update
 ```
 
 You only need the `set -a` line once per shell. For a cron job, keep both lines together —
-cron starts a fresh shell with none of your environment, **and starts it in your home
-directory**, so lead with a `cd` or the job will look for its cursor in `$HOME/data/` and
-re-restore the baseline on every fresh install:
+cron starts a fresh shell with none of your environment, so you still need to source
+`.env` there. Leading with a `cd` into the clone costs nothing and is a second, independent
+guarantee that a first-time migration finds that clone's old cursor to adopt:
 
 ```bash
 # crontab -e   — update daily at 06:00
@@ -410,8 +389,12 @@ Plan for **~8.5 GB** once everything settles. Itemized:
 | Baseline download (transient — deletable)        | ~1.0 GB |
 
 Figure a little extra headroom during the first download — the compressed baseline and the
-restored copy coexist until you clear `data/work/` — plus **~6–8 GB RAM** — the embedder
-alone holds ~2.3 GB once bge-m3 loads, on top of Qdrant + ArangoDB serving the full graph.
+restored copy coexist until you clear `~/.local/share/embeddington/work/` (or
+`$EMBEDDINGTON_HOME/work/` if set) — plus **~6–8 GB RAM** — the embedder alone holds
+~2.3 GB once bge-m3 loads, on top of Qdrant + ArangoDB serving the full graph.
+
+Upgrading? Downloads used to land in `data/work/` inside your clone. That directory is no
+longer used and can be deleted outright — it may still be holding ~1 GB of baseline scratch.
 
 Sizes track the baseline, so they grow over time: `baseline-2026-07` roughly doubled the
 vector count over `baseline-2026-06`, and the disk figures moved with it.
@@ -437,17 +420,65 @@ vector count over `baseline-2026-06`, and the disk figures moved with it.
 `embeddington-consume update` flags (all optional — `--repo` defaults to
 `whiffernet/embeddington`; override it only if you've forked):
 
-| Flag                | Default                   | Purpose                                                            |
-| ------------------- | ------------------------- | ------------------------------------------------------------------ |
-| `--repo`            | `whiffernet/embeddington` | `owner/name` of this releases repo                                 |
-| `--cursor`          | `data/.cursor`            | Local cursor file — **relative to your current directory**         |
-| `--work-dir`        | `data/work`               | Scratch dir for downloads — **relative to your current directory** |
-| `--qdrant-url`      | `http://localhost:6333`   | Local Qdrant                                                       |
-| `--collection`      | `technology`              | Qdrant collection name                                             |
-| `--arango-url`      | `http://localhost:8529`   | Local ArangoDB                                                     |
-| `--arango-db`       | `technology_kg`           | Target database                                                    |
-| `--arango-user`     | `root`                    | ArangoDB user                                                      |
-| `--arango-password` | `$ARANGO_ROOT_PASSWORD`   | ArangoDB password                                                  |
+| Flag                | Default                   | Purpose                                                      |
+| ------------------- | ------------------------- | ------------------------------------------------------------ |
+| `--repo`            | `whiffernet/embeddington` | `owner/name` of this releases repo                           |
+| `--cursor`          | `<state dir>/.cursor`     | Local cursor file                                            |
+| `--work-dir`        | `<state dir>/work`        | Scratch dir for downloads                                    |
+| `--force-baseline`  | off                       | Ignore the cursor and re-restore the full baseline (~828 MB) |
+| `--qdrant-url`      | `http://localhost:6333`   | Local Qdrant                                                 |
+| `--collection`      | `technology`              | Qdrant collection name                                       |
+| `--arango-url`      | `http://localhost:8529`   | Local ArangoDB                                               |
+| `--arango-db`       | `technology_kg`           | Target database                                              |
+| `--arango-user`     | `root`                    | ArangoDB user                                                |
+| `--arango-password` | `$ARANGO_ROOT_PASSWORD`   | ArangoDB password                                            |
+
+The **state directory** holds the cursor — the record of which version of the graph you have.
+It resolves in this order: `$EMBEDDINGTON_HOME`, then `$XDG_DATA_HOME/embeddington`, then
+`~/.local/share/embeddington`. There is one local stack per machine, so there is one cursor
+per machine — which is why the working directory no longer matters.
+
+> **Careful with `$EMBEDDINGTON_HOME` / `$XDG_DATA_HOME`.** If you export either one from
+> `.bashrc` (or a login profile), **cron does not inherit it** — cron starts a bare shell.
+> The cron run then looks for the cursor in `~/.local/share/embeddington/`, doesn't find the
+> one your interactive shell has been maintaining, and stops with the "already has N points"
+> refusal (exit 3). Either set the variable inside the crontab line itself, or don't set it
+> at all.
+
+Upgrading from a version that kept its cursor in `data/.cursor`? The first run adopts it and
+says so — nothing is re-downloaded — **provided that old cursor is somewhere the CLI looks**:
+the current directory, the install root (your clone, for the documented `pip install -e .`),
+or `$HOME`. If you once ran the tool from a fourth place (say `~/work`), copy that file into
+the state directory yourself before the first run:
+
+```bash
+mkdir -p ~/.local/share/embeddington
+cp ~/work/data/.cursor ~/.local/share/embeddington/.cursor
+embeddington-consume update
+```
+
+(Use `$EMBEDDINGTON_HOME` or `$XDG_DATA_HOME/embeddington` instead if you've set either.)
+A copy — not `--cursor ~/work/data/.cursor`: that flag only tells this one run where the
+cursor file lives, and keeps using it in place. It's a permanent flag, not a migration.
+
+Every old cursor the first run _does_ find is renamed to `data/.cursor.migrated` (kept, not
+deleted) — all of them, not just the one it adopts, so none can be mistaken for a live cursor
+later.
+
+Two more upgrade housekeeping notes:
+
+- Your old scratch dir — `data/work/` in the clone — is orphaned now that downloads land in
+  `<state dir>/work/`. It can hold up to ~1 GB of baseline leftovers; delete it.
+- **Exit codes**, for anyone wrapping this in a job runner:
+
+  | Code | Meaning                                                                                                                                                                                                                                                 |
+  | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `0`  | Success (restored, applied diffs, or already up to date)                                                                                                                                                                                                |
+  | `1`  | Unhandled error                                                                                                                                                                                                                                         |
+  | `3`  | **Refused**: a baseline was needed, but the stores already hold data and no cursor was found. Nothing was downloaded. Copy your old cursor into the state dir (above) and re-run, or pass `--force-baseline` if you really want the ~828 MB re-restore. |
+
+  (There is no `2`: it's reserved for `BaselineRequired`, which only the library can raise —
+  the CLI always supplies a baseline importer.)
 
 > _"This is what happens when you float your version tags."_
 >

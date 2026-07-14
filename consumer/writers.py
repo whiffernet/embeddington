@@ -5,7 +5,33 @@ record's ``doc`` and persisted as an attribute on the relationships_v2 edge (the
 consumer half of Plan-1 I1 — no protocol change needed).
 """
 
+from arango.exceptions import ArangoServerError, CollectionListError, DocumentCountError
 from qdrant_client import models as qmodels
+
+# ArangoDB ERR codes that mean "the thing you asked about is not there".
+_ERR_COLLECTION_NOT_FOUND = 1203
+_ERR_DATABASE_NOT_FOUND = 1228
+
+
+def _is_absence(exc: ArangoServerError) -> bool:
+    """Return whether an Arango server error means "it does not exist" (rather than "it broke").
+
+    python-arango raises CollectionListError / DocumentCountError on ANY non-success response,
+    so the exception TYPE says nothing about the cause: a 401 from a per-database ACL, a 500,
+    or a 503 from a server still in WAL recovery all arrive as the same class as a 404. Only a
+    genuine absence may be reported as an empty store -- everything else must propagate, or the
+    updater's guard reads "Arango empty" for a live database and re-imports over it.
+
+    Args:
+        exc: The python-arango server error to classify.
+
+    Returns:
+        True when the error is a genuine "not found", False for every other failure.
+    """
+    return exc.http_code == 404 or exc.error_code in (
+        _ERR_COLLECTION_NOT_FOUND,
+        _ERR_DATABASE_NOT_FOUND,
+    )
 
 
 class QdrantConsumerWriter:
@@ -29,6 +55,25 @@ class QdrantConsumerWriter:
         from qdrant_client import QdrantClient
 
         return cls(QdrantClient(url=url), collection)
+
+    @property
+    def collection(self):
+        """The name of the Qdrant collection this writer targets."""
+        return self._collection
+
+    def point_count(self) -> int:
+        """Return how many points the collection holds.
+
+        The updater uses this to refuse a baseline restore into a store that already has
+        the data (which would re-download ~828 MB for nothing). A collection that does not
+        exist yet counts as 0, so a genuinely fresh install is never blocked.
+
+        Returns:
+            The exact number of points, or 0 if the collection does not exist.
+        """
+        if not self._client.collection_exists(self._collection):
+            return 0
+        return self._client.count(self._collection, exact=True).count
 
     def upsert_point(self, point_id: str, vector: list[float], payload: dict) -> None:
         """Upsert a single point into the collection.
@@ -78,6 +123,10 @@ class ArangoConsumerWriter:
     """Implements embeddington.apply.protocols.ArangoWriter against a python-arango db."""
 
     def __init__(self, db):
+        # db.collection() is LAZY in python-arango (no server round-trip), so holding these
+        # handles says nothing about whether the database or collections actually exist.
+        # Keep the db handle too: it is the only way to ask (has_collection).
+        self._db = db
         self._entities = db.collection("entities_v2")
         self._edges = db.collection("relationships_v2")
 
@@ -97,6 +146,39 @@ class ArangoConsumerWriter:
         from arango import ArangoClient
 
         return cls(ArangoClient(hosts=url).db(db_name, username=username, password=password))
+
+    def entity_count(self) -> int:
+        """Return how many entities the graph holds.
+
+        Paired with QdrantConsumerWriter.point_count() by the updater's guard. Both stores
+        must look populated before a restore is refused: a baseline import writes Qdrant
+        first, so "Qdrant full, Arango empty" means an INTERRUPTED import, which must stay
+        re-runnable rather than being mistaken for a healthy install.
+
+        Mirrors point_count()'s existence guard. On a fresh consumer stack neither the
+        ``technology_kg`` database nor entities_v2 exists yet (arangorestore --create-database
+        makes them), and ``StandardCollection.count()`` raises rather than returning 0 in that
+        state -- so an unguarded count would crash the very first run.
+
+        ONLY a genuine absence becomes 0. A 401 (per-database ACL), a 403, a 500, or a 503 from
+        a server still recovering must propagate: reporting those as 0 would tell the guard the
+        graph is empty when it is merely unreachable, and 828 MB would land on a live store.
+
+        Returns:
+            The number of documents in entities_v2, or 0 if the collection (or the whole
+            database) does not exist yet.
+
+        Raises:
+            ArangoServerError: Any Arango failure that is not a genuine "not found".
+        """
+        try:
+            if not self._db.has_collection("entities_v2"):
+                return 0
+            return self._entities.count()
+        except (CollectionListError, DocumentCountError) as exc:
+            if _is_absence(exc):
+                return 0  # database or collection genuinely absent -> nothing stored
+            raise
 
     def upsert_entity(self, key: str, doc: dict) -> None:
         """Upsert an entity vertex into entities_v2.

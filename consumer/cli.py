@@ -13,8 +13,9 @@ import os
 import sys
 import urllib.error
 import urllib.request
+from pathlib import Path
 
-from consumer import release_client, restore_ops, updater, writers
+from consumer import release_client, restore_ops, state_paths, updater, writers
 from consumer.fetcher import HttpFetcher
 
 
@@ -62,7 +63,43 @@ def _preflight(args):
         )
 
 
+def _resolve_paths(args, env=None, home=None, cwd=None, install_root_dir=None):
+    """Fill in cursor/work_dir from the state dir when the flags were not passed.
+
+    The stores are machine-global (named Docker volumes on fixed ports), so the cursor is
+    too: it lives in one per-user state dir, NOT in the current working directory. An
+    explicitly passed flag always wins.
+
+    Args:
+        args: The parsed CLI namespace (mutated in place and returned).
+        env: Environment mapping; defaults to os.environ.
+        home: The user's home directory; defaults to Path.home().
+        cwd: The current working directory; defaults to Path.cwd().
+        install_root_dir: Override for the install root used when probing for a
+            pre-v0.2 cursor; defaults to None, which leaves production behavior
+            (probe the real install root) unchanged. Tests inject this to stay
+            isolated from whatever is actually on disk under the real clone.
+
+    Returns:
+        The same namespace, with ``cursor`` and ``work_dir`` as Paths and ``legacy_cursors``
+        holding any pre-v0.2 cursors found on disk.
+    """
+    env = os.environ if env is None else env
+    home = Path.home() if home is None else Path(home)
+    cwd = Path.cwd() if cwd is None else Path(cwd)
+
+    args.cursor = Path(args.cursor) if args.cursor else state_paths.default_cursor_path(env, home)
+    args.work_dir = (
+        Path(args.work_dir) if args.work_dir else state_paths.default_work_dir(env, home)
+    )
+    args.legacy_cursors = state_paths.legacy_cursor_candidates(
+        cwd, home, install_root_dir=install_root_dir
+    )
+    return args
+
+
 def _cmd_update(args):
+    args = _resolve_paths(args)
     _preflight(args)
     fetcher = HttpFetcher()
     rc = release_client.ReleaseClient(fetcher, repo=args.repo)
@@ -81,10 +118,22 @@ def _cmd_update(args):
         args.arango_password,
     )
     try:
-        result = updater.update(rc, qdrant, arango, args.cursor, args.work_dir, baseline_importer)
+        result = updater.update(
+            rc,
+            qdrant,
+            arango,
+            args.cursor,
+            args.work_dir,
+            baseline_importer,
+            legacy_cursors=args.legacy_cursors,
+            force_baseline=args.force_baseline,
+        )
     except updater.BaselineRequired as exc:
         print(f"{exc}", file=sys.stderr)
         return 2
+    except updater.BaselineRefused as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 3
     print(_format_update(result))
     return 0
 
@@ -105,23 +154,25 @@ def _format_update(result):
     lines = ["Embeddington update complete."]
     if mode == "baseline":
         b = result["baseline"]
-        lines.append(f"  Action:  restored full baseline ({b['tag']})")
+        lines.append(f"  Action:   restored full baseline ({b['tag']})")
         lines.append(
-            f"  Loaded:  {b['points']:,} vectors · {b['entities']:,} entities · "
+            f"  Loaded:   {b['points']:,} vectors · {b['entities']:,} entities · "
             f"{b['edges']:,} edges"
         )
-        lines.append(f"  Version: {result['cursor']}")
-        lines.append(f"  Diffs:   {result['applied']} applied on top of the baseline")
+        lines.append(f"  Version:  {result['cursor']}")
+        lines.append(f"  Diffs:    {result['applied']} applied on top of the baseline")
         lines.append(
-            "  Note:    a one-time full re-download is expected after a compaction — "
+            "  Note:     a one-time full re-download is expected after a compaction — "
             "existing installs re-restore the latest snapshot in a single step."
         )
     elif mode == "diffs":
-        lines.append(f"  Action:  applied {result['applied']} incremental update(s)")
-        lines.append(f"  Version: {result['cursor']}")
+        lines.append(f"  Action:   applied {result['applied']} incremental update(s)")
+        lines.append(f"  Version:  {result['cursor']}")
     else:  # up_to_date
-        lines.append("  Action:  no changes — already the latest")
-        lines.append(f"  Version: {result['cursor']}")
+        lines.append("  Action:   no changes — already the latest")
+        lines.append(f"  Version:  {result['cursor']}")
+    if result.get("adopted_from"):
+        lines.append(f"  Migrated: adopted the cursor from {result['adopted_from']}")
     return "\n".join(lines)
 
 
@@ -140,8 +191,24 @@ def _build_parser():
         default="whiffernet/embeddington",
         help="owner/name of the releases repo (default: %(default)s)",
     )
-    p_up.add_argument("--cursor", default="data/.cursor")
-    p_up.add_argument("--work-dir", default="data/work")
+    p_up.add_argument(
+        "--cursor",
+        default=None,
+        help=(
+            "cursor file (default: $EMBEDDINGTON_HOME, else $XDG_DATA_HOME/embeddington, "
+            "else ~/.local/share/embeddington/.cursor)"
+        ),
+    )
+    p_up.add_argument(
+        "--work-dir",
+        default=None,
+        help="scratch dir for downloads (default: <state dir>/work)",
+    )
+    p_up.add_argument(
+        "--force-baseline",
+        action="store_true",
+        help="ignore the local cursor and re-restore the full baseline (~828 MB)",
+    )
     p_up.add_argument("--qdrant-url", default="http://localhost:6333")
     p_up.add_argument("--collection", default="technology")
     p_up.add_argument("--arango-url", default="http://localhost:8529")
