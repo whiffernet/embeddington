@@ -9,23 +9,28 @@ from arango.response import Response
 from qdrant_client import models as qmodels
 
 
-def _arango_server_error(exc_cls, error_code, message):
-    """Build a real python-arango server error, as the driver would raise it on a 404.
+def _arango_server_error(exc_cls, error_code, message, status_code=404):
+    """Build a real python-arango server error, as the driver would raise it.
+
+    python-arango raises the SAME exception class for every non-success response, so the
+    status_code knob is what lets a test express the difference between "not there" (404) and
+    "broken/forbidden" (401, 500, 503) -- a distinction entity_count() must honour.
 
     Args:
         exc_cls: The python-arango exception class to construct.
         error_code: ArangoDB ERR code (e.g. 1228 = database not found).
         message: The server's error message.
+        status_code: HTTP status the fake server "returned" (default 404).
 
     Returns:
-        An instance of exc_cls carrying an HTTP 404 response.
+        An instance of exc_cls carrying the given HTTP response.
     """
     resp = Response(
         method="get",
         url="http://fake/_api/collection",
         headers={},
-        status_code=404,
-        status_text="Not Found",
+        status_code=status_code,
+        status_text="Not Found" if status_code == 404 else "Error",
         raw_body="",
     )
     resp.error_code = error_code
@@ -82,6 +87,8 @@ class _FakeCollection:
         return self._db.collections[self._name]
 
     def count(self):
+        if self._db.server_error is not None:
+            raise _arango_server_error(DocumentCountError, *self._db.server_error)
         if not self._db.db_exists:
             raise _arango_server_error(DocumentCountError, 1228, "database not found")
         if self._name not in self._db.collections:
@@ -98,19 +105,26 @@ class _FakeCollection:
 class FakeArangoDb:
     """Mimics db.collection(name) / db.has_collection(name) on a python-arango database.
 
-    Two knobs reproduce the states a consumer really passes through:
+    Three knobs reproduce the states a consumer really passes through:
       * ``db_exists = False`` -- the fresh consumer stack, before arangorestore
         ``--create-database`` has made ``technology_kg``. has_collection() and count() both
         raise (HTTP 404), exactly as the driver does.
       * dropping a key from ``collections`` -- the database exists but the collection does
         not; count() on its (lazy) handle raises.
+      * ``server_error = (error_code, message, status_code)`` -- the database is THERE but the
+        server says no: a per-database ACL (401), a 500, a 503 from a node still in WAL
+        recovery. python-arango raises the same exception classes as for a 404, which is
+        precisely why entity_count() must not read these as "empty".
     """
 
     def __init__(self):
         self.collections = {"entities_v2": {}, "relationships_v2": {}}
         self.db_exists = True  # flip to False to simulate "database not found"
+        self.server_error = None  # (error_code, message, status_code) to raise on any access
 
     def has_collection(self, name):
+        if self.server_error is not None:
+            raise _arango_server_error(CollectionListError, *self.server_error)
         if not self.db_exists:
             raise _arango_server_error(CollectionListError, 1228, "database not found")
         return name in self.collections

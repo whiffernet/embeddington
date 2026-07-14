@@ -1,3 +1,6 @@
+import pytest
+from arango.exceptions import ArangoServerError
+
 from consumer import writers
 from embeddington.apply import apply_diff
 from embeddington.format import records
@@ -100,3 +103,51 @@ def test_entity_count_returns_zero_when_the_collection_is_missing(fake_arango_db
     aw = writers.ArangoConsumerWriter(fake_arango_db)
     del fake_arango_db.collections["entities_v2"]
     assert aw.entity_count() == 0
+
+
+@pytest.mark.parametrize(
+    "error_code,message,status_code",
+    [
+        (11, "not authorized to execute this request", 401),  # per-database ACL (Arango 3.12)
+        (11, "forbidden", 403),
+        (0, "internal server error", 500),
+        (0, "service unavailable", 503),  # still replaying the WAL while Qdrant already serves
+    ],
+)
+def test_entity_count_propagates_a_real_arango_failure(
+    fake_arango_db, error_code, message, status_code
+):
+    """A LIVE-but-unhappy Arango must never be reported as an empty graph.
+
+    python-arango raises CollectionListError / DocumentCountError on ANY non-success response,
+    so a 401/403/500/503 arrives as the same class as a genuine 404. Swallowing those as 0 is
+    strictly worse than crashing: the updater's guard reads "Qdrant full, Arango empty", takes
+    that for an interrupted import, and re-restores 828 MB over a healthy store.
+    """
+    aw = writers.ArangoConsumerWriter(fake_arango_db)
+    fake_arango_db.server_error = (error_code, message, status_code)
+
+    with pytest.raises(ArangoServerError) as exc:
+        aw.entity_count()
+    assert exc.value.http_code == status_code
+
+
+def test_entity_count_propagates_a_failure_raised_by_the_count_itself(fake_arango_db):
+    """The second call site: has_collection() succeeds, then count() 500s.
+
+    Guards the other half of the try-block -- a discriminator applied to only one of the two
+    exception types would leave this path swallowing errors as 0.
+    """
+    aw = writers.ArangoConsumerWriter(fake_arango_db)
+    original_has_collection = fake_arango_db.has_collection
+
+    def has_collection(name):
+        result = original_has_collection(name)
+        fake_arango_db.server_error = (0, "internal server error", 500)  # dies at count() only
+        return result
+
+    fake_arango_db.has_collection = has_collection
+
+    with pytest.raises(ArangoServerError) as exc:
+        aw.entity_count()
+    assert exc.value.http_code == 500

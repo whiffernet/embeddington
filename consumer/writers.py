@@ -5,8 +5,33 @@ record's ``doc`` and persisted as an attribute on the relationships_v2 edge (the
 consumer half of Plan-1 I1 — no protocol change needed).
 """
 
-from arango.exceptions import CollectionListError, DocumentCountError
+from arango.exceptions import ArangoServerError, CollectionListError, DocumentCountError
 from qdrant_client import models as qmodels
+
+# ArangoDB ERR codes that mean "the thing you asked about is not there".
+_ERR_COLLECTION_NOT_FOUND = 1203
+_ERR_DATABASE_NOT_FOUND = 1228
+
+
+def _is_absence(exc: ArangoServerError) -> bool:
+    """Return whether an Arango server error means "it does not exist" (rather than "it broke").
+
+    python-arango raises CollectionListError / DocumentCountError on ANY non-success response,
+    so the exception TYPE says nothing about the cause: a 401 from a per-database ACL, a 500,
+    or a 503 from a server still in WAL recovery all arrive as the same class as a 404. Only a
+    genuine absence may be reported as an empty store -- everything else must propagate, or the
+    updater's guard reads "Arango empty" for a live database and re-imports over it.
+
+    Args:
+        exc: The python-arango server error to classify.
+
+    Returns:
+        True when the error is a genuine "not found", False for every other failure.
+    """
+    return exc.http_code == 404 or exc.error_code in (
+        _ERR_COLLECTION_NOT_FOUND,
+        _ERR_DATABASE_NOT_FOUND,
+    )
 
 
 class QdrantConsumerWriter:
@@ -135,18 +160,25 @@ class ArangoConsumerWriter:
         makes them), and ``StandardCollection.count()`` raises rather than returning 0 in that
         state -- so an unguarded count would crash the very first run.
 
+        ONLY a genuine absence becomes 0. A 401 (per-database ACL), a 403, a 500, or a 503 from
+        a server still recovering must propagate: reporting those as 0 would tell the guard the
+        graph is empty when it is merely unreachable, and 828 MB would land on a live store.
+
         Returns:
             The number of documents in entities_v2, or 0 if the collection (or the whole
             database) does not exist yet.
+
+        Raises:
+            ArangoServerError: Any Arango failure that is not a genuine "not found".
         """
         try:
             if not self._db.has_collection("entities_v2"):
                 return 0
             return self._entities.count()
-        except CollectionListError:
-            return 0  # database itself absent (HTTP 404 on /_api/collection) -> nothing stored
-        except DocumentCountError:
-            return 0  # collection vanished between the check and the count
+        except (CollectionListError, DocumentCountError) as exc:
+            if _is_absence(exc):
+                return 0  # database or collection genuinely absent -> nothing stored
+            raise
 
     def upsert_entity(self, key: str, doc: dict) -> None:
         """Upsert an entity vertex into entities_v2.
