@@ -263,6 +263,79 @@ def test_off_chain_legacy_cursor_is_still_adopted_so_compaction_re_baselines(
     assert result["adopted_from"] == old
 
 
+def test_candidate_whose_plan_raises_is_not_adopted_over_a_usable_fallback(
+    tmp_path, fake_qdrant_client, fake_arango_db
+):
+    """A candidate whose plan_update RAISES must never be adopted, even as a fallback.
+
+    Before this fix, ``_adopt_legacy_cursor`` captured the fallback tuple BEFORE calling
+    plan_update. A candidate whose sha started a broken diff-chain sub-sequence (ChainGapError)
+    got captured into ``fallback`` first, and the ``continue`` in the except-block was a no-op
+    -- that already-captured, unusable sha won even though a later, genuinely off-chain (and
+    therefore adoptable) candidate followed it. This manifest is built so plan_update actually
+    raises for ``bad`` -- it is not mocked.
+    """
+    repo = "me/embeddington"
+
+    def url(tag, name):
+        return f"https://github.com/{repo}/releases/download/{tag}/{name}"
+
+    b1, s1 = _diff_bundle_bytes(tmp_path, "c3d4", "e5f6")
+    b2, s2 = _diff_bundle_bytes(tmp_path, "e5f6", "a7b8")
+    manifest = {
+        "schema_version": "1.0",
+        "baselines": [
+            {
+                "tag": "baseline-2026-06",
+                "head_sha": "c3d4",
+                "points": 0,
+                "entities": 0,
+                "edges": 0,
+                "assets": {"qdrant": "q.zst", "arango": "a.zst"},
+                "sha256": {"qdrant": "x", "arango": "y"},
+            }
+        ],
+        "diffs": [
+            # A broken sub-chain reachable ONLY from "badsha": the walk from "badsha" hits
+            # this pair first and raises ChainGapError before ever reaching the real chain
+            # below. Placed ahead of the real chain so it does not affect walks that start
+            # at "c3d4" (chain_from finds the FIRST matching prev_sha and walks from there).
+            {"prev_sha": "badsha", "head_sha": "middle", "asset": "junk1.zst", "sha256": "dead1"},
+            {"prev_sha": "WRONG", "head_sha": "final", "asset": "junk2.zst", "sha256": "dead2"},
+            {"prev_sha": "c3d4", "head_sha": "e5f6", "asset": "diff-e5f6.jsonl.zst", "sha256": s1},
+            {"prev_sha": "e5f6", "head_sha": "a7b8", "asset": "diff-a7b8.jsonl.zst", "sha256": s2},
+        ],
+    }
+    import json
+
+    fetcher = _FakeFetcher(
+        {
+            url("diffs", "manifest.json"): json.dumps(manifest).encode(),
+            url("diffs", "diff-e5f6.jsonl.zst"): b1,
+            url("diffs", "diff-a7b8.jsonl.zst"): b2,
+        }
+    )
+    rc = release_client.ReleaseClient(fetcher, repo=repo)
+    qw, aw = _writers(fake_qdrant_client, fake_arango_db)
+
+    bad = _legacy(tmp_path, "bad", "badsha")  # plan_update raises ChainGapError for this sha
+    good = _legacy(tmp_path, "good", "0ldc0mpacted")  # genuinely off-chain -> usable fallback
+    imported = []
+
+    result = updater.update(
+        rc,
+        qw,
+        aw,
+        tmp_path / "state" / ".cursor",
+        work_dir=tmp_path / "w",
+        baseline_importer=lambda b: imported.append(b["tag"]),
+        legacy_cursors=[bad, good],
+    )
+
+    assert result["adopted_from"] == good  # NOT bad, even though bad was seen first
+    assert imported == ["baseline-2026-06"]
+
+
 def test_guard_refuses_baseline_into_a_populated_store(
     tmp_path, fake_qdrant_client, fake_arango_db
 ):
@@ -285,8 +358,13 @@ def test_guard_refuses_baseline_into_a_populated_store(
     assert "technology" in str(exc.value) and "--force-baseline" in str(exc.value)
 
 
-def test_blank_cursor_file_does_not_bypass_the_guard(tmp_path, fake_qdrant_client, fake_arango_db):
-    """A torn write leaves a 0-byte cursor; it must not read as a valid one."""
+def test_blank_cursor_file_is_treated_as_absent(tmp_path, fake_qdrant_client, fake_arango_db):
+    """A torn write leaves a 0-byte (or whitespace-only) cursor file.
+
+    read_cursor() normalizes that blank content to None (its ``.strip() or None`` contract),
+    so it reads back as "no cursor" -- and the populated-store guard must still fire on it,
+    exactly as it does when the file is absent outright.
+    """
     rc, _ = _setup(tmp_path)
     qw, aw = _writers(fake_qdrant_client, fake_arango_db)
     _populate(fake_qdrant_client, fake_arango_db)

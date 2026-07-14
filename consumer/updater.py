@@ -64,14 +64,14 @@ def _adopt_legacy_cursor(legacy_cursors, manifest, supported_major):
         sha = read_cursor(path)
         if not sha:
             continue
-        if fallback is None:
-            fallback = (sha, path)
         try:
             plan = plan_update(sha, manifest, supported_major)
         except EmbeddingtonError:
             continue  # broken chain / unsupported schema -> not a usable cursor
         if plan.mode == "baseline":
-            continue  # off-chain: keep it only as the fallback
+            if fallback is None:
+                fallback = (sha, path)  # off-chain: keep it only as the fallback
+            continue
         remaining = len(plan.diffs)
         if best is None or remaining < best[0]:
             best = (remaining, sha, path)
