@@ -17,6 +17,10 @@ class FakeQdrantClient:
         return self.exists
 
     def count(self, collection_name, exact=True):
+        if not self.exists:
+            # Mirrors the real qdrant_client, which raises (UnexpectedResponse / 404)
+            # rather than returning zero when the collection doesn't exist.
+            raise ValueError("collection not found")
         return types.SimpleNamespace(count=len(self.points))
 
     def upsert(self, collection_name, points):

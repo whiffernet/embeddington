@@ -1,3 +1,7 @@
+from unittest import mock
+
+import pytest
+
 from consumer import cursor_store
 
 
@@ -34,6 +38,34 @@ def test_blank_cursor_file_reads_as_none(tmp_path):
 
 def test_write_cursor_is_atomic_and_leaves_no_temp_file(tmp_path):
     p = tmp_path / "state" / ".cursor"
-    cursor_store.write_cursor(p, "abc123")
+
+    with mock.patch("consumer.cursor_store.os.replace", wraps=cursor_store.os.replace) as spy:
+        cursor_store.write_cursor(p, "abc123")
+
+    # Pin the MECHANISM: the write must go through os.replace(tmp, dest), not a
+    # direct write to the destination -- that's what makes it atomic.
+    assert spy.call_count == 1
+    (tmp_arg, dest_arg), _ = spy.call_args
+    assert tmp_arg != dest_arg
+    assert dest_arg == p
+
+    # End state: content correct, no leftover .tmp file.
     assert cursor_store.read_cursor(p) == "abc123"
     assert list(p.parent.iterdir()) == [p]  # no .tmp left behind
+
+
+def test_write_cursor_leaves_original_untouched_when_replace_fails(tmp_path):
+    """The real safety property: a failed swap must never touch the destination.
+
+    If os.replace() blows up partway (disk full, permissions, etc.), the destination
+    must still hold its pre-write value rather than being truncated or left half-written
+    -- a torn/blank cursor silently triggers a full 828 MB baseline re-download.
+    """
+    p = tmp_path / ".cursor"
+    cursor_store.write_cursor(p, "original-sha")
+
+    with mock.patch("consumer.cursor_store.os.replace", side_effect=OSError("disk full")):
+        with pytest.raises(OSError):
+            cursor_store.write_cursor(p, "new-sha")
+
+    assert cursor_store.read_cursor(p) == "original-sha"

@@ -55,8 +55,13 @@ def test_apply_diff_through_real_writers(fake_qdrant_client, fake_arango_db):
 
 
 def test_point_count_returns_zero_when_collection_missing(fake_qdrant_client):
-    fake_qdrant_client.exists = False
+    # Upsert first, then flip to "missing". If the collection_exists() guard in
+    # point_count() were ever removed, the fake's count() would raise (matching the
+    # real client) instead of coincidentally returning 0, so this pins the guard.
     qw = writers.QdrantConsumerWriter(fake_qdrant_client, "technology")
+    qw.upsert_point("p1", [0.1], {"filename": "a.md"})
+    qw.upsert_point("p2", [0.2], {"filename": "b.md"})
+    fake_qdrant_client.exists = False
     assert qw.point_count() == 0
 
 
