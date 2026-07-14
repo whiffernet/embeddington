@@ -176,14 +176,29 @@ def test_explicit_cursor_flag_beats_the_env(tmp_path):
 
 
 def test_resolve_paths_discovers_legacy_cursors(tmp_path):
-    clone = tmp_path / "clone"
+    """Pins the (cwd, home) argument order into legacy_cursor_candidates.
+
+    Both cwd and home get a cursor so a transposed call at the ``_resolve_paths``
+    call site produces the wrong ORDER, not just a differently-sourced single
+    element -- a same-length list was how this bug survived the suite before.
+    install_root_dir is pointed at an empty, isolated directory so this test
+    never depends on whether the real clone happens to have a data/.cursor.
+    """
+    clone, home = tmp_path / "clone", tmp_path / "home"
     (clone / "data").mkdir(parents=True)
     (clone / "data" / ".cursor").write_text("abc")
+    (home / "data").mkdir(parents=True)
+    (home / "data" / ".cursor").write_text("xyz")
     args = cli._build_parser().parse_args(["update"])
 
-    resolved = cli._resolve_paths(args, env={}, home=tmp_path / "home", cwd=clone)
+    resolved = cli._resolve_paths(
+        args, env={}, home=home, cwd=clone, install_root_dir=tmp_path / "unrelated_install_root"
+    )
 
-    assert resolved.legacy_cursors == [clone / "data" / ".cursor"]
+    assert resolved.legacy_cursors == [
+        clone / "data" / ".cursor",
+        home / "data" / ".cursor",
+    ]
 
 
 def test_force_baseline_defaults_off_and_parses_on():
@@ -215,12 +230,18 @@ def test_cmd_update_forwards_legacy_cursors_and_force_baseline(monkeypatch, tmp_
     Both kwargs are keyword-only WITH defaults and consumer/ is not typechecked, so dropping
     either at the call site is silent -- adoption would be dead in production with a green
     suite. This test is what makes that impossible.
+
+    ``_cmd_update`` calls ``_resolve_paths(args)`` with no seams, so it always probes the
+    real install root's data/.cursor. Patch ``install_root`` where legacy_cursor_candidates
+    actually looks it up (the state_paths module, not this one) so the exact-equality
+    assertion below stays true regardless of whatever a developer's real clone holds.
     """
     clone = tmp_path / "clone"
     (clone / "data").mkdir(parents=True)
     (clone / "data" / ".cursor").write_text("abc")
     monkeypatch.chdir(clone)
     monkeypatch.setenv("EMBEDDINGTON_HOME", str(tmp_path / "state"))
+    monkeypatch.setattr(cli.state_paths, "install_root", lambda: tmp_path / "unrelated_root")
 
     captured = {}
 

@@ -28,7 +28,7 @@ def test_baseline_message_leads_with_action_and_counts():
 def test_diffs_message():
     msg = cli._format_update({"mode": "diffs", "applied": 3, "cursor": "a7b8", "baseline": None})
     assert "applied 3 incremental update(s)" in msg
-    assert "Version: a7b8" in msg
+    assert "Version:  a7b8" in msg
 
 
 def test_up_to_date_message():
@@ -36,4 +36,4 @@ def test_up_to_date_message():
         {"mode": "up_to_date", "applied": 0, "cursor": "a7b8", "baseline": None}
     )
     assert "no changes — already the latest" in msg
-    assert "Version: a7b8" in msg
+    assert "Version:  a7b8" in msg

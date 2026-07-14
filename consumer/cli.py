@@ -63,7 +63,7 @@ def _preflight(args):
         )
 
 
-def _resolve_paths(args, env=None, home=None, cwd=None):
+def _resolve_paths(args, env=None, home=None, cwd=None, install_root_dir=None):
     """Fill in cursor/work_dir from the state dir when the flags were not passed.
 
     The stores are machine-global (named Docker volumes on fixed ports), so the cursor is
@@ -75,6 +75,10 @@ def _resolve_paths(args, env=None, home=None, cwd=None):
         env: Environment mapping; defaults to os.environ.
         home: The user's home directory; defaults to Path.home().
         cwd: The current working directory; defaults to Path.cwd().
+        install_root_dir: Override for the install root used when probing for a
+            pre-v0.2 cursor; defaults to None, which leaves production behavior
+            (probe the real install root) unchanged. Tests inject this to stay
+            isolated from whatever is actually on disk under the real clone.
 
     Returns:
         The same namespace, with ``cursor`` and ``work_dir`` as Paths and ``legacy_cursors``
@@ -88,7 +92,9 @@ def _resolve_paths(args, env=None, home=None, cwd=None):
     args.work_dir = (
         Path(args.work_dir) if args.work_dir else state_paths.default_work_dir(env, home)
     )
-    args.legacy_cursors = state_paths.legacy_cursor_candidates(cwd, home)
+    args.legacy_cursors = state_paths.legacy_cursor_candidates(
+        cwd, home, install_root_dir=install_root_dir
+    )
     return args
 
 
@@ -148,23 +154,23 @@ def _format_update(result):
     lines = ["Embeddington update complete."]
     if mode == "baseline":
         b = result["baseline"]
-        lines.append(f"  Action:  restored full baseline ({b['tag']})")
+        lines.append(f"  Action:   restored full baseline ({b['tag']})")
         lines.append(
-            f"  Loaded:  {b['points']:,} vectors · {b['entities']:,} entities · "
+            f"  Loaded:   {b['points']:,} vectors · {b['entities']:,} entities · "
             f"{b['edges']:,} edges"
         )
-        lines.append(f"  Version: {result['cursor']}")
-        lines.append(f"  Diffs:   {result['applied']} applied on top of the baseline")
+        lines.append(f"  Version:  {result['cursor']}")
+        lines.append(f"  Diffs:    {result['applied']} applied on top of the baseline")
         lines.append(
-            "  Note:    a one-time full re-download is expected after a compaction — "
+            "  Note:     a one-time full re-download is expected after a compaction — "
             "existing installs re-restore the latest snapshot in a single step."
         )
     elif mode == "diffs":
-        lines.append(f"  Action:  applied {result['applied']} incremental update(s)")
-        lines.append(f"  Version: {result['cursor']}")
+        lines.append(f"  Action:   applied {result['applied']} incremental update(s)")
+        lines.append(f"  Version:  {result['cursor']}")
     else:  # up_to_date
-        lines.append("  Action:  no changes — already the latest")
-        lines.append(f"  Version: {result['cursor']}")
+        lines.append("  Action:   no changes — already the latest")
+        lines.append(f"  Version:  {result['cursor']}")
     if result.get("adopted_from"):
         lines.append(f"  Migrated: adopted the cursor from {result['adopted_from']}")
     return "\n".join(lines)
@@ -188,7 +194,10 @@ def _build_parser():
     p_up.add_argument(
         "--cursor",
         default=None,
-        help="cursor file (default: $EMBEDDINGTON_HOME or ~/.local/share/embeddington/.cursor)",
+        help=(
+            "cursor file (default: $EMBEDDINGTON_HOME, else $XDG_DATA_HOME/embeddington, "
+            "else ~/.local/share/embeddington/.cursor)"
+        ),
     )
     p_up.add_argument(
         "--work-dir",

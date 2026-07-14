@@ -66,31 +66,27 @@ def test_legacy_candidates_finds_the_install_root_from_an_unrelated_cwd(tmp_path
 def test_legacy_candidates_finds_install_root_cursor_with_no_override(monkeypatch, tmp_path):
     """Exercises the real production path: no install_root_dir override.
 
-    A pre-v0.2 cursor placed at the real install_root()/data/.cursor must still be found
-    when called from an unrelated cwd -- this is the actual cron scenario, not a stand-in
-    for it. The fixture file lives inside the real repo (data/ is gitignored), so it is
-    created and removed within the test.
+    A pre-v0.2 cursor at install_root()/data/.cursor must still be found when called from
+    an unrelated cwd -- this is the actual cron scenario, not a stand-in for it. This must
+    stay hermetic regardless of what a developer's real clone happens to hold (a genuine
+    data/.cursor is exactly the artifact every pre-v0.2 user has), so ``install_root`` is
+    monkeypatched where ``legacy_cursor_candidates`` actually looks it up -- as a bare name
+    inside this module -- rather than writing into the real repo.
     """
-    cursor_path = state_paths.install_root() / "data" / ".cursor"
-    assert not cursor_path.exists(), "stray data/.cursor already present in repo"
-
-    cursor_path.parent.mkdir(parents=True, exist_ok=True)
+    fake_root = tmp_path / "fake_root"
+    cursor_path = fake_root / "data" / ".cursor"
+    cursor_path.parent.mkdir(parents=True)
     cursor_path.write_text("abc")
-    try:
-        elsewhere, home = tmp_path / "elsewhere", tmp_path / "home"
-        elsewhere.mkdir()
-        home.mkdir()
-        monkeypatch.chdir(elsewhere)
+    monkeypatch.setattr(state_paths, "install_root", lambda: fake_root)
 
-        found = state_paths.legacy_cursor_candidates(elsewhere, home)
+    elsewhere, home = tmp_path / "elsewhere", tmp_path / "home"
+    elsewhere.mkdir()
+    home.mkdir()
+    monkeypatch.chdir(elsewhere)
 
-        assert found == [cursor_path]
-    finally:
-        cursor_path.unlink()
-        try:
-            cursor_path.parent.rmdir()
-        except OSError:
-            pass  # data/ pre-existed or holds other files; leave it alone
+    found = state_paths.legacy_cursor_candidates(elsewhere, home)
+
+    assert found == [cursor_path]
 
 
 def test_legacy_candidates_orders_cwd_first_then_install_root_then_home(tmp_path):
