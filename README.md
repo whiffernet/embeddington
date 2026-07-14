@@ -393,6 +393,9 @@ restored copy coexist until you clear `~/.local/share/embeddington/work/` (or
 `$EMBEDDINGTON_HOME/work/` if set) — plus **~6–8 GB RAM** — the embedder alone holds
 ~2.3 GB once bge-m3 loads, on top of Qdrant + ArangoDB serving the full graph.
 
+Upgrading? Downloads used to land in `data/work/` inside your clone. That directory is no
+longer used and can be deleted outright — it may still be holding ~1 GB of baseline scratch.
+
 Sizes track the baseline, so they grow over time: `baseline-2026-07` roughly doubled the
 vector count over `baseline-2026-06`, and the disk figures moved with it.
 
@@ -435,8 +438,38 @@ It resolves in this order: `$EMBEDDINGTON_HOME`, then `$XDG_DATA_HOME/embeddingt
 `~/.local/share/embeddington`. There is one local stack per machine, so there is one cursor
 per machine — which is why the working directory no longer matters.
 
-Upgrading from a version that kept its cursor in `data/.cursor`? The first run finds it,
-adopts it, and says so. Nothing is re-downloaded.
+> **Careful with `$EMBEDDINGTON_HOME` / `$XDG_DATA_HOME`.** If you export either one from
+> `.bashrc` (or a login profile), **cron does not inherit it** — cron starts a bare shell.
+> The cron run then looks for the cursor in `~/.local/share/embeddington/`, doesn't find the
+> one your interactive shell has been maintaining, and stops with the "already has N points"
+> refusal (exit 3). Either set the variable inside the crontab line itself, or don't set it
+> at all.
+
+Upgrading from a version that kept its cursor in `data/.cursor`? The first run adopts it and
+says so — nothing is re-downloaded — **provided that old cursor is somewhere the CLI looks**:
+the current directory, the install root (your clone, for the documented `pip install -e .`),
+or `$HOME`. If you once ran the tool from a fourth place (say `~/work`), point the first run
+at that file yourself and it will be migrated forward:
+
+```bash
+embeddington-consume update --cursor ~/work/data/.cursor
+```
+
+Once adopted, the old file is renamed to `data/.cursor.migrated` (kept, not deleted) so it
+can never be mistaken for a live cursor later.
+
+Two more upgrade housekeeping notes:
+
+- Your old scratch dir — `data/work/` in the clone — is orphaned now that downloads land in
+  `<state dir>/work/`. It can hold up to ~1 GB of baseline leftovers; delete it.
+- **Exit codes**, for anyone wrapping this in a job runner:
+
+  | Code | Meaning                                                                                                                                                                                                                         |
+  | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `0`  | Success (restored, applied diffs, or already up to date)                                                                                                                                                                        |
+  | `1`  | Unhandled error                                                                                                                                                                                                                 |
+  | `2`  | A baseline restore is required but no importer is available                                                                                                                                                                     |
+  | `3`  | **Refused**: a baseline was needed, but the stores already hold data and no cursor was found. Nothing was downloaded. Pass `--cursor` at your old cursor file, or `--force-baseline` if you really want the ~828 MB re-restore. |
 
 > _"This is what happens when you float your version tags."_
 >
