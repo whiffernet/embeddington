@@ -8,9 +8,10 @@ never string-interpolated user input.
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from arango import ArangoClient
+from arango.cursor import Cursor
 from arango.exceptions import ArangoError as _ArangoError
 from arango.exceptions import DocumentGetError
 
@@ -97,11 +98,9 @@ class ArangoKGClient:
             }}
         """
         try:
-            cursor = self._db.aql.execute(
-                query,
-                bind_vars={"needle": text, "limit": limit, "graph": GRAPH},
-            )
-            return list(cursor)
+            bind_vars: dict[str, Any] = {"needle": text, "limit": limit, "graph": GRAPH}
+            cursor = self._db.aql.execute(query, bind_vars=bind_vars)
+            return list(cast(Cursor, cursor))
         except _ArangoError as exc:
             raise ArangoError(f"find_entities failed: {exc}") from exc
 
@@ -128,9 +127,10 @@ class ArangoKGClient:
             raise ArangoError(f"get_entity failed: {exc}") from exc
         if doc is None:
             return None
+        doc_dict = cast(dict[str, Any], doc)
         return {
-            "id": doc["_id"],
-            **{k: v for k, v in doc.items() if not k.startswith("_")},
+            "id": doc_dict["_id"],
+            **{k: v for k, v in doc_dict.items() if not k.startswith("_")},
         }
 
     def neighbors(
@@ -210,7 +210,7 @@ class ArangoKGClient:
         """
         try:
             cursor = self._db.aql.execute(query, bind_vars=bind_vars)
-            results = list(cursor)
+            results = list(cast(Cursor, cursor))
         except _ArangoError as exc:
             raise ArangoError(f"neighbors failed: {exc}") from exc
 
@@ -305,7 +305,8 @@ class ArangoKGClient:
             RETURN {{vertex: rows[0].r.vertex, edge: rows[0].r.edge, fetched: LENGTH(pool)}}
         """
         try:
-            results = list(self._db.aql.execute(query, bind_vars=bind_vars))
+            cursor = self._db.aql.execute(query, bind_vars=bind_vars)
+            results = list(cast(Cursor, cursor))
         except _ArangoError as exc:
             raise ArangoError(f"neighbors_stratified failed: {exc}") from exc
         nodes: dict[str, dict] = {}
@@ -346,7 +347,8 @@ class ArangoKGClient:
             RETURN c
         """
         try:
-            rows = list(self._db.aql.execute(query, bind_vars=bind_vars))
+            cursor = self._db.aql.execute(query, bind_vars=bind_vars)
+            rows = list(cast(Cursor, cursor))
         except _ArangoError as exc:
             raise ArangoError(f"count_edges failed: {exc}") from exc
         return int(rows[0]) if rows else 0
@@ -379,11 +381,9 @@ class ArangoKGClient:
             RETURN {vertex: v, edge: e}
         """
         try:
-            cursor = self._db.aql.execute(
-                query,
-                bind_vars={"from": from_id, "to": to_id, "graph": GRAPH},
-            )
-            steps = list(cursor)
+            bind_vars: dict[str, Any] = {"from": from_id, "to": to_id, "graph": GRAPH}
+            cursor = self._db.aql.execute(query, bind_vars=bind_vars)
+            steps = list(cast(Cursor, cursor))
         except _ArangoError as exc:
             raise ArangoError(f"shortest_path failed: {exc}") from exc
 
@@ -431,10 +431,17 @@ class ArangoKGClient:
         """
         try:
             entity_types = list(
-                self._db.aql.execute(f"FOR e IN {ENTITIES} COLLECT t = e.type RETURN t")
+                cast(
+                    Cursor, self._db.aql.execute(f"FOR e IN {ENTITIES} COLLECT t = e.type RETURN t")
+                )
             )
             predicates = list(
-                self._db.aql.execute(f"FOR r IN {RELATIONSHIPS} COLLECT p = r.predicate RETURN p")
+                cast(
+                    Cursor,
+                    self._db.aql.execute(
+                        f"FOR r IN {RELATIONSHIPS} COLLECT p = r.predicate RETURN p"
+                    ),
+                )
             )
         except _ArangoError as exc:
             raise ArangoError(f"schema failed: {exc}") from exc

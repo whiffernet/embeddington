@@ -20,7 +20,7 @@ try:
     from .qdrant_client import QdrantError
 except ImportError:
     from arango_client import ArangoError  # type: ignore[no-redef]
-    from qdrant_client import QdrantError  # type: ignore[no-redef]
+    from qdrant_client import QdrantError  # type: ignore[no-redef,attr-defined]
 
 try:
     from . import budget as _budget

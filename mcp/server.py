@@ -47,7 +47,7 @@ except ImportError:
     from arango_client import ArangoError, ArangoKGClient  # type: ignore[no-redef]
     from embedding_client import EmbeddingClient, EmbeddingError  # type: ignore[no-redef]
     from enrich import enrich as _enrich_impl  # type: ignore[no-redef]
-    from qdrant_client import QdrantError, QdrantSearchClient  # type: ignore[no-redef]
+    from qdrant_client import QdrantError, QdrantSearchClient  # type: ignore[no-redef,attr-defined]
 
 # --- Logging — stderr only (stdout reserved for MCP stdio) ----------------
 logging.basicConfig(

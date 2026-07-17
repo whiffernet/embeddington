@@ -196,7 +196,7 @@ def select_edges(edges: list[dict], slots: int) -> list[dict]:
     for e in ranked:  # pass 1: best edge per distinct predicate
         if len(kept) >= slots:
             break
-        p = e.get("predicate")
+        p = str(e.get("predicate"))
         eid = str(e.get("id"))
         if p not in seen_preds and eid not in kept_ids:
             seen_preds.add(p)

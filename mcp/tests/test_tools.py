@@ -366,6 +366,23 @@ async def test_enrich_tool_default_top_k_is_5():
 
 
 @pytest.mark.asyncio
+async def test_enrich_tool_defaults_match_tuned_values():
+    """The shipped enrich defaults must match the sweep-chosen knee (edge_budget=40, top_k=5).
+
+    Guards against the wired tool default silently drifting from the value
+    the Task 11 tuning sweep picked (see battery_results/2026-07-17-sweep.md).
+    """
+    import inspect
+
+    from server import enrich as tool
+
+    fn = tool.fn if hasattr(tool, "fn") else tool  # FastMCP wraps the coroutine
+    params = inspect.signature(fn).parameters
+    assert params["edge_budget"].default == 40
+    assert params["top_k"].default == 5
+
+
+@pytest.mark.asyncio
 async def test_kg_neighbors_reports_truncation(monkeypatch):
     fake = MagicMock()
     fake.neighbors = MagicMock(
