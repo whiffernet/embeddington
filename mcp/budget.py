@@ -212,13 +212,31 @@ def select_edges(edges: list[dict], slots: int) -> list[dict]:
     return kept
 
 
+def _prune_orphan_nodes(match: dict) -> None:
+    """Restrict a match's ``nodes`` to endpoints of its surviving ``edges``.
+
+    ``_kg_side`` materializes ``nodes`` from the endpoints of the pre-trim
+    selected edges (enrich.py). When the ceiling trim pops edges, the endpoints
+    those edges contributed can become orphans — nodes with no surviving edge in
+    the match — which both violates the nodes-are-edge-endpoints contract
+    (RESPONSE_SHAPES.md ``match``) and wastes ~85 tokens each of ceiling budget.
+    Dropping edges can only remove endpoints, never introduce new ones, so this
+    is safe to call any time and only ever shrinks ``nodes``; pruning inside the
+    trim loop lets ``estimate_tokens`` reclaim the freed node tokens and keep
+    more edges instead of flooring the match. Mutates ``match`` in place.
+    """
+    endpoints = {e["source"] for e in match["edges"]} | {e["target"] for e in match["edges"]}
+    match["nodes"] = [n for n in match["nodes"] if n["id"] in endpoints]
+
+
 def trim_to_ceiling(result: dict, max_tokens: int, floor: int = 3) -> dict:
     """Enforce the response token ceiling (spec §4.1–4.2). Mutates result.
 
     Victim rule: while over ceiling, drop the tail edge of the match holding
     the most edges above its floor (all budgeted matches are hint-derived, so
-    all carry the floor). Then trim vector chunks down to one. If still over,
-    flag loudly — never return silently oversized, never drop below floors.
+    all carry the floor) and prune any node that edge orphaned. Then trim
+    vector chunks down to one. If still over, flag loudly — never return
+    silently oversized, never drop below floors.
 
     Args:
         result: The assembled enrich envelope with kg_matches and vector_chunks.
@@ -239,6 +257,10 @@ def trim_to_ceiling(result: dict, max_tokens: int, floor: int = 3) -> dict:
             break
         victim = max(candidates, key=lambda m: len(m["edges"]))
         victim["edges"].pop()  # tail = lowest-value (selection is diversity-first)
+        # Prune nodes the popped edge orphaned so their tokens are reclaimed
+        # this iteration — without this the loop keeps popping edges while the
+        # orphan nodes hold the response over the ceiling, flooring the match.
+        _prune_orphan_nodes(victim)
         victim["truncation"]["returned"] = len(victim["edges"])
         victim["truncation"]["truncated"] = True
         result["budget"]["truncated"] = True
@@ -255,5 +277,12 @@ def trim_to_ceiling(result: dict, max_tokens: int, floor: int = 3) -> dict:
         result["warnings"].append(
             "response exceeds ceiling even at floors — narrow with predicates"
         )
+    # Invariant (RESPONSE_SHAPES.md): every match's nodes are exactly the
+    # entities that are an endpoint of one of its surviving edges. Victim
+    # matches were pruned in the loop; untrimmed matches are already consistent
+    # (the KG side subsets nodes to the selected edges). This final pass makes
+    # the guarantee hold for every match regardless of which trim path ran.
+    for m in matches:
+        _prune_orphan_nodes(m)
     result["budget"]["returned"] = sum(len(m["edges"]) for m in matches)
     return result

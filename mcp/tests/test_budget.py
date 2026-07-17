@@ -282,3 +282,91 @@ def test_trim_touches_chunks_only_after_edges_and_keeps_one():
     env = _envelope([_match("a", 4)], n_chunks=3)
     out = trim_to_ceiling(env, max_tokens=1)
     assert len(out["vector_chunks"]) == 1  # never zero
+
+
+# --- orphan-node pruning on ceiling trim (issue #28 edge-count inversion) ---
+# _kg_side materializes match["nodes"] from the endpoints of the PRE-trim
+# selected edges; the ceiling trim then pops edges. Without pruning the nodes
+# those popped edges orphaned, the response carried entities with no surviving
+# edge (contract violation) AND their ~tokens held the response over ceiling,
+# flooring concepts toward the 3-edge floor — so a larger edge_budget delivered
+# FEWER edges (the eb=120 inversion in the battery sweep).
+
+
+def _match_with_distinct_nodes(concept: str, n_edges: int) -> dict:
+    """Match whose n_edges each point to a distinct target node, plus those
+    nodes — mirrors the enrich `_kg_side` shape (nodes = selected-edge
+    endpoints) that exposed the orphan-node trim bug. Node payloads are padded
+    to a realistic size so dropping edges frees a meaningful token amount."""
+    edges = [
+        {
+            "id": f"{concept}-{i}",
+            "source": f"entities_v2/{concept}",
+            "target": f"entities_v2/{concept}-n{i}",
+            "predicate": "CONTAINS",
+            "confidence": 0.9 - i * 0.001,
+            "extraction_type": "explicit",
+            "releases": None,
+            "source_document": "IT Service Management",
+            "source_quote": "q" * 200,
+        }
+        for i in range(n_edges)
+    ]
+    nodes = [
+        {
+            "id": f"entities_v2/{concept}-n{i}",
+            "name": f"node {i} " + "z" * 120,
+            "type": "Feature",
+            "releases": ["zurich"],
+        }
+        for i in range(n_edges)
+    ]
+    return {
+        "concept": concept,
+        "variants": [],
+        "nodes": nodes,
+        "edges": edges,
+        "truncation": {"truncated": False, "available": n_edges, "returned": n_edges},
+        "suggest": None,
+        "error": None,
+    }
+
+
+def _orphan_node_ids(match: dict) -> list[str]:
+    """Node ids in the match that are NOT an endpoint of any surviving edge."""
+    endpoints = {e["source"] for e in match["edges"]} | {e["target"] for e in match["edges"]}
+    return [n["id"] for n in match["nodes"] if n["id"] not in endpoints]
+
+
+def test_trim_prunes_orphan_nodes_and_reuses_freed_tokens():
+    """20 edges to 20 distinct nodes, ceiling forcing a heavy trim: after trim
+    no node is an orphan, and delivered edges stay well above the floor because
+    the freed node-tokens are reclaimed for edges instead of holding the
+    response floored (the pre-fix failure)."""
+    floor = 3
+    env = _envelope([_match_with_distinct_nodes("hub", 20)], n_chunks=1)
+    ceiling = estimate_tokens(env) * 6 // 10  # room above floor once orphans go
+    out = trim_to_ceiling(env, max_tokens=ceiling, floor=floor)
+    m = out["kg_matches"][0]
+    assert _orphan_node_ids(m) == []  # nodes-are-edge-endpoints contract holds
+    assert len(m["nodes"]) == len(m["edges"])  # 1:1 here — every node still cited
+    assert len(m["edges"]) > floor  # freed node-tokens reused, not floored
+    assert estimate_tokens(out) <= ceiling
+
+
+def test_trim_does_not_invert_to_floor_under_ceiling_eb120_case():
+    """The eb=120 inversion: 5 concepts each with 24 edges+nodes overshoot the
+    12000 ceiling. Pre-fix, the trim floored every concept to 3 edges (15 total)
+    while ~100 orphan nodes pinned the response ~1600-2300 tokens UNDER the
+    ceiling — a larger budget delivering fewer edges. With orphan pruning the
+    freed node-tokens go to edges: delivery is well above the floor and no
+    concept carries an orphan node."""
+    floor = 3
+    matches = [_match_with_distinct_nodes(f"c{j}", 24) for j in range(5)]
+    env = _envelope(matches, n_chunks=5)
+    out = trim_to_ceiling(env, max_tokens=12000, floor=floor)
+    total_edges = sum(len(m["edges"]) for m in out["kg_matches"])
+    assert total_edges > len(matches) * floor  # NOT stuck at the 5x3=15 floor
+    for m in out["kg_matches"]:
+        assert _orphan_node_ids(m) == []
+    assert estimate_tokens(out) <= 12000
