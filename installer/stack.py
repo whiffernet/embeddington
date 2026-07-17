@@ -28,7 +28,8 @@ def ensure_env_file(consumer_dir, *, token_fn=None):
         Path to the .env file (newly created or pre-existing).
 
     Raises:
-        FileExistsError: If the file already exists (will return it instead; this is safe).
+        FileExistsError: Only on a concurrent create between the exists() check and the
+            O_EXCL open — a pre-existing file is returned untouched, never raised on.
 
     [CRITIC] The file must be 0o600 from birth (O_CREAT|O_EXCL with the mode), never
     write_text-then-chmod: under the default umask that leaves a window where any local
