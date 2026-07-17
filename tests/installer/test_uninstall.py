@@ -241,6 +241,27 @@ def test_resolved_volume_names_respect_a_custom_project_prefix(tmp_path):
     assert any("volume rm" in c and "myproj_qdrant_storage" in c for c in joined(run))
 
 
+def test_resolved_volume_names_are_shown_at_the_gate_before_deletion(tmp_path):
+    # [CRITIC] resolve_volume_names suffix-matches and can over-match a second compose
+    # project's stopped volume; the typed-delete prompt and the receipt must both name
+    # the resolved list so an over-match is visible before AND after deletion, not just
+    # discoverable by re-running `docker volume ls`.
+    run = MapRun(
+        {
+            "docker volume ls": RunResult(
+                0, "myproj_qdrant_storage\nmyproj_arango_data\nmyproj_embed_models\n", ""
+            )
+        }
+    )
+    _, _, out = drive(tmp_path, ["n", "n", "delete", "n", "n"], run=run)
+    pre_delete_out = out[: out.index(TYPED_GATE_TEXT)]
+    assert "myproj_qdrant_storage" in pre_delete_out
+    assert "myproj_arango_data" in pre_delete_out
+    removed_line = next(line for line in out.splitlines() if "Removed:" in line)
+    assert "myproj_qdrant_storage" in removed_line
+    assert "myproj_arango_data" in removed_line
+
+
 def test_with_cron_line_the_cron_prompt_comes_first(tmp_path):
     # Pins prompt POSITION: the cron offer must consume the first answer, or every
     # later gate shifts by one on real boxes that carry the cron line.

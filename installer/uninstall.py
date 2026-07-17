@@ -245,6 +245,11 @@ def run_uninstall(
     console.print()
 
     volumes = resolve_volume_names(run)
+    # [CRITIC] resolve_volume_names suffix-matches and can over-match a second compose
+    # project's stopped volume; naming the resolved list at BOTH the prompt and the
+    # receipt makes an over-match visible before and after, not just discoverable by
+    # re-running `docker volume ls`.
+    data_label = f"data_volumes ({', '.join(volumes['data'])})"
     keys = {i.key for i in manifest}
     removed, kept, failed = [], [], []
 
@@ -322,7 +327,8 @@ def run_uninstall(
                 console.print(f"    • {name}")
             kept.append("data_volumes")
         elif really_delete_data:
-            record("data_volumes", _rm_volumes(run, volumes["data"]))
+            console.print("  volumes to delete: " + ", ".join(volumes["data"]))
+            record(data_label, _rm_volumes(run, volumes["data"]))
         else:
             kept.append("data_volumes")
             console.print(
@@ -345,13 +351,15 @@ def run_uninstall(
                 default=False,
                 input_fn=input_fn,
             )
+        if proceed_to_gate:
+            console.print("  volumes to delete: " + ", ".join(volumes["data"]))
         if proceed_to_gate and ui.typed_confirm(
             console,
             "Delete qdrant_storage + arango_data — the knowledge graph itself? "
             "This cannot be undone.",
             input_fn=input_fn,
         ):
-            record("data_volumes", _rm_volumes(run, volumes["data"]))
+            record(data_label, _rm_volumes(run, volumes["data"]))
         else:
             kept.append("data_volumes")
 

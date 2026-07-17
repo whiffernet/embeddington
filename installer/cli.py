@@ -62,7 +62,16 @@ def _production_deps(repo_root, args):
         return state.detect_state(repo_root, runner.run, points, entities)
 
     def proof(_console):
-        points, entities = counters()
+        try:
+            points, entities = counters()
+        except errors.SetupError:
+            raise
+        except Exception as exc:
+            raise errors.SetupError(
+                "EMB-44",
+                f"Post-import verification could not reach the stores: {exc}",
+                "Give the containers a few seconds and re-run embeddington-setup --check.",
+            )
         return import_step.proof_of_life(points, entities)
 
     def run_uninstall_dep(console, assume_yes, really, input_fn):

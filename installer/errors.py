@@ -2,9 +2,9 @@
 
 The code is the stable, greppable contract between a failing install and the README's
 troubleshooting table: every registered code has a `#### EMB-nn` heading in the README
-(pinned by tests/test_readme_pins.py). install.sh hard-codes only EMB-10..EMB-14, the
-codes reachable before Python exists; everything else is raised from this module's
-SetupError.
+(pinned by tests/test_readme_pins.py). install.sh hard-codes EMB-10..EMB-16 (the codes
+reachable before Python exists; EMB-15 is raised by the Python preflight); everything
+else is raised from this module's SetupError.
 """
 
 ANCHOR_BASE = "https://github.com/whiffernet/embeddington#"

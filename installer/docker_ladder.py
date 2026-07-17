@@ -8,7 +8,7 @@ BOTH `docker info` and `docker compose version` work, because several install ro
 ship without the compose v2 plugin and every later step runs `docker compose <cmd>`.
 """
 
-import os
+import getpass
 import sys
 import time
 from pathlib import Path
@@ -83,7 +83,7 @@ def _wait_with_group_check(console, run, *, assume_yes, input_fn, sleep, wait_se
         _consented(
             console,
             run,
-            ["sudo", "usermod", "-aG", "docker", os.environ.get("USER", "$USER")],
+            ["sudo", "usermod", "-aG", "docker", getpass.getuser()],
             assume_yes=assume_yes,
             input_fn=input_fn,
             sudo_note=True,
