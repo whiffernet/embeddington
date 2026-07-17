@@ -113,4 +113,9 @@ def test_allocate_leftover_goes_in_relevance_order():
     concepts = [_c("a", 0), _c("b", 1), _c("c", 2)]
     slots = allocate_budget(concepts, edge_budget=20)
     # weights 2,1,1 → raw 10,5,5; exact split, deterministic
-    assert sum(slots) == 20 and slots[0] >= slots[1] >= slots[2]
+    assert slots == [10, 5, 5]
+
+
+def test_allocate_budget_below_floor_never_exceeds_budget():
+    assert allocate_budget([_c("a", 0)], edge_budget=1) == [1]
+    assert allocate_budget([_c("a", 0), _c("b", 1)], edge_budget=2) == [2, 0]

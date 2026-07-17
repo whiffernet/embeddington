@@ -89,13 +89,23 @@ def allocate_budget(concepts: list[Concept], edge_budget: int, max_concepts: int
     order) rather than the floor. Leftover from integer division distributes
     +1 at a time in concept (relevance) order — never by degree.
 
+    Args:
+        concepts: List of Concept objects to budget for, in relevance order.
+        edge_budget: Total slots available; invariant sum(result) <= edge_budget.
+        max_concepts: Maximum number of concepts to budget (default 5).
+
     Returns:
         Slot counts aligned with concepts[:max_concepts]; zeros for concepts
-        the budget cannot cover.
+        the budget cannot cover. Invariant: sum(result) <= edge_budget and
+        len(result) == min(len(concepts), max_concepts).
     """
     n = min(len(concepts), max_concepts)
     if n == 0 or edge_budget <= 0:
         return [0] * n
+    # Handle sub-floor budgets: give the single top-relevance concept exactly
+    # edge_budget slots without the MIN_SLOTS floor.
+    if edge_budget < MIN_SLOTS:
+        return [edge_budget] + [0] * (n - 1)
     n_budgeted = max(1, min(n, edge_budget // MIN_SLOTS))
     weights = [2.0 if concepts[i].hint_index == 0 else 1.0 for i in range(n_budgeted)]
     total_w = sum(weights)
