@@ -69,12 +69,23 @@ def _wait_with_group_check(console, run, *, assume_yes, input_fn, sleep, wait_se
     plain `docker info` fails forever even though the daemon came up fine — without
     this check that reports as a misleading "daemon didn't come up". The group change
     cannot take effect inside the current session, so this path always ends in EMB-21
-    with the re-login fix; the offer just saves the user the usermod command.
+    with the re-login fix; the offer just saves the user the usermod command. The
+    `sudo docker info` diagnostic itself is consent-gated like every other sudo call —
+    a decline (or a failure) re-raises the original wait error unchanged.
     """
     try:
         _wait_for_daemon(console, run, sleep, wait_seconds)
     except SetupError:
-        if run(["sudo", "docker", "info"]).rc != 0:
+        console.print(
+            "[yellow]The daemon may be up but unreachable as your user — a read-only "
+            "`sudo docker info` can tell a stopped daemon from a permissions problem.[/yellow]"
+        )
+        if (
+            _consented(
+                console, run, ["sudo", "docker", "info"], assume_yes=assume_yes, input_fn=input_fn
+            )
+            != "ok"
+        ):
             raise
         console.print(
             "[yellow]The daemon IS running — your user just can't reach its socket "
@@ -260,7 +271,23 @@ def _linux_ladder(
             "Install Docker Engine + the compose plugin per "
             "https://docs.docker.com/engine/install/, then re-run the installer.",
         )
-    run(_start_cmd(which), stream=True)
+    if (
+        _consented(
+            console,
+            run,
+            _start_cmd(which),
+            assume_yes=assume_yes,
+            input_fn=input_fn,
+            sudo_note=True,
+        )
+        != "ok"
+    ):
+        console.print(
+            "[yellow]Start the daemon yourself[/yellow] (`sudo systemctl start docker` or "
+            "`sudo service docker start`) — I'll wait. Press Enter when you've kicked it."
+        )
+        if not assume_yes:
+            input_fn()
     _wait_with_group_check(
         console,
         run,

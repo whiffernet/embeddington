@@ -60,6 +60,46 @@ def joined(run):
     return [" ".join(c["cmd"]) for c in run.calls]
 
 
+def ensure_with_console(
+    run,
+    *,
+    platform="macos",
+    assume_yes=False,
+    which=lambda n: None,
+    answers=(),
+    os_release="",
+    wait_seconds=10,
+):
+    """Like ensure(), but also returns the console's captured output text and any
+    SetupError raised (instead of letting it propagate) so callers can assert on both.
+    """
+    it = iter(answers)
+    c = console()
+    err = None
+    try:
+        docker_ladder.ensure_docker(
+            c,
+            run,
+            platform=platform,
+            assume_yes=assume_yes,
+            which=which,
+            os_release_text=os_release,
+            input_fn=lambda: next(it),
+            sleep=lambda s: None,
+            wait_seconds=wait_seconds,
+        )
+    except errors.SetupError as exc:
+        err = exc
+    return c.file.getvalue(), err
+
+
+def assert_every_sudo_was_displayed(run, out):
+    """Pin the invariant: no sudo command runs without first being echoed to the console."""
+    for call in run.calls:
+        if call["cmd"][0] == "sudo":
+            assert "I'd run: " + " ".join(call["cmd"]) in out
+
+
 def test_detect_platform():
     assert docker_ladder.detect_platform(sys_platform="darwin", proc_version_text="") == "macos"
     assert (
@@ -184,17 +224,19 @@ def test_macos_menu_none_is_emb20():
 
 def test_linux_apt_consented_install_start_verify():
     run = FakeRun([ABSENT, OK, OK, UP, OK])  # info, apt install, start, poll, compose
-    ensure(
+    out, err = ensure_with_console(
         run,
         platform="linux",
         which=lambda n: "/usr/bin/systemctl" if n == "systemctl" else None,
         os_release="ID=ubuntu\nID_LIKE=debian\n",
-        answers=("y",),
+        answers=("y", "y"),  # install consent, start consent
     )
+    assert err is None
     cmds = joined(run)
     assert any("apt-get install" in c and c.startswith("sudo") for c in cmds)
     assert "sudo systemctl start docker" in cmds
     assert cmds[-1] == "docker compose version"
+    assert_every_sudo_was_displayed(run, out)
 
 
 def test_linux_apt_install_failure_is_emb23_not_declined():
@@ -213,18 +255,53 @@ def test_linux_group_denied_after_install_is_emb21_with_usermod_offer():
     # Plain `docker info` fails through the timeout; `sudo docker info` succeeds.
     run = FakeRun([ABSENT, OK, OK, DOWN, DOWN, OK, OK])
     # info, apt install, start, poll, poll(timeout), sudo docker info, usermod
+    out, err = ensure_with_console(
+        run,
+        platform="linux",
+        which=lambda n: "/usr/bin/systemctl" if n == "systemctl" else None,
+        os_release="ID=ubuntu\n",
+        answers=("y", "y", "y", "y"),  # install, start, diagnostic, usermod
+        wait_seconds=10,
+    )
+    assert err is not None
+    assert err.code == "EMB-21"
+    assert "log out" in err.fix.lower() or "newgrp" in err.fix
+    assert any("usermod -aG docker" in c for c in joined(run))
+    assert_every_sudo_was_displayed(run, out)
+
+
+def test_linux_declined_start_falls_back_to_manual_wait():
+    # Install consented; the daemon-start offer is declined; user presses Enter after
+    # starting it themselves; the poll immediately finds it up.
+    run = FakeRun([ABSENT, OK, UP, OK])  # info, apt install, poll(up), compose
+    ensure(
+        run,
+        platform="linux",
+        which=lambda n: "/usr/bin/systemctl" if n == "systemctl" else None,
+        os_release="ID=ubuntu\n",
+        answers=("y", "n", ""),  # install consent, start DECLINED, Enter at manual prompt
+    )
+    cmds = joined(run)
+    assert not any("sudo systemctl start" in c for c in cmds)
+    assert cmds[-1] == "docker compose version"
+
+
+def test_declined_diagnostic_raises_plain_emb21_without_sudo_info():
+    # Same group-denied setup, but the diagnostic consent is declined: the original
+    # EMB-21 wait error must still surface, and `sudo docker info` must never run.
+    run = FakeRun([ABSENT, OK, OK, DOWN, DOWN])
+    # info, apt install, start, poll, poll(timeout) — no diagnostic, no usermod
     with pytest.raises(errors.SetupError) as exc:
         ensure(
             run,
             platform="linux",
             which=lambda n: "/usr/bin/systemctl" if n == "systemctl" else None,
             os_release="ID=ubuntu\n",
-            answers=("y", "y"),
+            answers=("y", "y", "n"),  # install, start, diagnostic DECLINED
             wait_seconds=10,
         )
     assert exc.value.code == "EMB-21"
-    assert "log out" in exc.value.fix.lower() or "newgrp" in exc.value.fix
-    assert any("usermod -aG docker" in c for c in joined(run))
+    assert not any("sudo docker info" in c for c in joined(run))
 
 
 def test_linux_unknown_distro_is_emb23():
