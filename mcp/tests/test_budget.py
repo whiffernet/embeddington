@@ -101,6 +101,33 @@ def test_group_concepts_ranks_variants_by_degree_not_encounter_order():
     assert concepts[0].variants[0]["degree"] == 500
 
 
+def test_group_concepts_dedup_disable_hook_is_env_gated(monkeypatch):
+    """BUDGET_DISABLE_DEDUP=1 keys on entity id — every entity its own concept.
+
+    The hook must ONLY activate under the env var: same-name variants that
+    normally merge into one concept split into N when it is set, and merge
+    again when it is cleared. Ids are non-prefixing so the prefix-merge rule
+    can't muddy the assertion.
+    """
+    seeded = [
+        (0, _e("alpha", "Process Mining", "Feature", 300)),
+        (0, _e("beta", "Process Mining", "Product", 200)),
+    ]
+    # Default (env unset by conftest): same normalized name -> one concept.
+    monkeypatch.delenv("BUDGET_DISABLE_DEDUP", raising=False)
+    assert len(group_concepts(seeded)) == 1
+
+    # Hook active: each entity is its own concept, one variant apiece.
+    monkeypatch.setenv("BUDGET_DISABLE_DEDUP", "1")
+    concepts = group_concepts(seeded)
+    assert len(concepts) == 2
+    assert all(len(c.variants) == 1 for c in concepts)
+
+    # And it deactivates cleanly when the flag is anything but "1".
+    monkeypatch.setenv("BUDGET_DISABLE_DEDUP", "0")
+    assert len(group_concepts(seeded)) == 1
+
+
 def _c(key: str, hint_index: int = 0) -> Concept:
     return Concept(key=key, variants=[_e(key, key)], hint_index=hint_index)
 

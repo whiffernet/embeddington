@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
 from dataclasses import dataclass, field
 from typing import Any
@@ -62,6 +63,12 @@ def group_concepts(seeded: list[tuple[int, dict]]) -> list[Concept]:
             continue
         seen_ids.add(eid)
         key = normalize_name(entity.get("name") or "")
+        # Sweep hook (spec §7 tuning arm): with BUDGET_DISABLE_DEDUP=1, key on
+        # the (unique) entity id so every entity is its own concept — lets the
+        # sweep measure the deduped vs undeduped budget. Env-gated: unset =
+        # normal name-based grouping, unchanged.
+        if os.environ.get("BUDGET_DISABLE_DEDUP") == "1":
+            key = eid
         target: Concept | None = None
         if key:
             for c in concepts:
