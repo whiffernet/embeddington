@@ -8,8 +8,11 @@ estimation, and the ceiling trim loop. See the design spec
 
 from __future__ import annotations
 
+import json
+import math
 import re
 from dataclasses import dataclass, field
+from typing import Any
 
 TOKEN_DIVISOR = 3  # deliberately pessimistic: KG JSON tokenizes near 3 chars/token
 PREFIX_MERGE_SLACK = 4  # "cmdb_rel_ci" vs "cmdb_rel_ciCIS" — merge if extension <= 4 chars
@@ -123,3 +126,49 @@ def allocate_budget(concepts: list[Concept], edge_budget: int, max_concepts: int
         slots[i % n_budgeted] += 1
         i += 1
     return slots + [0] * (n - n_budgeted)
+
+
+def estimate_tokens(obj: Any) -> int:
+    """Pessimistic token estimate: ceil(compact-JSON length / TOKEN_DIVISOR)."""
+    return math.ceil(
+        len(json.dumps(obj, separators=(",", ":"), ensure_ascii=False)) / TOKEN_DIVISOR
+    )
+
+
+def coalesced_confidence(edge: dict) -> float:
+    """Edge confidence with null coalesced to mid-tier 0.5 (spec §3.3)."""
+    c = edge.get("confidence")
+    return 0.5 if c is None else float(c)
+
+
+def select_edges(edges: list[dict], slots: int) -> list[dict]:
+    """Predicate-diversity floor, then confidence fill (spec §3.3).
+
+    Pass 1 walks predicates ordered by their best edge's coalesced confidence
+    (desc) taking the best edge per predicate — so a minority predicate's
+    single edge survives 50 high-confidence edges of another class. Pass 2
+    fills remaining slots by coalesced confidence desc. Ties break on edge id
+    for determinism. Floor picks come first in the output — the ceiling trim
+    (Task 5) drops from the tail, so diversity is sacrificed last.
+    """
+    if slots <= 0 or not edges:
+        return []
+    ranked = sorted(edges, key=lambda e: (-coalesced_confidence(e), str(e.get("id"))))
+    kept: list[dict] = []
+    kept_ids: set[str] = set()
+    seen_preds: set[str] = set()
+    for e in ranked:  # pass 1: best edge per distinct predicate
+        if len(kept) >= slots:
+            break
+        p = e.get("predicate")
+        if p not in seen_preds:
+            seen_preds.add(p)
+            kept.append(e)
+            kept_ids.add(str(e.get("id")))
+    for e in ranked:  # pass 2: fill by confidence
+        if len(kept) >= slots:
+            break
+        if str(e.get("id")) not in kept_ids:
+            kept.append(e)
+            kept_ids.add(str(e.get("id")))
+    return kept

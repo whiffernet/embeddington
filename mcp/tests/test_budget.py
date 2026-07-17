@@ -119,3 +119,52 @@ def test_allocate_leftover_goes_in_relevance_order():
 def test_allocate_budget_below_floor_never_exceeds_budget():
     assert allocate_budget([_c("a", 0)], edge_budget=1) == [1]
     assert allocate_budget([_c("a", 0), _c("b", 1)], edge_budget=2) == [2, 0]
+
+
+from budget import coalesced_confidence, estimate_tokens, select_edges
+
+
+def _edge(eid: str, predicate: str, confidence=None) -> dict:
+    return {
+        "id": eid,
+        "source": "entities_v2/a",
+        "target": f"entities_v2/{eid}",
+        "predicate": predicate,
+        "confidence": confidence,
+        "extraction_type": "explicit",
+        "releases": None,
+        "source_document": "d",
+        "source_quote": "q",
+    }
+
+
+def test_estimate_tokens_is_ceil_len_over_3():
+    obj = {"a": "xxxx"}  # compact json: {"a":"xxxx"} = 12 chars → 4 tokens
+    assert estimate_tokens(obj) == 4
+
+
+def test_coalesced_confidence_null_is_midtier():
+    assert coalesced_confidence(_edge("e1", "CONTAINS", None)) == 0.5
+    assert coalesced_confidence(_edge("e2", "CONTAINS", 0.9)) == 0.9
+
+
+def test_select_edges_keeps_minority_predicate_over_bulk_confidence():
+    # The recall critic's killer: 50 CONTAINS@0.96 vs 1 INGESTS_FROM@0.78.
+    edges = [_edge(f"c{i}", "CONTAINS", 0.96) for i in range(50)]
+    edges.append(_edge("answer", "INGESTS_FROM", 0.78))
+    kept = select_edges(edges, slots=10)
+    assert any(e["predicate"] == "INGESTS_FROM" for e in kept)
+
+
+def test_select_edges_null_confidence_class_not_starved():
+    edges = [_edge(f"c{i}", "CONTAINS", 0.9) for i in range(20)]
+    edges.append(_edge("structural", "HAS_FIELD", None))  # bulk-loaded, unscored
+    kept = select_edges(edges, slots=5)
+    assert any(e["predicate"] == "HAS_FIELD" for e in kept)
+
+
+def test_select_edges_respects_slots_and_is_deterministic():
+    edges = [_edge(f"e{i}", "CONTAINS", 0.9) for i in range(10)]
+    a = select_edges(list(edges), slots=4)
+    b = select_edges(list(reversed(edges)), slots=4)
+    assert len(a) == 4 and [e["id"] for e in a] == [e["id"] for e in b]
