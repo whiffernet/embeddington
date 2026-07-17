@@ -36,6 +36,13 @@ def _fresh_async_clients():
     server._embed_clients.clear()
     server._qdrant_clients.clear()
     yield
+    # Clear again post-test so live clients pointed at the battery stack never
+    # linger in the process-global caches and leak into later test files (which
+    # runs when the full suite is invoked with EMBEDDINGTON_BATTERY=1). The old
+    # clients can't be cleanly aclose()d here — theirs is a now-closed loop — so
+    # we drop the references and let GC reclaim them, mirroring server.main().
+    server._embed_clients.clear()
+    server._qdrant_clients.clear()
 
 
 @pytest.fixture(scope="session", autouse=True)
