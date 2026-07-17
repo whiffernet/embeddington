@@ -2,8 +2,9 @@
 
 import io
 
-from installer import errors, ui
 from rich.console import Console
+
+from installer import errors, ui
 
 
 def buffer_console():

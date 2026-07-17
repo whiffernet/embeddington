@@ -3,6 +3,7 @@
 import re
 
 import pytest
+
 from installer import errors
 
 
