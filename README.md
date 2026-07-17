@@ -125,6 +125,28 @@ stores and the embedder all run in Docker.
 
 > _"The Dude abides."_
 
+One command. It checks your machine, offers to set up Docker if you don't have it
+(OrbStack/Colima on macOS), starts the local stack, imports the knowledge graph, and
+verifies it — interactively, with taste:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/whiffernet/embeddington/main/install.sh | bash
+```
+
+- Re-running it later is safe: on an installed machine it offers **Update / Repair /
+  Uninstall** instead.
+- Unattended (CI, scripts): `EMBEDDINGTON_YES=1`, install dir via
+  `EMBEDDINGTON_INSTALL_DIR`. Unattended mode never installs Docker (it can't consent)
+  and never deletes data.
+- Prefer to read before you pipe? [`install.sh`](install.sh) is a hundred-odd boring lines; the
+  interesting parts run from the versioned clone after it.
+- Health check any time: `embeddington-setup --check`
+
+<details><summary>Manual install (the long way)</summary>
+
+Prefer to run each step yourself instead of piping the one-liner? Here's what it does,
+broken out.
+
 ### First, know where you're standing
 
 Almost every confusing moment with this repo comes from running a command in the wrong
@@ -207,6 +229,8 @@ embeddington-consume --help
 > ran `pip install -e .` from `consumer/` instead of the repo root, or you opened a new
 > shell and forgot to re-activate the venv (`. .venv/bin/activate` from the repo root).
 
+</details>
+
 ---
 
 ## Roll it forward (import & update)
@@ -245,6 +269,10 @@ guarantee that a first-time migration finds that clone's old cursor to adopt:
 0 6 * * * cd $HOME/embeddington && set -a && . consumer/.env && set +a && .venv/bin/embeddington-consume update >> $HOME/embeddington-update.log 2>&1
 ```
 
+That example line assumes `~/embeddington`; if you installed somewhere else, the wizard's
+receipt prints the crontab line for your actual install location — copy it from there
+instead of hand-editing the path above.
+
 First run downloads and restores the full baseline (a few hundred MB), so it takes a few
 minutes. After that, updates are tiny. Run it on whatever schedule you like (a daily cron,
 say) to stay current.
@@ -278,6 +306,21 @@ Embeddington update complete.
 
 A baseline restore reporting `Diffs: 0` is a **success**, not a no-op — it means the snapshot
 it just loaded was already current. Nothing more to fetch, man.
+
+---
+
+## Leaving town (uninstall)
+
+> _"Sometimes there's a man... sometimes, there's a man."_
+
+Same command, or `embeddington-setup --uninstall` from the clone. It shows everything
+embeddington owns (containers, volumes, state dir, cron line, the clone), asks about
+each item separately — every default is **No** — and looks _inside_ the stores first:
+if it finds collections or databases you created, it names them and refuses to offer
+volume deletion until you acknowledge. The knowledge-graph volumes require typing
+`delete`; a plain `y` won't do it. Shared infrastructure (Docker, OrbStack, Colima,
+Homebrew) is never removed — the receipt lists the manual commands if you want them
+gone too.
 
 ---
 
@@ -417,6 +460,24 @@ vector count over `baseline-2026-06`, and the disk figures moved with it.
 
 ## Configuration
 
+`embeddington-setup` flags (all optional):
+
+| Flag                   | Purpose                                                                    |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `--check`              | Doctor mode: report health, change nothing, exit 0 (healthy) or 1          |
+| `--uninstall`          | Interactively remove embeddington, asking about each owned item separately |
+| `--yes`                | Unattended: defaults everywhere, no prompts                                |
+| `--really-delete-data` | With `--yes`: allow unattended deletion of data volumes/clone              |
+| `--force-baseline`     | Forwarded to the updater: re-restore the full baseline                     |
+
+`install.sh` environment variables (all optional):
+
+| Variable                   | Default                                          | Purpose                                                                        |
+| -------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------ |
+| `EMBEDDINGTON_YES`         | unset                                            | `1` for a fully unattended install (never installs Docker, never deletes data) |
+| `EMBEDDINGTON_INSTALL_DIR` | `~/embeddington`                                 | Where to clone and install                                                     |
+| `EMBEDDINGTON_CLONE_URL`   | `https://github.com/whiffernet/embeddington.git` | Clone source override (CI, forks)                                              |
+
 `embeddington-consume update` flags (all optional — `--repo` defaults to
 `whiffernet/embeddington`; override it only if you've forked):
 
@@ -510,6 +571,170 @@ pip install -r requirements-dev.txt
 pytest
 cd ..
 ```
+
+---
+
+## When the plan comes apart (troubleshooting)
+
+> _"This is a very complicated case."_
+
+Every installer failure prints an `[EMB-nn]` code with a fix line already attached. Find
+yours here for the full story.
+
+#### EMB-10 — no interactive terminal
+
+`install.sh` was piped without a TTY and `EMBEDDINGTON_YES` isn't set — it can't prompt
+for anything. Run it from a real terminal, or set `EMBEDDINGTON_YES=1` for an
+unattended install.
+
+#### EMB-11 — git missing
+
+`git` isn't on `PATH`. Install it (`xcode-select --install` on macOS; `apt`/`dnf
+install git` on Linux), then re-run.
+
+#### EMB-12 — python too old or missing
+
+No `python3.13`, `python3.12`, or `python3` on `PATH` resolves to 3.12+. Install
+Python 3.12 or newer (python.org, `brew install python@3.12`, or your distro), then
+re-run.
+
+#### EMB-13 — can't reach the repo
+
+`git ls-remote` against the clone URL failed — no network, or a proxy is in the way.
+Check your connection, then re-run.
+
+#### EMB-14 — venv/pip bootstrap failed
+
+Three distinct causes share this code, and `install.sh` tells you which: the
+`python3-venv` package is missing (`sudo apt install python3-venv`, or
+`python3.12-venv`, then re-run); a `pip install` step failed (the last 20 lines of
+`install.log` print above the error — fix what it complains about, then re-run); or
+the clone is stale and `embeddington-setup` never landed (`cd` into the install dir,
+`git stash && git pull --ff-only`, then re-run).
+
+#### EMB-15 — not enough disk
+
+Preflight found less than 3 GB free. Free up at least 3 GB (12+ recommended), then
+re-run.
+
+#### EMB-16 — install dir isn't empty and isn't a clone
+
+The install directory exists, has files in it, and isn't an embeddington git clone —
+`install.sh` won't overwrite something it doesn't recognize. Pick a different location
+(`EMBEDDINGTON_INSTALL_DIR=...`), or move that directory aside.
+
+#### EMB-20 — docker install declined
+
+No container runtime was found and every offer to install one was turned down (or,
+in `--yes` mode, there was no one to ask — unattended mode never installs Docker
+because it can't consent on your behalf). Install OrbStack, Colima, Docker Desktop,
+or Docker Engine yourself, then re-run — or run interactively without
+`EMBEDDINGTON_YES` so the wizard can offer.
+
+#### EMB-21 — docker daemon not reachable
+
+The daemon didn't come up within the wait window, or it's up but your user can't
+reach its socket yet (fresh Linux installs aren't in the `docker` group by default —
+the wizard offers `usermod -aG docker`, but that only takes effect after you log out
+and back in, or run `newgrp docker`). Start the daemon manually (OrbStack/Docker
+Desktop, `colima start`, or `sudo systemctl start docker`) or re-login, then re-run.
+
+#### EMB-22 — manual runtime install required
+
+The wizard can't finish this install path for you — no Homebrew to install OrbStack
+with, an OrbStack brew install that failed, Colima's three-step manual setup, or
+Docker Desktop (a GUI download it can't script). Follow the printed steps or install
+a runtime yourself, then re-run.
+
+#### EMB-23 — automatic docker install failed or unsupported
+
+Either the `docker compose` v2 plugin is missing after an otherwise-working Docker
+install, the Linux distro wasn't recognized so the wizard wouldn't guess a package
+manager, or the recognized distro's package install command failed. Install Docker
+Engine + the compose plugin per
+[docs.docker.com/engine/install](https://docs.docker.com/engine/install/), then
+re-run.
+
+#### EMB-24 — port already taken
+
+A port `consumer/docker-compose.yml` needs is bound by something that isn't
+embeddington. Stop whatever holds that port (or move it), then re-run.
+
+#### EMB-31 — docker compose up failed
+
+Either `docker compose up -d --build` exited non-zero (the error prints just above),
+or Qdrant/ArangoDB didn't answer within the store timeout. Fix what compose
+complained about (ports, disk, daemon) — or check `docker compose ps` and
+`docker compose logs` in `consumer/` — then re-run; it picks up where it left off.
+
+#### EMB-32 — embed service didn't come up
+
+The `embed` service's first build downloads ~2 GB of model weights, and that stalled
+or failed past the embed timeout. Run `docker compose logs embed` in `consumer/` to
+see why; a plain retry (`docker compose up -d --build`) resumes a dropped download
+cleanly.
+
+#### EMB-33 — no usable ArangoDB password
+
+`consumer/.env` either doesn't exist, or exists but its `ARANGO_ROOT_PASSWORD` is
+empty or still the placeholder `change-me`. Re-run the installer to generate one, or
+open the file and set `ARANGO_ROOT_PASSWORD` to any non-empty value yourself.
+
+#### EMB-41 — download failed (network)
+
+A baseline or diff download hit a network error. Check your connection and re-run —
+downloads resume/retry cleanly.
+
+#### EMB-42 — asset checksum mismatch
+
+A downloaded asset failed checksum verification. Re-run — a corrupted download
+re-fetches cleanly. If it repeats, open an issue.
+
+#### EMB-43 — populated store with no cursor
+
+The stores already hold data and no cursor was found, so the updater refuses to
+guess whether a full re-restore is safe (this is the same guard `embeddington-consume
+update` exits `3` for). If the store is healthy, copy your old cursor into the state
+dir (see **Configuration** above); to deliberately re-restore everything, re-run with
+`--force-baseline`.
+
+#### EMB-44 — proof-of-life query returned zero
+
+After import, a real query against Qdrant and ArangoDB found at least one store
+empty or unqueryable. Give the containers a few seconds to settle and re-run
+`embeddington-setup --check`; if it persists, check `docker compose logs` in
+`consumer/`, or run `embeddington-consume update --force-baseline` for a clean
+restore.
+
+#### EMB-45 — updater error
+
+The updater hit something other than a network, checksum, or guard failure (a chain
+gap, a schema version mismatch, ...). Re-run the installer; if it repeats, run
+`embeddington-consume update` directly for the full error.
+
+#### EMB-51 — MCP dependency install failed
+
+`pip install -r mcp/requirements.txt` failed while wiring up Claude — the graph
+itself is unaffected and fully usable without it. Run that `pip install` manually to
+see why, then launch Claude from the repo root with `consumer/.env` loaded.
+
+#### EMB-61 — couldn't inspect store contents before deletion
+
+Uninstall couldn't query the stores (daemon down?) before offering to delete their
+volumes, so it can't prove they hold only embeddington data. This is a non-fatal
+warning, not a stopper. For an inspected deletion: `cd consumer && docker compose up
+-d`, then re-run the uninstall — or proceed knowing the contents are unverified.
+
+#### EMB-62 — crontab rewrite failed
+
+Uninstall couldn't rewrite your crontab to strip the embeddington line. Run
+`crontab -e` and remove the line yourself.
+
+#### EMB-63 — clone self-delete handoff failed
+
+Uninstall hands off to a tiny detached script to delete the clone (so the running
+Python process isn't deleting the directory it's executing from); the handoff
+`execv` itself failed. Remove the clone yourself: `rm -rf <clone path>`.
 
 ---
 

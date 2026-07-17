@@ -15,3 +15,4 @@ data/
 !*.env.example
 .superpowers/
 .coverage
+install.log

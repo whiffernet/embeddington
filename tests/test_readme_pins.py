@@ -98,3 +98,16 @@ def _component_row(component):
         if line.startswith("|") and f"**{component}**" in line:
             return line
     raise AssertionError(f"no third-party table row for {component} in the README")
+
+
+def test_every_emb_code_has_a_readme_troubleshooting_heading():
+    """Every registered installer error code must have its README anchor.
+
+    show_error() prints github.com/whiffernet/embeddington#emb-nn; that anchor only
+    exists if the README carries a `#### EMB-nn` heading.
+    """
+    from installer import errors
+
+    readme = _readme_text()
+    missing = [code for code in errors.CODES if f"#### {code}" not in readme]
+    assert not missing, f"EMB codes without a README troubleshooting heading: {missing}"

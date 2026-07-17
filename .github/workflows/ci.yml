@@ -79,3 +79,35 @@ jobs:
         with: { python-version: "3.12" }
       - run: pip install semgrep
       - run: semgrep scan --config p/python --config p/secrets --error --metrics off .
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: shellcheck install.sh
+
+  # End-to-end bootstrap proof WITHOUT a docker binary: install.sh must get all the
+  # way through clone->venv->pip->wizard, and the wizard must fail with the docker
+  # ladder's code (EMB-20, unattended can't consent) — not a crash, not success.
+  # This also pins runner.run's rc-127 normalization: with a bare subprocess.run, the
+  # missing docker binary would traceback before EMB-20 ever printed.
+  installer-smoke:
+    runs-on: ubuntu-latest
+    container: python:3.12-bookworm
+    steps:
+      - uses: actions/checkout@v7
+      - name: run install.sh unattended against this checkout
+        run: |
+          set +e
+          # safe.directory: the job-container checkout is owned by a different uid,
+          # and git refuses "dubious ownership" repos without it. file:// keeps
+          # --depth honest (git ignores --depth on plain local-path clones).
+          git config --global --add safe.directory '*'
+          EMBEDDINGTON_YES=1 \
+          EMBEDDINGTON_CLONE_URL="file://$PWD" \
+          EMBEDDINGTON_INSTALL_DIR=/tmp/emb-smoke \
+          bash install.sh > /tmp/smoke.log 2>&1
+          rc=$?
+          set -e
+          cat /tmp/smoke.log
+          test $rc -ne 0 || { echo "expected a nonzero exit without docker"; exit 1; }
+          grep -q "EMB-20" /tmp/smoke.log
