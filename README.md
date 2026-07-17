@@ -110,11 +110,14 @@ same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
 
 > _"This is not Docs. This is embeddington. There are rules."_
 
-- **Docker** (with the Compose plugin) — runs the local Qdrant + ArangoDB + embedder.
-- **Python 3.12+**.
+- **Python 3.12+** — the one hard prerequisite. The installer is written in Python and
+  bails early (with a clear message) if it's missing.
+- **Docker** (with the Compose plugin) — runs the local Qdrant + ArangoDB + embedder. You
+  don't have to install it yourself first: if it's absent, the one-liner installer detects
+  that and offers to set it up for you (OrbStack/Colima on macOS, apt/dnf on Linux), all
+  consent-gated. So you can start from the one command either way.
 
-That's the whole list. No account, no token, no access request — the download is a plain
-HTTPS GET.
+No account, no token, no access request — the download is a plain HTTPS GET.
 
 Cross-platform: Linux, macOS (Intel **and** Apple Silicon), and Windows via WSL2 — the
 stores and the embedder all run in Docker.
@@ -233,16 +236,19 @@ embeddington-consume --help
 
 ---
 
-## Roll it forward (import & update)
+## Roll it forward (staying current)
 
 > _"New information has come to light, man."_
 
-One command restores the baseline on first run, then applies any newer diffs. Later runs
-apply only what changed.
+Your graph already landed during install — the wizard restored the baseline and verified it,
+so there's nothing to import by hand. This section is about **keeping it current** afterward:
+pulling newer diffs as they're published. (Re-running the one-liner does this too — on an
+installed box it offers **Update** — but under the hood it's the one command below, which is
+also what you'd drop in a cron job.)
 
-`embeddington-consume` needs `ARANGO_ROOT_PASSWORD` in its environment — the same value you
-put in `consumer/.env` during install. The first line below loads it. That relative path
-(`consumer/.env`) is why this block wants the repo root:
+That command is `embeddington-consume update`. It needs `ARANGO_ROOT_PASSWORD` in its
+environment — the same value in `consumer/.env` from install. The first line below loads it.
+That relative path (`consumer/.env`) is why this block wants the repo root:
 
 ```bash
 # run from: repo root
@@ -273,9 +279,10 @@ That example line assumes `~/embeddington`; if you installed somewhere else, the
 receipt prints the crontab line for your actual install location — copy it from there
 instead of hand-editing the path above.
 
-First run downloads and restores the full baseline (a few hundred MB), so it takes a few
-minutes. After that, updates are tiny. Run it on whatever schedule you like (a daily cron,
-say) to stay current.
+Most runs are tiny — just the newer diffs. The exception is a **re-baseline**: after the
+publisher compacts history, the next update re-restores the whole snapshot in one step (a
+few hundred MB, a few minutes). That's expected, not an error. Run it on whatever schedule
+you like — a daily cron, say — to stay current.
 
 What it prints. **First run** (or the first run after a new baseline is cut) restores the
 whole graph:
