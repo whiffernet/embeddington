@@ -34,3 +34,15 @@ def test_invalid_default_collection_env_raises(monkeypatch):
     # restore the module to its real state for other tests
     monkeypatch.delenv("DEFAULT_QDRANT_COLLECTION", raising=False)
     importlib.reload(config)
+
+
+def test_max_response_tokens_default_and_env(monkeypatch):
+    monkeypatch.delenv("EMBEDDINGTON_MAX_RESPONSE_TOKENS", raising=False)
+    importlib.reload(config)
+    assert config.MAX_RESPONSE_TOKENS == 12000
+    monkeypatch.setenv("EMBEDDINGTON_MAX_RESPONSE_TOKENS", "9000")
+    importlib.reload(config)
+    assert config.MAX_RESPONSE_TOKENS == 9000
+    # restore the module to its real state for other tests
+    monkeypatch.delenv("EMBEDDINGTON_MAX_RESPONSE_TOKENS", raising=False)
+    importlib.reload(config)

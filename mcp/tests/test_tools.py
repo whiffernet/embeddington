@@ -175,12 +175,55 @@ async def test_kg_schema_returns_types():
 
 
 @pytest.mark.asyncio
-async def test_enrich_returns_combined():
+async def test_enrich_returns_combined(monkeypatch):
+    fake_arango = MagicMock(spec=["find_entities", "neighbors_stratified", "count_edges"])
+    fake_arango.find_entities = MagicMock(
+        return_value=[
+            {
+                "id": "entities_v2/x",
+                "name": "X",
+                "type": "Module",
+                "degree": 5,
+            },
+        ]
+    )
+    fake_arango.neighbors_stratified = MagicMock(
+        return_value={
+            "nodes": [
+                {"id": "entities_v2/x", "name": "X", "type": "Module", "releases": []},
+                {"id": "entities_v2/y", "name": "Y", "type": "Module", "releases": []},
+            ],
+            "edges": [
+                {
+                    "id": "e1",
+                    "source": "entities_v2/x",
+                    "target": "entities_v2/y",
+                    "predicate": "USES",
+                    "confidence": 0.9,
+                    "extraction_type": "explicit",
+                    "releases": [],
+                    "source_document": "doc.md",
+                    "source_quote": "X uses Y",
+                },
+            ],
+            "fetched": 1,
+        }
+    )
+    fake_arango.count_edges = MagicMock(return_value=1)
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
+
     fn = await _fn("enrich")
     result = await fn(query="X", entity_hints=["X"], top_k=5)
     assert "vector_chunks" in result
     assert "kg_matches" in result
     assert "errors" in result
+    assert "budget" in result
+    assert "warnings" in result
+    assert len(result["kg_matches"]) == 1
+    match = result["kg_matches"][0]
+    assert match["variants"][0]["id"] == "entities_v2/x"
+    assert len(match["edges"]) == 1
+    assert match["edges"][0]["predicate"] == "USES"
 
 
 @pytest.mark.asyncio
@@ -259,3 +302,95 @@ async def test_vector_search_embed_error_returns_structured_error(monkeypatch):
     assert result["results"] == []
     assert result["collection"] == "technology"
     assert "embed boom" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_enrich_tool_normalizes_and_validates_predicates(monkeypatch):
+    captured_kwargs: dict = {}
+
+    async def fake_enrich_impl(**kwargs):
+        captured_kwargs.update(kwargs)
+        return {
+            "vector_chunks": [],
+            "kg_matches": [],
+            "errors": {},
+            "budget": {"edge_budget": kwargs.get("edge_budget"), "returned": 0, "truncated": False},
+            "warnings": [],
+        }
+
+    monkeypatch.setattr(srv, "_enrich_impl", fake_enrich_impl)
+    monkeypatch.setattr(srv, "_get_known_predicates", lambda: {"CONTAINS", "REQUIRES_ROLE"})
+
+    fn = await _fn("enrich")
+    result = await fn(query="X", predicates=["contains", "bogus_pred"])
+
+    assert captured_kwargs["predicates"] == ["CONTAINS", "BOGUS_PRED"]
+    assert any("bogus_pred" in w for w in result["warnings"])
+
+
+@pytest.mark.asyncio
+async def test_enrich_tool_default_top_k_is_5():
+    import inspect
+
+    from server import enrich as tool
+
+    fn = tool.fn if hasattr(tool, "fn") else tool  # FastMCP wraps the coroutine
+    assert inspect.signature(fn).parameters["top_k"].default == 5
+
+
+@pytest.mark.asyncio
+async def test_kg_neighbors_reports_truncation(monkeypatch):
+    fake = MagicMock()
+    fake.neighbors = MagicMock(
+        return_value={
+            "nodes": [],
+            "edges": [{"id": f"e{i}"} for i in range(100)],
+            "fetched": 100,
+        }
+    )
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake)
+
+    fn = await _fn("kg_neighbors")
+    result = await fn(entity_id="entities_v2/x", limit=100)
+    assert result["truncation"] == {"truncated": True, "available": None, "returned": 100}
+
+
+@pytest.mark.asyncio
+async def test_kg_neighbors_available_none_when_depth_not_1(monkeypatch):
+    """count_edges is a depth-1-only count; it isn't a valid ceiling for a
+    multi-hop `returned`, so `available` must stay None at depth > 1 even
+    when `types` is given."""
+    fake = MagicMock()
+    fake.neighbors = MagicMock(return_value={"nodes": [], "edges": [{"id": "e1"}], "fetched": 1})
+    fake.count_edges = MagicMock(return_value=1)
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake)
+
+    fn = await _fn("kg_neighbors")
+    result = await fn(entity_id="entities_v2/x", depth=2, types=["USES"])
+    assert result["truncation"]["available"] is None
+    fake.count_edges.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_kg_neighbors_count_edges_failure_keeps_payload(monkeypatch):
+    """A count_edges error is secondary enrichment failing, not a neighbors()
+    failure — the already-fetched nodes/edges must survive."""
+    from arango_client import ArangoError
+
+    fake = MagicMock()
+    fake.neighbors = MagicMock(
+        return_value={
+            "nodes": [{"id": "entities_v2/y", "name": "Y", "type": "Module"}],
+            "edges": [{"id": "e1", "predicate": "USES"}],
+            "fetched": 1,
+        }
+    )
+    fake.count_edges = MagicMock(side_effect=ArangoError("count boom"))
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake)
+
+    fn = await _fn("kg_neighbors")
+    result = await fn(entity_id="entities_v2/x", depth=1, types=["USES"])
+    assert result["edges"] == [{"id": "e1", "predicate": "USES"}]
+    assert result["nodes"] == [{"id": "entities_v2/y", "name": "Y", "type": "Module"}]
+    assert result["truncation"]["available"] is None
+    assert "error" not in result

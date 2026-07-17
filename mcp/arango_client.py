@@ -153,16 +153,20 @@ class ArangoKGClient:
                 exploration only when needed.
 
         Returns:
-            Dict with ``nodes`` (``{id, name, type, releases}`` vertex dicts)
-            and ``edges`` (``{id, source, target, predicate, confidence,
-            extraction_type, releases, source_document, source_quote}`` dicts).
-            ``releases`` gives ServiceNow version context; ``extraction_type``
-            ("explicit"/"inferred") pairs with ``confidence`` as a reliability
-            signal; ``source_quote`` is verbatim provenance truncated to 240
-            chars so a dense neighborhood stays under the consumer tool-result
-            cap. Edges are ordered highest-``confidence`` first, so when
-            ``limit`` truncates a large neighborhood the most-reliable edges are
-            kept. Duplicates are deduplicated by id.
+            Dict with ``nodes`` (``{id, name, type, releases}`` vertex dicts),
+            ``edges`` (``{id, source, target, predicate, confidence,
+            extraction_type, releases, source_document, source_quote}`` dicts),
+            and ``fetched`` (raw pre-dedup traversal row count — lets callers
+            tell "truncated by limit" apart from "genuinely small
+            neighborhood"). ``releases`` gives ServiceNow version context;
+            ``extraction_type`` ("explicit"/"inferred") pairs with
+            ``confidence`` as a reliability signal; ``source_quote`` is
+            verbatim provenance truncated to 240 chars so a dense
+            neighborhood stays under the consumer tool-result cap. Edges are
+            ordered highest-``confidence`` first, so when ``limit`` truncates
+            a large neighborhood the most-reliable edges are kept. ``nodes``/
+            ``edges`` are deduplicated by id; ``fetched`` counts raw rows
+            before that dedup.
 
         Raises:
             ArangoError: On query failure.
@@ -217,7 +221,11 @@ class ArangoKGClient:
             e = r["edge"]
             nodes.setdefault(v["id"], v)
             edges.setdefault(e["id"], e)
-        return {"nodes": list(nodes.values()), "edges": list(edges.values())}
+        return {
+            "nodes": list(nodes.values()),
+            "edges": list(edges.values()),
+            "fetched": len(results),
+        }
 
     def neighbors_stratified(
         self,
