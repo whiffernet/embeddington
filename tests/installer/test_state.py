@@ -49,6 +49,12 @@ def test_full_install_is_all_true(tmp_path):
     assert st.stores_populated and st.cursor_present and st.mcp_deps
 
 
+def test_one_populated_store_is_not_populated(tmp_path):
+    # Pins the AND: a mutation to `or` would call a half-restored stack healthy.
+    st = detect(tmp_path, points=lambda: 152_194, entities=lambda: 0)
+    assert not st.stores_populated
+
+
 def test_store_errors_read_as_not_populated(tmp_path):
     def boom():
         raise ConnectionError("daemon down")
