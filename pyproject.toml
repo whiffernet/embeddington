@@ -16,7 +16,9 @@ dependencies = [
 
 [project.optional-dependencies]
 setup = ["rich>=13"]
-dev = ["pytest>=8.0", "pytest-cov>=5", "mypy>=1.0"]
+# rich repeats here because the installer test suite imports it directly and CI
+# installs only [dev] — the dev env must be self-sufficient.
+dev = ["pytest>=8.0", "pytest-cov>=5", "mypy>=1.0", "rich>=13"]
 
 [tool.setuptools.packages.find]
 where = ["src", "."]

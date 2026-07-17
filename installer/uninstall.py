@@ -169,7 +169,10 @@ def _self_delete(console, repo_root, *, mkstemp, execv):
             "echo 'embeddington has left the building. The Dude abides.'\n"
             'rm -- "$0"\n'
         )
-    os.chmod(script, 0o700)
+    # 0o700 is owner-only; the execute bit is required (this is a script) and mkstemp
+    # created the file 0o600, so there is no permissive window. The nosemgrep waives
+    # python.lang.security.audit.insecure-file-permissions (false positive here).
+    os.chmod(script, 0o700)  # nosemgrep
     console.print(f"[dim]Handing off to {script} to remove the clone. So long, man.[/dim]")
     try:
         execv("/bin/sh", ["/bin/sh", str(script), str(repo_root)])
