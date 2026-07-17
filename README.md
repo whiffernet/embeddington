@@ -138,7 +138,7 @@ curl -fsSL https://raw.githubusercontent.com/whiffernet/embeddington/main/instal
 - Unattended (CI, scripts): `EMBEDDINGTON_YES=1`, install dir via
   `EMBEDDINGTON_INSTALL_DIR`. Unattended mode never installs Docker (it can't consent)
   and never deletes data.
-- Prefer to read before you pipe? [`install.sh`](install.sh) is ~150 boring lines; the
+- Prefer to read before you pipe? [`install.sh`](install.sh) is a hundred-odd boring lines; the
   interesting parts run from the versioned clone after it.
 - Health check any time: `embeddington-setup --check`
 
