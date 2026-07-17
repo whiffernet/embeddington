@@ -197,6 +197,16 @@ def test_neighbors_stratified_query_shape(kg_client):
     assert "COLLECT" in aql and "0.5" in aql  # stratification + null coalesce in ORDERING
 
 
+def test_neighbors_stratified_pool_cap_and_bindvar_wiring(kg_client):
+    kg_client._db.aql.execute.return_value = iter([])
+    kg_client.neighbors_stratified("entities_v2/x", per_predicate=4, overall=33)
+    aql = kg_client._db.aql.execute.call_args.args[0]
+    bind = kg_client._db.aql.execute.call_args.kwargs["bind_vars"]
+    assert "LIMIT 5000" in aql  # hub-memory safety cap (spec)
+    assert bind["pp"] == 4  # per_predicate wired to @pp
+    assert bind["overall"] == 33  # overall wired to @overall
+
+
 def test_neighbors_stratified_predicates_upper_normalized(kg_client):
     kg_client._db.aql.execute.return_value = iter([])
     kg_client.neighbors_stratified("entities_v2/x", predicates=["contains"])
