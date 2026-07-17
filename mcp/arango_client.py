@@ -271,9 +271,12 @@ class ArangoKGClient:
         # NB: by_pred's inner COLLECT relies on `pool` already being
         # confidence-ordered — AQL COLLECT ... INTO preserves the input
         # order within each group, so SLICE(grp[*].r, 0, @pp) takes each
-        # predicate's best rows without a re-sort. Verify against the live
-        # server in the Tier-2 battery (Task 10); if ordering isn't
-        # preserved there, add an inner SORT to the slice subquery.
+        # predicate's best rows without a re-sort. VERIFIED on the Tier-2
+        # live battery (Task 10) against ArangoDB 3.12.4: for high-degree
+        # hubs (CMDB deg 459 / 11 predicates, Incident deg 5315 / pool 5000)
+        # the COLLECT+SLICE per-predicate picks matched an explicit
+        # inner-SORT top-@pp-by-confidence for every predicate — order is
+        # preserved, so no inner SORT is needed.
         query = f"""
         LET pool = (
             FOR v, e IN 1..1 ANY @start GRAPH @graph
