@@ -31,9 +31,17 @@ services:
   arango:
     image: arangodb/arangodb:3.12.4
     restart: unless-stopped
+    # Bound Arango's memory. By DEFAULT (no limit) arangod sizes its caches as a
+    # fraction of TOTAL host RAM — ~54% — regardless of dataset size, which on a
+    # large host reserves tens of GB for a <1 GB dataset and can OOM the box.
+    # ARANGO_MEMORY_CAP makes arangod size every proportional default (block cache,
+    # edge cache, AQL query limits) as if the host had exactly that much RAM, and
+    # mem_limit is a hard cgroup backstop. See .env.example for how to tune it.
+    mem_limit: ${ARANGO_MEMORY_CAP:-4g}
     environment:
       # Required — set this in .env (compose fails fast if unset).
       - ARANGO_ROOT_PASSWORD=${ARANGO_ROOT_PASSWORD:?set ARANGO_ROOT_PASSWORD in .env}
+      - ARANGODB_OVERRIDE_DETECTED_TOTAL_MEMORY=${ARANGO_MEMORY_CAP:-4G}
     ports:
       - "8529:8529"
     volumes:
