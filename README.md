@@ -89,8 +89,9 @@ you where to look. The docs are still the truth.
 
 > _"There's a lot of strands to keep in old Duder's head."_
 
-Snapshot of the **`baseline-2026-07b`** baseline (as of **2026-07-09**). The graph grows as
-daily diffs land, so a fresh install will already be a touch bigger than this.
+These are the counts of the current published baseline, **`baseline-2026-07b`** — and, with
+no diffs published on top of it yet, exactly what a fresh install restores today. They'll
+grow when the next baseline or diff batch is published.
 
 | Metric                                      | Count       |
 | ------------------------------------------- | ----------- |
