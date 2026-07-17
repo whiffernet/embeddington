@@ -70,6 +70,8 @@ def group_concepts(seeded: list[tuple[int, dict]]) -> list[Concept]:
         else:
             target.variants.append(entity)
             target.hint_index = min(target.hint_index, hint_index)
+            shorter, longer = sorted((target.key, key), key=len)
+            target.key = shorter
 
     concepts.sort(key=lambda c: c.hint_index)
     return concepts

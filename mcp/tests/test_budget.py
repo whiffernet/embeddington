@@ -66,3 +66,15 @@ def test_group_concepts_dedups_same_entity_across_hints():
 def test_group_concepts_unnamed_entities_stay_singletons():
     seeded = [(0, _e("a", "")), (0, _e("b", ""))]
     assert len(group_concepts(seeded)) == 2  # never bucket unparseables together
+
+
+def test_group_concepts_recanonicalizes_key_on_merge():
+    """Staggered chains merge fully: the concept key follows the shortest name."""
+    seeded = [
+        (0, _e("a", "ABCDEFGH")),
+        (0, _e("b", "ABCD")),  # merges, key must become "abcd..."-normalized
+        (0, _e("c", "AB")),  # must now also merge (extension 2 from ABCD)
+    ]
+    concepts = group_concepts(seeded)
+    assert len(concepts) == 1
+    assert len(concepts[0].variants) == 3
