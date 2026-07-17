@@ -212,9 +212,11 @@ async def enrich(
             le=200,
             description="TOTAL KG edges across the whole response, allocated "
             "across matched concepts. Truncation is explicit — see each "
-            "match's truncation object and suggest hint. Values past ~40–60 "
-            "are usually counterproductive: under the response ceiling the "
-            "trim floors concepts, so a larger budget can return FEWER edges.",
+            "match's truncation object and suggest hint. A larger budget "
+            "returns more edges up to the response ceiling and then plateaus "
+            "(the ceiling trim caps the total either way); the sweep default "
+            "of 40 already sits at that plateau, so raising it mainly adds "
+            "latency, not edges.",
         ),
     ] = 40,
     predicates: Annotated[

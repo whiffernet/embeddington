@@ -90,7 +90,10 @@ EMBED_CONCURRENCY = 16
 CEILING = config.MAX_RESPONSE_TOKENS  # 12000 est-tokens
 HEADROOM_TOKENS = int(CEILING * 0.75)  # ≤ this leaves ≥25% ceiling headroom
 PLATEAU_TOLERANCE = 0.05  # "within 5% of the plateau" (relative)
-SHIPPED = (60, 5)  # (edge_budget, top_k) defaults before this sweep
+SHIPPED = (
+    40,
+    5,
+)  # (edge_budget, top_k) currently-committed defaults (re-swept on orphan-fixed data)
 RESULTS_PATH = _TESTS / "battery_results" / "2026-07-17-sweep.md"
 
 # Short column labels for the (wide) per-query tables.
@@ -350,13 +353,20 @@ def _render(rows: list[dict], gts: dict, knee: dict, plateau: float, threshold: 
         )
     lines.append("")
     lines.append(
-        "**Finding 2 — edge_budget inverts past the ceiling.** Edges actually "
-        "delivered peak at **edge_budget=40** and then *fall* as the budget "
-        "grows (predicate recall falls with them) because a larger request "
-        "overshoots the ceiling and the trim floors concepts toward the 3-edge "
-        "floor. Retention at 40 and 60 is tied; 40 delivers more edges and more "
-        "predicate diversity. Asking for MORE edges past ~40–60 returns FEWER — "
-        "the high end of the 1–200 `edge_budget` range is a footgun."
+        "**Finding 2 — edge delivery plateaus past ~40 (orphan-node trim fix, "
+        "#28).** Edges actually delivered rise from edge_budget=20 to ~40 and "
+        "then *plateau* (~28 mean) as the budget grows; predicate recall stays "
+        "~1.0 across edge_budget 40–120. A larger budget no longer returns "
+        "fewer edges. **Before** this fix the ceiling trim popped edges but left "
+        "their now-orphan nodes in the response, which held it over the ceiling "
+        "and floored concepts to the 3-edge floor — so delivery *inverted*, "
+        "collapsing to ~8.6 mean edges (predicate recall ~0.55) at "
+        "edge_budget=120 while sitting 1600–2300 tokens UNDER the ceiling. "
+        "Pruning orphan nodes on trim reclaims those tokens for edges, so "
+        "delivery now plateaus instead of inverting (see the KG-edges table: "
+        "eb=120/k=5 went from ~8.6 to ~28 mean). Retention still peaks at "
+        "edge_budget=40 and eases off mildly at larger budgets, so the smallest "
+        "budget at the plateau stays the knee."
     )
     lines.append("")
     lines.append(
@@ -364,9 +374,9 @@ def _render(rows: list[dict], gts: dict, knee: dict, plateau: float, threshold: 
         f"`top_k={knee['top_k']}`** (dedup=on). Retention {ka['mean_ret']:.3f} "
         f"(plateau {plateau:.3f} at top_k={SHIPPED[1]}, ≥ {threshold:.3f} "
         f"threshold), predicate recall {ka['mean_pp']:.3f}, {ka['mean_returned']:.1f} "
-        f"edges delivered — the edge_budget that maximizes delivered edges / "
-        f"predicate diversity at plateau retention, just below the flooring "
-        f"inversion."
+        f"edges delivered — the smallest `edge_budget` at the retention plateau, "
+        f"where delivered edges and predicate diversity have also plateaued; "
+        f"higher budgets add latency without adding edges."
     )
     lines.append("")
     if (knee["edge_budget"], knee["top_k"]) == SHIPPED:
@@ -416,7 +426,8 @@ def _pick_knee(rows: list[dict]) -> tuple[dict, float, float]:
     must not tune). Among dedup=on combos at that ``top_k``: the smallest
     ``edge_budget`` whose mean retention is within ``PLATEAU_TOLERANCE`` of that
     slice's plateau, tie-broken by the most edges actually delivered (which
-    inverts past the ceiling — Finding 2).
+    plateaus past the ceiling now that orphan nodes are pruned on trim —
+    Finding 2; before that fix it inverted).
     """
     slice_ = [c for c in rows if c["dedup"] == "on" and c["top_k"] == SHIPPED[1]]
     plateau = max(_agg(c)["mean_ret"] for c in slice_)
