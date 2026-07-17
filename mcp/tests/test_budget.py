@@ -1,6 +1,14 @@
 """Tier-1 (pure, no I/O) tests for the budget/selection module."""
 
-from budget import Concept, allocate_budget, group_concepts, normalize_name
+from budget import (
+    Concept,
+    allocate_budget,
+    coalesced_confidence,
+    estimate_tokens,
+    group_concepts,
+    normalize_name,
+    select_edges,
+)
 
 
 def _e(eid: str, name: str, etype: str = "Feature", degree: int = 10) -> dict:
@@ -119,9 +127,6 @@ def test_allocate_leftover_goes_in_relevance_order():
 def test_allocate_budget_below_floor_never_exceeds_budget():
     assert allocate_budget([_c("a", 0)], edge_budget=1) == [1]
     assert allocate_budget([_c("a", 0), _c("b", 1)], edge_budget=2) == [2, 0]
-
-
-from budget import coalesced_confidence, estimate_tokens, select_edges
 
 
 def _edge(eid: str, predicate: str, confidence=None) -> dict:

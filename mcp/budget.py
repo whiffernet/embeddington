@@ -129,14 +129,28 @@ def allocate_budget(concepts: list[Concept], edge_budget: int, max_concepts: int
 
 
 def estimate_tokens(obj: Any) -> int:
-    """Pessimistic token estimate: ceil(compact-JSON length / TOKEN_DIVISOR)."""
+    """Pessimistic token estimate: ceil(compact-JSON length / TOKEN_DIVISOR).
+
+    Args:
+        obj: Any JSON-serializable object.
+
+    Returns:
+        Estimated token count (integer).
+    """
     return math.ceil(
         len(json.dumps(obj, separators=(",", ":"), ensure_ascii=False)) / TOKEN_DIVISOR
     )
 
 
 def coalesced_confidence(edge: dict) -> float:
-    """Edge confidence with null coalesced to mid-tier 0.5 (spec §3.3)."""
+    """Edge confidence with null coalesced to mid-tier 0.5 (spec §3.3).
+
+    Args:
+        edge: Edge dictionary with optional 'confidence' key.
+
+    Returns:
+        Confidence value (0.0-1.0), or 0.5 if missing/null.
+    """
     c = edge.get("confidence")
     return 0.5 if c is None else float(c)
 
@@ -150,6 +164,14 @@ def select_edges(edges: list[dict], slots: int) -> list[dict]:
     fills remaining slots by coalesced confidence desc. Ties break on edge id
     for determinism. Floor picks come first in the output — the ceiling trim
     (Task 5) drops from the tail, so diversity is sacrificed last.
+
+    Args:
+        edges: List of edge dictionaries with 'id', 'predicate', and
+            optional 'confidence' keys.
+        slots: Maximum number of edges to select.
+
+    Returns:
+        Selected edges, ordered floor-picks-first.
     """
     if slots <= 0 or not edges:
         return []
@@ -161,14 +183,16 @@ def select_edges(edges: list[dict], slots: int) -> list[dict]:
         if len(kept) >= slots:
             break
         p = e.get("predicate")
-        if p not in seen_preds:
+        eid = str(e.get("id"))
+        if p not in seen_preds and eid not in kept_ids:
             seen_preds.add(p)
             kept.append(e)
-            kept_ids.add(str(e.get("id")))
+            kept_ids.add(eid)
     for e in ranked:  # pass 2: fill by confidence
         if len(kept) >= slots:
             break
-        if str(e.get("id")) not in kept_ids:
+        eid = str(e.get("id"))
+        if eid not in kept_ids:
             kept.append(e)
-            kept_ids.add(str(e.get("id")))
+            kept_ids.add(eid)
     return kept
