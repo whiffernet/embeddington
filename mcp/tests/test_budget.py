@@ -8,6 +8,7 @@ from budget import (
     group_concepts,
     normalize_name,
     select_edges,
+    trim_to_ceiling,
 )
 
 
@@ -173,3 +174,72 @@ def test_select_edges_respects_slots_and_is_deterministic():
     a = select_edges(list(edges), slots=4)
     b = select_edges(list(reversed(edges)), slots=4)
     assert len(a) == 4 and [e["id"] for e in a] == [e["id"] for e in b]
+
+
+def _match(concept: str, n_edges: int) -> dict:
+    edges = [_edge(f"{concept}-{i}", "CONTAINS", 0.9 - i * 0.01) for i in range(n_edges)]
+    return {
+        "concept": concept,
+        "variants": [],
+        "nodes": [],
+        "edges": edges,
+        "truncation": {"truncated": False, "available": n_edges, "returned": n_edges},
+        "suggest": None,
+        "error": None,
+    }
+
+
+def _envelope(matches: list[dict], n_chunks: int = 2) -> dict:
+    chunks = [
+        {
+            "id": str(i),
+            "score": 0.9 - i * 0.1,
+            "text": "x" * 500,
+            "source": "s",
+            "metadata": {},
+        }
+        for i in range(n_chunks)
+    ]
+    return {
+        "vector_chunks": chunks,
+        "kg_matches": matches,
+        "errors": {},
+        "budget": {
+            "edge_budget": 60,
+            "returned": sum(len(m["edges"]) for m in matches),
+            "truncated": False,
+        },
+        "warnings": [],
+    }
+
+
+def test_trim_noop_when_under_ceiling():
+    env = _envelope([_match("a", 3)])
+    before = estimate_tokens(env)
+    out = trim_to_ceiling(env, max_tokens=before + 100)
+    assert len(out["kg_matches"][0]["edges"]) == 3
+    assert out["budget"]["truncated"] is False
+
+
+def test_trim_drops_from_largest_match_first():
+    env = _envelope([_match("big", 20), _match("small", 4)])
+    target = estimate_tokens(env) - 40  # force a few drops
+    out = trim_to_ceiling(env, max_tokens=target)
+    assert len(out["kg_matches"][1]["edges"]) == 4  # small untouched
+    assert len(out["kg_matches"][0]["edges"]) < 20
+    assert out["kg_matches"][0]["truncation"]["truncated"] is True
+
+
+def test_trim_never_breaks_the_top3_floor():
+    env = _envelope([_match("a", 6), _match("b", 6)], n_chunks=1)
+    out = trim_to_ceiling(env, max_tokens=1)  # impossible ceiling
+    for m in out["kg_matches"]:
+        assert len(m["edges"]) >= 3  # hinted-concept floor holds
+    assert out["budget"]["truncated"] is True
+    assert out["warnings"]  # over-ceiling admitted, not silent
+
+
+def test_trim_touches_chunks_only_after_edges_and_keeps_one():
+    env = _envelope([_match("a", 4)], n_chunks=3)
+    out = trim_to_ceiling(env, max_tokens=1)
+    assert len(out["vector_chunks"]) == 1  # never zero

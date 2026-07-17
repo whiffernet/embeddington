@@ -196,3 +196,50 @@ def select_edges(edges: list[dict], slots: int) -> list[dict]:
             kept.append(e)
             kept_ids.add(eid)
     return kept
+
+
+def trim_to_ceiling(result: dict, max_tokens: int, floor: int = 3) -> dict:
+    """Enforce the response token ceiling (spec §4.1–4.2). Mutates result.
+
+    Victim rule: while over ceiling, drop the tail edge of the match holding
+    the most edges above its floor (all budgeted matches are hint-derived, so
+    all carry the floor). Then trim vector chunks down to one. If still over,
+    flag loudly — never return silently oversized, never drop below floors.
+
+    Args:
+        result: The assembled enrich envelope with kg_matches and vector_chunks.
+        max_tokens: The token ceiling to enforce.
+        floor: Minimum edges per concept (default 3).
+
+    Returns:
+        The mutated result dict.
+    """
+
+    def over() -> bool:
+        return estimate_tokens(result) > max_tokens
+
+    matches = result.get("kg_matches", [])
+    while over():
+        candidates = [m for m in matches if len(m["edges"]) > floor]
+        if not candidates:
+            break
+        victim = max(candidates, key=lambda m: len(m["edges"]))
+        victim["edges"].pop()  # tail = lowest-value (selection is diversity-first)
+        victim["truncation"]["returned"] = len(victim["edges"])
+        victim["truncation"]["truncated"] = True
+        result["budget"]["truncated"] = True
+
+    chunks = result.get("vector_chunks", [])
+    while over() and len(chunks) > 1:
+        chunks.pop()  # qdrant returns score-ordered; tail = weakest
+        result["budget"]["truncated"] = True
+        if "response ceiling: vector chunks trimmed" not in result["warnings"]:
+            result["warnings"].append("response ceiling: vector chunks trimmed")
+
+    if over():
+        result["budget"]["truncated"] = True
+        result["warnings"].append(
+            "response exceeds ceiling even at floors — narrow with predicates"
+        )
+    result["budget"]["returned"] = sum(len(m["edges"]) for m in matches)
+    return result
