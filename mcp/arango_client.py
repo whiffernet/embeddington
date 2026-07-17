@@ -8,9 +8,10 @@ never string-interpolated user input.
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from arango import ArangoClient
+from arango.cursor import Cursor
 from arango.exceptions import ArangoError as _ArangoError
 from arango.exceptions import DocumentGetError
 
@@ -65,10 +66,12 @@ class ArangoKGClient:
 
         Returns:
             List of dicts with keys ``id``, ``name``, ``type``,
-            ``source_documents`` (first 5 provenance docs, for citation) and
-            ``releases`` (ServiceNow release tags, for version context). The
-            legacy ``description`` key was removed — that attribute is empty on
-            every entity in the corpus.
+            ``source_documents`` (first 5 provenance docs, for citation),
+            ``releases`` (ServiceNow release tags, for version context), and
+            ``degree`` (graph degree, already computed for ranking — exposed
+            so callers can use it as a neighborhood-size/availability signal
+            without a second traversal). The legacy ``description`` key was
+            removed — that attribute is empty on every entity in the corpus.
 
         Raises:
             ArangoError: On query failure.
@@ -91,14 +94,13 @@ class ArangoKGClient:
                 type: e.type,
                 source_documents: SLICE(e.source_documents, 0, 5),
                 releases: e.releases,
+                degree: degree,
             }}
         """
         try:
-            cursor = self._db.aql.execute(
-                query,
-                bind_vars={"needle": text, "limit": limit, "graph": GRAPH},
-            )
-            return list(cursor)
+            bind_vars: dict[str, Any] = {"needle": text, "limit": limit, "graph": GRAPH}
+            cursor = self._db.aql.execute(query, bind_vars=bind_vars)
+            return list(cast(Cursor, cursor))
         except _ArangoError as exc:
             raise ArangoError(f"find_entities failed: {exc}") from exc
 
@@ -125,9 +127,10 @@ class ArangoKGClient:
             raise ArangoError(f"get_entity failed: {exc}") from exc
         if doc is None:
             return None
+        doc_dict = cast(dict[str, Any], doc)
         return {
-            "id": doc["_id"],
-            **{k: v for k, v in doc.items() if not k.startswith("_")},
+            "id": doc_dict["_id"],
+            **{k: v for k, v in doc_dict.items() if not k.startswith("_")},
         }
 
     def neighbors(
@@ -150,16 +153,20 @@ class ArangoKGClient:
                 exploration only when needed.
 
         Returns:
-            Dict with ``nodes`` (``{id, name, type, releases}`` vertex dicts)
-            and ``edges`` (``{id, source, target, predicate, confidence,
-            extraction_type, releases, source_document, source_quote}`` dicts).
-            ``releases`` gives ServiceNow version context; ``extraction_type``
-            ("explicit"/"inferred") pairs with ``confidence`` as a reliability
-            signal; ``source_quote`` is verbatim provenance truncated to 240
-            chars so a dense neighborhood stays under the consumer tool-result
-            cap. Edges are ordered highest-``confidence`` first, so when
-            ``limit`` truncates a large neighborhood the most-reliable edges are
-            kept. Duplicates are deduplicated by id.
+            Dict with ``nodes`` (``{id, name, type, releases}`` vertex dicts),
+            ``edges`` (``{id, source, target, predicate, confidence,
+            extraction_type, releases, source_document, source_quote}`` dicts),
+            and ``fetched`` (raw pre-dedup traversal row count — lets callers
+            tell "truncated by limit" apart from "genuinely small
+            neighborhood"). ``releases`` gives ServiceNow version context;
+            ``extraction_type`` ("explicit"/"inferred") pairs with
+            ``confidence`` as a reliability signal; ``source_quote`` is
+            verbatim provenance truncated to 240 chars so a dense
+            neighborhood stays under the consumer tool-result cap. Edges are
+            ordered highest-``confidence`` first, so when ``limit`` truncates
+            a large neighborhood the most-reliable edges are kept. ``nodes``/
+            ``edges`` are deduplicated by id; ``fetched`` counts raw rows
+            before that dedup.
 
         Raises:
             ArangoError: On query failure.
@@ -203,7 +210,7 @@ class ArangoKGClient:
         """
         try:
             cursor = self._db.aql.execute(query, bind_vars=bind_vars)
-            results = list(cursor)
+            results = list(cast(Cursor, cursor))
         except _ArangoError as exc:
             raise ArangoError(f"neighbors failed: {exc}") from exc
 
@@ -214,7 +221,137 @@ class ArangoKGClient:
             e = r["edge"]
             nodes.setdefault(v["id"], v)
             edges.setdefault(e["id"], e)
-        return {"nodes": list(nodes.values()), "edges": list(edges.values())}
+        return {
+            "nodes": list(nodes.values()),
+            "edges": list(edges.values()),
+            "fetched": len(results),
+        }
+
+    def neighbors_stratified(
+        self,
+        entity_id: str,
+        per_predicate: int = 2,
+        overall: int = 50,
+        predicates: Optional[list[str]] = None,
+    ) -> dict[str, Any]:
+        """Depth-1 neighborhood sampled for predicate diversity (spec §3.3).
+
+        One AQL pass over the (bounded) neighborhood: the top `per_predicate`
+        edges per distinct predicate UNION the overall top `overall` by
+        confidence. Null confidence coalesces to 0.5 for ORDERING only — the
+        returned edge keeps its real (possibly null) value. The scan is
+        bounded at 5000 rows by coalesced confidence to keep hub memory sane;
+        `fetched` reports rows seen (callers derive availability from
+        find_entities degree, not from fetched).
+
+        Args:
+            entity_id: Starting vertex ``_id``.
+            per_predicate: Edges kept per distinct predicate (>=1).
+            overall: Overall top-N by confidence to union in.
+            predicates: Optional predicate filter, case-insensitive.
+
+        Returns:
+            ``{nodes, edges, fetched}`` — same node/edge shapes as neighbors().
+
+        Raises:
+            ArangoError: On query failure.
+        """
+        per_predicate = max(1, min(per_predicate, 10))
+        overall = max(1, min(overall, 500))
+        pred_filter = ""
+        bind_vars: dict[str, Any] = {
+            "start": entity_id,
+            "graph": GRAPH,
+            "pp": per_predicate,
+            "overall": overall,
+        }
+        if predicates:
+            pred_filter = "FILTER UPPER(e.predicate) IN @preds"
+            bind_vars["preds"] = [p.upper() for p in predicates]
+        # NB: by_pred's inner COLLECT relies on `pool` already being
+        # confidence-ordered — AQL COLLECT ... INTO preserves the input
+        # order within each group, so SLICE(grp[*].r, 0, @pp) takes each
+        # predicate's best rows without a re-sort. VERIFIED on the Tier-2
+        # live battery (Task 10) against ArangoDB 3.12.4: for high-degree
+        # hubs (CMDB deg 459 / 11 predicates, Incident deg 5315 / pool 5000)
+        # the COLLECT+SLICE per-predicate picks matched an explicit
+        # inner-SORT top-@pp-by-confidence for every predicate — order is
+        # preserved, so no inner SORT is needed.
+        query = f"""
+        LET pool = (
+            FOR v, e IN 1..1 ANY @start GRAPH @graph
+                {pred_filter}
+                SORT e.confidence == null ? 0.5 : e.confidence DESC
+                LIMIT 5000
+                RETURN {{
+                    vertex: {{id: v._id, name: v.name, type: v.type, releases: v.releases}},
+                    edge: {{
+                        id: e._key, source: e._from, target: e._to,
+                        predicate: e.predicate, confidence: e.confidence,
+                        extraction_type: e.extraction_type, releases: e.releases,
+                        source_document: e.source_document,
+                        source_quote: SUBSTRING(e.source_quote, 0, 240),
+                    }},
+                }}
+        )
+        LET by_pred = FLATTEN(
+            FOR r IN pool
+                COLLECT p = r.edge.predicate INTO grp
+                RETURN SLICE(grp[*].r, 0, @pp),
+            1)
+        LET top_overall = SLICE(pool, 0, @overall)
+        FOR r IN UNION(by_pred, top_overall)
+            COLLECT eid = r.edge.id INTO rows
+            RETURN {{vertex: rows[0].r.vertex, edge: rows[0].r.edge, fetched: LENGTH(pool)}}
+        """
+        try:
+            cursor = self._db.aql.execute(query, bind_vars=bind_vars)
+            results = list(cast(Cursor, cursor))
+        except _ArangoError as exc:
+            raise ArangoError(f"neighbors_stratified failed: {exc}") from exc
+        nodes: dict[str, dict] = {}
+        edges: dict[str, dict] = {}
+        fetched = 0
+        for r in results:
+            nodes.setdefault(r["vertex"]["id"], r["vertex"])
+            edges.setdefault(r["edge"]["id"], r["edge"])
+            fetched = max(fetched, r.get("fetched", 0))
+        return {"nodes": list(nodes.values()), "edges": list(edges.values()), "fetched": fetched}
+
+    def count_edges(self, entity_id: str, predicates: Optional[list[str]] = None) -> int:
+        """Count depth-1 incident edges, optionally predicate-filtered.
+
+        Used only when a predicate filter makes find_entities' degree the
+        wrong availability basis (spec §5.3) — an unfiltered call should use
+        degree instead of paying this traversal.
+
+        Args:
+            entity_id: Starting vertex ``_id``.
+            predicates: Optional predicate filter, case-insensitive.
+
+        Returns:
+            Count of depth-1 incident edges matching the filter.
+
+        Raises:
+            ArangoError: On query failure.
+        """
+        pred_filter = ""
+        bind_vars: dict[str, Any] = {"start": entity_id, "graph": GRAPH}
+        if predicates:
+            pred_filter = "FILTER UPPER(e.predicate) IN @preds"
+            bind_vars["preds"] = [p.upper() for p in predicates]
+        query = f"""
+        FOR v, e IN 1..1 ANY @start GRAPH @graph
+            {pred_filter}
+            COLLECT WITH COUNT INTO c
+            RETURN c
+        """
+        try:
+            cursor = self._db.aql.execute(query, bind_vars=bind_vars)
+            rows = list(cast(Cursor, cursor))
+        except _ArangoError as exc:
+            raise ArangoError(f"count_edges failed: {exc}") from exc
+        return int(rows[0]) if rows else 0
 
     def shortest_path(
         self, from_id: str, to_id: str, max_hops: int = 4
@@ -244,11 +381,9 @@ class ArangoKGClient:
             RETURN {vertex: v, edge: e}
         """
         try:
-            cursor = self._db.aql.execute(
-                query,
-                bind_vars={"from": from_id, "to": to_id, "graph": GRAPH},
-            )
-            steps = list(cursor)
+            bind_vars: dict[str, Any] = {"from": from_id, "to": to_id, "graph": GRAPH}
+            cursor = self._db.aql.execute(query, bind_vars=bind_vars)
+            steps = list(cast(Cursor, cursor))
         except _ArangoError as exc:
             raise ArangoError(f"shortest_path failed: {exc}") from exc
 
@@ -296,10 +431,17 @@ class ArangoKGClient:
         """
         try:
             entity_types = list(
-                self._db.aql.execute(f"FOR e IN {ENTITIES} COLLECT t = e.type RETURN t")
+                cast(
+                    Cursor, self._db.aql.execute(f"FOR e IN {ENTITIES} COLLECT t = e.type RETURN t")
+                )
             )
             predicates = list(
-                self._db.aql.execute(f"FOR r IN {RELATIONSHIPS} COLLECT p = r.predicate RETURN p")
+                cast(
+                    Cursor,
+                    self._db.aql.execute(
+                        f"FOR r IN {RELATIONSHIPS} COLLECT p = r.predicate RETURN p"
+                    ),
+                )
             )
         except _ArangoError as exc:
             raise ArangoError(f"schema failed: {exc}") from exc

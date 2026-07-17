@@ -51,3 +51,9 @@ ALLOWED_ARANGO_COLLECTIONS = {
 }
 # Note: no FORBIDDEN_QDRANT_COLLECTIONS in v1 — Qdrant has no credential isolation
 # yet (see spec §5). Code-level scoping in tool implementations is the only guard.
+
+# --- Response budgeting -----------------------------------------------------
+# Response ceiling for enrich, in ESTIMATED tokens (chars/3, pessimistic).
+# Server-side config on purpose: the token cap is the CLIENT's property and
+# LLM callers must not be able to opt out of the guard (spec §4.1).
+MAX_RESPONSE_TOKENS = int(os.environ.get("EMBEDDINGTON_MAX_RESPONSE_TOKENS", "12000"))

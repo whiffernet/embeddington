@@ -1,0 +1,17 @@
+# Local battery stack for Tier-2 live tests. Pinned to the engine versions
+# the public baseline was produced under — snapshot restore is
+# version-sensitive; do NOT float to :latest.
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.16.3
+    ports: ["19411:6333"]
+    volumes: [battery_qdrant:/qdrant/storage]
+  arangodb:
+    image: arangodb:3.12.4
+    ports: ["19412:8529"]
+    environment:
+      ARANGO_ROOT_PASSWORD: ${ARANGO_ROOT_PASSWORD:?set in env}
+    volumes: [battery_arango:/var/lib/arangodb3]
+volumes:
+  battery_qdrant:
+  battery_arango:

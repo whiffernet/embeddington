@@ -47,7 +47,7 @@ except ImportError:
     from arango_client import ArangoError, ArangoKGClient  # type: ignore[no-redef]
     from embedding_client import EmbeddingClient, EmbeddingError  # type: ignore[no-redef]
     from enrich import enrich as _enrich_impl  # type: ignore[no-redef]
-    from qdrant_client import QdrantError, QdrantSearchClient  # type: ignore[no-redef]
+    from qdrant_client import QdrantError, QdrantSearchClient  # type: ignore[no-redef,attr-defined]
 
 # --- Logging — stderr only (stdout reserved for MCP stdio) ----------------
 logging.basicConfig(
@@ -125,6 +125,34 @@ def _get_arango() -> ArangoKGClient:
     return _arango
 
 
+# --- Predicate cache --------------------------------------------------------
+_schema_predicates: set[str] | None = None
+
+
+def _get_known_predicates() -> set[str] | None:
+    """Cached UPPER-cased predicate list from kg_schema; None = unavailable.
+
+    Populated lazily on first use and cached for the process lifetime — the
+    KG schema doesn't change within a running server. On Arango failure the
+    cache is left unset (not poisoned with an empty set) so a transient
+    outage doesn't permanently disable predicate validation; the caller
+    treats None as "skip validation" rather than "no predicates exist".
+
+    Returns:
+        Set of upper-cased predicate strings, or None if the schema could
+        not be fetched.
+    """
+    global _schema_predicates
+    if _schema_predicates is None:
+        try:
+            _schema_predicates = {
+                str(p).upper() for p in _get_arango().schema().get("predicates", [])
+            }
+        except ArangoError:
+            return None
+    return _schema_predicates
+
+
 # --- Startup sanity check -------------------------------------------------
 
 
@@ -176,39 +204,90 @@ async def enrich(
             "Pass these whenever possible; falls back to regex if None."
         ),
     ] = None,
-    top_k: Annotated[int, Field(ge=1, le=50, description="Vector chunks to return.")] = 10,
+    top_k: Annotated[int, Field(ge=1, le=50, description="Vector chunks to return.")] = 5,
+    edge_budget: Annotated[
+        int,
+        Field(
+            ge=1,
+            le=200,
+            description="TOTAL KG edges across the whole response, allocated "
+            "across matched concepts. Truncation is explicit — see each "
+            "match's truncation object and suggest hint. A larger budget "
+            "returns more edges up to the response ceiling and then plateaus "
+            "(the ceiling trim caps the total either way); the sweep default "
+            "of 40 already sits at that plateau, so raising it mainly adds "
+            "latency, not edges.",
+        ),
+    ] = 40,
+    predicates: Annotated[
+        Optional[list[str]],
+        Field(
+            description="Relationship predicate filter (case-insensitive). "
+            "Leave null unless you have already called kg_schema — guessed "
+            "names are validated and flagged in warnings."
+        ),
+    ] = None,
 ) -> dict[str, Any]:
-    """Default starting tool: parallel vector search + KG entity match.
+    """Default starting tool: budgeted parallel vector search + KG concept match.
 
     Always uses the default `technology` collection for its vector half and
     the shared ServiceNow KG for its entity half.
 
-    Returns structured JSON ({vector_chunks, kg_matches, errors}) — no
-    synthesis. Claude does all reasoning over the returned data.
+    Returns structured JSON ({vector_chunks, kg_matches, errors, budget,
+    warnings}) — no synthesis. Claude does all reasoning over the returned
+    data.
 
-    Grounding: each `kg_matches[].entity` carries `source_documents` +
-    `releases`; each `kg_matches[].neighbors.edges[]` carries `source_quote`
-    (verbatim, citable), `confidence`, `extraction_type`, and `releases`. Cite
-    the `source_quote` for any relationship you use, treat inferred/low-
-    confidence edges as tentative, and scope version-sensitive claims to
-    `releases`.
+    Grounding: each `kg_matches[].variants[0]` carries `source_documents` +
+    `releases` (+ `degree`); each `kg_matches[].edges[]` carries
+    `source_quote` (verbatim, citable), `confidence`, `extraction_type`, and
+    `releases`. Cite the `source_quote` for any relationship you use, treat
+    inferred/low-confidence edges as tentative, and scope version-sensitive
+    claims to `releases`.
+
+    Responses are budget-bounded: kg_matches groups entity variants into
+    concepts (variants[0] = best-ranked); each match's `truncation` reports
+    {truncated, available, returned}; when truncated, `suggest` gives the
+    kg_neighbors/kg_path drill-down. A server-side token ceiling keeps the
+    response within the client cap (or flags it loudly in `warnings` in the
+    rare case per-concept floors force a small overflow) — raising edge_budget
+    adds latency, not size, once the ceiling is reached.
 
     Args:
         query: The user's natural-language question.
         entity_hints: Entity names pre-extracted by Claude from the query.
         top_k: Number of vector chunks to return (1-50).
+        edge_budget: Total KG edge slots to split across matched concepts
+            (1-200, default 40).
+        predicates: Optional relationship predicate filter. Unknown
+            predicates (per kg_schema) are flagged in warnings, not rejected.
 
     Returns:
-        dict with keys vector_chunks, kg_matches, and errors.
+        dict with keys vector_chunks, kg_matches, errors, budget, warnings.
     """
-    return await _enrich_impl(
+    server_warnings: list[str] = []
+    norm_predicates: Optional[list[str]] = None
+    if predicates:
+        norm_predicates = [p.upper() for p in predicates]
+        known = _get_known_predicates()
+        if known is not None:
+            unknown = [p for p in norm_predicates if p not in known]
+            if unknown:
+                server_warnings.append(
+                    f"unknown predicates (call kg_schema): {sorted(p.lower() for p in unknown)}"
+                )
+    result = await _enrich_impl(
         query=query,
         entity_hints=entity_hints,
         top_k=top_k,
+        edge_budget=edge_budget,
+        predicates=norm_predicates,
         embedding_client=_get_embed(),
         qdrant_client=_get_qdrant(),
         arango_client=_get_arango(),
+        max_response_tokens=config.MAX_RESPONSE_TOKENS,
     )
+    result["warnings"] = server_warnings + result["warnings"]
+    return result
 
 
 @mcp.tool
@@ -336,6 +415,15 @@ async def kg_neighbors(
     `source_quote`, treat inferred or low-confidence edges as tentative, and
     scope version-sensitive claims to the edge's `releases`.
 
+    `truncation` reports whether `limit` cut off the raw traversal
+    (`truncated`), the true depth-1 edge count when `types` was given
+    (`available` — an extra count_edges query, which only counts immediate
+    neighbors; it is populated only for depth-1 predicate-filtered calls,
+    where count_edges gives an exact basis, and is otherwise null — both
+    when `types` is omitted and when `depth` > 1, since a depth-1 count
+    isn't a meaningful ceiling for a multi-hop `returned`), and how many
+    edges this call actually returned (`returned`).
+
     Args:
         entity_id: Full ArangoDB document ID to traverse from.
         depth: Traversal depth, 1-3.
@@ -343,14 +431,33 @@ async def kg_neighbors(
         limit: Max raw traversal rows (1-500, default 100).
 
     Returns:
-        dict with keys nodes, edges, and optional error. Node dicts carry
-        `releases` for per-entity version context.
+        dict with keys nodes, edges, truncation, and optional error. Node
+        dicts carry `releases` for per-entity version context.
     """
     try:
         result = _get_arango().neighbors(entity_id, depth=depth, types=types, limit=limit)
-        return result
     except ArangoError as exc:
-        return {"nodes": [], "edges": [], "error": str(exc)}
+        return {
+            "nodes": [],
+            "edges": [],
+            "truncation": {"truncated": False, "available": None, "returned": 0},
+            "error": str(exc),
+        }
+    fetched = result.pop("fetched", 0)
+    available = None
+    if types and depth == 1:
+        # Best-effort: count_edges is a secondary enrichment query — its
+        # failure must not discard the neighbors() payload we already have.
+        try:
+            available = _get_arango().count_edges(entity_id, types)
+        except ArangoError:
+            available = None
+    result["truncation"] = {
+        "truncated": fetched >= limit,
+        "available": available,
+        "returned": len(result["edges"]),
+    }
+    return result
 
 
 @mcp.tool

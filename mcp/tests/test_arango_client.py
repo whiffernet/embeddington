@@ -1,29 +1,47 @@
 """Tests for the scoped ArangoDB client.
 
-These tests use python-arango against a real Arango instance — they're
-integration tests that require ARANGO_TEST_URL + ARANGO_TEST_USER +
-ARANGO_TEST_PASSWORD in the env. Skipped if not provided.
+Two families live here:
+
+- Integration tests (the `client` fixture) run python-arango against a real
+  Arango instance — they require ARANGO_TEST_URL + ARANGO_TEST_USER +
+  ARANGO_TEST_PASSWORD in the env and skip (via the fixture) if not provided.
+- Unit tests (the `kg_client` fixture) construct a real ArangoKGClient
+  against a fake host — `ArangoClient.db()` defaults to `verify=False` so no
+  network call is made — then replace `_db` with a MagicMock so
+  `_db.aql.execute` can be stubbed and its call args asserted on. These
+  always run; they exercise AQL construction, not a live server.
 """
 
 import os
+from unittest.mock import MagicMock
 
 import pytest
 from arango_client import ArangoKGClient
 
-pytestmark = pytest.mark.skipif(
-    not os.environ.get("ARANGO_TEST_PASSWORD"),
-    reason="set ARANGO_TEST_PASSWORD (and optional ARANGO_TEST_URL/USER) to run",
-)
-
 
 @pytest.fixture
 def client():
+    if not os.environ.get("ARANGO_TEST_PASSWORD"):
+        pytest.skip("set ARANGO_TEST_PASSWORD (and optional ARANGO_TEST_URL/USER) to run")
     return ArangoKGClient(
         url=os.environ.get("ARANGO_TEST_URL", "http://localhost:8529"),
         database="technology_kg",
         username=os.environ.get("ARANGO_TEST_USER", "root"),
         password=os.environ["ARANGO_TEST_PASSWORD"],
     )
+
+
+@pytest.fixture
+def kg_client():
+    """ArangoKGClient with a mocked `_db` for AQL-construction unit tests."""
+    c = ArangoKGClient(
+        url="http://test-arango:8529",
+        database="test_kg",
+        username="test-user",
+        password="test-pw",
+    )
+    c._db = MagicMock()
+    return c
 
 
 def test_find_entities_returns_results(client):
@@ -131,3 +149,71 @@ def test_can_read_collection_denies_out_of_scope(client):
     """Isolation check — the scoped user must NOT see collections outside the KG."""
     # The scoped user should be denied on any collection not explicitly granted.
     assert client.can_read_collection("some_other_collection") is False
+
+
+def test_find_entities_returns_degree(kg_client):
+    kg_client._db.aql.execute.return_value = iter(
+        [
+            {
+                "id": "entities_v2/x",
+                "name": "X",
+                "type": "Feature",
+                "source_documents": [],
+                "releases": None,
+                "degree": 42,
+            },
+        ]
+    )
+    out = kg_client.find_entities("X")
+    assert out[0]["degree"] == 42
+    aql = kg_client._db.aql.execute.call_args.args[0]
+    assert "degree: degree" in aql  # RETURN now exposes the computed degree
+
+
+def test_neighbors_stratified_query_shape(kg_client):
+    kg_client._db.aql.execute.return_value = iter(
+        [
+            {
+                "vertex": {"id": "entities_v2/n", "name": "n", "type": "T", "releases": None},
+                "edge": {
+                    "id": "1",
+                    "source": "entities_v2/x",
+                    "target": "entities_v2/n",
+                    "predicate": "CONTAINS",
+                    "confidence": None,
+                    "extraction_type": "explicit",
+                    "releases": None,
+                    "source_document": "d",
+                    "source_quote": "q",
+                },
+                "fetched": 120,
+            },
+        ]
+    )
+    out = kg_client.neighbors_stratified("entities_v2/x", per_predicate=2, overall=30)
+    assert set(out) == {"nodes", "edges", "fetched"}
+    assert out["edges"][0]["confidence"] is None  # null preserved in OUTPUT
+    aql = kg_client._db.aql.execute.call_args.args[0]
+    assert "COLLECT" in aql and "0.5" in aql  # stratification + null coalesce in ORDERING
+
+
+def test_neighbors_stratified_pool_cap_and_bindvar_wiring(kg_client):
+    kg_client._db.aql.execute.return_value = iter([])
+    kg_client.neighbors_stratified("entities_v2/x", per_predicate=4, overall=33)
+    aql = kg_client._db.aql.execute.call_args.args[0]
+    bind = kg_client._db.aql.execute.call_args.kwargs["bind_vars"]
+    assert "LIMIT 5000" in aql  # hub-memory safety cap (spec)
+    assert bind["pp"] == 4  # per_predicate wired to @pp
+    assert bind["overall"] == 33  # overall wired to @overall
+
+
+def test_neighbors_stratified_predicates_upper_normalized(kg_client):
+    kg_client._db.aql.execute.return_value = iter([])
+    kg_client.neighbors_stratified("entities_v2/x", predicates=["contains"])
+    bind = kg_client._db.aql.execute.call_args.kwargs["bind_vars"]
+    assert bind["preds"] == ["CONTAINS"]
+
+
+def test_count_edges_uses_count_aggregate(kg_client):
+    kg_client._db.aql.execute.return_value = iter([57])
+    assert kg_client.count_edges("entities_v2/x", predicates=["CONTAINS"]) == 57
