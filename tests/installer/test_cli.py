@@ -1,6 +1,7 @@
 """CLI flow: flag parsing, doctor exit codes, step ordering, error rendering."""
 
 import io
+from pathlib import Path
 
 from rich.console import Console
 
@@ -134,6 +135,31 @@ def test_uninstall_flag_routes_to_uninstall():
     rec = Recorder(state=ALL_GOOD)
     assert run_main(["--yes", "--uninstall"], rec) == 0
     assert rec.order[-1] == "uninstall"
+
+
+def test_repair_with_dead_embed_still_runs_compose():
+    # containers_running=True but embed_running=False: an install where qdrant+arango
+    # are up but embed crashed. Repair must not skip compose_up just because the menu
+    # gate (containers_running alone) says "already running".
+    state = InstallState(True, True, False, True, True, True)
+    rec = Recorder(state=state)
+    result = cli.main(
+        [],
+        console=console(),
+        deps=make_deps(rec),
+        input_fn=lambda: "r",  # menu -> Repair
+    )
+    assert result == 0
+    assert "compose" in rec.order
+
+
+def test_cron_line_is_built_from_the_actual_repo_root():
+    # Note: the line's log redirect legitimately contains the literal string
+    # "$HOME/embeddington" (as a prefix of $HOME/embeddington-update.log), so the
+    # assertion below targets the `cd` clause specifically rather than the whole line.
+    line = cli.cron_line(Path("/custom/spot/embeddington"))
+    assert "cd /custom/spot/embeddington &&" in line
+    assert "cd $HOME/embeddington &&" not in line
 
 
 def test_force_baseline_reaches_run_import():

@@ -6,7 +6,6 @@ stays import-free of the others.
 """
 
 import argparse
-import functools
 from pathlib import Path
 
 from installer import (
@@ -66,7 +65,17 @@ def _production_deps(repo_root, args):
         points, entities = counters()
         return import_step.proof_of_life(points, entities)
 
-    from installer import uninstall
+    def run_uninstall_dep(console, assume_yes, really, input_fn):
+        from installer import uninstall  # lazy: installer/uninstall.py lands in a later task
+
+        return uninstall.run_uninstall(
+            console,
+            runner.run,
+            repo_root,
+            assume_yes=assume_yes,
+            really_delete_data=really,
+            input_fn=input_fn,
+        )
 
     return {
         "detect_state": detect,
@@ -85,19 +94,12 @@ def _production_deps(repo_root, args):
         "read_password": lambda _c: stack.read_password(repo_root / "consumer" / ".env"),
         "compose_up": lambda _c: stack.compose_up(runner.run, repo_root / "consumer"),
         "wait_for_services": lambda console: stack.wait_for_services(console, runner.http_get),
-        "run_import": functools.partial(import_step.run_import),
+        "run_import": import_step.run_import,
         "proof_of_life": proof,
         "claude_wiring": lambda console, assume_yes, input_fn: claude_step.offer_claude_wiring(
             console, runner.run, repo_root, assume_yes=assume_yes, input_fn=input_fn
         ),
-        "run_uninstall": lambda console, assume_yes, really, input_fn: uninstall.run_uninstall(
-            console,
-            runner.run,
-            repo_root,
-            assume_yes=assume_yes,
-            really_delete_data=really,
-            input_fn=input_fn,
-        ),
+        "run_uninstall": run_uninstall_dep,
     }
 
 
@@ -170,7 +172,7 @@ def _install_flow(console, deps, st, args, input_fn):
     ui.rule(console, "Local stack")
     deps["ensure_env"](console)
     password = deps["read_password"](console)
-    if not st.containers_running:
+    if not (st.containers_running and st.embed_running):
         deps["compose_up"](console)
     deps["wait_for_services"](console)
 
@@ -265,7 +267,22 @@ def _build_parser():
 
 
 def main(argv=None, *, console=None, deps=None, input_fn=input):
-    """Entry point. Returns a process exit code (0 ok, 1 any failure)."""
+    """Entry point: parse flags, build/accept deps, and dispatch to the right flow.
+
+    Args:
+        argv: command-line arguments (excluding the program name), or None to read
+            from sys.argv via argparse's default behavior.
+        console: a rich Console to render to, or None to build the production one.
+        deps: the step-function bundle (see `_production_deps`), or None to build the
+            real production wiring. This is the injection seam tests use to swap any
+            step for a stub without touching the flow logic.
+        input_fn: callable() -> str used for interactive prompts, defaults to `input`.
+
+    Returns:
+        Process exit code. 0 on success; 1 if a `SetupError` was raised anywhere in
+        the flow. `--check` (doctor mode) repurposes this as a health probe: 0 means
+        healthy, 1 means unhealthy, and neither exit mutates anything.
+    """
     args = _build_parser().parse_args(argv)
     console = ui.make_console() if console is None else console
     repo_root = _repo_root()
