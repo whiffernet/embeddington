@@ -207,8 +207,10 @@ async def enrich(
 
     chunks = vector_result["chunks"]
     # Vector half claims at most ~60% of the ceiling up front (spec §4.1).
+    vector_pre_clipped = False
     while len(chunks) > 1 and _budget.estimate_tokens(chunks) > 0.6 * max_response_tokens:
         chunks.pop()
+        vector_pre_clipped = True
         if "response ceiling: vector chunks trimmed" not in warnings:
             warnings.append("response ceiling: vector chunks trimmed")
 
@@ -220,7 +222,7 @@ async def enrich(
         "budget": {
             "edge_budget": edge_budget,
             "returned": sum(len(m["edges"]) for m in matches),
-            "truncated": any(m["truncation"]["truncated"] for m in matches),
+            "truncated": vector_pre_clipped or any(m["truncation"]["truncated"] for m in matches),
         },
         "warnings": warnings,
     }

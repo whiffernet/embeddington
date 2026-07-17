@@ -206,6 +206,37 @@ async def test_enrich_combines_vector_and_kg_results():
 
 
 @pytest.mark.asyncio
+async def test_enrich_vector_preclip_sets_budget_truncated():
+    """The 60%-ceiling vector pre-clip (spec §4.1) pops chunks before `budget`
+    is built — regression for the bug where `budget.truncated` only looked at
+    match truncation and silently missed vector-side clipping."""
+    embedding = AsyncMock()
+    embedding.embed = AsyncMock(return_value=[0.1] * 1024)
+    qdrant = AsyncMock()
+    qdrant.search = AsyncMock(
+        return_value=[
+            {"id": str(i), "score": 0.9, "text": "x" * 30000, "source": "x", "metadata": {}}
+            for i in range(5)
+        ]
+    )
+    arango = _mock_arango()
+    arango.find_entities = MagicMock(return_value=[])
+
+    result = await enrich(
+        query="what is ITSM",
+        entity_hints=["ITSM"],
+        top_k=5,
+        embedding_client=embedding,
+        qdrant_client=qdrant,
+        arango_client=arango,
+    )
+
+    assert len(result["vector_chunks"]) < 5
+    assert "response ceiling: vector chunks trimmed" in result["warnings"]
+    assert result["budget"]["truncated"] is True
+
+
+@pytest.mark.asyncio
 async def test_enrich_partial_failure_qdrant_down():
     """When Qdrant fails, return empty vector_chunks but still attempt KG."""
     from qdrant_client import QdrantError

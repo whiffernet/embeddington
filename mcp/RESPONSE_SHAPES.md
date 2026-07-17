@@ -7,16 +7,17 @@ file. It is versioned with the code, so `git pull` keeps it current.
 
 - **Current as of:** `v0.3.0` (embeddington repo line — see `CHANGELOG.md` at
   the repo root, which is now the git-tag-synced authority going forward).
-- Version tags sprinkled through this doc's body (`v0.3.4`, `v0.3.5`,
-  `v0.3.7`) predate embeddington's own version line — they record when a
-  shape was introduced in the upstream server before it was vendored into
-  this repo, and don't correspond to `embeddington` git tags. The `v0.3.0`
-  above is this repo's own, first `CHANGELOG.md`-tracked release.
+- Version tags sprinkled through this doc's body (`upstream v0.3.4`,
+  `upstream v0.3.5`, `upstream v0.3.7`) predate embeddington's own version
+  line — they record when a shape was introduced in the upstream server
+  before it was vendored into this repo, and don't correspond to
+  `embeddington` git tags. The `v0.3.0` above is this repo's own, first
+  `CHANGELOG.md`-tracked release.
 - **Executable spec:** the shapes here are asserted by
   `mcp/tests/` (notably `test_arango_client.py`,
-  `test_tools.py`, `test_enrich.py`) — those tests are the enforcement; this
-  doc is the human-readable mirror. If they disagree, the tests win and this
-  doc is stale (please fix it).
+  `test_tools.py`, `test_enrich.py`, `test_budget.py`) — those tests are the
+  enforcement; this doc is the human-readable mirror. If they disagree, the
+  tests win and this doc is stale (please fix it).
 
 Every tool returns a **stable envelope**: the documented keys are always
 present, and an `error` string is added on failure (so consumers never need to
@@ -117,8 +118,8 @@ predicates"`. Treat it as an advisory surface, not an error signal —
 }
 ```
 
-- ⚠️ The legacy `description` key was **removed in v0.3.5** (it was empty corpus-wide).
-- **Ordering (v0.3.7):** `find_entities` results are relevance-ranked — exact name match, then prefix, then substring; ties broken by graph degree (descending). So `entities[0]` is the core hub entity, not an arbitrary peripheral match. This is what `enrich` seeds KG traversal from.
+- ⚠️ The legacy `description` key was **removed in upstream v0.3.5** (it was empty corpus-wide).
+- **Ordering (upstream v0.3.7):** `find_entities` results are relevance-ranked — exact name match, then prefix, then substring; ties broken by graph degree (descending). So `entities[0]` is the core hub entity, not an arbitrary peripheral match. This is what `enrich` seeds KG traversal from.
 - **`degree` (v0.3.0):** graph degree (1-hop edge count, any direction), computed once at `find_entities` time and carried through to `enrich`'s `match.variants[]`. It's the ranking tiebreaker for `find_entities` and, when an `enrich` call has no `predicates` filter, the estimate basis for `match.truncation.available` (see the `match` sub-shape below).
 - `kg_get_entity` returns the **full doc** instead — richer: `{id, canonical_key, name, type, source_documents, schema_version, updated_at, releases}` (no `degree` — that field is only computed by `find_entities`'s ranking traversal).
 
@@ -129,7 +130,7 @@ predicates"`. Treat it as an advisory surface, not an error signal —
   "concept": "cmdb", // normalized dedup key (casefolded, punctuation-collapsed name)
   "variants": [
     /* entity, ... */
-  ], // same-name entities across types/hints, merged into one match; variants[0] = best-ranked
+  ], // same-name entities across types/hints, merged into one match; variants[0] = best-ranked (highest graph `degree`, ties broken by id)
   "nodes": [
     /* node, ... */
   ], // union of nodes across all variants' fetched neighborhoods
@@ -151,6 +152,8 @@ predicates"`. Treat it as an advisory surface, not an error signal —
 ```
 
 All seven keys are **always present** — even when this concept's expansion failed (`nodes`/`edges` empty, `error` set) or the budget allocator gave it zero slots (`edges` empty, `truncation.truncated` reflects whether there was anything to expand — see below).
+
+**Ordering:** the top-level `kg_matches[]` array is ordered by earliest contributing `entity_hints` index, then first-seen order within that index — i.e. concepts seeded (even partly) by your first hint sort before ones seeded only by later hints, matching `allocate_budget`'s relevance weighting. Within a match, `variants[0]` is the highest-`degree` variant (ties broken by id) — see above.
 
 > **`truncation.available` is an estimate, not an exact count — never
 > derive a dropped-edge count from it.** For a concept with no `predicates`
@@ -184,7 +187,7 @@ All seven keys are **always present** — even when this concept's expansion fai
   "name": "sn_ti.read",
   "type": "Role",
   "releases": ["zurich"],
-} // per-entity version context (added v0.3.5; null if unpopulated)
+} // per-entity version context (added upstream v0.3.5; null if unpopulated)
 ```
 
 ### `edge` (kg_neighbors `edges[]` and `match.edges[]`)
@@ -196,14 +199,14 @@ All seven keys are **always present** — even when this concept's expansion fai
   "target": "entities_v2/role__sn_ti.read", // _to, full _id
   "predicate": "REQUIRES_ROLE",
   "confidence": 0.95, // float 0–1
-  "extraction_type": "explicit", // "explicit" | "inferred" | "explet"(dirty typo) — added v0.3.5
-  "releases": ["zurich"], // ~33% of edges populated (else null) — added v0.3.5
+  "extraction_type": "explicit", // "explicit" | "inferred" | "explet"(dirty typo) — added upstream v0.3.5
+  "releases": ["zurich"], // ~33% of edges populated (else null) — added upstream v0.3.5
   "source_document": "IT Service Management",
   "source_quote": "The Predictive Intelligence ... plugin activates these ...",
 } // verbatim, <=240 chars
 ```
 
-**Ordering (v0.3.7):** `kg_neighbors` edges come back **highest-`confidence` first**, so when `limit` truncates a large (hub) neighborhood it keeps the most-reliable edges rather than an arbitrary slice. `match.edges[]` (enrich, v0.3.0) uses a different order: a predicate-diversity floor pass (best edge per distinct predicate) followed by a confidence-desc fill pass, so a minority predicate's one edge survives ahead of a majority predicate's twentieth. `enrich` stays depth-1 (a real hub already yields hundreds–thousands of depth-1 edges); for true multi-hop "how does A connect to B", use `kg_path`.
+**Ordering (upstream v0.3.7):** `kg_neighbors` edges come back **highest-`confidence` first**, so when `limit` truncates a large (hub) neighborhood it keeps the most-reliable edges rather than an arbitrary slice. `match.edges[]` (enrich, v0.3.0) uses a different order: a predicate-diversity floor pass (best edge per distinct predicate) followed by a confidence-desc fill pass, so a minority predicate's one edge survives ahead of a majority predicate's twentieth. `enrich` stays depth-1 (a real hub already yields hundreds–thousands of depth-1 edges); for true multi-hop "how does A connect to B", use `kg_path`.
 
 ### `path_edge` (kg_path `edges[]`) — leaner than `edge`
 
@@ -267,11 +270,11 @@ embeddington bounds responses by:
 
 ---
 
-_Changelog of shape-affecting releases: v0.3.0 (vector_search collection param),
-v0.3.4 (edge `source_document` + `source_quote`), v0.3.5 (edge `releases` +
-`extraction_type`; entity `description`→`source_documents`+`releases`; node
-`releases`) — legacy references predating embeddington's own version line, see
-the note under "Current as of" above._
+_Changelog of shape-affecting releases: upstream v0.3.0 (vector_search collection
+param), upstream v0.3.4 (edge `source_document` + `source_quote`), upstream
+v0.3.5 (edge `releases` + `extraction_type`; entity `description`→
+`source_documents`+`releases`; node `releases`) — legacy references predating
+embeddington's own version line, see the note under "Current as of" above._
 
 _embeddington `v0.3.0`: `enrich` response-level `edge_budget` (concept dedup,
 predicate-diversity selection, explicit `truncation`/`suggest`, per-concept

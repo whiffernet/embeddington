@@ -42,6 +42,11 @@ def group_concepts(seeded: list[tuple[int, dict]]) -> list[Concept]:
     shorter one's concept; entities with empty names are singleton concepts
     and are never bucketed together; identical entity ids dedup first.
 
+    Within each concept, variants are sorted best-ranked first — best-ranked
+    means highest graph `degree` (ties broken by id for determinism) — so
+    `variants[0]` is always the concept's most-connected entity, regardless
+    of which hint or encounter order first pulled it in.
+
     Args:
         seeded: (hint_index, entity_dict) pairs in per-hint result order.
 
@@ -76,6 +81,8 @@ def group_concepts(seeded: list[tuple[int, dict]]) -> list[Concept]:
             shorter, longer = sorted((target.key, key), key=len)
             target.key = shorter
 
+    for c in concepts:
+        c.variants.sort(key=lambda v: (-(v.get("degree") or 0), str(v.get("id"))))
     concepts.sort(key=lambda c: c.hint_index)
     return concepts
 

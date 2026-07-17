@@ -233,12 +233,12 @@ async def enrich(
     warnings}) — no synthesis. Claude does all reasoning over the returned
     data.
 
-    Grounding: each `kg_matches[].entity` carries `source_documents` +
-    `releases`; each `kg_matches[].neighbors.edges[]` carries `source_quote`
-    (verbatim, citable), `confidence`, `extraction_type`, and `releases`. Cite
-    the `source_quote` for any relationship you use, treat inferred/low-
-    confidence edges as tentative, and scope version-sensitive claims to
-    `releases`.
+    Grounding: each `kg_matches[].variants[0]` carries `source_documents` +
+    `releases` (+ `degree`); each `kg_matches[].edges[]` carries
+    `source_quote` (verbatim, citable), `confidence`, `extraction_type`, and
+    `releases`. Cite the `source_quote` for any relationship you use, treat
+    inferred/low-confidence edges as tentative, and scope version-sensitive
+    claims to `releases`.
 
     Responses are budget-bounded: kg_matches groups entity variants into
     concepts (variants[0] = best-ranked); each match's `truncation` reports

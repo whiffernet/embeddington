@@ -89,6 +89,18 @@ def test_group_concepts_recanonicalizes_key_on_merge():
     assert len(concepts[0].variants) == 3
 
 
+def test_group_concepts_ranks_variants_by_degree_not_encounter_order():
+    """variants[0] must be the highest-degree variant, even when a low-degree
+    variant is encountered first via an earlier hint (cross-hint merge)."""
+    seeded = [
+        (0, _e("low", "CMDB", "Feature", degree=5)),
+        (1, _e("high", "CMDB", "Product", degree=500)),
+    ]
+    concepts = group_concepts(seeded)
+    assert len(concepts) == 1
+    assert concepts[0].variants[0]["degree"] == 500
+
+
 def _c(key: str, hint_index: int = 0) -> Concept:
     return Concept(key=key, variants=[_e(key, key)], hint_index=hint_index)
 
