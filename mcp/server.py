@@ -247,8 +247,10 @@ async def enrich(
     Responses are budget-bounded: kg_matches groups entity variants into
     concepts (variants[0] = best-ranked); each match's `truncation` reports
     {truncated, available, returned}; when truncated, `suggest` gives the
-    kg_neighbors/kg_path drill-down. A server-side token ceiling guarantees
-    the response fits the client cap — raising edge_budget cannot overflow it.
+    kg_neighbors/kg_path drill-down. A server-side token ceiling keeps the
+    response within the client cap (or flags it loudly in `warnings` in the
+    rare case per-concept floors force a small overflow) — raising edge_budget
+    adds latency, not size, once the ceiling is reached.
 
     Args:
         query: The user's natural-language question.

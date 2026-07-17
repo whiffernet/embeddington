@@ -229,20 +229,20 @@ async def enrich(
     return _budget.trim_to_ceiling(result, max_tokens=max_response_tokens)
 
 
-def _build_suggest(variants: list[dict], dropped_pool: list[dict]) -> dict[str, Any]:
+def _build_suggest(variants: list[dict], pool: list[dict]) -> dict[str, Any]:
     """Drill-down hint for a truncated concept (spec §5.2).
 
     Args:
         variants: The concept's entity variants (best-ranked first).
-        dropped_pool: The full edge pool fetched for this concept, used to
-            surface the most common predicates worth a follow-up query.
+        pool: The full edge pool fetched for this concept, used to surface the
+            neighborhood's most common predicates worth a follow-up query.
 
     Returns:
         A suggest dict pointing at kg_neighbors and kg_path follow-ups.
     """
     from collections import Counter
 
-    top_preds = [p for p, _ in Counter(e["predicate"] for e in dropped_pool).most_common(3)]
+    top_preds = [p for p, _ in Counter(e["predicate"] for e in pool).most_common(3)]
     return {
         "kg_neighbors": {"entity_id": variants[0]["id"], "types": top_preds, "limit": 100},
         "multi_hop": "for dependency chains use kg_path(from_id, to_id)",
