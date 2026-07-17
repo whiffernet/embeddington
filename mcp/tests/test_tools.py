@@ -329,6 +329,33 @@ async def test_enrich_tool_normalizes_and_validates_predicates(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_enrich_tool_skips_predicate_validation_when_schema_unavailable(monkeypatch):
+    """_get_known_predicates() -> None (Arango down) must not crash or warn
+    spuriously; predicates still forwarded UPPER-cased to the impl."""
+    captured_kwargs: dict = {}
+
+    async def fake_enrich_impl(**kwargs):
+        captured_kwargs.update(kwargs)
+        return {
+            "vector_chunks": [],
+            "kg_matches": [],
+            "errors": {},
+            "budget": {"edge_budget": kwargs.get("edge_budget"), "returned": 0, "truncated": False},
+            "warnings": [],
+        }
+
+    monkeypatch.setattr(srv, "_enrich_impl", fake_enrich_impl)
+    monkeypatch.setattr(srv, "_get_known_predicates", lambda: None)
+
+    fn = await _fn("enrich")
+    result = await fn(query="X", predicates=["contains"])
+
+    assert captured_kwargs["predicates"] == ["CONTAINS"]
+    assert not any("contains" in w.lower() for w in result["warnings"])
+    assert not any("unknown predicates" in w for w in result["warnings"])
+
+
+@pytest.mark.asyncio
 async def test_enrich_tool_default_top_k_is_5():
     import inspect
 

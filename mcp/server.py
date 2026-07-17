@@ -412,10 +412,11 @@ async def kg_neighbors(
     `truncation` reports whether `limit` cut off the raw traversal
     (`truncated`), the true depth-1 edge count when `types` was given
     (`available` — an extra count_edges query, which only counts immediate
-    neighbors; it's None when `types` is omitted since find_entities' degree
-    is the cheaper signal there, and also None for `depth` > 1 since a
-    depth-1 count isn't a meaningful ceiling for a multi-hop `returned`),
-    and how many edges this call actually returned (`returned`).
+    neighbors; it is populated only for depth-1 predicate-filtered calls,
+    where count_edges gives an exact basis, and is otherwise null — both
+    when `types` is omitted and when `depth` > 1, since a depth-1 count
+    isn't a meaningful ceiling for a multi-hop `returned`), and how many
+    edges this call actually returned (`returned`).
 
     Args:
         entity_id: Full ArangoDB document ID to traverse from.
