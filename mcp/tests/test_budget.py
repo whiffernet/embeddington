@@ -1,6 +1,6 @@
 """Tier-1 (pure, no I/O) tests for the budget/selection module."""
 
-from budget import group_concepts, normalize_name
+from budget import Concept, allocate_budget, group_concepts, normalize_name
 
 
 def _e(eid: str, name: str, etype: str = "Feature", degree: int = 10) -> dict:
@@ -78,3 +78,39 @@ def test_group_concepts_recanonicalizes_key_on_merge():
     concepts = group_concepts(seeded)
     assert len(concepts) == 1
     assert len(concepts[0].variants) == 3
+
+
+def _c(key: str, hint_index: int = 0) -> Concept:
+    return Concept(key=key, variants=[_e(key, key)], hint_index=hint_index)
+
+
+def test_allocate_first_hint_concept_gets_double_weight():
+    concepts = [_c("primary", 0), _c("context", 1)]
+    slots = allocate_budget(concepts, edge_budget=60)
+    assert slots[0] == 40 and slots[1] == 20  # 2:1 weighting
+
+
+def test_allocate_caps_at_max_concepts():
+    concepts = [_c(f"c{i}", i) for i in range(8)]
+    slots = allocate_budget(concepts, edge_budget=60)
+    assert len(slots) == 5  # only first 5 budgeted; callers treat the rest as unexpanded
+
+
+def test_allocate_minimum_three_per_budgeted_concept():
+    concepts = [_c("a", 0), _c("b", 1), _c("c", 2)]
+    slots = allocate_budget(concepts, edge_budget=10)
+    assert all(s >= 3 for s in slots) and sum(slots) <= 10
+
+
+def test_allocate_tiny_budget_reduces_concept_count_not_floor():
+    concepts = [_c("a", 0), _c("b", 1), _c("c", 2)]
+    slots = allocate_budget(concepts, edge_budget=5)
+    # 5 // 3 = 1 concept gets budgeted; floor never sliced below 3
+    assert slots == [5, 0, 0]
+
+
+def test_allocate_leftover_goes_in_relevance_order():
+    concepts = [_c("a", 0), _c("b", 1), _c("c", 2)]
+    slots = allocate_budget(concepts, edge_budget=20)
+    # weights 2,1,1 → raw 10,5,5; exact split, deterministic
+    assert sum(slots) == 20 and slots[0] >= slots[1] >= slots[2]
