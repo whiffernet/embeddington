@@ -22,6 +22,23 @@ def test_ensure_env_file_never_overwrites_an_existing_one(tmp_path):
     assert "old-password" in existing.read_text()
 
 
+def test_env_file_is_born_0600_via_o_excl(tmp_path, monkeypatch):
+    """Pins the creation call itself: a write-then-chmod regression must fail here."""
+    import os
+
+    calls = {}
+    real_open = os.open
+
+    def spy(path, flags, mode=0o777):
+        calls["flags"], calls["mode"] = flags, mode
+        return real_open(path, flags, mode)
+
+    monkeypatch.setattr(stack.os, "open", spy)
+    stack.ensure_env_file(tmp_path, token_fn=lambda n: "t")
+    assert calls["flags"] & os.O_EXCL
+    assert calls["mode"] == 0o600
+
+
 def test_read_password_returns_the_value(tmp_path):
     f = tmp_path / ".env"
     f.write_text("# comment\nARANGO_ROOT_PASSWORD=hunter2\n")
@@ -37,6 +54,14 @@ def test_read_password_rejects_unusable_env_as_emb33(tmp_path, body):
     with pytest.raises(errors.SetupError) as exc:
         stack.read_password(f)
     assert exc.value.code == "EMB-33"
+
+
+def test_read_password_missing_file_is_emb33_with_doesnt_exist_message(tmp_path):
+    f = tmp_path / "missing.env"
+    with pytest.raises(errors.SetupError) as exc:
+        stack.read_password(f)
+    assert exc.value.code == "EMB-33"
+    assert "doesn't exist" in exc.value.friendly
 
 
 def test_compose_up_streams_and_raises_emb31_on_failure(tmp_path):

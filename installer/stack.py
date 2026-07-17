@@ -20,6 +20,16 @@ ENV_HEADER = (
 def ensure_env_file(consumer_dir, *, token_fn=None):
     """Create consumer/.env with a generated password iff it doesn't already exist.
 
+    Args:
+        consumer_dir: Path where .env will be created.
+        token_fn: Callable that generates the password string (default: secrets.token_urlsafe).
+
+    Returns:
+        Path to the .env file (newly created or pre-existing).
+
+    Raises:
+        FileExistsError: If the file already exists (will return it instead; this is safe).
+
     [CRITIC] The file must be 0o600 from birth (O_CREAT|O_EXCL with the mode), never
     write_text-then-chmod: under the default umask that leaves a window where any local
     user can read the root password. O_EXCL also makes a concurrent-create a loud
@@ -36,11 +46,25 @@ def ensure_env_file(consumer_dir, *, token_fn=None):
 
 
 def read_password(env_file):
-    """Read ARANGO_ROOT_PASSWORD out of a consumer/.env; EMB-33 if unusable."""
+    """Read ARANGO_ROOT_PASSWORD out of a consumer/.env; EMB-33 if unusable.
+
+    Args:
+        env_file: Path to the .env file.
+
+    Returns:
+        The ARANGO_ROOT_PASSWORD value.
+
+    Raises:
+        SetupError: If the file doesn't exist or doesn't contain a usable password.
+    """
     try:
         lines = env_file.read_text().splitlines()
     except OSError:
-        lines = []
+        raise SetupError(
+            "EMB-33",
+            f"{env_file} doesn't exist.",
+            "Re-run the installer — it generates the file with a random password.",
+        )
     for line in lines:
         if line.startswith("ARANGO_ROOT_PASSWORD="):
             value = line.split("=", 1)[1].strip()
@@ -55,7 +79,15 @@ def read_password(env_file):
 
 
 def compose_up(run, consumer_dir):
-    """docker compose up -d --build, streamed live (the embed build takes 10-20 min)."""
+    """docker compose up -d --build, streamed live (the embed build takes 10-20 min).
+
+    Args:
+        run: Callable that executes a subprocess command (injected for testing).
+        consumer_dir: Path where docker-compose.yml is located.
+
+    Raises:
+        SetupError: If docker compose exits with non-zero status (EMB-31).
+    """
     result = run(["docker", "compose", "up", "-d", "--build"], cwd=consumer_dir, stream=True)
     if result.rc != 0:
         raise SetupError(
@@ -78,6 +110,18 @@ def wait_for_services(
     console, http_get, *, sleep=None, clock=None, store_timeout=180, embed_timeout=1800
 ):
     """Poll until qdrant+arango (store_timeout) and embed (embed_timeout) answer.
+
+    Args:
+        console: Rich Console for status updates.
+        http_get: Callable that performs HTTP GET and returns (status, body).
+        sleep: Time.sleep override (injected for testing).
+        clock: time.monotonic override (injected for testing).
+        store_timeout: Seconds to wait for Qdrant and ArangoDB (default 180).
+        embed_timeout: Seconds to wait for the embed service (default 1800).
+
+    Raises:
+        SetupError: If stores don't respond within store_timeout (EMB-31) or embed service
+            doesn't respond within embed_timeout (EMB-32).
 
     Separate deadlines because the stores are prebuilt pulls (up in seconds) while the
     embed service downloads ~2 GB of model weights on first start. [CRITIC] The wait
