@@ -4,7 +4,8 @@
 
 Fixes #28 (enrich payloads exceeded the MCP client tool-result cap).
 
-- `enrich`: response-level `edge_budget` (default 60 total) with
+- `enrich`: response-level `edge_budget` (default 40 total — the sweep knee;
+  see `mcp/tests/battery_results/2026-07-17-sweep.md`) with
   relevance-weighted allocation, concept dedup (same-name entity variants
   expand once, all facets merged), predicate-diversity selection,
   explicit `truncation`/`suggest`, per-concept error scoping, `predicates`

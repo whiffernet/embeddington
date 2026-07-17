@@ -27,7 +27,7 @@ guard for missing keys).
 
 > ### ⚠️ Behavioral change (v0.3.0)
 >
-> `enrich` output is now budget-bounded: default ≤60 edges TOTAL (previously
+> `enrich` output is now budget-bounded: default ≤40 edges TOTAL (previously
 > up to ~100 edges PER matched entity — 576 edges observed on a 3-hint
 > query) and `top_k` default 5 (was 10). Same-name entity variants are
 > grouped into one concept match. Dropped edges are explicit
@@ -42,7 +42,7 @@ guard for missing keys).
 
 | Tool                                                                 | Success envelope                                                                                                      |
 | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `enrich(query, entity_hints?, top_k=5, edge_budget=60, predicates?)` | `{vector_chunks: [chunk], kg_matches: [match], errors: {}, budget: {edge_budget, returned, truncated}, warnings: []}` |
+| `enrich(query, entity_hints?, top_k=5, edge_budget=40, predicates?)` | `{vector_chunks: [chunk], kg_matches: [match], errors: {}, budget: {edge_budget, returned, truncated}, warnings: []}` |
 | `vector_search(query, collection?, limit=10)`                        | `{results: [chunk], count, collection}`                                                                               |
 | `kg_find_entities(text, limit=10)`                                   | `{entities: [entity], count}`                                                                                         |
 | `kg_get_entity(entity_id)`                                           | `{entity: <full doc> \| null}`                                                                                        |
@@ -255,7 +255,7 @@ embeddington bounds responses by:
 
 - `source_quote` truncated to 240 chars, `source_documents` capped to the first 5.
 - `kg_neighbors`/`kg_path` row counts capped by `limit` (default 100 / max 500 for neighbors). Don't raise `limit` on dense hub entities without `types` filtering.
-- `enrich`, since v0.3.0, caps `top_k` (vector chunks, 1–50, default **5**, was 10) and `edge_budget` (KG edges **total across the whole response**, 1–200, default **60**, was ~100 _per matched entity_ uncapped in aggregate). The budget is allocated across matched concepts with relevance weighting and a per-concept floor; see the behavioral-change callout at the top of this doc.
+- `enrich`, since v0.3.0, caps `top_k` (vector chunks, 1–50, default **5**, was 10) and `edge_budget` (KG edges **total across the whole response**, 1–200, default **40**, was ~100 _per matched entity_ uncapped in aggregate). The budget is allocated across matched concepts with relevance weighting and a per-concept floor; see the behavioral-change callout at the top of this doc. The default of 40 is the sweep knee (`mcp/tests/battery_results/2026-07-17-sweep.md`): under the response ceiling, edge delivery peaks near `edge_budget≈40` and then **inverts** — a larger budget overshoots the ceiling and the trim floors concepts, so asking for more edges can return fewer. Raise `edge_budget` past ~40–60 only with that caveat; for maximal KG grounding prefer lowering `top_k` (to 3), which cedes more of the shared ceiling to KG edges.
 - A server-side response-token ceiling (`EMBEDDINGTON_MAX_RESPONSE_TOKENS`, default `12000` estimated tokens at ~3 chars/token — deliberately pessimistic) trims the _whole_ `enrich` response deterministically (KG edges from the largest match first, then vector chunks, always respecting per-concept floors) if it's still too large after budgeting. This is server config, not a tool parameter — callers cannot raise `edge_budget` past what the ceiling allows.
 
 ---

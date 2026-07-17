@@ -212,9 +212,11 @@ async def enrich(
             le=200,
             description="TOTAL KG edges across the whole response, allocated "
             "across matched concepts. Truncation is explicit — see each "
-            "match's truncation object and suggest hint.",
+            "match's truncation object and suggest hint. Values past ~40–60 "
+            "are usually counterproductive: under the response ceiling the "
+            "trim floors concepts, so a larger budget can return FEWER edges.",
         ),
-    ] = 60,
+    ] = 40,
     predicates: Annotated[
         Optional[list[str]],
         Field(
@@ -251,7 +253,7 @@ async def enrich(
         entity_hints: Entity names pre-extracted by Claude from the query.
         top_k: Number of vector chunks to return (1-50).
         edge_budget: Total KG edge slots to split across matched concepts
-            (1-200, default 60).
+            (1-200, default 40).
         predicates: Optional relationship predicate filter. Unknown
             predicates (per kg_schema) are flagged in warnings, not rejected.
 
