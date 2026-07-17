@@ -23,8 +23,11 @@ fail() { # fail EMB-nn "friendly" "fix"
 }
 
 # --- TTY: prompts must come from the terminal, not the curl pipe -------------
+# Attempt a real open: permission bits ([ -r /dev/tty ]) pass in containers and
+# daemons that have no controlling terminal, where any actual open fails (ENXIO)
+# and a later `< /dev/tty` redirect would kill the script.
 INTERACTIVE=0
-if [ -e /dev/tty ] && [ -r /dev/tty ]; then INTERACTIVE=1; fi
+if { : < /dev/tty; } 2>/dev/null; then INTERACTIVE=1; fi
 if [ "$INTERACTIVE" -eq 0 ] && [ -z "$YES" ]; then
   fail EMB-10 "No interactive terminal, and EMBEDDINGTON_YES isn't set." \
     "Run from a real terminal, or set EMBEDDINGTON_YES=1 for an unattended install."
@@ -98,9 +101,10 @@ fi
 
 # --- Handoff to the wizard ------------------------------------------------------
 # ${YES:+--yes} expands to nothing when unset — bash-3.2-safe (an empty array
-# expansion under set -u would abort on stock macOS).
-if [ "$INTERACTIVE" -eq 1 ]; then
-  exec .venv/bin/embeddington-setup ${YES:+--yes} < /dev/tty
+# expansion under set -u would abort on stock macOS). Unattended mode never reads
+# a prompt, so it never gets the /dev/tty redirect — headless boxes have none.
+if [ -z "$YES" ] && [ "$INTERACTIVE" -eq 1 ]; then
+  exec .venv/bin/embeddington-setup < /dev/tty
 else
   exec .venv/bin/embeddington-setup ${YES:+--yes}
 fi
