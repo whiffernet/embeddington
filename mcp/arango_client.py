@@ -65,10 +65,12 @@ class ArangoKGClient:
 
         Returns:
             List of dicts with keys ``id``, ``name``, ``type``,
-            ``source_documents`` (first 5 provenance docs, for citation) and
-            ``releases`` (ServiceNow release tags, for version context). The
-            legacy ``description`` key was removed — that attribute is empty on
-            every entity in the corpus.
+            ``source_documents`` (first 5 provenance docs, for citation),
+            ``releases`` (ServiceNow release tags, for version context), and
+            ``degree`` (graph degree, already computed for ranking — exposed
+            so callers can use it as a neighborhood-size/availability signal
+            without a second traversal). The legacy ``description`` key was
+            removed — that attribute is empty on every entity in the corpus.
 
         Raises:
             ArangoError: On query failure.
@@ -91,6 +93,7 @@ class ArangoKGClient:
                 type: e.type,
                 source_documents: SLICE(e.source_documents, 0, 5),
                 releases: e.releases,
+                degree: degree,
             }}
         """
         try:
@@ -215,6 +218,127 @@ class ArangoKGClient:
             nodes.setdefault(v["id"], v)
             edges.setdefault(e["id"], e)
         return {"nodes": list(nodes.values()), "edges": list(edges.values())}
+
+    def neighbors_stratified(
+        self,
+        entity_id: str,
+        per_predicate: int = 2,
+        overall: int = 50,
+        predicates: Optional[list[str]] = None,
+    ) -> dict[str, Any]:
+        """Depth-1 neighborhood sampled for predicate diversity (spec §3.3).
+
+        One AQL pass over the (bounded) neighborhood: the top `per_predicate`
+        edges per distinct predicate UNION the overall top `overall` by
+        confidence. Null confidence coalesces to 0.5 for ORDERING only — the
+        returned edge keeps its real (possibly null) value. The scan is
+        bounded at 5000 rows by coalesced confidence to keep hub memory sane;
+        `fetched` reports rows seen (callers derive availability from
+        find_entities degree, not from fetched).
+
+        Args:
+            entity_id: Starting vertex ``_id``.
+            per_predicate: Edges kept per distinct predicate (>=1).
+            overall: Overall top-N by confidence to union in.
+            predicates: Optional predicate filter, case-insensitive.
+
+        Returns:
+            ``{nodes, edges, fetched}`` — same node/edge shapes as neighbors().
+
+        Raises:
+            ArangoError: On query failure.
+        """
+        per_predicate = max(1, min(per_predicate, 10))
+        overall = max(1, min(overall, 500))
+        pred_filter = ""
+        bind_vars: dict[str, Any] = {
+            "start": entity_id,
+            "graph": GRAPH,
+            "pp": per_predicate,
+            "overall": overall,
+        }
+        if predicates:
+            pred_filter = "FILTER UPPER(e.predicate) IN @preds"
+            bind_vars["preds"] = [p.upper() for p in predicates]
+        # NB: by_pred's inner COLLECT relies on `pool` already being
+        # confidence-ordered — AQL COLLECT ... INTO preserves the input
+        # order within each group, so SLICE(grp[*].r, 0, @pp) takes each
+        # predicate's best rows without a re-sort. Verify against the live
+        # server in the Tier-2 battery (Task 10); if ordering isn't
+        # preserved there, add an inner SORT to the slice subquery.
+        query = f"""
+        LET pool = (
+            FOR v, e IN 1..1 ANY @start GRAPH @graph
+                {pred_filter}
+                SORT e.confidence == null ? 0.5 : e.confidence DESC
+                LIMIT 5000
+                RETURN {{
+                    vertex: {{id: v._id, name: v.name, type: v.type, releases: v.releases}},
+                    edge: {{
+                        id: e._key, source: e._from, target: e._to,
+                        predicate: e.predicate, confidence: e.confidence,
+                        extraction_type: e.extraction_type, releases: e.releases,
+                        source_document: e.source_document,
+                        source_quote: SUBSTRING(e.source_quote, 0, 240),
+                    }},
+                }}
+        )
+        LET by_pred = FLATTEN(
+            FOR r IN pool
+                COLLECT p = r.edge.predicate INTO grp
+                RETURN SLICE(grp[*].r, 0, @pp),
+            1)
+        LET top_overall = SLICE(pool, 0, @overall)
+        FOR r IN UNION(by_pred, top_overall)
+            COLLECT eid = r.edge.id INTO rows
+            RETURN {{vertex: rows[0].r.vertex, edge: rows[0].r.edge, fetched: LENGTH(pool)}}
+        """
+        try:
+            results = list(self._db.aql.execute(query, bind_vars=bind_vars))
+        except _ArangoError as exc:
+            raise ArangoError(f"neighbors_stratified failed: {exc}") from exc
+        nodes: dict[str, dict] = {}
+        edges: dict[str, dict] = {}
+        fetched = 0
+        for r in results:
+            nodes.setdefault(r["vertex"]["id"], r["vertex"])
+            edges.setdefault(r["edge"]["id"], r["edge"])
+            fetched = max(fetched, r.get("fetched", 0))
+        return {"nodes": list(nodes.values()), "edges": list(edges.values()), "fetched": fetched}
+
+    def count_edges(self, entity_id: str, predicates: Optional[list[str]] = None) -> int:
+        """Count depth-1 incident edges, optionally predicate-filtered.
+
+        Used only when a predicate filter makes find_entities' degree the
+        wrong availability basis (spec §5.3) — an unfiltered call should use
+        degree instead of paying this traversal.
+
+        Args:
+            entity_id: Starting vertex ``_id``.
+            predicates: Optional predicate filter, case-insensitive.
+
+        Returns:
+            Count of depth-1 incident edges matching the filter.
+
+        Raises:
+            ArangoError: On query failure.
+        """
+        pred_filter = ""
+        bind_vars: dict[str, Any] = {"start": entity_id, "graph": GRAPH}
+        if predicates:
+            pred_filter = "FILTER UPPER(e.predicate) IN @preds"
+            bind_vars["preds"] = [p.upper() for p in predicates]
+        query = f"""
+        FOR v, e IN 1..1 ANY @start GRAPH @graph
+            {pred_filter}
+            COLLECT WITH COUNT INTO c
+            RETURN c
+        """
+        try:
+            rows = list(self._db.aql.execute(query, bind_vars=bind_vars))
+        except _ArangoError as exc:
+            raise ArangoError(f"count_edges failed: {exc}") from exc
+        return int(rows[0]) if rows else 0
 
     def shortest_path(
         self, from_id: str, to_id: str, max_hops: int = 4
