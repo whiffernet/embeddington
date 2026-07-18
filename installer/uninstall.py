@@ -16,11 +16,11 @@ from pathlib import Path
 
 from consumer import state_paths
 from installer import ui
+from installer.cron import CRON_MARKER, strip_cron_lines
 from installer.errors import SetupError
 
 KNOWN_QDRANT_COLLECTIONS = {"technology"}
 KNOWN_ARANGO_DBS = {"technology_kg", "_system"}
-CRON_MARKER = "embeddington-consume"
 
 
 @dataclass(frozen=True)
@@ -73,13 +73,6 @@ def resolve_volume_names(run):
         + pick("_arango_data", "consumer_arango_data"),
         "cache": pick("_embed_models", "consumer_embed_models"),
     }
-
-
-def strip_cron_lines(crontab_text):
-    """Return the crontab minus every line mentioning embeddington-consume."""
-    return "\n".join(line for line in crontab_text.splitlines() if CRON_MARKER not in line) + (
-        "\n" if crontab_text.endswith("\n") else ""
-    )
 
 
 def dirty_files(run, repo_root):

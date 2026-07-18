@@ -19,20 +19,7 @@ from installer import (
     state,
     ui,
 )
-
-
-def cron_line(repo_root):
-    """The nightly-update crontab line for THIS install location.
-
-    [CRITIC] Built from the actual repo_root, never hardcoded to $HOME/embeddington —
-    the installer honors EMBEDDINGTON_INSTALL_DIR and an interactive location prompt,
-    and a receipt that prints a cron line for the wrong directory fails silently every
-    night.
-    """
-    return (
-        f"0 6 * * * cd {repo_root} && set -a && . consumer/.env && set +a && "
-        f".venv/bin/embeddington-consume update >> $HOME/embeddington-update.log 2>&1"
-    )
+from installer.cron import cron_line, install_cron
 
 
 def _repo_root():
@@ -108,12 +95,42 @@ def _production_deps(repo_root, args):
         "claude_wiring": lambda console, assume_yes, input_fn: claude_step.offer_claude_wiring(
             console, runner.run, repo_root, assume_yes=assume_yes, input_fn=input_fn
         ),
+        "install_cron": lambda console, assume_yes, input_fn: install_cron(
+            console, runner.run, repo_root, assume_yes=assume_yes, input_fn=input_fn
+        ),
         "run_uninstall": run_uninstall_dep,
     }
 
 
 def _render_rows(console, results):
     ui.check_rows(console, [(r.name, r.ok, r.detail) for r in results])
+
+
+def _cron_receipt(outcome, repo_root):
+    """Render the receipt's auto-updates line for an install_cron outcome.
+
+    Args:
+        outcome: the string install_cron returned.
+        repo_root: the clone root (for the manual line when not enabled).
+
+    Returns:
+        A ready-to-print receipt fragment.
+    """
+    if outcome in ("installed", "installed-cron-down"):
+        line = "  Auto-updates: enabled (daily 06:00). Remove with embeddington-setup --uninstall."
+        if outcome == "installed-cron-down":
+            # Generic-correct: do NOT hardcode a start command — macOS has no `service`,
+            # and WSL2 needs more than starting cron. Point at the per-platform README note.
+            line += (
+                "\n    [yellow]note: no cron daemon detected — the job won't run until cron "
+                "is running. See the README's auto-updates note for your platform "
+                "(Linux/macOS/WSL2).[/yellow]"
+            )
+        return line
+    return (
+        "  Auto-updates: not set up. To enable later, add this crontab line:\n"
+        f"    {cron_line(repo_root)}"
+    )
 
 
 def _doctor(console, deps):
@@ -197,12 +214,15 @@ def _install_flow(console, deps, st, args, input_fn):
     ui.rule(console, "Claude")
     deps["claude_wiring"](console, args.yes, input_fn)
 
+    ui.rule(console, "Auto-updates")
+    cron_outcome = deps["install_cron"](console, args.yes, input_fn)
+
     ui.rule(console, "Receipt")
     console.print(
         f"  Install:   {_repo_root()}\n"
         f"  State:     ~/.local/share/embeddington (or $EMBEDDINGTON_HOME)\n"
         f"  Version:   {result['cursor']}\n"
-        f"  Daily cron (optional):\n    {cron_line(_repo_root())}\n"
+        f"{_cron_receipt(cron_outcome, _repo_root())}\n"
         f"  Health:    embeddington-setup --check\n"
         f"  Leaving?   embeddington-setup --uninstall\n"
     )

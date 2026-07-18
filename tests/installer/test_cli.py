@@ -59,6 +59,7 @@ def make_deps(rec):
         ),
         "proof_of_life": rec.step("proof", (152_194, 41_000)),
         "claude_wiring": rec.step("claude", "skipped"),
+        "install_cron": rec.step("install_cron", "skipped-unattended"),
         "run_uninstall": rec.step("uninstall", 0),
     }
 
@@ -81,6 +82,7 @@ def test_fresh_install_runs_steps_in_order():
         "import",
         "proof",
         "claude",
+        "install_cron",
     ]
 
 
@@ -151,6 +153,36 @@ def test_repair_with_dead_embed_still_runs_compose():
     )
     assert result == 0
     assert "compose" in rec.order
+
+
+def test_install_flow_offers_cron_after_claude():
+    rec = Recorder(state=FRESH)
+    deps = make_deps(rec)
+    deps["install_cron"] = rec.step("install_cron", "installed")
+    assert cli.main(["--yes"], console=console(), deps=deps, input_fn=lambda: "") == 0
+    assert rec.order.index("install_cron") > rec.order.index("claude")
+
+
+def test_cron_receipt_enabled():
+    line = cli._cron_receipt("installed", "/opt/emb")
+    assert "enabled" in line.lower()
+    assert "--uninstall" in line
+
+
+def test_cron_receipt_cron_down_warns():
+    line = cli._cron_receipt("installed-cron-down", "/opt/emb")
+    assert "enabled" in line.lower()
+    assert "cron" in line.lower() and ("won't" in line.lower() or "not running" in line.lower())
+    # generic-correct: must NOT hardcode a platform-specific start command (macOS has no
+    # `service`), so it points at the README instead.
+    assert "service cron start" not in line
+
+
+def test_cron_receipt_not_set_up_prints_manual_line():
+    for outcome in ("declined", "skipped-unattended", "no-crontab"):
+        line = cli._cron_receipt(outcome, "/opt/emb")
+        assert "not set up" in line.lower()
+        assert "cd /opt/emb" in line  # the manual crontab line is printed
 
 
 def test_cron_line_is_built_from_the_actual_repo_root():

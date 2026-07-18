@@ -247,6 +247,11 @@ pulling newer diffs as they're published. (Re-running the one-liner does this to
 installed box it offers **Update** — but under the hood it's the one command below, which is
 also what you'd drop in a cron job.)
 
+**The installer offers to set this up for you.** During install (and on **Repair**), the
+wizard asks _"Set up daily auto-updates at 06:00?"_ — say yes and it adds the crontab entry
+below automatically (idempotently; `embeddington-setup --uninstall` removes it). If you
+declined, ran unattended (`EMBEDDINGTON_YES=1`), or want a different schedule, add it by hand:
+
 That command is `embeddington-consume update`. It needs `ARANGO_ROOT_PASSWORD` in its
 environment — the same value in `consumer/.env` from install. The first line below loads it.
 That relative path (`consumer/.env`) is why this block wants the repo root:
@@ -279,6 +284,30 @@ guarantee that a first-time migration finds that clone's old cursor to adopt:
 That example line assumes `~/embeddington`; if you installed somewhere else, the wizard's
 receipt prints the crontab line for your actual install location — copy it from there
 instead of hand-editing the path above.
+
+<details><summary>Auto-updates on macOS and WSL2 (platform notes)</summary>
+
+The daily cron job is a plain crontab entry. On a normal Linux box with cron running it
+just works. Each platform has a wrinkle worth knowing:
+
+- **Linux:** if the wizard warned that no cron daemon was detected, start it —
+  `sudo service cron start` (or `sudo systemctl enable --now cron`), then the 06:00 job
+  fires.
+- **macOS:** cron starts itself the first time a crontab exists, so the "no cron daemon
+  detected" warning right after enabling is usually just a timing blip — the job will
+  still run. Two real caveats: (1) if `crontab` fails to write, grant your terminal app
+  **Full Disk Access** (System Settings → Privacy & Security) and re-run; (2) cron jobs
+  inherit macOS privacy limits, so if you installed embeddington **under `~/Documents`,
+  `~/Desktop`, `~/Downloads`, or iCloud Drive**, the nightly `cd` into it can be blocked
+  and the update silently does nothing — install somewhere like `~/embeddington` or
+  `~/code/embeddington` to avoid this.
+- **WSL2:** a crontab entry only fires while the distro is running, and WSL2 shuts the
+  distro down when idle and does not launch it at boot. For reliable 06:00 updates you
+  need `systemd=true` in `/etc/wsl.conf` **and** something keeping the distro alive (e.g.
+  a Windows Task Scheduler job that runs `wsl.exe`). Without that, prefer running
+  `embeddington-setup` (Update) by hand when you want fresh data.
+
+</details>
 
 Most runs are tiny — just the newer diffs. The exception is a **re-baseline**: after the
 publisher compacts history, the next update re-restores the whole snapshot in one step (a
