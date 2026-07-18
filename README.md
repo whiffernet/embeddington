@@ -288,7 +288,7 @@ instead of hand-editing the path above.
 <details><summary>Auto-updates on macOS and WSL2 (platform notes)</summary>
 
 The daily cron job is a plain crontab entry. On a normal Linux box with cron running it
-just works. Two platforms need a word:
+just works. Each platform has a wrinkle worth knowing:
 
 - **Linux:** if the wizard warned that no cron daemon was detected, start it —
   `sudo service cron start` (or `sudo systemctl enable --now cron`), then the 06:00 job
