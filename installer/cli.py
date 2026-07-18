@@ -19,20 +19,7 @@ from installer import (
     state,
     ui,
 )
-
-
-def cron_line(repo_root):
-    """The nightly-update crontab line for THIS install location.
-
-    [CRITIC] Built from the actual repo_root, never hardcoded to $HOME/embeddington —
-    the installer honors EMBEDDINGTON_INSTALL_DIR and an interactive location prompt,
-    and a receipt that prints a cron line for the wrong directory fails silently every
-    night.
-    """
-    return (
-        f"0 6 * * * cd {repo_root} && set -a && . consumer/.env && set +a && "
-        f".venv/bin/embeddington-consume update >> $HOME/embeddington-update.log 2>&1"
-    )
+from installer.cron import cron_line
 
 
 def _repo_root():
