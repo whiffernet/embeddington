@@ -106,11 +106,29 @@ def install_cron(console, run, repo_root, *, assume_yes, input_fn=input):
     # Write to a temp file, install it, and always clean the temp file up (a per-run
     # crontab tempfile left in /tmp is untidy). mkstemp + finally, not NamedTemporaryFile
     # (delete=False), so nothing lingers.
-    fd, path = tempfile.mkstemp(suffix=".cron", prefix="embeddington-")
     try:
-        with os.fdopen(fd, "w") as handle:
-            handle.write(new_tab)
-        if run(["crontab", path]).rc != 0:
+        fd, path = tempfile.mkstemp(suffix=".cron", prefix="embeddington-")
+    except OSError:
+        ui.show_error(
+            console,
+            SetupError(
+                "EMB-62",
+                "Couldn't write the crontab, so auto-updates weren't enabled.",
+                "Add the line yourself with `crontab -e` — the receipt prints it. On "
+                "macOS a write failure usually means the Terminal app needs Full Disk "
+                "Access (System Settings → Privacy & Security).",
+            ),
+        )
+        return "declined"
+
+    try:
+        try:
+            with os.fdopen(fd, "w") as handle:
+                handle.write(new_tab)
+            wrote = run(["crontab", path]).rc == 0
+        except OSError:
+            wrote = False
+        if not wrote:
             ui.show_error(
                 console,
                 SetupError(

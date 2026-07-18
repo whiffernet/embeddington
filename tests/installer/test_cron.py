@@ -67,7 +67,8 @@ class CronRun:
     def __call__(self, cmd, *, cwd=None, env=None, timeout=None, stream=False):
         self.calls.append({"cmd": list(cmd), "cwd": cwd, "stream": stream})
         if cmd[:1] == ["crontab"] and len(cmd) == 2 and cmd[1] != "-l":
-            self.written = open(cmd[1]).read()  # capture the written body before unlink
+            with open(cmd[1]) as fh:
+                self.written = fh.read()  # capture the written body before unlink
         return self.results.pop(0) if self.results else RunResult(0, "", "")
 
 
@@ -148,3 +149,16 @@ def test_write_failure_is_not_installed_and_warns_emb62():
     out = cron.install_cron(c, run, "/opt/emb", assume_yes=False, input_fn=lambda: "y")
     assert out == "declined"
     assert "EMB-62" in c.file.getvalue()
+
+
+def test_tempfile_is_cleaned_up_after_install():
+    import os
+
+    run = CronRun([RunResult(0, "", ""), RunResult(0, "", ""), RunResult(0, "1", "")])
+    cron.install_cron(console(), run, "/opt/emb", assume_yes=False, input_fn=lambda: "y")
+    write_calls = [
+        c["cmd"][1]
+        for c in run.calls
+        if c["cmd"][:1] == ["crontab"] and len(c["cmd"]) == 2 and c["cmd"][1] != "-l"
+    ]
+    assert write_calls and not os.path.exists(write_calls[0])
