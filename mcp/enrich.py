@@ -347,10 +347,14 @@ async def _vector_side(
     ``chunk_text`` on subtokens split at underscores/punctuation, so a
     MatchText search for "cmdb_rel_ci" actually matches any chunk containing
     {cmdb, rel, ci} anywhere (all-subtokens-AND, not the literal identifier)
-    — each lane over-fetches at ``limit=top_k*2`` and is post-filtered to
-    chunks whose text contains the literal token case-insensitively before
-    fusion, to give the shrinkage from filtering some headroom. All
-    surviving lanes are merged by reciprocal-rank fusion (``hybrid.rrf_merge``)
+    — each lane over-fetches at ``limit=max(top_k*2, 25)`` and is
+    post-filtered to chunks whose text contains the literal token
+    case-insensitively before fusion. The 25 floor (not just top_k*2) is a
+    measured depth: identifiers built from common subtokens (e.g.
+    "pm_project" -> {pm, project}) push literal-token chunks as deep as
+    rank 14-23 in the subtoken-AND-filtered lane, so a depth-10 fetch
+    post-filters to empty for those. All surviving lanes are merged by
+    reciprocal-rank fusion (``hybrid.rrf_merge``)
     and capped to `top_k`. A lexical lane that raises is logged and dropped
     (not propagated) — the fused result still reflects any lanes that did
     succeed.
@@ -400,7 +404,7 @@ async def _vector_side(
         active = True
         for tok in tokens:
             try:
-                lane = await qdrant.search(vector=vector, limit=top_k * 2, match_text=tok)
+                lane = await qdrant.search(vector=vector, limit=max(top_k * 2, 25), match_text=tok)
                 lex_lanes.append([c for c in lane if tok in str(c.get("text", "")).lower()])
             except Exception as exc:  # noqa: BLE001 — a lexical lane degrades, never fails enrich
                 logger.warning("lexical lane failed for token %r: %s", tok, exc)

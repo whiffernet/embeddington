@@ -685,8 +685,9 @@ async def test_vector_side_lexical_lane_postfilters_to_literal_token():
     identifier (live-validation defect, issue #38: 5/5 real smoke hits
     lacked the literal token). The lexical lane must post-filter each hit
     down to chunks whose text contains the literal token (case-insensitive)
-    before fusion, and over-fetch (limit=top_k*2) to give that filtering
-    some headroom."""
+    before fusion, and over-fetch (limit=max(top_k*2, 25), a measured depth
+    floor for common-subtoken identifiers) to give that filtering some
+    headroom."""
     calls = []
 
     class Q:
@@ -708,7 +709,7 @@ async def test_vector_side_lexical_lane_postfilters_to_literal_token():
     ids = [c["id"] for c in res["chunks"]]
     assert "literal" in ids
     assert "scattered" not in ids  # scattered-subtoken match dropped by the postfilter
-    assert ("cmdb_rel_ci", 10) in calls  # lexical lane over-fetches at top_k*2 = 5*2
+    assert ("cmdb_rel_ci", 25) in calls  # lexical lane over-fetches at max(top_k*2, 25) = 25
 
 
 @pytest.mark.asyncio

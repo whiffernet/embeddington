@@ -65,7 +65,11 @@ MAX_RESPONSE_TOKENS = int(os.environ.get("EMBEDDINGTON_MAX_RESPONSE_TOKENS", "12
 DIVERSITY_QUOTA_FRACTION = float(os.environ.get("EMBEDDINGTON_DIVERSITY_QUOTA", "0.40"))
 
 # Minimum dense-lane similarity score a vector chunk must clear to survive
-# (spec §5 PR 4, issue #38). 0.0 disables the filter — the shipped default is
-# picked by Task 6's measurement sweep, not guessed here. Like the knobs
-# above, this is wired at the server.py call site; enrich.py stays config-free.
-SCORE_THRESHOLD = float(os.environ.get("EMBEDDINGTON_SCORE_THRESHOLD", "0.0"))
+# (spec §5 PR 4, issue #38). 0.0 disables the filter. 0.50 is the measured
+# shipped default (Task 6 battery sweep, live Qdrant): nonsense probes top
+# out ~0.45, the weakest legitimate battery query bottoms at ~0.56 — 0.50
+# splits with margin on both sides (live-verified: nonsense returns 0 chunks
+# at 0.50 vs 5 padded-in at 0.0; all legitimate queries unaffected). Like the
+# knobs above, this is wired at the server.py call site; enrich.py stays
+# config-free.
+SCORE_THRESHOLD = float(os.environ.get("EMBEDDINGTON_SCORE_THRESHOLD", "0.50"))
