@@ -241,7 +241,9 @@ async def enrich(
                 for eid in quote_to_edges[sq]:
                     relevance[eid] = score
         except Exception as exc:  # noqa: BLE001 — any embed failure degrades, never fails enrich
-            logger.warning("relevance scoring failed, degrading to confidence order: %s", exc)
+            logger.warning(
+                "relevance scoring failed, degrading to confidence order: %s", exc, exc_info=True
+            )
             relevance = None
             warnings.append(
                 "relevance scoring unavailable — selection degraded to confidence order"
