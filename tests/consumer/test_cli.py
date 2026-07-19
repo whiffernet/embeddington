@@ -307,3 +307,75 @@ def test_adoption_is_reported_to_the_user(tmp_path):
         }
     )
     assert "Migrated" in out and "/home/u/embeddington/data/.cursor" in out
+
+
+# --- ensure-index -----------------------------------------------------------
+
+
+def test_ensure_index_parses_and_dispatches(monkeypatch):
+    calls = {}
+
+    def fake_cmd(args):
+        calls["qdrant_url"] = args.qdrant_url
+        calls["collection"] = args.collection
+        return 0
+
+    monkeypatch.setattr(cli, "_cmd_ensure_index", fake_cmd)
+    rc = cli.main(["ensure-index", "--qdrant-url", "http://q:6333", "--collection", "tech"])
+
+    assert rc == 0
+    assert calls == {"qdrant_url": "http://q:6333", "collection": "tech"}
+
+
+def test_ensure_index_defaults_match_update(tmp_path):
+    """No reason for the two commands to point at different collections by default."""
+    up = cli._build_parser().parse_args(["update"])
+    ei = cli._build_parser().parse_args(["ensure-index"])
+
+    assert ei.qdrant_url == up.qdrant_url
+    assert ei.collection == up.collection
+
+
+@pytest.mark.parametrize(
+    "status,expected_rc", [("ready", 0), ("building", 1), ("absent", 1), ("unavailable", 1)]
+)
+def test_ensure_index_exit_code_follows_status(monkeypatch, capsys, status, expected_rc):
+    monkeypatch.setattr(
+        cli,
+        "lexical_index",
+        types.SimpleNamespace(ensure_chunk_text_index=lambda url, collection: status),
+    )
+
+    rc = cli.main(["ensure-index"])
+
+    assert rc == expected_rc
+    assert status in capsys.readouterr().out
+
+
+def test_ensure_index_passes_through_the_configured_url_and_collection(monkeypatch):
+    captured = {}
+
+    def fake_ensure(url, collection):
+        captured["url"] = url
+        captured["collection"] = collection
+        return "ready"
+
+    monkeypatch.setattr(
+        cli, "lexical_index", types.SimpleNamespace(ensure_chunk_text_index=fake_ensure)
+    )
+
+    cli.main(["ensure-index", "--qdrant-url", "http://custom:6333", "--collection", "mine"])
+
+    assert captured == {"url": "http://custom:6333", "collection": "mine"}
+
+
+def test_ensure_index_help_documents_the_exit_codes():
+    parser = cli._build_parser()
+    sub_action = next(
+        a
+        for a in parser._subparsers._group_actions
+        if a.dest == "command"  # noqa: SLF001
+    )
+    help_text = sub_action.choices["ensure-index"].format_help()
+
+    assert "0" in help_text and "ready" in help_text

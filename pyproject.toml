@@ -12,6 +12,7 @@ dependencies = [
     "zstandard>=0.22",
     "qdrant-client>=1.10",
     "python-arango>=8.0",
+    "httpx>=0.28.1",
 ]
 
 [project.optional-dependencies]
