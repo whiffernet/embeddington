@@ -22,8 +22,9 @@ Evaluator: `compare_to_baseline.py` (amended floor — see gold/README.md Amendm
 | hub_cmdb improved                                  | 0.071->0.071 | DEFERRED(PR4) |
 
 Baseline selector mean gold-recall was **0.130** (BASELINE.md) — the shipped selector
-returns **2.2×** the gold-relevant edges, and revives three formerly-zero queries
-(`c1` 0→0.200, `hub_incident` 0→0.429, `control_no_hints_snake` 0→0.333).
+returns **2.2×** the gold-relevant edges, and revives four formerly-zero queries
+(`c1` 0→0.200, `hub_incident` 0→0.429, `control_no_hints_snake` 0→0.333,
+`hub_cmdb_rel_ci` 0→0.071).
 Mean gold-precision (watched, no gate): 0.126 (baseline 0.061).
 
 ## Quota-fraction arm sweep (reps=1, shipped combo)
@@ -69,7 +70,7 @@ as well. Queued follow-up: precompute/persist quote embeddings at install/update
 first calls are also fast.
 
 Degradation-path integrity: the final run logged 19 `relevance scoring unavailable`
-warnings, all in `eb=80`/`eb=120` grid cells (large-pool batch embeds timing out on CPU
+warnings, all in `eb=120` grid cells (large-pool batch embeds timing out on CPU
 — noted for PR 6's re-tune); the shipped-combo segment is **clean**, so every gated
 number above was measured with relevance scoring active.
 
