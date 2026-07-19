@@ -47,3 +47,23 @@ family majority vote** (Claude judge / gpt-oss-120b / llama-3.3-70b, identical r
 temperature 0, blind): 121 relevant of 2,765. Full history, per-round numbers, and the
 bar disposition live in JUDGE-VALIDATION.md. Rebuilds must reproduce the whole pipeline:
 judge -> skeptic -> both referee-family votes -> majority.
+
+## Identifier cohort (2026-07-19)
+
+**Built for:** PR 4 / issue #38
+
+**Queries:** Four natural-language identifier-lookup queries with controller-verified literal corpus presence:
+
+1. "What does the com.snc.discovery plugin activate?" → `id_disc_plugin` (pools ZERO edges)
+2. "What does the com.snc.incident.mim plugin provide for major incident management?" → `id_mim_plugin` (pools ZERO edges)
+3. "What is the pm_project table used for?" → `id_pm_project` (pools 152 edges, 7 relevant)
+4. "What is the sc_cat_item table used for?" → `id_sc_cat_item` (pools 212 edges, 6 relevant)
+
+**KG extraction deficiency:** The two dotted-plugin queries (`id_disc_plugin`, `id_mim_plugin`) yield zero edges
+from the KG because the entity-hint extractor (`_extract_entity_hints`) cannot resolve dotted identifiers in
+NL phrases. This is a **measured, documented deficiency** in the extraction ontology — vector-lane gates on
+the MCP still cover all four queries despite the gap.
+
+**Labeling:** Identical judge→skeptic→2-referee majority pipeline as the main fixed cohort. Result: 13 candidate
+edges (both non-empty queries pooled) with **unanimous 3/3 cross-family majority** labels (Claude, gpt-oss-120b,
+llama-3.3-70b). All 7 id_pm_project relevants + 6 id_sc_cat_item relevants survived skeptic review.

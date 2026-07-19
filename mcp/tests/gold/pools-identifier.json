@@ -1,0 +1,4096 @@
+{
+ "binding": {
+  "baseline": "baseline-2026-07b",
+  "points": 152194,
+  "entities": 310364,
+  "edges": 683651
+ },
+ "per_predicate": 2,
+ "overall": 100,
+ "queries": {
+  "id_disc_plugin": {
+   "fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "query": "What does the com.snc.discovery plugin activate?",
+   "edges": {}
+  },
+  "id_mim_plugin": {
+   "fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "query": "What does the com.snc.incident.mim plugin provide for major incident management?",
+   "edges": {}
+  },
+  "id_pm_project": {
+   "fingerprint": "39bce2b22b2700bdce755ab3a2c4d2423598c1e12456934825c732d618fdef37",
+   "query": "What is the pm_project table used for?",
+   "edges": {
+    "1856318163": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Required. Sys_id of the project or demand for the cost plan.Data type: String\nTable: Project [pm_project] or Demand [dmn_demand]",
+     "source_document": "markdown/api-reference/rest-apis/ppm-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__project_portfolio_management_api",
+     "target": "entities_v2/table__pm_project"
+    },
+    "1856318169": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Projects are created in the Project [pm_project] table and project tasks are created in the Project Task [pm_project_task] table.",
+     "source_document": "markdown/api-reference/rest-apis/ppm-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__project_portfolio_management_api",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2464225380": {
+     "predicate": "USES_TABLE",
+     "source_quote": "map this field to the 'Number' field of the Project table (pm_project) using the project field map.",
+     "source_document": "markdown/it-business-management/scenario-planning-in-spw/field-map-form.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__field_map_form",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2465277439": {
+     "predicate": "USES_TABLE",
+     "source_quote": "project tasks are created in the Project Task [pm_project_task] table.",
+     "source_document": "markdown/api-reference/rest-apis/ppm-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__apinowppminsert_project_tasks",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2465823417": {
+     "predicate": "CONTAINS",
+     "source_quote": "Define a new dictionary override for `pm_project_task` table",
+     "source_document": "markdown/it-business-management/project-management/customize-project-task-states.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/technicalcomponent__dictionary_override",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466009754": {
+     "predicate": "CONTAINS",
+     "source_quote": "The project tasks displayed in the planning page of the new project workspace show the fields according to the Project Workspace view of the pm_project_task table.",
+     "source_document": "markdown/it-business-management/project-workspace/add-new-columns-to-planning-console.md",
+     "confidence": 0.75,
+     "extraction_type": "inferred",
+     "releases": [],
+     "source": "entities_v2/feature__project_workspace_view",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466046716": {
+     "predicate": "USES_TABLE",
+     "source_quote": "A new record is created in the Project [pm_project] table.",
+     "source_document": "markdown/it-business-management/project-management/project-import-msp.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/module__import",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466046722": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The tasks associated with the project are added to the Project Task [pm_project_task] table.",
+     "source_document": "markdown/it-business-management/project-management/project-import-msp.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/module__import",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466046734": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The tasks associated with the project are added to the Project Task [pm_project_task] table.",
+     "source_document": "markdown/it-business-management/project-management/project-import-msp.md",
+     "confidence": 0.75,
+     "extraction_type": "inferred",
+     "releases": [],
+     "source": "entities_v2/product__project_management",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466058198": {
+     "predicate": "CONTAINS",
+     "source_quote": "Project|pm_project",
+     "source_document": "markdown/it-business-management/ppm-collaboration/business-stakeholder-role-ppm.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/role__business_stakeholder",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466058204": {
+     "predicate": "CONTAINS",
+     "source_quote": "Project Task|pm_project_task",
+     "source_document": "markdown/it-business-management/ppm-collaboration/business-stakeholder-role-ppm.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/role__business_stakeholder",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466094693": {
+     "predicate": "USES_TABLE",
+     "source_quote": "new GlideRecord('pm_project');",
+     "source_document": "markdown/it-business-management/scenario-planning-in-spw/widget-new-record-form.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/technicalcomponent__script",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466112120": {
+     "predicate": "USES_TABLE",
+     "source_quote": "project [pm_project]",
+     "source_document": "markdown/it-business-management/scenario-planning-in-spw/manage-planning-items-from-the-roadmap-view.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/dataentity__planning_item",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466112850": {
+     "predicate": "CONTAINS",
+     "source_quote": "Milestone table map|This field is relevant only for Project [pm_project] table map.",
+     "source_document": "markdown/it-business-management/portfolio-planning/table-map-form-ppw.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/product__project_portfolio_management",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466124731": {
+     "predicate": "USES_TABLE",
+     "source_quote": "**Table:** Project task [pm_project_task]",
+     "source_document": "markdown/it-business-management/project-management/t_SetUpProjNotifiWorkflowTool.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/technicalcomponent__notify_assignee",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466163640": {
+     "predicate": "USES_TABLE",
+     "source_quote": "select **pm_project** for projects",
+     "source_document": "markdown/it-business-management/scenario-planning-in-spw/enable-spw-fin-epic.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/module__investment_entities",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466301681": {
+     "predicate": "USES_TABLE",
+     "source_quote": "such as project [pm_project] or demand [dmn_demand]",
+     "source_document": "markdown/it-business-management/portfolio-planning/modify-planning-items-from-roadmap-portfolio-planning.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__portfolio_planning_workspace",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466341233": {
+     "predicate": "CONTAINS",
+     "source_quote": "Project [pm_project]",
+     "source_document": "markdown/order-management/configure-project-table-mapping.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/module__order_management",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466341239": {
+     "predicate": "CONTAINS",
+     "source_quote": "Project Task [pm_project_task]",
+     "source_document": "markdown/order-management/configure-project-table-mapping.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/module__order_management",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466341269": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Order Line Item to Project|Order Line Item [sn_ind_tmt_orm_order_line_item]|Project [pm_project]",
+     "source_document": "markdown/order-management/configure-project-table-mapping.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__order_line_item_to_project_table_map",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466341287": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Domain Order to Project Task|Domain Order [sn_ind_tmt_orm_domain_order]|Project Task [pm_project_task]",
+     "source_document": "markdown/order-management/configure-project-table-mapping.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__domain_order_to_project_task_table_map",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466341305": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Order Task to Project|Order Task [sn_ind_tmt_orm_order_task]|Project Task [pm_project_task]",
+     "source_document": "markdown/order-management/configure-project-table-mapping.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__order_task_to_project_table_map",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466359237": {
+     "predicate": "CONTAINS",
+     "source_quote": "Project task assigned|pm_project_task|Assigned to",
+     "source_document": "markdown/it-business-management/project-management/t_ActivateProjTaskEmailNot.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/module__project_management",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466426546": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var now_GR = new GlideRecord('pm_project');",
+     "source_document": "markdown/it-business-management/project-workspace/configure-widget-project-financials.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/technicalcomponent__widget",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466504193": {
+     "predicate": "CONTAINS",
+     "source_quote": "The Project Template Configuration list defines the items that are included in a template.",
+     "source_document": "markdown/it-business-management/project-management/c_ProjectTemplateConfiguration.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__project_template_configuration",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466504199": {
+     "predicate": "CONTAINS",
+     "source_quote": "The Project Template Configuration list contains three default template configuration items: project, project task, and project subtask.",
+     "source_document": "markdown/it-business-management/project-management/c_ProjectTemplateConfiguration.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__project_template_configuration",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466504205": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Parent. Because this task object is one level below the root level, it uses the parent table as a link element.",
+     "source_document": "markdown/it-business-management/project-management/c_ProjectTemplateConfiguration.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__pm_project_task",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466504211": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Parent. Because this subtask object is two levels below the root level, it uses the parent table as a link element.",
+     "source_document": "markdown/it-business-management/project-management/c_ProjectTemplateConfiguration.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/table__pm_project_task",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466544480": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Set the Active field to **true** for dmn_demand and pm_project.",
+     "source_document": "markdown/it-business-management/portfolio-planning/fin-enable-integration-planning-item-ppw.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__enable_integration_for_internal_planning_item",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466577931": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Select a parent table record, for example, Project report `pm_project`.",
+     "source_document": "markdown/it-business-management/export-to-powerpoint-for-application-portfolio-management/manage-components-export-ppt.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__related_tables",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466577937": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Select a parent table record, for example, Project report `pm_project`.",
+     "source_document": "markdown/it-business-management/export-to-powerpoint-for-application-portfolio-management/manage-components-export-ppt.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__scripted_elements",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466577943": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var gr = new GlideRecord('pm_project');",
+     "source_document": "markdown/it-business-management/export-to-powerpoint-for-application-portfolio-management/manage-components-export-ppt.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__script_component",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466654130": {
+     "predicate": "USES_TABLE",
+     "source_quote": "For example, you might select Project [pm_project].",
+     "source_document": "markdown/servicenow-platform/t_CreateALinkToAScorecard.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/technicalcomponent__view_scorecard_ui_action",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466704970": {
+     "predicate": "USES_TABLE",
+     "source_quote": "In the Planning Console list, expand **Context: default** and select `Project[pm_project]`.",
+     "source_document": "markdown/it-business-management/project-management/enable-client-side-planning.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__enable_client_side_planning",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466705610": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Select the **Project** to which the external task belongs.",
+     "source_document": "markdown/it-business-management/project-workspace/add-external-dependencies-between-projects-from-project-workspace.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__external_dependency",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466710428": {
+     "predicate": "CONTAINS",
+     "source_quote": "Select the **pm_project** table name that has no corresponding **Column name**.",
+     "source_document": "markdown/it-business-management/project-management/t_TrackProjCommentsCollabStake.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/product__project_management",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466710476": {
+     "predicate": "USES_TABLE",
+     "source_quote": "add **Activities (filtered)**, which is the activity formatter, to the desired location on the Project form.",
+     "source_document": "markdown/it-business-management/project-management/t_TrackProjCommentsCollabStake.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__activities_filtered",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466726515": {
+     "predicate": "USES_TABLE",
+     "source_quote": "|pm_project_metric|Join pm_project to metric definition to metric instance creating a view that can be reported on for things like: Projects that were closed by name or date|Project Metric|",
+     "source_document": "markdown/platform-administration/table-administration-and-data-management/r_DatabaseViewsInTheBaseSystem.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/table__pm_project_metric",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466726545": {
+     "predicate": "USES_TABLE",
+     "source_quote": "|pm_project_sla|Join pm_project to sla(task_sla) to report on things like project names by sla.|Project SLA|",
+     "source_document": "markdown/platform-administration/table-administration-and-data-management/r_DatabaseViewsInTheBaseSystem.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/table__pm_project_sla",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466726569": {
+     "predicate": "USES_TABLE",
+     "source_quote": "|pm_project_task_metric|Join pm_project_task to metric definition to metric instance creating a view that can be reported on for things like: Project tasks that were closed by name or date|Project Task Metric|",
+     "source_document": "markdown/platform-administration/table-administration-and-data-management/r_DatabaseViewsInTheBaseSystem.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/table__pm_project_task_metric",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466726609": {
+     "predicate": "USES_TABLE",
+     "source_quote": "|pm_project_task_sla|Join pm_project to sla(task_sla) to report on things like release tasks by sla.|Project Task SLA|",
+     "source_document": "markdown/platform-administration/table-administration-and-data-management/r_DatabaseViewsInTheBaseSystem.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/table__pm_project_task_sla",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466726647": {
+     "predicate": "USES_TABLE",
+     "source_quote": "|pm_project_task_time_worked|Join pm_project_task to task time worked to pull time worked entries associated with project tasks.|Project Task Time Worked|",
+     "source_document": "markdown/platform-administration/table-administration-and-data-management/r_DatabaseViewsInTheBaseSystem.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/table__pm_project_task_time_worked",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466731913": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Site projects are created on **pm_project table**.",
+     "source_document": "markdown/order-management/spm-integration-workflow.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__site_project_oversight_determination",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466731925": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Site projects are created on **pm_project table**.",
+     "source_document": "markdown/order-management/spm-integration-workflow.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/module__order_management",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466811218": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Recognized data is mapped to pm_project and pm_project_task columns.",
+     "source_document": "markdown/it-business-management/project-workspace/project-workspace-reference.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__now_assist",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466811224": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Recognized data is mapped to pm_project and pm_project_task columns.",
+     "source_document": "markdown/it-business-management/project-workspace/project-workspace-reference.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__now_assist",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466875503": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Row 2 displays Status, Percent complete, and Phase columns from project [pm_project] table.",
+     "source_document": "markdown/it-business-management/project-workspace/configure-project-card-parameters.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/table__pm_home_page_config",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466875515": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The project workspace overview page My Projects Space displays the projects as cards ...",
+     "source_document": "markdown/it-business-management/project-workspace/configure-project-card-parameters.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__my_projects_space",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466883593": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Project aggregate column|Aggregation is applied on the selected column of the Project [pm_project] table.",
+     "source_document": "markdown/it-business-management/project-management/portal-board-widget-form.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/dataentity__project_aggregate_column",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466883599": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Project table|Table from which projects are being filtered.",
+     "source_document": "markdown/it-business-management/project-management/portal-board-widget-form.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/dataentity__project_table",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466883605": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Project filter|Criteria applied to filter projects from the Project table.",
+     "source_document": "markdown/it-business-management/project-management/portal-board-widget-form.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/dataentity__project_filter",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466884937": {
+     "predicate": "USES_TABLE",
+     "source_quote": "If a table map is not created from one of the delivered tables (dmn_demand, pm_project) ... you are required to create a business rule to support the interfacing of the table map records",
+     "source_document": "markdown/it-business-management/portfolio-planning/managing-integration.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__business_rule",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466886825": {
+     "predicate": "CONTAINS",
+     "source_quote": "Recognized data is mapped to pm_project and pm_project_task columns.",
+     "source_document": "markdown/it-business-management/project-workspace/column-configuration-project-tasks.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__now_assist",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2466886831": {
+     "predicate": "CONTAINS",
+     "source_quote": "Now Assist extracts project and project task details from uploaded documents (e.g., excel workbooks).",
+     "source_document": "markdown/it-business-management/project-workspace/column-configuration-project-tasks.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__now_assist",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2466987237": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Overdue Tasks and Milestones ... in the Project Task [pm_project_task] table:",
+     "source_document": "markdown/it-business-management/project-workspace/project-analytics-widgets.md",
+     "confidence": 0.96,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__analytics",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2467017126": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Overdue Tasks and Milestones ... in the Project Task [pm_project_task] table",
+     "source_document": "markdown/it-business-management/project-workspace/widgets-and-reports-for-project-analytics.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/dataentity__overdue_tasks_and_milestones",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2467073512": {
+     "predicate": "USES_TABLE",
+     "source_quote": "these project records are stored in the PPM Project [pm_project] table",
+     "source_document": "markdown/it-business-management/scenario-planning-in-spw/managing-backlog-alignment-planner-workspace.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__prioritization",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2467075128": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Sys_id of the project or demand to associate with this cost plan. You can locate this value in one of the following tables:-   Project Task [pm_project_task]",
+     "source_document": "markdown/api-reference/server-api-reference/CostPlanBatchOperationsAPI.md",
+     "confidence": 0.7,
+     "extraction_type": "inferred",
+     "releases": [],
+     "source": "entities_v2/technicalcomponent__costplanbatchoperations",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2467146163": {
+     "predicate": "USES_TABLE",
+     "source_quote": "In Project Task, Incident, Problem, and Change records, the Time worked field does not appear by default",
+     "source_document": "markdown/platform-administration/table-administration-and-data-management/t_CreateATimeCard.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__auto_fill_time_card_with_time_worked_entries",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2467146187": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Generate Time Cards: ... for all project tasks assigned to the user",
+     "source_document": "markdown/platform-administration/table-administration-and-data-management/t_CreateATimeCard.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__generate_time_cards",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2467226978": {
+     "predicate": "REQUIRES_PLUGIN",
+     "source_quote": "Install plugins for Demand Management: idea_core, dmn_demand, and pm_project",
+     "source_document": "markdown/it-service-management/digital-portfolio-management/dpm-related-products.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__demand_management",
+     "target": "entities_v2/plugin__pm_project"
+    },
+    "2467237842": {
+     "predicate": "CONTAINS",
+     "source_quote": "Project [pm_project]",
+     "source_document": "markdown/it-business-management/ppm-collaboration/table-installed-with-PPS-finance.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/module__project_management",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2467313933": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var projectGr =  new GlideRecord('pm_project');",
+     "source_document": "markdown/api-reference/server-api-reference/c_GlideRecordAPI.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/technicalcomponent__gliderecord",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2467313999": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var child = new GlideRecord('pm_project_task');",
+     "source_document": "markdown/api-reference/server-api-reference/c_GlideRecordAPI.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__gliderecord",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2467345720": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Activate the default project state (pm_project.state = -5)",
+     "source_document": "markdown/it-business-management/project-management/t_ApplyTempProjWorkbench.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__apply_template_to_a_blank_project",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2467362375": {
+     "predicate": "USES_TABLE",
+     "source_quote": "For example, select `Project[pm_project]` to add a column to the project planning console.",
+     "source_document": "markdown/it-business-management/project-management/add-display-column.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__planning_console",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2467362381": {
+     "predicate": "USES_TABLE",
+     "source_quote": "select a table from `[pm_project]` or `[pm_project_task]` for a display column added in the Project planning console.",
+     "source_document": "markdown/it-business-management/project-management/add-display-column.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__planning_console",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2467383890": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var now_GR = new GlideRecord(\"pm_project\");",
+     "source_document": "markdown/it-business-management/project-management/diagnostic-scripts-form.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/technicalcomponent__diagnostic_script",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2467435876": {
+     "predicate": "USES_TABLE",
+     "source_quote": "<g:ui_reference name=\"parent_id\" id=\"parent_id\" table=\"pm_project\" query=\"active=true\" completer=\"AJAXTableCompleter\" columns=\"project_manager;short_description\"/>",
+     "source_document": "markdown/api-reference/scripts/c_ExtensionsToJellySyntax.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/technicalcomponent__gui_reference",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2470340123": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The project tasks displayed in the planning page of the new project workspace show the fields according to the Project Workspace view of the pm_project_task table.",
+     "source_document": "markdown/it-business-management/project-workspace/add-new-columns-to-planning-console.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__project_workspace",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2470363744": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Users with the business stakeholder role for PPM can access the following tables that store the data to load the widgets in the Portfolio dashboard, Program dashboard, and Time Sheet dashboard, and Resource reports: Project Task pm_project_",
+     "source_document": "markdown/it-business-management/ppm-collaboration/business-stakeholder-role-ppm.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/plugin__business_stakeholder_com.snc.business_stakeholder",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2470381024": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var now_GR = new GlideRecord('pm_project');",
+     "source_document": "markdown/it-business-management/scenario-planning-in-spw/widget-new-record-form.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__widget_new_record_form",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2470539909": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var now_GR = new GlideRecord('pm_project');",
+     "source_document": "markdown/it-business-management/project-workspace/configure-widget-project-financials.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__financials_tab",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2470607739": {
+     "predicate": "USES_TABLE",
+     "source_quote": "If a table map is not created from one of the delivered tables (pm_portfolio, rm_epic, dmn_demand, pm_project) or does not extend from them, you are required to create a business rule to support the interfacing of the table map records.",
+     "source_document": "markdown/it-business-management/scenario-planning-in-spw/troubleshooting-apw-integrations.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__strategic_planning_workspace",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2470615333": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Select a parent table record, for example, Project report pm_project.",
+     "source_document": "markdown/it-business-management/export-to-powerpoint-for-application-portfolio-management/manage-components-export-ppt.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__pm_project",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2471240186": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Summarize demand records using the demand summarization skill. The skill reviews the demand fields and related lists and helps create a clear summary of the demand.",
+     "source_document": "markdown/it-business-management/strategic-planning/summarize-demand-in-demand-workspace.md",
+     "confidence": 0.7,
+     "extraction_type": "inferred",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/dataentity__demands",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2471554175": {
+     "predicate": "USES_TABLE",
+     "source_quote": "List of unassigned Open or Pending project tasks that are planned to start 14 days from the current date.",
+     "source_document": "markdown/it-business-management/project-workspace/project-analytics-widgets.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__upcoming_tasks_next_2_weeks_with_no_assignee",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2471554181": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Track the state of various project tasks across the release based on the assigned users or group.",
+     "source_document": "markdown/it-business-management/project-workspace/project-analytics-widgets.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__task_assignments",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2471554187": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Donut chart showing the number of project tasks in different stages of development such as Pending, Open, Work In Progress, and Closed Complete.",
+     "source_document": "markdown/it-business-management/project-workspace/project-analytics-widgets.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__tasks_by_state",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "2472560504": {
+     "predicate": "USES_TABLE",
+     "source_quote": "dmn_decision|RIDAC|pm_project / dmn_demand",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__dmn_decision",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560552": {
+     "predicate": "USES_TABLE",
+     "source_quote": "ridac_m2m|RIDAC|pm_project / dmn_demand",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__ridac_m2m",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560564": {
+     "predicate": "USES_TABLE",
+     "source_quote": "pm_m2m_project_stakeholder|Stakeholder|pm_project",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__pm_m2m_project_stakeholder",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560582": {
+     "predicate": "USES_TABLE",
+     "source_quote": "sn_gf_goal_m2m_relationship|Goal|pm_project / dmn_demand / pm_program",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__sn_gf_goal_m2m_relationship",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560600": {
+     "predicate": "USES_TABLE",
+     "source_quote": "cost_plan|Financial|pm_project / dmn_demand",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__cost_plan",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560612": {
+     "predicate": "USES_TABLE",
+     "source_quote": "cost_plan_breakdown|Financial|pm_project / dmn_demand / pm_program / pm_portfolio",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__cost_plan_breakdown",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560636": {
+     "predicate": "USES_TABLE",
+     "source_quote": "benefit_plan|Financial|pm_project / dmn_demand",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__benefit_plan",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560648": {
+     "predicate": "USES_TABLE",
+     "source_quote": "benefit_plan_breakdown|Financial|pm_project / dmn_demand / pm_program / pm_portfolio",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__benefit_plan_breakdown",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560672": {
+     "predicate": "USES_TABLE",
+     "source_quote": "nm_benefit_plan_breakdown|Financial|pm_project / dmn_demand / pm_program / pm_portfolio",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__nm_benefit_plan_breakdown",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560696": {
+     "predicate": "USES_TABLE",
+     "source_quote": "fm_expense_line|Financial|pm_project / dmn_demand",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__fm_expense_line",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560720": {
+     "predicate": "USES_TABLE",
+     "source_quote": "sn_invst_pln_invst_investment|Financial|pm_project",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__sn_invst_pln_invst_investment",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560732": {
+     "predicate": "USES_TABLE",
+     "source_quote": "project_funding|Financial|pm_project / dmn_demand / pm_program / pm_portfolio",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__project_funding",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560840": {
+     "predicate": "USES_TABLE",
+     "source_quote": "sn_invst_pln_invst_investment_baseline_header|Baseline|pm_project (via investment)",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__sn_invst_pln_invst_investment_baseline_header",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560882": {
+     "predicate": "USES_TABLE",
+     "source_quote": "sn_plng_att_core_cpaam_capacity|Resource|pm_project / dmn_demand",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__sn_plng_att_core_cpaam_capacity",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560894": {
+     "predicate": "USES_TABLE",
+     "source_quote": "resource_aggregate_daily|Resource|pm_project / dmn_demand",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__resource_aggregate_daily",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560906": {
+     "predicate": "USES_TABLE",
+     "source_quote": "resource_aggregate_weekly|Resource|pm_project / dmn_demand",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__resource_aggregate_weekly",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560918": {
+     "predicate": "USES_TABLE",
+     "source_quote": "resource_aggregate_monthly|Resource|pm_project / dmn_demand",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__resource_aggregate_monthly",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560930": {
+     "predicate": "USES_TABLE",
+     "source_quote": "time_card|Time|pm_project",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__time_card",
+     "target": "entities_v2/table__pm_project"
+    },
+    "2472560942": {
+     "predicate": "USES_TABLE",
+     "source_quote": "time_sheet|Time|pm_project",
+     "source_document": "markdown/it-business-management/supported-tables-for-partition-ewd.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__time_sheet",
+     "target": "entities_v2/table__pm_project"
+    },
+    "41410502": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Sys_id of the project or demand to associate with this cost plan. You can locate this value in one of the following tables: \u2022 Project [pm_project] \u2022 Project Task [pm_project_task] \u2022 Demand [dmn_demand]",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__costplanbatchoperations",
+     "target": "entities_v2/table__pm_project"
+    },
+    "41410508": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Sys_id of the project or demand to associate with this cost plan. You can locate this value in one of the following tables: \u2022 Project [pm_project] \u2022 Project Task [pm_project_task] \u2022 Demand [dmn_demand]",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__costplanbatchoperations",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "41418462": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var child = new GlideRecord('pm_project_task'); child.addQuery('parent', project.sys_id); child.orderBy('order'); child.orderBy('number'); child.query();",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__gliderecord_orderby",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "41577416": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var gr = new GlideRecord('pm_project_task');",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__getselectedproject_function",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "42537531": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var child = new GlideRecord('pm_project_task');",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__gliderecord",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "42919737": {
+     "predicate": "USES_TABLE",
+     "source_quote": "task ... Table: Project [pm_project]",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__project_portfolio_management_-_post_nowppminsert_cost_plans",
+     "target": "entities_v2/table__pm_project"
+    },
+    "42919779": {
+     "predicate": "USES_TABLE",
+     "source_quote": "task ... Table: Project [pm_project]",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__project_portfolio_management_-_post_nowppminsert_project_tasks",
+     "target": "entities_v2/table__pm_project"
+    },
+    "42920077": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Projects are created in the Project [pm_project] table",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__insert_project_tasks_api",
+     "target": "entities_v2/table__pm_project"
+    },
+    "42920083": {
+     "predicate": "USES_TABLE",
+     "source_quote": "project tasks are created in the Project Task [pm_project_task] table",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__insert_project_tasks_api",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "43146997": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Change the Table name to the table on which you want the UI action to appear. For example, you might select Project [pm_project].",
+     "source_document": "servicenow-australia-servicenow-platform-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__view_scorecard_ui_action",
+     "target": "entities_v2/table__pm_project"
+    },
+    "43306614": {
+     "predicate": "REQUIRES_PLUGIN",
+     "source_quote": "Install plugins for Demand Management: idea_core, dmn_demand, and pm_project",
+     "source_document": "servicenow-australia-it-service-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/module__digital_portfolio_management",
+     "target": "entities_v2/plugin__pm_project"
+    },
+    "43355040": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var gr = new GlideRecord('pm_project_task');",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__glidesystem.getpreference",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "43365043": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var child = new GlideRecord('pm_project_task'); child.addQuery('parent', project.sys_id); child.orderBy('order'); child.orderBy('number');",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__client_side_gliderecord_-_orderby",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "43365059": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var child = new GlideRecord('pm_project_task'); child.addQuery('parent', project.sys_id);",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__client_side_gliderecord",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "43384529": {
+     "predicate": "USES_TABLE",
+     "source_quote": "project tasks are created in the Project Task [pm_project_task] table.",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__project_portfolio_management_api",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "43384549": {
+     "predicate": "USES_TABLE",
+     "source_quote": "project tasks are created in the Project Task [pm_project_task] table",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__create_project_and_associated_project_tasks",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "43436415": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var child = new GlideRecord('pm_project_task'); child.addQuery('parent', project.sys_id); child.orderBy('order'); child.orderBy('number'); child.query();",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent_gliderecord_pm_project_task_orderby_example",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "43638331": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Projects are created in the Project [pm_project] table and project tasks are created in the Project Task [pm_project_task] table.",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__project_portfolio_management_-_post_nowppminsert_project_tasks",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "43726494": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Change the Table name to the table on which you want the UI action to appear. For example, you might select Project [pm_project].",
+     "source_document": "servicenow-australia-servicenow-platform-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__view_scorecard",
+     "target": "entities_v2/table__pm_project"
+    },
+    "43924627": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Join pm_project to metric definition to metric instance creating a view that can be reported on for things like: Projects that were closed by name or date",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__project_metric",
+     "target": "entities_v2/table__pm_project"
+    },
+    "43924631": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Join pm_project to sla(task_sla) to report on things like project names by sla.",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__project_sla",
+     "target": "entities_v2/table__pm_project"
+    },
+    "43924639": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Join pm_project_task to metric definition to metric instance creating a view that can be reported on for things like: Project tasks that were closed by name or date",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__project_task_metric",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "43924643": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Join pm_project to sla(task_sla) to report on things like release tasks by sla.",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__project_task_sla",
+     "target": "entities_v2/table__pm_project"
+    },
+    "43924651": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Join pm_project_task to task time worked to pull time worked entries associated with project tasks.",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__project_task_time_worked",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44015724": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Set the Active field to true for dmn_demand and pm_project.",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__table_map",
+     "target": "entities_v2/table__pm_project"
+    },
+    "44016949": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Execution table ... For example, Project [pm_project] table map.",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/module__table_map_form",
+     "target": "entities_v2/table__pm_project"
+    },
+    "44020898": {
+     "predicate": "USES_TABLE",
+     "source_quote": "If your free-form roadmap was built on one of the PPM tables, such as project [pm_project] or demand [dmn_demand]",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__free-form_roadmaps",
+     "target": "entities_v2/table__pm_project"
+    },
+    "44022107": {
+     "predicate": "USES_TABLE",
+     "source_quote": "new GlideRecord('pm_project')",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__widget_form",
+     "target": "entities_v2/table__pm_project"
+    },
+    "44025556": {
+     "predicate": "USES_TABLE",
+     "source_quote": "pm_project | project_manager",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__now_assist_context_menu_nacm",
+     "target": "entities_v2/table__pm_project"
+    },
+    "44025560": {
+     "predicate": "USES_TABLE",
+     "source_quote": "pm_project_task | project_manager",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__now_assist_context_menu_nacm",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44029762": {
+     "predicate": "EXTENDS_TABLE",
+     "source_quote": "In the base system, the states in project and project task inherit the states in Task table.",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/table__pm_project_task",
+     "target": "entities_v2/table__task"
+    },
+    "44029774": {
+     "predicate": "USES_TABLE",
+     "source_quote": "In the Project or Project Task form, right-click the header bar and select Copy partial project.",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.7,
+     "extraction_type": "inferred",
+     "releases": null,
+     "source": "entities_v2/feature__copy_partial_project",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44029810": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Define a new dictionary override for pm_project_task table",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/module__project_task",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44030114": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Project task assigned | pm_project_task | Assigned to | Inserted or updated",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__project_task_assigned",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44030118": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Project task started | pm_project_task | State | Changes to Workin Progress",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__project_task_started",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44030122": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Project task commented | pm_project_task | Additional comments | Any changes occur",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__project_task_commented",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44030210": {
+     "predicate": "USES_TABLE",
+     "source_quote": "- Table: Project task [pm_project_task]",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__notify_assignee_workflow",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44030222": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Changing the planned start date of a project also moves all its tasks",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.7,
+     "extraction_type": "inferred",
+     "releases": null,
+     "source": "entities_v2/feature__change_planned_start_date_of_a_project",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44030238": {
+     "predicate": "USES_TABLE",
+     "source_quote": "On the Project Tasks related list, select the project task which you want to pre-date.",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.7,
+     "extraction_type": "inferred",
+     "releases": null,
+     "source": "entities_v2/feature__pre-date_a_project_task",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44030662": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Project task object    | pm_project_task",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.7,
+     "extraction_type": "inferred",
+     "releases": null,
+     "source": "entities_v2/feature__project_template_configuration",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44030686": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The tasks associated with the project are added to the Project Task [pm_project_task] table.",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__project_import",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44030694": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Export project data, such as project tasks and task constraints, can be exported as an export file.",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.7,
+     "extraction_type": "inferred",
+     "releases": null,
+     "source": "entities_v2/feature__project_export",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44030734": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The tasks associated with the project are added to the Project Task [pm_project_task] table.",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/module__import_module",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44032447": {
+     "predicate": "USES_TABLE",
+     "source_quote": "the following conditions in the Project Task [pm_project_task] table",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__overdue_tasks_widget",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44033480": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Overdue Tasks and Milestones ... in the Project Task [pm_project_task] table",
+     "source_document": "servicenow-australia-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__overdue_tasks_and_milestones",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "44157686": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Site projects are created on pm_project table.",
+     "source_document": "servicenow-australia-order-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__site_project_creation",
+     "target": "entities_v2/table__pm_project"
+    },
+    "44157814": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Project Task [pm_project_task]",
+     "source_document": "servicenow-australia-order-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__configure_field_mappings",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "4453698": {
+     "predicate": "REQUIRES_PLUGIN",
+     "source_quote": "To see demand data: Install plugins for Demand Management: idea_core, dmn_demand, and pm_project",
+     "source_document": "servicenow-zurich-it-service-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich",
+      "australia"
+     ],
+     "source": "entities_v2/feature__plan_tab",
+     "target": "entities_v2/plugin__pm_project"
+    },
+    "4606793": {
+     "predicate": "USES_TABLE",
+     "source_quote": "<g:ui_reference name=\"parent_id\" id=\"parent_id\" table=\"pm_project\" query=\"active=true\" completer=\"AJAXTableCompleter\" columns=\"project_manager;short_description\"/>",
+     "source_document": "servicenow-zurich-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__gui_reference_tag",
+     "target": "entities_v2/table__pm_project"
+    },
+    "4623833": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var child = new GlideRecord('pm_project_task'); child.orderBy('order'); child.orderBy('number');",
+     "source_document": "servicenow-zurich-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia",
+      "zurich"
+     ],
+     "source": "entities_v2/feature__orderby",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "4669504": {
+     "predicate": "USES_TABLE",
+     "source_quote": "task ... Table: Project [pm_project] or Demand [dmn_demand]",
+     "source_document": "servicenow-zurich-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich",
+      "australia"
+     ],
+     "source": "entities_v2/module__project_portfolio_management",
+     "target": "entities_v2/table__pm_project"
+    },
+    "4669512": {
+     "predicate": "USES_TABLE",
+     "source_quote": "project tasks are created in the Project Task [pm_project_task] table.",
+     "source_document": "servicenow-zurich-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich",
+      "australia"
+     ],
+     "source": "entities_v2/module__project_portfolio_management",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "5027687": {
+     "predicate": "USES_TABLE",
+     "source_quote": "If your free-form roadmap was built on one of the PPM tables, such as project [pm_project] or demand [dmn_demand]",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__roadmap",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5028328": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Milestone table map | This field is relevant only for Project [pm_project] table map.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/module__table_map",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5028360": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Milestone table map ... for Project [pm_project] table map.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__table_map_form",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5032231": {
+     "predicate": "USES_TABLE",
+     "source_quote": "This skill analyzes project elements such as resources, tasks, and milestones to identify issues or discrepancies.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__project_insights_generation_skill",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5032235": {
+     "predicate": "USES_TABLE",
+     "source_quote": "This skill analyzes project elements such as resources, tasks, and milestones to identify issues or discrepancies.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__project_insights_generation_skill",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "5033508": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Entities: Project [pm_project]",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.96,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__enable_data_separation_on_select_entities",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5033556": {
+     "predicate": "USES_TABLE",
+     "source_quote": "You can enable data separation on the following entities and related entities. - Entities: - Project [pm_project] ...",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__data_separation",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5033572": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Related entities: - Project Task [pm_project_task] ...",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__data_separation",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "5035142": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The new tasks appear in the Project Tasks related list.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.75,
+     "extraction_type": "inferred",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__project_task_creator",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "5035266": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Select the pm_project table name that has no corresponding Column name",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__live_feed",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5035270": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Select the pm_project table name that has no corresponding Column name",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__journal_fields",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5035358": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: pm_project_task",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__project_task_email_notifications",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "5035494": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The information in this section is built from fields on the project [pm_project] table",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich",
+      "australia"
+     ],
+     "source": "entities_v2/module__project",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5035522": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The information in this section is built from fields on the project [pm_project] table",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__project_template",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5035550": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The exception is pm_project, which is the root or top-level object in the template.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__project_template_configuration",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5035582": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The tasks associated with the project are added to the Project Task [pm_project_task] table.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/module__project_management",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "5035854": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Project [pm_project] table ...",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia",
+      "zurich"
+     ],
+     "source": "entities_v2/feature__project_currency_view",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5036487": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var now_GR = new GlideRecord(\"pm_project\");",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__diagnostic_scripts",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5036699": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Project aggregate column | Aggregation is applied on the selected column of the Project [pm_project] table.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__portal_board_widget_form",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5037241": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The project tasks displayed in the planning page of the new project workspace show the fields as per the Project Workspace view of the pm_project_task table.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich",
+      "australia"
+     ],
+     "source": "entities_v2/module__project_workspace",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "5037249": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The project tasks displayed in the planning page of the new project workspace show the fields as per the Project Workspace view of the pm_project_task table.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__add_new_columns_to_the_planning_page",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "5037261": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The project tasks displayed in the planning page of the new project workspace show the fields as per the Project Workspace view of the pm_project_task table.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__create_and_assign_project_tasks_from_project_workspace",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "5037273": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The project tasks displayed in the planning page of the new project workspace show the fields as per the Project Workspace view of the pm_project_task table.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__personalize_the_planning_page_view_in_project_workspace",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "5037922": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Row 2 displays Status, Percent complete, and Phase columns from project [pm_project] table.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__project_card",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5038010": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The Planning tab in project workspace displays the selected project in planning console.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.7,
+     "extraction_type": "inferred",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__planning_tab",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "5038018": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The Resources tab in project workspace shows the resource plans for the selected project.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.7,
+     "extraction_type": "inferred",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__resources_tab",
+     "target": "entities_v2/table__pm_project_task"
+    },
+    "5038078": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Associate the widget to the Project table.",
+     "source_document": "servicenow-zurich-it-business-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__widget",
+     "target": "entities_v2/table__pm_project"
+    },
+    "5126807": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Project [pm_project]",
+     "source_document": "servicenow-zurich-order-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__configure_field_mappings",
+     "target": "entities_v2/table__pm_project"
+    }
+   }
+  },
+  "id_sc_cat_item": {
+   "fingerprint": "b3d0ce170046d4b59390b09f4364fbb0e7cb2c591ac5aeb6aa6c8a0ca46c99c2",
+   "query": "How is the sc_cat_item table related to the service catalog?",
+   "edges": {
+    "1831493030": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Required. Sys_id of the record producer configured with an appointment booking service configuration.Table: Record Producer [sc_cat_item_producer]",
+     "source_document": "markdown/api-reference/rest-apis/appointment-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__appointment_api",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "1831493098": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Sys\\_id of the record producer configured with the appointment booking service configuration\\.Data type: String\\nTable: Record Producer \\[sc\\_cat\\_item\\_producer\\]",
+     "source_document": "markdown/api-reference/rest-apis/appointment-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__apisn_apptmnt_bookingapi_versionappointmentexecute_rule_conditions",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "1838635565": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "markdown/api-reference/rest-apis/case-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/dataentity__case",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "1838635850": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "markdown/api-reference/rest-apis/case-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__case_api",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "1838636469": {
+     "predicate": "USES_TABLE",
+     "source_quote": "delivery\\_task\\n\\t\\t id=\"d3486e725\"\\n\\t\\t\\n\\t\\tSys\\_id of the execution plan task.Data type: String\\n\\t\\t\\n\\t\\tTable: Execution Plan Task \\[sc\\_cat\\_item\\_delivery\\_task\\]",
+     "source_document": "markdown/api-reference/rest-apis/case-api.md",
+     "confidence": 0.9,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__delivery_task",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "1839478238": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "markdown/api-reference/rest-apis/change-management-api.md",
+     "confidence": 0.9,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__change_request",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "1952711860": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The Service Catalog API defines catalog items [sc_cat_item], record producers [sc_cat_item_producer], and related aspects of service catalogs.",
+     "source_document": "markdown/application-development/index.md",
+     "confidence": 0.96,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__service_catalog_api",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2023630240": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Copy of Apply for Citizen Development catalog item",
+     "source_document": "markdown/application-development/app-engine-management-center/customize-app-intake-form-catalog-builder.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__copy_of_apply_for_citizen_development",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2159762430": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The following list of tables are not supported by the ATF tests failure resolution feature.\n-   sc_cat_item_delivery_task",
+     "source_document": "markdown/application-development/automated-test-framework-atf/atf-metadata-exception-triage.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__automated_test_framework",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "2465959682": {
+     "predicate": "CONTAINS",
+     "source_quote": "sc_cat_item_producer",
+     "source_document": "markdown/application-development/now-assist-for-creator/sns-app-gen-supported-metadata.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__app_generation",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2466133995": {
+     "predicate": "EXTENDS_TABLE",
+     "source_quote": "is an extension of the sc_cat_item_producer table",
+     "source_document": "markdown/service-exchange/service-bridge-v2-remote-record.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/table__remote_record_producer",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2466256430": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Maps the question to a specific field on the Catalog Item (sc_cat_item) table or Record Producer (sc_cat_item_producer) table.",
+     "source_document": "markdown/servicenow-platform/service-catalog/service-catalog-wizard-forms-field.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/technicalcomponent__catalog_wizard_step",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2466322344": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Don't activate the People Genius Result configuration if your instance has more than 100,000 records in any of the following tables:\n-   Catalog Item [sc_cat_item]",
+     "source_document": "markdown/platform-administration/ai-search/genius-result-people-ais.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__people_genius_result_configuration",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2466331164": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Order [sc_cat_item]",
+     "source_document": "markdown/customer-service-management/customer-self-service-and-omnichannel-engagement/enable-ai-search-assist-actions-portal-auth-ext.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/dataentity__order",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2466346855": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The system identifier (sys_id) of the catalog item from the Record Producer [sc_cat_item_producer] table.",
+     "source_document": "markdown/customer-service-management/component-properties-for-catalog-item.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/dataentity__catalog_item",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2466366876": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Enter glide.sg.image.default.[tablename]. Replace [tablename] with the name of the table you want this property to apply to. For example to use the Catalog Item table, enter glide.sg.image.default.sc_cat_item.",
+     "source_document": "markdown/mobile/set-default-missing-image.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__placeholder_image_configuration",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2466382564": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The Catalog Item [sc_cat_item] record you want to use to populate the catalog variables slush bucket.",
+     "source_document": "markdown/build-workflows/workflow-studio/create-catalog-task-flow-designer.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__create_catalog_task_action",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2466402899": {
+     "predicate": "USES_TABLE",
+     "source_quote": "It searches information from ... catalog items",
+     "source_document": "markdown/customer-service-management/nass-portal.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__enhanced_chat",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2466448466": {
+     "predicate": "USES_TABLE",
+     "source_quote": "You can filter or group by questions on a table extended from the Task [task] table, for example the Incident [incident] or Problem [problem] tables, or from the Record Producer table [sc_cat_item_producer].",
+     "source_document": "markdown/now-intelligence/questions-in-dv.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/table__sc_cat_item_producer",
+     "target": "entities_v2/table__task"
+    },
+    "2466634468": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Enter `sc_cat_item.LIST` in the navigation filter.",
+     "source_document": "markdown/it-operations-management/cloud-account-management/create-a-varaible-set-for-request-cloud-account.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/dataentity__request_cloud_account",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2466719353": {
+     "predicate": "USES_TABLE",
+     "source_quote": "add people to the **Secondary owner** user-criteria field in the sc_cat_item and sc_cat_item_producer tables",
+     "source_document": "markdown/release-notes/release-notes/service-catalog-rn.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__enable_editing_of_catalog_items_by_multiple_users",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2466770681": {
+     "predicate": "CONTAINS",
+     "source_quote": "\"sc_cat_item\"",
+     "source_document": "markdown/platform-administration/localization-workspace/lw-localizable-content.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/product__localization_workspace",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2466864450": {
+     "predicate": "USES_TABLE",
+     "source_quote": "For example, to hide prices for standard catalog items, add sc_cat_item to the list.",
+     "source_document": "markdown/servicenow-platform/service-catalog/c_HidingPricesInTheServiceCatalog.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__hide_prices_by_item_types",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2466894603": {
+     "predicate": "USES_TABLE",
+     "source_quote": "catalog_admin: To access the Service Catalog items [sc_cat_item] table.",
+     "source_document": "markdown/platform-administration/localization-framework/req-adhoc-translation-for-sc-items.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__edit_translations",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2466894639": {
+     "predicate": "USES_TABLE",
+     "source_quote": "**Machine Translations**|Translate the catalog items using machine translations.",
+     "source_document": "markdown/platform-administration/localization-framework/req-adhoc-translation-for-sc-items.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__machine_translations",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2466894651": {
+     "predicate": "USES_TABLE",
+     "source_quote": "**Export Source File**|Option to export files for translation.",
+     "source_document": "markdown/platform-administration/localization-framework/req-adhoc-translation-for-sc-items.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__export_source_file",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2466894663": {
+     "predicate": "USES_TABLE",
+     "source_quote": "**Import Source File**|Option to import translated files to update the translation.",
+     "source_document": "markdown/platform-administration/localization-framework/req-adhoc-translation-for-sc-items.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__import_source_file",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2466894675": {
+     "predicate": "USES_TABLE",
+     "source_quote": "After your changes are completed, click **Publish Translations**.",
+     "source_document": "markdown/platform-administration/localization-framework/req-adhoc-translation-for-sc-items.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__publish_translations",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2466938639": {
+     "predicate": "CONTAINS",
+     "source_quote": "Catalog Item [sc_cat_item] ... use the V4 index format.",
+     "source_document": "markdown/platform-administration/search-administration/index-multiple-tables.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__text_index_groups",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2466938673": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Catalog Item [sc_cat_item] ... use the V4 index format.",
+     "source_document": "markdown/platform-administration/search-administration/index-multiple-tables.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__text_index_groups",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2467024432": {
+     "predicate": "USES_TABLE",
+     "source_quote": "-   Catalog item [sc_cat_item]",
+     "source_document": "markdown/customer-service-management/csm-config-workspace-ai-search.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/module__csm_configurable_workspace",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2467193485": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Knowledge & Catalog - Catalog Items|Catalog Item [sc_cat_item]",
+     "source_document": "markdown/platform-administration/search-administration/search-settings-filter-group-table.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__knowledge__catalog_-_catalog_items",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2467193557": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Knowledge & Catalog\\n-   Catalog Item [sc_cat_item]",
+     "source_document": "markdown/platform-administration/search-administration/search-settings-filter-group-table.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__knowledge__catalog",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2467267076": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var dptask = new GlideRecord(\"sc_cat_item_delivery_task\");",
+     "source_document": "markdown/api-reference/scripts/useful-server-side-scripts.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/technicalcomponent__assignment_rule",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "2467289135": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Create a record producer [sc_cat_item_producer] for users to create task-based records",
+     "source_document": "markdown/application-development/servicenow-sdk/fluent-service-catalog-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/dataentity__catalogitemrecordproducer",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2467294973": {
+     "predicate": "CONTAINS",
+     "source_quote": "\"sc_cat_item\"",
+     "source_document": "markdown/application-development/servicenow-studio-classic/servicenow-studio-file-navigator-taxonomy.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__catalog_item",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2467295033": {
+     "predicate": "CONTAINS",
+     "source_quote": "\"sc_cat_item_producer\"",
+     "source_document": "markdown/application-development/servicenow-studio-classic/servicenow-studio-file-navigator-taxonomy.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__record_producer",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2467295097": {
+     "predicate": "CONTAINS",
+     "source_quote": "sc_cat_item_producer",
+     "source_document": "markdown/application-development/servicenow-studio-classic/servicenow-studio-file-navigator-taxonomy.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/module__record_producer",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2467309946": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "markdown/financial-services-operations/fso-int_guide-table_defs.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/table__loan_service_case",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "2467321492": {
+     "predicate": "USES_TABLE",
+     "source_quote": "SQLException thrown when loading the sc_cat_item table with language translations on (order by a field that can have translations)",
+     "source_document": "markdown/release-notes/australia-all-other-fixes.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/module__database_persistence",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2467325988": {
+     "predicate": "USES_TABLE",
+     "source_quote": "SQLException thrown when loading the sc_cat_item table with language translations on (order by a field that can have translations)",
+     "source_document": "markdown/release-notes/australia-all-other-fixes.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/module__configuration_management_database_cmdb",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2467393222": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Source table: Catalog Item [sc_cat_item]",
+     "source_document": "markdown/platform-administration/ai-search/ais-ne-global-search-nav-tabs.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/feature__catalog_items",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2467401436": {
+     "predicate": "USES_TABLE",
+     "source_quote": "8.  Request Catalog table [sc_cat_item]",
+     "source_document": "markdown/customer-service-management/csm-use-case-tables.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/product__customer_service_management",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2467425027": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var ri =new GlideRecord(\"sc_cat_item\");",
+     "source_document": "markdown/api-reference/scripts/r_UsefulApprovalAssignmentScripts.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__assign_catalog_item_to_group_based_on_delivery_plan_task",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2467425037": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var dptask =new GlideRecord(\"sc_cat_item_delivery_task\");",
+     "source_document": "markdown/api-reference/scripts/r_UsefulApprovalAssignmentScripts.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__assign_catalog_item_to_group_based_on_delivery_plan_task",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "2467425043": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var scCatItem =new GlideRecord(\"sc_cat_item\");",
+     "source_document": "markdown/api-reference/scripts/r_UsefulApprovalAssignmentScripts.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/technicalcomponent__assign_items_with_one_task",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2467425049": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var dpTask =new GlideRecord(\"sc_cat_item_delivery_task\");",
+     "source_document": "markdown/api-reference/scripts/r_UsefulApprovalAssignmentScripts.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/technicalcomponent__assign_items_with_one_task",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "2467440714": {
+     "predicate": "USES_TABLE",
+     "source_quote": "-   **Default value:** sc_cat_item_guide, sc_cat_item_producer, sc_cat_item_wizard",
+     "source_document": "markdown/servicenow-platform/service-catalog/r_ServiceCatalogProperties.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [],
+     "source": "entities_v2/module__catalog_items",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2470209485": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Record Producer [sc_cat_item_producer]",
+     "source_document": "markdown/customer-service-management/csm-service-definition-catalog-items.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/module__csm_configurable_workspace",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2470250916": {
+     "predicate": "USES_TABLE",
+     "source_quote": "HR search and notify AI agent|Performs search to find relevant HR knowledge articles and catalog items related to the given query and raise notification if relevant information is found.",
+     "source_document": "markdown/employee-service-management/now-assist-for-hrsd/employee-issue-resolver-na.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__hr_search_and_notify_ai_agent",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2470300087": {
+     "predicate": "CONTAINS",
+     "source_quote": "Record Producer [sc_cat_item_producer]: Submits requests or generates records other than Request Management tables for services that aren't serviced by Request Management (for example, HR Cases, Facilities Requests, or Legal Requests).",
+     "source_document": "markdown/servicenow-platform/service-catalog/request-cat-use-case.md",
+     "confidence": 0.9,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/product__service_catalog",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2470306186": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Maps the question to a specific field on the Catalog Item (sc_cat_item) table or Record Producer (sc_cat_item_producer) table.",
+     "source_document": "markdown/servicenow-platform/service-catalog/service-catalog-wizard-forms-field.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/module__catalog_wizard_step",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2470306192": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Maps the question to a specific field on the Catalog Item (sc_cat_item) table or Record Producer (sc_cat_item_producer) table.",
+     "source_document": "markdown/servicenow-platform/service-catalog/service-catalog-wizard-forms-field.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/module__catalog_wizard_step",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2470306204": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Maps the question to a specific field on the Catalog Item (sc_cat_item) table or Record Producer (sc_cat_item_producer) table.",
+     "source_document": "markdown/servicenow-platform/service-catalog/service-catalog-wizard-forms-field.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/module__catalog_wizard_section",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2470306216": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Maps the question to a specific field on the Catalog Item (sc_cat_item) table or Record Producer (sc_cat_item_producer) table.",
+     "source_document": "markdown/servicenow-platform/service-catalog/service-catalog-wizard-forms-field.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/module__catalog_wizard_question",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2470307315": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Identifier of the table where information of the artifact is stored. For example, Catalog Items [sc_cat_item] table.",
+     "source_document": "markdown/platform-administration/localization-framework/create-configure-custom-artifact.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__processor_script",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2470315254": {
+     "predicate": "USES_TABLE",
+     "source_quote": "[Record producer](https://raw.githubusercontent.com/ServiceNow/ServiceNowDocs/australia/markdown/servicenow-platform/service-catalog/c_RecordProducer.md)\\n</td><td>\\nsc\\_cat\\_item\\_producer",
+     "source_document": "markdown/application-development/now-assist-for-creator/sns-app-gen-supported-metadata.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__record_producer",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2470332363": {
+     "predicate": "USES_TABLE",
+     "source_quote": "You can filter or group by questions on a table extended from the Task [task] table, for example the Incident [incident] or Problem [problem] tables, or from the Record Producer table [sc_cat_item_producer].",
+     "source_document": "markdown/now-intelligence/questions-in-dv.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__questions",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2470384861": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Catalog Item [sc_cat_item]",
+     "source_document": "markdown/platform-administration/ai-search/activate-people-genius-results-ais.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__default_ai_search_genius_results_model",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2470406725": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Roles required: -   localization_requestor: To request translations -   catalog_admin: To access the Service Catalog items [sc_cat_item] table.",
+     "source_document": "markdown/platform-administration/localization-framework/request-translations-multiple-items.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__service_catalog_items",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2470412993": {
+     "predicate": "CONTAINS",
+     "source_quote": "The Catalog Items [sc_cat_item] table opens.",
+     "source_document": "markdown/build-workflows/workflow-studio/create-sc-flow.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/product__service_catalog",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2470570621": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Catalog Item [sc_cat_item]",
+     "source_document": "markdown/platform-administration/search-administration/global-search-default-tables.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__catalog_item",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2470725185": {
+     "predicate": "USES_TABLE",
+     "source_quote": "WhereClause isn't correctly identified when language translations are enabled for a catalog variable with reference to sc_cat_item",
+     "source_document": "markdown/release-notes/australia-all-other-fixes.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/module__database_persistence_-_data_access",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2470789892": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Name of the table that extends Catalog Item [sc_cat_item].",
+     "source_document": "markdown/api-reference/server-api-reference/c_CatItem.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__catitem.settablename",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2470789898": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Sys_id of the record producer to use from the Record Producer [sc_cat_item_producer] table.",
+     "source_document": "markdown/api-reference/server-api-reference/c_CatItem.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__catitem.submitproducer",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2470789904": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Updates the values for specified fields of a catalog item.",
+     "source_document": "markdown/api-reference/server-api-reference/c_CatItem.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__catitem.update",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2470834778": {
+     "predicate": "USES_TABLE",
+     "source_quote": "sc_cat_item",
+     "source_document": "markdown/application-development/servicenow-studio-classic/servicenow-studio-file-navigator-taxonomy.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__schedule",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2470943682": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "markdown/api-reference/rest-apis/integrations-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__sn_customerservice_case",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "2470945254": {
+     "predicate": "USES_TABLE",
+     "source_quote": "select the flow in the **Flow** field of the Service Catalog Item [sc_cat_item] table.",
+     "source_document": "markdown/build-workflows/workflow-studio/add-stages.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/dataentity__service_catalog_item",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2470953254": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Sys_id of the execution plan task.Data type: String\n\nTable: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "markdown/api-reference/rest-apis/case-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/dataentity__delivery_task",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "2470968759": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "markdown/api-reference/rest-apis/case-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/dataentity__contact",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "2470973686": {
+     "predicate": "CONTAINS",
+     "source_quote": "-   sc_cat_item",
+     "source_document": "markdown/application-development/automated-test-framework-atf/atf-metadata-exception-triage.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__atf_tests_failure_resolution",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2470973692": {
+     "predicate": "CONTAINS",
+     "source_quote": "-   sc_cat_item_delivery_task",
+     "source_document": "markdown/application-development/automated-test-framework-atf/atf-metadata-exception-triage.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__atf_tests_failure_resolution",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "2470992621": {
+     "predicate": "CONTAINS",
+     "source_quote": "|Record Producer|sc_cat_item_producer|",
+     "source_document": "markdown/application-development/app-engine-studio/supported-features-metadata-custom-templates.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/product__app_engine_studio",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2470996255": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Sys_id of the execution plan task.Data type: String Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "markdown/api-reference/rest-apis/case-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__case",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "2471043797": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Record Producer [sc_cat_item_producer]",
+     "source_document": "markdown/api-reference/rest-apis/appointment-api.md",
+     "confidence": 0.96,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__apisn_apptmnt_bookingappointmentcalendar",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2471043815": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Record Producer [sc_cat_item_producer]",
+     "source_document": "markdown/api-reference/rest-apis/appointment-api.md",
+     "confidence": 0.96,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__apisn_apptmnt_bookingappointmentconfiguration",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2471044253": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Record Producer [sc_cat_item_producer]",
+     "source_document": "markdown/api-reference/rest-apis/appointment-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__apisn_apptmnt_bookingv1appointmentcalendar",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2471044569": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Record Producer [sc_cat_item_producer]",
+     "source_document": "markdown/api-reference/rest-apis/appointment-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__apisn_apptmnt_bookingv1appointmentconfiguration",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2471044603": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Record Producer [sc_cat_item_producer]",
+     "source_document": "markdown/api-reference/rest-apis/appointment-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__apisn_apptmnt_bookingappointmentexecute_rule_conditions",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2471164210": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table to which the record belongs, such as sc_cat_item_producer.",
+     "source_document": "markdown/api-reference/rest-apis/c_ServiceCatalogAPI.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__apisn_scservicecatalogitems",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2471164228": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table to which the record belongs, such as sc_cat_item_producer.",
+     "source_document": "markdown/api-reference/rest-apis/c_ServiceCatalogAPI.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__apisn_scservicecatalogitemssys_id",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2471169156": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Catalog Item [sc_cat_item]",
+     "source_document": "markdown/api-reference/rest-apis/c_ServiceCatalogAPI.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__apisn_scv1servicecatalogitemssys_idcheckout_guide",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2471169186": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Catalog Item [sc_cat_item]",
+     "source_document": "markdown/api-reference/rest-apis/c_ServiceCatalogAPI.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__apisn_scservicecatalogitemsitem_sys_idget_invalid_delegated_users",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2471169902": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Catalog Item [sc_cat_item]",
+     "source_document": "markdown/api-reference/rest-apis/c_ServiceCatalogAPI.md",
+     "confidence": 0.96,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__apisn_scservicecatalogitemssys_idorder_now",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2471180626": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Type of form that enables users to enter information that generates a task-based record",
+     "source_document": "markdown/application-development/now-assist-for-creator/sns-app-gen-supported-metadata.md",
+     "confidence": 0.75,
+     "extraction_type": "inferred",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__sc_cat_item_producer",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2471216747": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Validates variable values of a catalog item or record producer in Service Portal.",
+     "source_document": "markdown/application-development/automated-test-framework-atf/test-steps-catalog-portal-category.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__validate_variable_values_sp",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2471216759": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Validate the price and recurring price of a catalog item in Service Portal.",
+     "source_document": "markdown/application-development/automated-test-framework-atf/test-steps-catalog-portal-category.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__validate_price_and_recurring_price_sp",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2471216771": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Set the quantity for a catalog item in Service Portal.",
+     "source_document": "markdown/application-development/automated-test-framework-atf/test-steps-catalog-portal-category.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__set_catalog_item_quantity_sp",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2471235693": {
+     "predicate": "USES_TABLE",
+     "source_quote": "You can filter or group by questions on a table extended from the Task [task] table, for example the Incident [incident] or Problem [problem] tables, or from the Record Producer table [sc_cat_item_producer].",
+     "source_document": "markdown/now-intelligence/questions-in-dv.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__record_producer",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2471294253": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var now_GR = new GlideRecord(\"sc_cat_item\");",
+     "source_document": "markdown/api-reference/server-api-reference/c_GlideSPScriptableScopedAPI.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__canreadrecord",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2471294277": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Returns a model and view model for a `sc_cat_item` or `sc_cat_item_guide`.",
+     "source_document": "markdown/api-reference/server-api-reference/c_GlideSPScriptableScopedAPI.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__getcatalogitem",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2471586912": {
+     "predicate": "CONTAINS",
+     "source_quote": "Catalog item [sc_cat_item]",
+     "source_document": "markdown/customer-service-management/csm-config-workspace-ai-search.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__csm_ais_configurable_workspace_search_config",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2471661059": {
+     "predicate": "USES_TABLE",
+     "source_quote": "com.glide.cs.portal_url_mapping._default.sc_cat_item\n\nDefault for Catalog Item URL mapping.\n -   Type: string\n-   Value: /{{\"portal\"}}?sys_id={{\"data.sys_id\"}}&id={{\"data.table_name\"}}&table={{\"data.table_name\"}}",
+     "source_document": "markdown/conversational-interfaces/url-navigation-ci.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__url_navigation_sys_cs_portal_url_mapping",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2471779707": {
+     "predicate": "USES_TABLE",
+     "source_quote": "answer.setTable('sc_cat_item');",
+     "source_document": "markdown/api-reference/server-api-reference/GeniusResultAnswerScopedAPI.md",
+     "confidence": 0.96,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__geniusresultanswer_api",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2471779813": {
+     "predicate": "CONTAINS",
+     "source_quote": "search query for records from the Catalog Item [sc_cat_item] table",
+     "source_document": "markdown/api-reference/server-api-reference/GeniusResultAnswerScopedAPI.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__ai_search_request_processor",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2471779825": {
+     "predicate": "USES_TABLE",
+     "source_quote": "answer.setTable('sc_cat_item');",
+     "source_document": "markdown/api-reference/server-api-reference/GeniusResultAnswerScopedAPI.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__geniusresultanswer",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2471879023": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Type of form that enables users to enter information that generates a task-based record",
+     "source_document": "markdown/application-development/now-assist-for-creator/sns-app-gen-supported-metadata.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__app_generation",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2471883610": {
+     "predicate": "USES_TABLE",
+     "source_quote": "You can filter or group by questions on a table extended from the Task [task] table, for example the Incident [incident] or Problem [problem] tables, or from the Record Producer table [sc_cat_item_producer].",
+     "source_document": "markdown/now-intelligence/questions-in-dv.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__data_visualizations",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2472108730": {
+     "predicate": "CONTAINS",
+     "source_quote": "The Service Catalog API defines catalog items [sc_cat_item], record producers [sc_cat_item_producer], and related aspects of service catalogs.",
+     "source_document": "markdown/application-development/index.md",
+     "confidence": 0.96,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__service_catalog_api",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2472108736": {
+     "predicate": "CONTAINS",
+     "source_quote": "The Service Catalog API defines catalog items [sc_cat_item], record producers [sc_cat_item_producer], and related aspects of service catalogs.",
+     "source_document": "markdown/application-development/index.md",
+     "confidence": 0.96,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__service_catalog_api",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2472186188": {
+     "predicate": "CONTAINS",
+     "source_quote": "sc_cat_item",
+     "source_document": "markdown/application-development/servicenow-studio-classic/servicenow-studio-file-navigator-taxonomy.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/technicalcomponent__catalog_item",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "2472189336": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Sys_id of the execution plan task. Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "markdown/financial-services-operations/fso-int_guide-table_defs.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__sn_bom_loan_service",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "2472225026": {
+     "predicate": "USES_TABLE",
+     "source_quote": "catalog_id ... Table: Record Producer [sc_cat_item_producer]",
+     "source_document": "markdown/api-reference/rest-apis/appointment-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__sn_apptmnt_bookingappointmentcalendar",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2472225062": {
+     "predicate": "USES_TABLE",
+     "source_quote": "catalog_id ... Table: Record Producer [sc_cat_item_producer]",
+     "source_document": "markdown/api-reference/rest-apis/appointment-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__sn_apptmnt_bookingappointmentconfiguration",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2472225444": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Record Producer [sc_cat_item_producer]",
+     "source_document": "markdown/api-reference/rest-apis/appointment-api.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/api__apisn_apptmnt_bookingapi_versionappointmentconfiguration",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "2472331023": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Catalog Item \\[sc_cat_item\\]",
+     "source_document": "markdown/servicenow-platform/service-catalog/catalog-on-portal.md",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/module__catalog",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "41168508": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var dptask =new GlideRecord(\"sc_cat_item_delivery_task\");",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__assign_catalog_item_to_group_based_on_delivery_plan_task",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "41253223": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Sys_id of the record producer to use from the Record Producer [sc_cat_item_producer] table.",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__submitproducer",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "41413577": {
+     "predicate": "USES_TABLE",
+     "source_quote": "answer.setTable('sc_cat_item');",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.96,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__ai_search_request_processor_script",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "42704364": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The remote record producer table is an extension of the sc_cat_item_producer table",
+     "source_document": "servicenow-australia-service-bridge-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__remote_record_producers",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "42704376": {
+     "predicate": "EXTENDS_TABLE",
+     "source_quote": "The remote record producer table is an extension of the sc_cat_item_producer table",
+     "source_document": "servicenow-australia-service-bridge-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/table__remote_record_producer_table",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "42705711": {
+     "predicate": "USES_TABLE",
+     "source_quote": "catalog_id ... Table: Record Producer [sc_cat_item_producer]",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__appointment_open_api",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "42746363": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Opportunity details and Roles and requirements are record producer records in the Catalog Item [sc_cat_item] table.",
+     "source_document": "servicenow-australia-employee-service-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/module__opportunity_marketplace",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "42934189": {
+     "predicate": "USES_TABLE",
+     "source_quote": "sys_class_name: Table to which the record belongs, such as sc_cat_item_producer.",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__scripted_rest_service",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "43012783": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var dptask = new GlideRecord(\"sc_cat_item_delivery_task\");",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/module__assignment_rule",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "43157825": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Enter the name of the alternative field (a column in the Catalog Item [sc_cat_item] table)",
+     "source_document": "servicenow-australia-servicenow-platform-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__alternate_description_field_on_checkout_form",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43164653": {
+     "predicate": "USES_TABLE",
+     "source_quote": "To add the catalog item to the shopping cart, click AddtoCart .",
+     "source_document": "servicenow-australia-servicenow-platform-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__add_to_cart",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43164659": {
+     "predicate": "USES_TABLE",
+     "source_quote": "To add the catalog item to the wish list, click the Add to Wish List icon ( ).",
+     "source_document": "servicenow-australia-servicenow-platform-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__add_to_wish_list",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43167472": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The Domain (sys_domain) and Domain Path (sys_domain_path) columns are added to the following tables that are domain-separated:\n- sc_cat_item",
+     "source_document": "servicenow-australia-servicenow-platform-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__domain_separation",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43354283": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var now_GR = new GlideRecord(\"sc_cat_item\"); ... if ($sp.canReadRecord(now_GR))",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__glidespscriptable",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43370177": {
+     "predicate": "EXTENDS_TABLE",
+     "source_quote": "The remote record producer table is an extension of the sc_cat_item_producer table and uses the sn_sb_pro_remote_request table.",
+     "source_document": "servicenow-australia-service-bridge-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/table__sn_sb_pro_remote_request",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "43373677": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Sys_id of the delivery task associated with the change request. Data type: String Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/module__change_management",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "43373709": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Sys_id of the delivery task associated with the change request. Data type: String Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__change_request",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "43373873": {
+     "predicate": "USES_TABLE",
+     "source_quote": "delivery_task ... Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__change_request_api",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "43379256": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Sys_id of the execution plan task. Data type: String Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__cases.delivery_task",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "43386904": {
+     "predicate": "USES_TABLE",
+     "source_quote": "\"sys_class_name\": \"sc_cat_item_producer\"",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/module__service_catalog",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "43435294": {
+     "predicate": "USES_TABLE",
+     "source_quote": "//Get the catalog item for the current requested item var scCatItem =new GlideRecord(\"sc_cat_item\");",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature_get_catalog_item",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43436829": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Catalog item created in table sc_cat_item with sys_id 706948a287e370103a730f2d0ebb351e",
+     "source_document": "servicenow-australia-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/module__catalog_item",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43470073": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Record Producer [sc_cat_item_producer] | Provides the record producers for a vaccination program",
+     "source_document": "servicenow-australia-healthcare-life-sciences-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/module__vaccine_administration_management",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "43542540": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The record producers are available in the Record Producer [sc_cat_item_producer] table.",
+     "source_document": "servicenow-australia-financial-services-operations-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/module__record_producers",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "43599665": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "servicenow-australia-financial-services-operations-enus.pdf",
+     "confidence": 0.75,
+     "extraction_type": "inferred",
+     "releases": null,
+     "source": "entities_v2/feature__case",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "43612344": {
+     "predicate": "USES_TABLE",
+     "source_quote": "A service catalog content type that references the [sc_cat_item table].",
+     "source_document": "servicenow-australia-platform-user-interface-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__service_catalog_content_type",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43612421": {
+     "predicate": "USES_TABLE",
+     "source_quote": "list block Catalog Top 5 displays the top five items in the Service Catalog table [sc_cat_item]. Because the table is [sc_cat_item], the content type sc_cat_item controls how the Catalog Top 5 list is displayed.",
+     "source_document": "servicenow-australia-platform-user-interface-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__catalog_item_content_type",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43636828": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Enter sc_cat_item.LIST in the navigation filter.",
+     "source_document": "servicenow-australia-it-operations-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature_catalog_variable_management",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43637075": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var sc = new GlideRecord( 'sc_cat_item' );",
+     "source_document": "servicenow-australia-platform-user-interface-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__keyword_search",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43641517": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Enter sc_cat_item.LIST in the navigation filter.",
+     "source_document": "servicenow-australia-it-operations-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature_request_cloud_account_form",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43673854": {
+     "predicate": "USES_TABLE",
+     "source_quote": "This script performs a keyword search on the sc_cat_item table using the 123TEXTQUERY321 query method.",
+     "source_document": "servicenow-australia-platform-user-interface-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature_keyword_search_script",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43720708": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Target Column ... is Catalog item (sc_cat_item).",
+     "source_document": "servicenow-australia-servicenow-platform-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__related_catalog_item_widget",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43728271": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Enter the name of the alternative field (a column in the Catalog Item [sc_cat_item] table) and save it.",
+     "source_document": "servicenow-australia-servicenow-platform-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__alternate_description_field",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43740805": {
+     "predicate": "EXTENDS_TABLE",
+     "source_quote": "This table extends the Catalog Item [sc_cat_item] table.",
+     "source_document": "servicenow-australia-servicenow-platform-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/table__sn_client_sf_dist_cat_item",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43871956": {
+     "predicate": "USES_TABLE",
+     "source_quote": "To see a list of record producers, open a new tab and type sc_cat_item_producer.list in the Filter navigation field.",
+     "source_document": "servicenow-australia-it-service-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__items_orderable_by_subscribers",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "43921378": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Reference to catalog item used to create a Task record.",
+     "source_document": "servicenow-australia-build-workflows-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__record_producer_action",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43928288": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Catalog Item [sc_cat_item] | Short description, Description, Category, Price",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__global_search",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43928384": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Knowledge & Catalog - Catalog Items | Catalog Item [sc_cat_item]",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__search_source",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43928424": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Knowledge & Catalog | \u2022 Knowledge [kb_knowledge] \u2022 Catalog Item [sc_cat_item]",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__search_group",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43928492": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Knowledge & Catalog | \u2022 Knowledge [kb_knowledge] \u2022 Catalog Item [sc_cat_item]",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__search_groups",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43928828": {
+     "predicate": "USES_TABLE",
+     "source_quote": "For example, if you select the sc_cat_item table, only the sc_cat_item table is reindexed.",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__reindex_a_table_without_impacting_text_search_results",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43929273": {
+     "predicate": "USES_TABLE",
+     "source_quote": "AI Search supports indexing of searchable content from variables on records in the Catalog Item [sc_cat_item] table",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__catalog_variable_indexing",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43929309": {
+     "predicate": "USES_TABLE",
+     "source_quote": "AI Search supports indexing of searchable content from variables on records in the Catalog Item [sc_cat_item] table",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__ai_search_catalog_variable_indexing",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43929833": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Warning: Don't activate the People Genius Result configuration if your instance has more than 100,000 records in any of the following tables:\n- Catalog Item [sc_cat_item]\n- Department [cmn_department]\n- Location [cmn_location]\n- User [sys_u",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__people_genius_result",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43931033": {
+     "predicate": "USES_TABLE",
+     "source_quote": "sc_cat_item.owner",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__facet",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43931790": {
+     "predicate": "USES_TABLE",
+     "source_quote": "ServiceNow AI Platform records indexed from the Catalog Item [sc_cat_item] table.",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__now_assist_actions_genius_results",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43931798": {
+     "predicate": "USES_TABLE",
+     "source_quote": "ServiceNow AI Platform records indexed from the Catalog Item [sc_cat_item] table.",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__now_assist_multi-content_response_genius_results",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43938200": {
+     "predicate": "USES_TABLE",
+     "source_quote": "catalog_admin: To access the Service Catalog items [sc_cat_item] table.",
+     "source_document": "servicenow-australia-platform-administration-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__localization_framework",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43950437": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Customers can request services related to the products they have purchased by linking the Catalog Items table [sc_cat_item]",
+     "source_document": "servicenow-australia-customer-service-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/module__cases",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43961541": {
+     "predicate": "USES_TABLE",
+     "source_quote": "On the Order [sc_cat_item] page, in the Security tab, do the following:",
+     "source_document": "servicenow-australia-customer-service-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__public_access_on_rest_apis",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43961545": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Apply rate limit to REST APIs to avoid excessive use or abuse of publicly available catalog items.",
+     "source_document": "servicenow-australia-customer-service-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__rate_limit_on_rest_apis",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43961581": {
+     "predicate": "USES_TABLE",
+     "source_quote": "On the Scripted REST APIs page, search and select AI Search Assist Action (Internal API). On the AI Search Assist Actions (Internal API) page, in the Resources related list, select Order [sc_cat_item].",
+     "source_document": "servicenow-australia-customer-service-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/module__scripted_rest_apis",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "43973269": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The system identifier (sys_id) of the catalog item from the Record Producer [sc_cat_item_producer] table.",
+     "source_document": "servicenow-australia-customer-service-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__catalog_item_component",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "44052732": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Catalog Item                    | sc_cat_item",
+     "source_document": "servicenow-australia-application-development-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia"
+     ],
+     "source": "entities_v2/feature__catalog_item",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "44058117": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The Service Catalog API defines catalog items [sc_cat_item] and related aspects of service catalogs, including categories, record producers, variables, catalog client scripts, catalog UI policies, and variable sets.",
+     "source_document": "servicenow-australia-application-development-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__service_catalog_api",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "44058289": {
+     "predicate": "USES_TABLE",
+     "source_quote": "For simple show/hide, mandatory, and read-only logic, use catalog UI policies instead.",
+     "source_document": "servicenow-australia-application-development-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__catalog_ui_policies",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "44058293": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Variable sets are reusable collections of variables that can be attached to catalog items and record producers.",
+     "source_document": "servicenow-australia-application-development-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__variableset",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "44067050": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The following list of tables are not supported by the ATF tests failure resolution feature.\n- sc_cat_item_delivery_task",
+     "source_document": "servicenow-australia-application-development-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/module__automated_test_framework_atf",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "44100986": {
+     "predicate": "USES_TABLE",
+     "source_quote": "catalog_admin role required to delete Catalog Item records",
+     "source_document": "servicenow-australia-platform-security-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__catalog_admin_role_required_to_delete_catalog_item_records",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "44100994": {
+     "predicate": "USES_TABLE",
+     "source_quote": "catalog_admin role required to create Catalog Item records",
+     "source_document": "servicenow-australia-platform-security-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": null,
+     "source": "entities_v2/feature__catalog_admin_role_required_to_create_catalog_item_records",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "4429610": {
+     "predicate": "EXTENDS_TABLE",
+     "source_quote": "This table extends the Catalog Item [sc_cat_item] table.",
+     "source_document": "servicenow-zurich-it-service-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia",
+      "zurich"
+     ],
+     "source": "entities_v2/table__pc_product_cat_item",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "4589219": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Maps the question to a specific field on the Catalog Item (sc_cat_item) table or Record Producer (sc_cat_item_producer) table.",
+     "source_document": "servicenow-zurich-servicenow-platform-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia",
+      "zurich"
+     ],
+     "source": "entities_v2/feature__variable",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "4589223": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Maps the question to a specific field on the Catalog Item (sc_cat_item) table or Record Producer (sc_cat_item_producer) table.",
+     "source_document": "servicenow-zurich-servicenow-platform-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia",
+      "zurich"
+     ],
+     "source": "entities_v2/feature__variable",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "4589227": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The table in which the record producer creates records.",
+     "source_document": "servicenow-zurich-servicenow-platform-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia",
+      "zurich"
+     ],
+     "source": "entities_v2/feature__record_producer",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "4606322": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var dptask =new GlideRecord(\"sc_cat_item_delivery_task\");",
+     "source_document": "servicenow-zurich-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__assignment_rule_script_for_catalog_item",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "4606330": {
+     "predicate": "USES_TABLE",
+     "source_quote": "var dpTask =new GlideRecord(\"sc_cat_item_delivery_task\");",
+     "source_document": "servicenow-zurich-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__assignment_rule_script_for_items_with_one_task",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "4612105": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Sys_id of the record producer to use from the Record Producer [sc_cat_item_producer] table.",
+     "source_document": "servicenow-zurich-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__catitem",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "4648443": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Record Producer [sc_cat_item_producer]",
+     "source_document": "servicenow-zurich-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__appointment_booking",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "4651006": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "servicenow-zurich-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich",
+      "australia"
+     ],
+     "source": "entities_v2/module__case_management",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "4651183": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "servicenow-zurich-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__case_rest_api",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "4651255": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "servicenow-zurich-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__case_api",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "4653800": {
+     "predicate": "USES_TABLE",
+     "source_quote": "delivery_task       | No longer in use. Sys_id of the delivery task associated with the change request. Data type: String Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "servicenow-zurich-api-reference-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__delivery_task_field",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "5008376": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Record Producer [sc_cat_item_producer]",
+     "source_document": "servicenow-zurich-customer-service-management-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__csm_record_producer_page",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "5079639": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The Catalog Items [sc_cat_item] table opens.",
+     "source_document": "servicenow-zurich-build-workflows-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich",
+      "australia"
+     ],
+     "source": "entities_v2/feature__service_catalog_trigger",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "5089458": {
+     "predicate": "USES_TABLE",
+     "source_quote": "catalog items from the Catalog Item [sc_cat_item] table",
+     "source_document": "servicenow-zurich-conversational-interfaces-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "australia",
+      "zurich"
+     ],
+     "source": "entities_v2/feature__url_navigation",
+     "target": "entities_v2/table__sc_cat_item"
+    },
+    "5195720": {
+     "predicate": "USES_TABLE",
+     "source_quote": "The record producers are available in the Record Producer [sc_cat_item_producer] table.",
+     "source_document": "servicenow-zurich-financial-services-operations-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__record_producers",
+     "target": "entities_v2/table__sc_cat_item_producer"
+    },
+    "5205105": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "servicenow-zurich-financial-services-operations-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/module__credit_card_service",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "5205177": {
+     "predicate": "USES_TABLE",
+     "source_quote": "delivery_task       | Data type: String Sys_id of the execution plan task. Data type: String Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "servicenow-zurich-financial-services-operations-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/feature__delivery_task",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    },
+    "5205620": {
+     "predicate": "USES_TABLE",
+     "source_quote": "Sys_id of the execution plan task. Data type: String Table: Execution Plan Task [sc_cat_item_delivery_task]",
+     "source_document": "servicenow-zurich-financial-services-operations-enus.pdf",
+     "confidence": 0.95,
+     "extraction_type": "explicit",
+     "releases": [
+      "zurich"
+     ],
+     "source": "entities_v2/module__financial",
+     "target": "entities_v2/table__sc_cat_item_delivery_task"
+    }
+   }
+  }
+ }
+}
