@@ -1,5 +1,7 @@
 """Fixed Tier-2 query battery (spec §7). Case 1/2 are verbatim from the
-2026-07-16 bakeoff issue report and are the acceptance anchors."""
+2026-07-16 bakeoff issue report and are the acceptance anchors.
+IDENTIFIER_QUERIES below is the identifier cohort, spec §3.4 — scored
+separately, never blended into the fixed-11 means."""
 
 CASE_1 = {
     "name": "case1_realistic_3hint",
@@ -69,3 +71,44 @@ CONTROLS = [
     },
 ]
 QUERIES = [CASE_1, CASE_2, *HUBS, *CONTROLS]
+
+# Identifier cohort (spec §3.4): NL-phrased questions about specific
+# ServiceNow identifiers (plugins, tables), corpus-verified for exact
+# chunk_text matches. Scored separately — NEVER blended into the fixed-11
+# means above.
+IDENTIFIER_QUERIES = [
+    {
+        "name": "id_disc_plugin",
+        "query": "What does the com.snc.discovery plugin activate?",
+        "entity_hints": None,
+        "top_k": 5,
+        "edge_budget": 40,
+        "predicates": None,
+    },
+    {
+        "name": "id_mim_plugin",
+        "query": (
+            "What does the com.snc.incident.mim plugin provide for major incident management?"
+        ),
+        "entity_hints": None,
+        "top_k": 5,
+        "edge_budget": 40,
+        "predicates": None,
+    },
+    {
+        "name": "id_pm_project",
+        "query": "What is the pm_project table used for?",
+        "entity_hints": None,
+        "top_k": 5,
+        "edge_budget": 40,
+        "predicates": None,
+    },
+    {
+        "name": "id_sc_cat_item",
+        "query": "How is the sc_cat_item table related to the service catalog?",
+        "entity_hints": None,
+        "top_k": 5,
+        "edge_budget": 40,
+        "predicates": None,
+    },
+]

@@ -9,6 +9,31 @@ from __future__ import annotations
 from statistics import median
 from typing import Any
 
+from battery_queries import IDENTIFIER_QUERIES
+from battery_queries import QUERIES as _FIXED_QUERIES
+
+_COHORTS: dict[str, list[dict]] = {"fixed": _FIXED_QUERIES, "identifier": IDENTIFIER_QUERIES}
+
+
+def select_cohort(name: str) -> list[dict]:
+    """Select a battery query cohort by name (spec §3.4).
+
+    Args:
+        name: ``"fixed"`` for the frozen 11-query battery
+            (``battery_queries.QUERIES``) or ``"identifier"`` for the
+            identifier cohort (``battery_queries.IDENTIFIER_QUERIES``).
+
+    Returns:
+        The selected query list.
+
+    Raises:
+        ValueError: if ``name`` is not a recognized cohort.
+    """
+    try:
+        return _COHORTS[name]
+    except KeyError:
+        raise ValueError(f"unknown cohort: {name!r}") from None
+
 
 def latency_summary(ms_all: list[float]) -> dict[str, float]:
     """Median + IQR over repeated wall-clock samples (spec §3.5)."""
