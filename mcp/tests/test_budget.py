@@ -354,6 +354,81 @@ def test_trim_prunes_orphan_nodes_and_reuses_freed_tokens():
     assert estimate_tokens(out) <= ceiling
 
 
+def _redge(eid, pred, conf=None, quote="q") -> dict:
+    return {"id": eid, "predicate": pred, "confidence": conf, "source_quote": quote}
+
+
+class TestSelectEdgesRelevance:
+    def test_none_relevance_is_byte_identical_to_legacy(self):
+        edges = [_redge("a", "P1", 0.9), _redge("b", "P2", 0.8), _redge("c", "P1", 0.7)]
+        legacy = select_edges(edges, 2)
+        assert select_edges(edges, 2, relevance=None) == legacy
+        assert select_edges(edges, 2, relevance=None, diversity_quota=1) == legacy
+
+    def test_fill_ranks_by_relevance_not_confidence(self):
+        # High-confidence edge loses to high-relevance edge in the fill phase.
+        edges = [_redge("hi_conf", "P1", 0.99), _redge("hi_rel", "P1", 0.10)]
+        rel = {"hi_rel": 0.95, "hi_conf": 0.05}
+        kept = select_edges(edges, 1, relevance=rel, diversity_quota=1)
+        assert [e["id"] for e in kept] == ["hi_rel"]
+
+    def test_quota_preserves_minority_predicate(self):
+        # 3 highly-relevant P1 edges would fill slots=3; quota must save P2's best.
+        edges = [
+            _redge("p1a", "P1", 0.9),
+            _redge("p1b", "P1", 0.9),
+            _redge("p1c", "P1", 0.9),
+            _redge("p2a", "P2", 0.1),
+        ]
+        rel = {"p1a": 0.9, "p1b": 0.8, "p1c": 0.7, "p2a": 0.2}
+        kept = select_edges(edges, 3, relevance=rel, diversity_quota=2)
+        ids = {e["id"] for e in kept}
+        assert "p2a" in ids  # survived via quota
+        assert "p1a" in ids  # best edge overall also present
+
+    def test_default_quota_is_quarter_of_slots_min_one(self):
+        # slots=8 -> quota 2: with 3 predicates present, only the 2 best-ranked
+        # predicates get a guaranteed pick; the rest of the 8 fill by relevance.
+        edges = [_redge(f"p1{i}", "P1", 0.5) for i in range(8)]
+        edges += [_redge("p2a", "P2", 0.5), _redge("p3a", "P3", 0.5)]
+        rel = {e["id"]: 0.9 if e["predicate"] == "P1" else 0.1 for e in edges}
+        rel["p2a"] = 0.2  # p2 ranks above p3
+        kept = select_edges(edges, 8, relevance=rel)
+        ids = {e["id"] for e in kept}
+        assert "p2a" in ids  # second quota pick
+        assert "p3a" not in ids  # quota exhausted at 2; fill is all-P1 by relevance
+
+    def test_unscored_edges_eligible_not_sunk(self):
+        # Unscored edge: no relevance entry. It must (a) win a quota slot for its
+        # predicate, and (b) rank by confidence among unscored in the fill.
+        edges = [_redge("scored", "P1", 0.1), _redge("unscored", "P2", 0.9, quote=None)]
+        rel = {"scored": 0.5}
+        kept = select_edges(edges, 2, relevance=rel, diversity_quota=1)
+        assert {e["id"] for e in kept} == {"scored", "unscored"}
+
+    def test_scored_zero_relevance_still_outranks_unscored_in_fill(self):
+        edges = [_redge("z", "P1", 0.1), _redge("u", "P1", 0.99, quote=None)]
+        rel = {"z": 0.0}
+        kept = select_edges(edges, 1, relevance=rel, diversity_quota=0)
+        assert [e["id"] for e in kept] == ["z"]
+
+    def test_grounding_fields_never_stripped(self):
+        edges = [_redge("a", "P1", 0.9)]
+        edges[0].update(
+            {"source_document": "ITSM", "extraction_type": "explicit", "releases": ["x"]}
+        )
+        kept = select_edges(edges, 1, relevance={"a": 0.5})
+        assert kept[0]["source_document"] == "ITSM"
+        assert kept[0]["releases"] == ["x"]
+
+    def test_deterministic_on_ties(self):
+        edges = [_redge("b", "P1", 0.5), _redge("a", "P1", 0.5)]
+        rel = {"a": 0.5, "b": 0.5}
+        k1 = select_edges(edges, 1, relevance=rel)
+        k2 = select_edges(list(reversed(edges)), 1, relevance=rel)
+        assert [e["id"] for e in k1] == [e["id"] for e in k2] == ["a"]
+
+
 def test_trim_does_not_invert_to_floor_under_ceiling_eb120_case():
     """The eb=120 inversion: 5 concepts each with 24 edges+nodes overshoot the
     12000 ceiling. Pre-fix, the trim floored every concept to 3 edges (15 total)
