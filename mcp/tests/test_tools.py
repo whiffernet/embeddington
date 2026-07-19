@@ -81,7 +81,14 @@ def _mock_clients(monkeypatch):
     # reensure guard for the rest of the session, and _lexical_status leaks
     # a Mock object forward into every later test that reads it.
     monkeypatch.setattr(srv, "_lexical_status", "absent")
-    monkeypatch.setattr(srv, "_lexical_last_reensure", 0.0)
+    # Relative offset, not a literal 0.0: time.monotonic()'s epoch is
+    # unspecified (often system boot, not wall-clock zero) — in a
+    # short-uptime environment 0.0 isn't guaranteed to be >60s in the past,
+    # which would make the reensure guard incorrectly no-op. See the same
+    # note in test_server_main.py's test_maybe_reensure_throttles_to_once_per_60s.
+    monkeypatch.setattr(
+        srv, "_lexical_last_reensure", srv.time.monotonic() - srv._LEXICAL_REENSURE_INTERVAL - 1
+    )
 
 
 async def _fn(tool_name: str):

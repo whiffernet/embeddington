@@ -407,7 +407,7 @@ async def _vector_side(
                 lane = await qdrant.search(vector=vector, limit=max(top_k * 2, 25), match_text=tok)
                 lex_lanes.append([c for c in lane if tok in str(c.get("text", "")).lower()])
             except Exception as exc:  # noqa: BLE001 — a lexical lane degrades, never fails enrich
-                logger.warning("lexical lane failed for token %r: %s", tok, exc)
+                logger.warning("lexical lane failed for identifier %r: %s", tok, exc)
                 active = False
 
     fused = hybrid.rrf_merge([dense_thresholded, *lex_lanes], limit=top_k)

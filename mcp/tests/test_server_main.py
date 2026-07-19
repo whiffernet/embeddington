@@ -88,7 +88,16 @@ async def test_maybe_reensure_throttles_to_once_per_60s(monkeypatch):
     at most once per process per 60s via the module-global monotonic guard
     (spec §5 PR 4, issue #38)."""
     monkeypatch.setattr(srv, "_lexical_status", "absent")
-    monkeypatch.setattr(srv, "_lexical_last_reensure", 0.0)
+    # NOT 0.0: time.monotonic()'s reference point is unspecified (often system
+    # boot, not epoch) — in a short-uptime environment (e.g. a freshly booted
+    # CI runner) 0.0 can be LESS than 60s behind "now", which makes the guard
+    # incorrectly treat this as still-within-window and skip the first call
+    # too (reproduced locally by faking a low-uptime monotonic clock). A
+    # relative offset from the real "now" is the only value guaranteed to be
+    # more than the interval in the past regardless of the clock's epoch.
+    monkeypatch.setattr(
+        srv, "_lexical_last_reensure", time.monotonic() - srv._LEXICAL_REENSURE_INTERVAL - 1
+    )
 
     fake_qdrant = AsyncMock()
     fake_qdrant.ensure_chunk_text = AsyncMock(return_value="building")
