@@ -36,9 +36,12 @@ fusion, plus a minimum-score floor on the dense lane).
   materialized in ~3m30s on the reference stack).
 - BEHAVIORAL: when the `chunk_text` index isn't `"ready"` (`"building"`,
   `"absent"`, or `"unavailable"`) and the query itself contains identifier
-  tokens, the lexical lane is skipped and `warnings` gets the exact string
-  `"lexical lane degraded — chunk_text index not ready"` — never a silent
-  drop when the caller might have expected a literal-token hit.
+  tokens, the lexical lane is skipped for that call. `enrich`'s `warnings`
+  gets the exact string `"lexical lane degraded — chunk_text index not
+ready"` — never a silent drop when the caller might have expected a
+  literal-token hit. `vector_search` has no `warnings` channel; it signals
+  the same degradation only implicitly, via a dense-lane-only `results`
+  list.
 - Fixed-11 gold-recall, paired against v0.6.0: 10/11 non-worse (mean
   0.283→0.268). The one dip, `control_no_hints_snake`, is explained in
   `PR4-EVIDENCE.md`: the query's own identifier token changed its fused

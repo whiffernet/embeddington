@@ -73,7 +73,18 @@ _arango: ArangoKGClient | None = None
 # without re-probing on every tool call.
 _lexical_status: str = "absent"
 _LEXICAL_REENSURE_INTERVAL = 60.0
-_lexical_last_reensure: float = 0.0
+# -inf, not 0.0: time.monotonic()'s reference point is unspecified (often
+# system boot, not epoch) — on a host booted <60s ago, 0.0 can be LESS than
+# 60s behind the first real `now`, which would make the throttle guard below
+# wrongly treat that first call as still-within-window and skip it too.
+_lexical_last_reensure: float = float("-inf")
+# True while a re-ensure is in flight. materialize_chunk_text can take
+# minutes (~3m30s for the full corpus) — longer than the 60s throttle
+# window above — so the timestamp guard alone doesn't stop a second tool
+# call from firing a second, concurrent materialize once the window elapses
+# mid-materialize. This flag is checked-and-set before the first `await`
+# in _maybe_reensure, so no asyncio.Lock is needed for that atomicity.
+_lexical_reensure_in_flight: bool = False
 
 
 def _get_embed(index: str | None = None) -> EmbeddingClient:
@@ -222,17 +233,31 @@ async def _maybe_reensure() -> None:
     Baseline restores can recreate the Qdrant collection and silently drop
     the chunk_text field/index outside of a server restart; this lets the
     lexical lane self-heal without re-probing Qdrant on every tool call.
-    """
-    global _lexical_status, _lexical_last_reensure
 
+    A second guard, ``_lexical_reensure_in_flight``, stops overlapping
+    materializes: a full-corpus materialize can take minutes — longer than
+    the 60s throttle window — so a tool call arriving mid-materialize would
+    otherwise see the window as elapsed and kick off a second, concurrent
+    ``ensure_chunk_text()`` (double-scrolling the whole collection). The
+    flag is set before the only `await` in this function, so the
+    check-and-set is atomic under asyncio's cooperative scheduling — no
+    asyncio.Lock needed.
+    """
+    global _lexical_status, _lexical_last_reensure, _lexical_reensure_in_flight
+
+    if _lexical_reensure_in_flight:
+        return
     now = time.monotonic()
     if now - _lexical_last_reensure < _LEXICAL_REENSURE_INTERVAL:
         return
     _lexical_last_reensure = now
+    _lexical_reensure_in_flight = True
     try:
         _lexical_status = await _get_qdrant().ensure_chunk_text()
     except Exception as exc:  # noqa: BLE001 — a failed re-ensure must not fail the tool call
         logger.warning("lazy chunk_text re-ensure failed: %s", exc)
+    finally:
+        _lexical_reensure_in_flight = False
 
 
 # --- MCP server + tools ---------------------------------------------------

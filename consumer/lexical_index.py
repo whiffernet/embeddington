@@ -22,6 +22,7 @@ the published baseline/diff snapshots.
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 
 import httpx
@@ -212,6 +213,13 @@ def ensure_chunk_text_index(
     ``chunk_text_status``); a failure of the materialize or index-create step
     propagates, since those are real writes the caller should know failed.
 
+    Qdrant's index-create PUT acks before its payload_schema registration
+    lands a beat later (live-observed race) -- a re-probe run immediately
+    after a successful create can still read "absent" even though the
+    create genuinely succeeded. The post-create probe is retried briefly
+    (up to 5 times, 0.5s apart) until the status moves off "absent", mirroring
+    ``mcp/qdrant_client.py::QdrantSearchClient.ensure_chunk_text``'s async poll.
+
     Args:
         url: Qdrant base URL.
         collection: Collection to ensure.
@@ -229,5 +237,10 @@ def ensure_chunk_text_index(
     if status == "absent":
         materialize_chunk_text(url, collection, batch=batch, timeout=timeout)
         create_chunk_text_index(url, collection, timeout=timeout)
-        status = chunk_text_status(url, collection, timeout=timeout)
+        for attempt in range(5):
+            status = chunk_text_status(url, collection, timeout=timeout)
+            if status != "absent":
+                break
+            if attempt < 4:
+                time.sleep(0.5)
     return status

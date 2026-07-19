@@ -57,6 +57,13 @@ class TestApplyThreshold:
         chunks = [{"id": "a", "score": 0.9}, {"id": "b", "score": 0.2}]
         assert [c["id"] for c in hybrid.apply_threshold(chunks, 0.5)] == ["a"]
 
+    def test_score_equal_to_threshold_is_kept(self):
+        """The comparison is `>=`, not `>` — a chunk scoring exactly at the
+        threshold must survive, not be dropped as "below" it. Kills a
+        mutant that flips >= to >."""
+        chunks = [{"id": "a", "score": 0.5}, {"id": "b", "score": 0.49}]
+        assert [c["id"] for c in hybrid.apply_threshold(chunks, 0.5)] == ["a"]
+
     def test_zero_threshold_noop(self):
         chunks = [{"id": "a", "score": -1.0}]
         assert hybrid.apply_threshold(chunks, 0.0) == chunks

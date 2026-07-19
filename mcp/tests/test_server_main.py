@@ -7,6 +7,7 @@ loop. Without this reset, the first request hits "Event loop is closed" from
 httpx.AsyncClient instances bound to the now-closed sanity-check loop.
 """
 
+import asyncio
 import time
 from unittest.mock import AsyncMock, MagicMock
 
@@ -115,3 +116,41 @@ async def test_maybe_reensure_throttles_to_once_per_60s(monkeypatch):
     await srv._maybe_reensure()
 
     assert fake_qdrant.ensure_chunk_text.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_maybe_reensure_guards_against_concurrent_duplicate_materialize(monkeypatch):
+    """A full-corpus materialize (~3m30s, measured) outlives the 60s throttle
+    window, so a second tool call arriving mid-materialize would otherwise
+    see the window as elapsed and fire a second, concurrent
+    ensure_chunk_text() — double-scrolling the whole collection. The
+    in-flight flag must stop the second call from ever reaching Qdrant."""
+    monkeypatch.setattr(srv, "_lexical_status", "absent")
+    monkeypatch.setattr(
+        srv, "_lexical_last_reensure", time.monotonic() - srv._LEXICAL_REENSURE_INTERVAL - 1
+    )
+    monkeypatch.setattr(srv, "_lexical_reensure_in_flight", False)
+
+    release = asyncio.Event()
+    calls = {"n": 0}
+
+    async def slow_ensure():
+        calls["n"] += 1
+        await release.wait()
+        return "ready"
+
+    fake_qdrant = AsyncMock()
+    fake_qdrant.ensure_chunk_text = slow_ensure
+    monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
+
+    t1 = asyncio.create_task(srv._maybe_reensure())
+    t2 = asyncio.create_task(srv._maybe_reensure())
+    await asyncio.sleep(0)  # let t1 start (and set the in-flight flag) before t2 races in
+
+    assert calls["n"] == 1  # t2 saw the flag and no-opped before ever calling ensure_chunk_text
+
+    release.set()
+    await asyncio.gather(t1, t2)
+
+    assert calls["n"] == 1
+    assert srv._lexical_reensure_in_flight is False  # cleared after completion

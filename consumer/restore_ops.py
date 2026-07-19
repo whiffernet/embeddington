@@ -188,7 +188,9 @@ def make_baseline_importer(
         # import_baseline() stays a pure orchestrator (its own docstring's promise);
         # this is the IO layer, so the one visible trace an ordinary `update` run
         # leaves for the warm-up lives here, not threaded into updater.update's
-        # structured receipt (deliberately deferred -- see task-4-report.md).
+        # structured receipt -- deliberately deferred (team-lead-confirmed):
+        # updater.py is ~20 tightly-scenario-tested behaviors, not worth the
+        # blast radius for a status ordinary callers can already see via this print.
         print(f"chunk_text index: {result['chunk_text_status']}")
         return result
 

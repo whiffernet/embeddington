@@ -5,7 +5,7 @@ consume embeddington (as a registered MCP, by importing the modules, or by
 hand-rolling clients against the same data), diff your assumptions against this
 file. It is versioned with the code, so `git pull` keeps it current.
 
-- **Current as of:** `v0.3.0` (embeddington repo line — see `CHANGELOG.md` at
+- **Current as of:** `v0.7.0` (embeddington repo line — see `CHANGELOG.md` at
   the repo root, which is now the git-tag-synced authority going forward).
 - Version tags sprinkled through this doc's body (`upstream v0.3.4`,
   `upstream v0.3.5`, `upstream v0.3.7`) predate embeddington's own version
@@ -333,14 +333,17 @@ the index. States that matter to a caller:
 - **`"ready"`** — the lexical lane runs normally.
 - **`"building"` / `"absent"`** (materialized-but-indexing, or missing
   entirely) — the lexical lane is skipped for that call (dense-lane-only
-  result), and, **only if the query itself contained identifier tokens**,
-  `warnings` gets the exact string
-  `"lexical lane degraded — chunk_text index not ready"`. A query with no
+  result). **`enrich` only:** if the query itself contained identifier
+  tokens, its `warnings` gets the exact string
+  `"lexical lane degraded — chunk_text index not ready"`; a query with no
   identifier tokens degrades silently — there was nothing for the lexical
-  lane to have contributed either way.
+  lane to have contributed either way. `vector_search` has no `warnings`
+  channel (its envelope is `{results, count, collection}` — see above) and
+  signals this same degradation only implicitly, via a dense-lane-only
+  (and possibly shorter) `results` list — there is no explicit flag.
 - **`"unavailable"`** — the startup ensure itself failed (e.g. Qdrant
-  unreachable); same degraded (skip + conditional warning) behavior as
-  above.
+  unreachable); same degraded (skip + `enrich`-only conditional warning)
+  behavior as above.
 
 A first-ever `ensure` on a fresh restore materializes the whole corpus
 (measured: 152,191/152,194 points in ~3m30s on the reference stack — 3

@@ -321,6 +321,24 @@ async def test_ensure_absent_materializes_creates_index_and_reprobes():
 
 
 @pytest.mark.asyncio
+async def test_ensure_ready_short_circuits_without_materializing():
+    """When chunk_text is already "ready", ensure_chunk_text must make a
+    single status probe and nothing else — no scroll, no set_payload, no
+    index-create (mirrors tests/consumer/test_lexical_index.py's sync
+    twin)."""
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request.url.path)
+        return httpx.Response(200, json=_collection_info({"chunk_text": {"data_type": "text"}}))
+
+    c = QdrantSearchClient("http://q", "technology", transport=httpx.MockTransport(handler))
+    assert await c.ensure_chunk_text() == "ready"
+    assert calls == ["/collections/technology"]  # a single probe, nothing else
+    await c.close()
+
+
+@pytest.mark.asyncio
 async def test_ensure_post_create_reprobe_polls_past_registration_race(monkeypatch):
     """Qdrant's index-create PUT acks (~7ms, live-observed) before its
     payload_schema registration lands a beat later — a re-probe run

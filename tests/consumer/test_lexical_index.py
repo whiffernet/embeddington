@@ -238,6 +238,44 @@ def test_ensure_absent_materializes_creates_index_and_reprobes(monkeypatch):
     assert len([s for s in seq if s == ("GET", "/collections/technology")]) == 2
 
 
+def test_ensure_post_create_reprobe_polls_past_registration_race(monkeypatch):
+    """Qdrant's index-create PUT acks before its payload_schema registration
+    lands a beat later -- a re-probe run immediately after a successful
+    create can still read "absent". Mirrors mcp/qdrant_client.py's async
+    poll (live-observed race, issue #38)."""
+    sleep_calls = []
+    monkeypatch.setattr(lexical_index.time, "sleep", lambda s: sleep_calls.append(s))
+
+    state = {"created": False}
+    post_create_probes = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        p = request.url.path
+        if p == "/collections/technology" and request.method == "GET":
+            if not state["created"]:
+                return httpx.Response(200, json=_collection_info({}))  # initial probe: absent
+            post_create_probes.append(1)
+            if len(post_create_probes) == 1:
+                return httpx.Response(200, json=_collection_info({}))  # absent once
+            return httpx.Response(
+                200, json=_collection_info({"chunk_text": {"data_type": "text"}})
+            )  # then ready
+        if p.endswith("/points/scroll"):
+            return httpx.Response(200, json={"result": {"points": [], "next_page_offset": None}})
+        if p.endswith("/index"):
+            state["created"] = True
+            return httpx.Response(200, json={"result": {}, "status": "ok"})
+        raise AssertionError(p)
+
+    _mock(monkeypatch, handler)
+
+    status = lexical_index.ensure_chunk_text_index("http://q", "technology")
+
+    assert status == "ready"
+    assert len(post_create_probes) == 2
+    assert sleep_calls == [0.5]  # exactly one sleep, between the two post-create probes
+
+
 def test_ensure_ready_short_circuits_without_materializing(monkeypatch):
     calls = []
 

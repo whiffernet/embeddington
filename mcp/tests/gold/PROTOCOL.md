@@ -56,14 +56,15 @@ judge -> skeptic -> both referee-family votes -> majority.
 
 1. "What does the com.snc.discovery plugin activate?" → `id_disc_plugin` (pools ZERO edges)
 2. "What does the com.snc.incident.mim plugin provide for major incident management?" → `id_mim_plugin` (pools ZERO edges)
-3. "What is the pm_project table used for?" → `id_pm_project` (pools 152 edges, 7 relevant)
-4. "What is the sc_cat_item table used for?" → `id_sc_cat_item` (pools 212 edges, 6 relevant)
+3. "What is the pm_project table used for?" → `id_pm_project` (pools 178 edges, 7 relevant)
+4. "How is the sc_cat_item table related to the service catalog?" → `id_sc_cat_item` (pools 186 edges, 6 relevant)
 
 **KG extraction deficiency:** The two dotted-plugin queries (`id_disc_plugin`, `id_mim_plugin`) yield zero edges
 from the KG because the entity-hint extractor (`_extract_entity_hints`) cannot resolve dotted identifiers in
 NL phrases. This is a **measured, documented deficiency** in the extraction ontology — vector-lane gates on
 the MCP still cover all four queries despite the gap.
 
-**Labeling:** Identical judge→skeptic→2-referee majority pipeline as the main fixed cohort. Result: 13 candidate
-edges (both non-empty queries pooled) with **unanimous 3/3 cross-family majority** labels (Claude, gpt-oss-120b,
-llama-3.3-70b). All 7 id_pm_project relevants + 6 id_sc_cat_item relevants survived skeptic review.
+**Labeling:** Identical judge→skeptic→2-referee majority pipeline as the main fixed cohort. Result: 364 labeled
+candidates (both non-empty queries pooled), 13 relevant (7+6) **unanimous 3/3 cross-family majority** labels
+(Claude, gpt-oss-120b, llama-3.3-70b). All 7 id_pm_project relevants + 6 id_sc_cat_item relevants survived
+skeptic review.
