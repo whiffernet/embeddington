@@ -12,6 +12,13 @@ services:
     environment:
       ARANGO_ROOT_PASSWORD: ${ARANGO_ROOT_PASSWORD:?set in env}
     volumes: [battery_arango:/var/lib/arangodb3]
+  embed:
+    # Same image the consumer stack runs — keeps measurement inside the
+    # isolation boundary (spec §4) instead of borrowing a consumer/prod embed.
+    build: ../../consumer/embed
+    ports: ["18100:8100"]
+    volumes: [battery_embed_models:/root/.cache/huggingface]
 volumes:
   battery_qdrant:
   battery_arango:
+  battery_embed_models:
