@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.6.0 — 2026-07-19
+
+Closes #36 (relevance-aware edge selection: two-phase diversity quota +
+cosine relevance replaces confidence-only selection in `enrich`'s KG half).
+
+- `match.edges[]` selection is now two-phase: a diversity quota (default
+  `0.40` of a concept's slots, `EMBEDDINGTON_DIVERSITY_QUOTA`) picks the
+  best edge per distinct predicate ranked by query relevance, then the
+  remaining slots fill by relevance. Relevance is bge-m3 cosine similarity
+  between each edge's `source_quote` and the query. Measured lift: mean
+  gold-recall 0.130 -> 0.283 (2.2x) on the frozen gold set
+  (`mcp/tests/gold/`), reviving four formerly-zero queries (`c1`,
+  `hub_incident`, `control_no_hints_snake`, `hub_cmdb_rel_ci`); mean
+  per-predicate recall 0.977. See `mcp/tests/gold/PR3-EVIDENCE.md`.
+- New `EMBEDDINGTON_DIVERSITY_QUOTA` env knob (default `0.40`) — server
+  config, not a tool parameter, same posture as
+  `EMBEDDINGTON_MAX_RESPONSE_TOKENS`.
+- Quote embeddings are fetched with one batched `embed_batch()` call per
+  `enrich` (order-preserving, validated), served from a bounded in-process
+  LRU cache. Honest cost: cold (CPU embed sidecar, no cache hits) 188ms ->
+  ~12.2s at the shipped combo (~45ms/quote, up to ~300 pool quotes
+  batch-embedded); warm (cache hit, or a GPU-backed embed service) back
+  down to ~200ms, at or below the pre-change baseline.
+- BEHAVIORAL: any embed failure degrades loudly to the legacy predicate-floor + confidence-fill order (byte-identical to `v0.5.1`) and adds the warning `"relevance scoring unavailable — selection degraded to confidence order"` to `warnings` — never a silent fallback.
+
 ## v0.5.0 — 2026-07-18
 
 Closes #46 (measurement foundation: `updated_at` envelope surfacing, battery
