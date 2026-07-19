@@ -1,0 +1,17 @@
+{
+ "per_query_auc": {
+  "case1_realistic_3hint": 0.7256432246998284,
+  "case2_minimal": 0.42426645519429024,
+  "hub_cmdb_rel_ci": 0.33705357142857145,
+  "hub_process_mining": 0.7052295530556401,
+  "hub_discovery": 0.6828661844484629,
+  "hub_cmdb": 0.43182915057915056,
+  "hub_incident": 0.6744391971664699,
+  "hub_predictive_intelligence": 0.7465723131357807,
+  "control_no_hints_snake": 0.7625786163522013,
+  "control_predicate_filter": 0.8907563025210085,
+  "control_multifacet_license": 0.36893203883495146
+ },
+ "mean_auc": 0.6136515097651233,
+ "note": "AUC of bge-m3 cosine predicting judge-relevant (spec \u00a73.3)"
+}

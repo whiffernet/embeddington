@@ -1,0 +1,14 @@
+{
+  "binding": "baseline-2026-07b",
+  "note": "updated_at coverage in the restored battery KG (spec \u00a75 PR 1 probe)",
+  "counts": {
+    "entities_v2": {
+      "total": 310364,
+      "with_updated_at": 307672
+    },
+    "relationships_v2": {
+      "total": 683651,
+      "with_updated_at": 226316
+    }
+  }
+}

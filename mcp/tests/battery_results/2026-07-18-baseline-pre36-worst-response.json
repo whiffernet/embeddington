@@ -1,0 +1,1060 @@
+{
+ "tokens": 12000,
+ "combo": {
+  "eb": 60,
+  "tk": 3,
+  "dedup": "off"
+ },
+ "query": "control_multifacet_license",
+ "response": {
+  "vector_chunks": [
+   {
+    "id": "196c5406-7acd-4c4d-9e2f-af32f698151a",
+    "score": 0.64222527,
+    "text": "# Access control\n\nWhen generating or sharing a project, Process Mining honors the access control rules \\(ACLs\\) for the table.\n\nWhen generating a project, Process Mining honors the ACLs on the table that a project reports on, and ignores ACLs on the audit table. Users with the promin\\_viewer role have read-only access.\n\nWhen sharing a project:\n\n-   All visible data in Analyst workbench is visible to any user who has access to the project.\n-   All mining operations are performed as per the project creator's \\[sys\\_created\\_by\\] access. This includes mining performed by roles with higher permission levels, which can result in less data being mined.\n\nSummary and insights page:\n\n-   KPIs are visible to any user who has the required permission to access related KPIs.\n-   Insights are visible to any user who has access to the project.\n\n**Parent Topic:**[Configuring Process Mining](setting-up-process-mining.md)",
+    "source": "github-sync",
+    "metadata": {
+     "filename": "markdown/now-intelligence/process-mining/access-control.md",
+     "file_path": "/app/data/documents/temp_technology_1779916252.890733/markdown/now-intelligence/process-mining/access-control.md",
+     "file_name": "markdown/now-intelligence/process-mining/access-control.md",
+     "file_type": "text/markdown",
+     "file_size": 919,
+     "creation_date": "2026-05-27",
+     "last_modified_date": "2026-05-27",
+     "ingested_at": "2026-05-27T21:10:52.892207",
+     "file_hash": "365e637c113d7a66f3d3e3a4dfc96fa9ece7ad5480104b20461032e23fb4b6cb",
+     "source": "github-sync",
+     "source_type": "github-md",
+     "source_uri": "https://github.com/ServiceNow/ServiceNowDocs/blob/australia/markdown/now-intelligence/process-mining/access-control.md",
+     "canonical_url": null,
+     "title": "Access control",
+     "product": "Process Mining",
+     "product_area": "Process Mining",
+     "last_update": "2026-03-12",
+     "release": "australia",
+     "_node_type": "TextNode",
+     "document_id": "a4e12d2c-1cd3-4c93-bfab-17cd8192f179",
+     "doc_id": "a4e12d2c-1cd3-4c93-bfab-17cd8192f179",
+     "ref_doc_id": "a4e12d2c-1cd3-4c93-bfab-17cd8192f179"
+    }
+   },
+   {
+    "id": "2aa05443-3bd8-4d84-a691-84d1ebddc1fa",
+    "score": 0.62900364,
+    "text": "# Process Mining\n\nProcess Mining helps analysts and process owners quickly analyze and optimize their business processes.\n\nCreate automated business process flows from your data that enable you to monitor and more quickly discover inefficiencies in your processes. With Process Mining, you can:\n\n-   Visualize the execution of your processes or a customer journey, giving insight into adoption and user experiences. For more information see, [Analyst workbench page](analyst-workbench-dashboard.md).\n-   Identify bottlenecks and see their impact on your key performance indicators, enabling you to resolve root-cause issues. For more information see, [Automated root cause analysis](auto-rca.md).\n-   Understand why SLAs are breached by mining multiple tables into one view. For more information see, [Configure multi-dimensional mining](../task/configure-multidimensional-mining.md).\n-   Apply filters to analyst workbench based on projects created by you, shared with you, or all. For more information see, [Filtering project data](../task/filter-project.md).\n-   Audit processes to immediately detect critical changes and potential problems before they create negative consequences on the business.\n-   Integrate with ServiceNow\u00ae Performance Analytics and Continual Improvement Management to discover opportunities for improving your processes. For more information see, [Integration with indicator data sources \\(PA\\)](integrate-pa.md#) and [Integration with Continual Improvement Management](integrate-with-continuous-i.md#).\n-   Compare processes to investigate performance differences or deviations. For more information see, [Comparing projects](comparing-models.md).\n-   Link connected processes for a more comprehensive view of what impacts your main business. For more information see, [Activate content packs](../task/activate-po-content-pack.md).\n-   View activity transitions to see the top contributing activity transitions across specific metrics. For more information see, [Applying a process step filter on an activity](../task/node-to-node-conditions.md)\n-   Perform advanced calculations with the scalability of machine learning and AI.\n-   Perform Machine Learning \\(ML\\) based Cluster Analysis to find similar groupings, or patterns, of instances or records. For more information see, [Cluster analysis](cluster-analysis.md).\n\n## Get started\n\n<table id=\"table_rjt_k3s_hyb\" class=\"nav-card\"><tbody><tr><td>\n\n[Explore![](../../../reuse/icons/brand-icons/bus-explore.svg)Learn about Process Mining concepts and features](explore-process-mining.md)\n\n</td><td>\n\n[Activate![](../../../reuse/icons/brand-icons/bus-power.svg)Learn how to activate Process Mining](activating-process-mining.md)\n\n</td><td>\n\n[Configure![](../../../reuse/icons/brand-icons/bus-sdlc.svg)Configure Process Mining](setting-up-process-mining.md)\n\n</td></tr><tr><td>\n\n[Use![](../../../reuse/icons/brand-icons/bus-agent-workspace-1.svg)Learn how to use Process Mining](use-process-mining.md)\n\n</td><td>\n\n[Reference![](../../../reuse/icons/brand-icons/bus-learn.svg)Get details about Process Mining like key terms and components installed information](process-mining-reference.md)\n\n</td><td>\n\n\u00a0\n\n</td></tr></tbody>\n</table>",
+    "source": "github-sync",
+    "metadata": {
+     "filename": "markdown/now-intelligence/process-mining/process-mining.md",
+     "file_path": "/app/data/documents/temp_technology_1779916273.928275/markdown/now-intelligence/process-mining/process-mining.md",
+     "file_name": "markdown/now-intelligence/process-mining/process-mining.md",
+     "file_type": "text/markdown",
+     "file_size": 3211,
+     "creation_date": "2026-05-27",
+     "last_modified_date": "2026-05-27",
+     "ingested_at": "2026-05-27T21:11:13.929165",
+     "file_hash": "7de5e16b6f4b48420b952ffcf57980d86cbe4961e2c83383f37213f3c747a9a4",
+     "source": "github-sync",
+     "source_type": "github-md",
+     "source_uri": "https://github.com/ServiceNow/ServiceNowDocs/blob/australia/markdown/now-intelligence/process-mining/process-mining.md",
+     "canonical_url": null,
+     "title": "Process Mining",
+     "product": "Process Mining",
+     "product_area": "Process Mining",
+     "last_update": "2026-03-12",
+     "release": "australia",
+     "_node_type": "TextNode",
+     "document_id": "4032d421-83b5-420d-836f-8d9b287fe9ed",
+     "doc_id": "4032d421-83b5-420d-836f-8d9b287fe9ed",
+     "ref_doc_id": "4032d421-83b5-420d-836f-8d9b287fe9ed"
+    }
+   },
+   {
+    "id": "7385e2bf-e09e-49f0-934e-29984f44dba8",
+    "score": 0.6130564,
+    "text": "</td></tr><tr><td>\n\nAutomated Finding Configuration \\[promin\\_automated\\_finding\\_configuration\\]\n\n</td><td>\n\nStores configurations for Automated findings.\n\n</td></tr><tr><td>\n\nProcess Route Statistics \\[promin\\_route\\_stats\\]\n\n</td><td>\n\nStores statistics for the Routes.\n\n</td></tr><tr><td>\n\nPromin case data \\[promin\\_case\\_data\\]\n\n</td><td>\n\nStores the log collected during full mine.\n\n</td></tr><tr><td>\n\nJob Process Mining Project\\[promin\\_job\\_m2m\\_project\\]\n\n</td><td>\n\nStores information about the project attached to a job.\n\n</td></tr></tbody>\n</table>**Parent Topic:**[Process Mining reference](../concept/process-mining-reference.md)\n\n## Process Mining roles\n\nProcess Mining adds these roles.\n\nRoles control access to features and capabilities in applications and modules.\n\nAfter access has been granted to a role, all the groups or users assigned to the role are granted the access. Roles can contain other roles, and any access granted to a role is granted to any role that contains it.\n\n### Process mining administrator \\[sn\\_process\\_mining\\_admin\\]\n\nAccess all projects and manage all project settings and configurations and schedule background and jobs.\n\n#### Contains Roles\n\nThe Process mining administrator \\[sn\\_process\\_mining\\_admin\\] role contains the sn\\_process\\_mining\\_power\\_user role.\n\n#### Groups\n\nList of groups this role is assigned to by default.\n\nNone.\n\n#### Special considerations\n\n**Note:** Avoid granting an admin role when more specialized roles are available.\n\n### Process Mining power user \\[sn\\_process\\_mining\\_power\\_user\\]\n\nPerform the following actions when assigned to this role.\n\n-   Can access all projects and manage all project settings and configurations.\n-   Can create and share projects.\n-   Can view projects created by other users and shared with them.\n-   Can schedule Process Mining jobs.\n\n#### Contains Roles\n\nThe Process optimization power user \\[sn\\_process\\_mining\\_power\\_user\\] role contains the sn\\_process\\_mining\\_analyst role.\n\n#### Groups\n\nList of groups this role is assigned to by default.\n\nNone.\n\n#### Special considerations\n\nNone.\n\n### Process Mining Analyst \\[sn\\_process\\_mining\\_analyst\\]\n\nPerform the following actions when assigned to this role.\n\n-   Create and share projects.\n-   View projects created by other users and shared with them.\n\n#### Contains Roles\n\nNone.\n\n#### Groups\n\nList of groups this role is assigned to by default.\n\nNone.\n\n#### Special considerations\n\nUsers with this role cannot access all projects.\n\n## Process Mining properties\n\nSystem properties control system behavior. The properties in this section are specific to the Process Mining application.\n\nThese properties are available for Process Mining.\n\n**Note:** To open the System Properties \\[sys\\_properties\\] table, enter `sys_properties.list` in the navigation filter.\n\n<table id=\"table_tlv_5cf_xvb\"><thead><tr><th>\n\nProperty\n\n</th><th>\n\nDescription\n\n</th></tr></thead><tbody><tr><td>\n\npromin.limit.node\\_def\n\n</td><td>\n\nDefines the maximum number of activities for parent nodes in the Process Mining process map.-   Type: Integer\n-   Default value: 10\n\n**Note:** Avoid performance issues and a cluttered UI by setting this value no higher than 10.\n\n</td></tr><tr><td>\n\npromin.limit.child\\_node\\_def\n\n</td><td>\n\nDefines the maximum number of activities for child nodes in the Process Mining process map.-   Type: Integer\n-   Default value: 5\n\n**Note:** Avoid performance issues by setting this value no higher than 5.\n\n</td></tr><tr><td>\n\npromin.limit.breakdown\\_def\n\n</td><td>\n\nDefines the maximum number of breakdowns for parent nodes in the Process Mining process map.-   Type: Integer\n-   Default value: 10\n\n**Note:** Avoid performance issues by setting this value no higher than 10.\n\n</td></tr><tr><td>\n\npromin.limit.child\\_breakdown\\_def\n\n</td><td>\n\nDefines the maximum number of breakdowns for child nodes in the Process Mining process map.-   Type: Integer\n-   Default value: 5\n\n**Note:** Avoid performance issues by setting this value no higher than 5.",
+    "source": "github-sync",
+    "metadata": {
+     "filename": "markdown/now-intelligence/process-mining/components-installed.md",
+     "file_path": "/app/data/documents/temp_technology_1779916257.365818/markdown/now-intelligence/process-mining/components-installed.md",
+     "file_name": "markdown/now-intelligence/process-mining/components-installed.md",
+     "file_type": "text/markdown",
+     "file_size": 10857,
+     "creation_date": "2026-05-27",
+     "last_modified_date": "2026-05-27",
+     "ingested_at": "2026-05-27T21:10:57.367184",
+     "file_hash": "5676e56dfb63348bbab3ffb1633a464b05326a1c61334724f55125284d9a10f6",
+     "source": "github-sync",
+     "source_type": "github-md",
+     "source_uri": "https://github.com/ServiceNow/ServiceNowDocs/blob/australia/markdown/now-intelligence/process-mining/components-installed.md",
+     "canonical_url": null,
+     "title": "Components installed with Process Mining",
+     "product": "Process Mining",
+     "product_area": "Process Mining",
+     "last_update": "2026-03-12",
+     "release": "australia",
+     "_node_type": "TextNode",
+     "document_id": "50d8c93d-d970-4823-b288-6d10d2d49324",
+     "doc_id": "50d8c93d-d970-4823-b288-6d10d2d49324",
+     "ref_doc_id": "50d8c93d-d970-4823-b288-6d10d2d49324"
+    }
+   }
+  ],
+  "kg_matches": [
+   {
+    "concept": "entities_v2/feature__process_mining",
+    "variants": [
+     {
+      "id": "entities_v2/feature__process_mining",
+      "name": "Process Mining",
+      "type": "Feature",
+      "source_documents": [
+       "markdown/release-notes/rn-summary-highlights.md",
+       "markdown/now-intelligence/process-mining/touchpoint-analysis.md",
+       "markdown/delta-washingtondc-australia/australia-washingtondc-securityincidentresponse-release-notes.md",
+       "markdown/financial-services-operations/financial-services-complaint-management/fso-complaint-mgmt-landing-page.md",
+       "markdown/it-service-management/digital-portfolio-management/dpm-po-integration.md"
+      ],
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-27T07:38:44.578990+00:00",
+      "degree": 316
+     }
+    ],
+    "nodes": [
+     {
+      "id": "entities_v2/product__hr_service_delivery",
+      "name": "HR Service Delivery",
+      "type": "Product",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-27T19:06:48.086395+00:00"
+     },
+     {
+      "id": "entities_v2/feature__task_mining_integration",
+      "name": "Task Mining integration",
+      "type": "Feature",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-06-26T04:17:05.227079+00:00"
+     },
+     {
+      "id": "entities_v2/feature__process_mining_properties",
+      "name": "Process Mining properties",
+      "type": "Feature",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-05-28T12:34:12.246915+00:00"
+     },
+     {
+      "id": "entities_v2/dataentity__work_order_task",
+      "name": "Work order task",
+      "type": "DataEntity",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-27T04:43:00.149337+00:00"
+     },
+     {
+      "id": "entities_v2/plugin__sn_po",
+      "name": "sn_po",
+      "type": "Plugin",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-06-27T06:55:16.185592+00:00"
+     },
+     {
+      "id": "entities_v2/feature__domain_separation",
+      "name": "Domain separation",
+      "type": "Feature",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-27T17:05:22.780743+00:00"
+     },
+     {
+      "id": "entities_v2/release__xanadu",
+      "name": "Xanadu",
+      "type": "Release",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-07-09T07:45:10.413598+00:00"
+     },
+     {
+      "id": "entities_v2/api__apinowtabletablename",
+      "name": "/api/now/table/{tableName}",
+      "type": "API",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-07-09T07:37:54.510105+00:00"
+     },
+     {
+      "id": "entities_v2/businessprocess__analyze_and_optimize_business_processes",
+      "name": "Analyze and optimize business processes",
+      "type": "BusinessProcess",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-06-26T04:16:48.630960+00:00"
+     },
+     {
+      "id": "entities_v2/table__promin_model",
+      "name": "promin_model",
+      "type": "Table",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-24T14:58:45.492215+00:00"
+     },
+     {
+      "id": "entities_v2/role__admin",
+      "name": "admin",
+      "type": "Role",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-07-09T07:49:46.009350+00:00"
+     }
+    ],
+    "edges": [
+     {
+      "id": "1979710559",
+      "source": "entities_v2/product__hr_service_delivery",
+      "target": "entities_v2/feature__process_mining",
+      "predicate": "INTEGRATES_WITH",
+      "confidence": 0.96,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/employee-service-management/index.md",
+      "source_quote": "HR Service Delivery Process Mining -- Integrating the Process Mining application with the HR Service Delivery application enables you to analyze processes relevant to your KPIs.",
+      "updated_at": null
+     },
+     {
+      "id": "2066544195",
+      "source": "entities_v2/feature__process_mining",
+      "target": "entities_v2/feature__task_mining_integration",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/index.md",
+      "source_quote": "Use the Task Mining integration to create Task Mining projects and run analyses directly from the Process Mining Workspace.",
+      "updated_at": null
+     },
+     {
+      "id": "2466449621",
+      "source": "entities_v2/feature__process_mining",
+      "target": "entities_v2/dataentity__work_order_task",
+      "predicate": "CREATES_DATA",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [],
+      "source_document": "markdown/field-service-management/work-order-management/process-opt-fsm.md",
+      "source_quote": "Process Mining for FSM creates business process flows from the work order task data in audit trails, allowing process owners to perform in-depth analysis and discover process insights to improve business outcomes.",
+      "updated_at": null
+     },
+     {
+      "id": "2466811882",
+      "source": "entities_v2/feature__process_mining",
+      "target": "entities_v2/plugin__sn_po",
+      "predicate": "REQUIRES_PLUGIN",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/process-mining/explore-process-mining.md",
+      "source_quote": "The Process Mining plugin (sn_po) is activated by default in all your production instances enabling you to use the evaluation projects.",
+      "updated_at": "2026-06-27T06:55:16.187134+00:00"
+     },
+     {
+      "id": "2466931211",
+      "source": "entities_v2/feature__process_mining",
+      "target": "entities_v2/feature__domain_separation",
+      "predicate": "ENHANCED_BY",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/process-mining/process-mining-reference.md",
+      "source_quote": "Domain separation is supported in Process Mining.",
+      "updated_at": "2026-06-23T21:17:35.986857+00:00"
+     },
+     {
+      "id": "2467447690",
+      "source": "entities_v2/feature__process_mining",
+      "target": "entities_v2/release__xanadu",
+      "predicate": "INTRODUCED_IN",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/release-notes/australia-xanadu-combined-release-notes.md",
+      "source_quote": "Process Mining",
+      "updated_at": "2026-06-26T09:39:37.847567+00:00"
+     },
+     {
+      "id": "2472144113",
+      "source": "entities_v2/feature__process_mining",
+      "target": "entities_v2/businessprocess__analyze_and_optimize_business_processes",
+      "predicate": "IMPLEMENTS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/index.md",
+      "source_quote": "Process Mining helps analysts and process owners quickly analyze and optimize their business processes.",
+      "updated_at": "2026-06-26T04:16:48.632292+00:00"
+     },
+     {
+      "id": "44121273",
+      "source": "entities_v2/feature__process_mining",
+      "target": "entities_v2/table__promin_model",
+      "predicate": "USES_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": null,
+      "source_document": "servicenow-australia-now-intelligence-enus.pdf",
+      "source_quote": "Process Model [promin_model] | Stores multiple model statistics for a project version.",
+      "updated_at": null
+     },
+     {
+      "id": "5068305",
+      "source": "entities_v2/feature__process_mining",
+      "target": "entities_v2/role__admin",
+      "predicate": "REQUIRES_ROLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "zurich"
+      ],
+      "source_document": "servicenow-zurich-now-intelligence-enus.pdf",
+      "source_quote": "Role required: admin",
+      "updated_at": null
+     },
+     {
+      "id": "2470562182",
+      "source": "entities_v2/feature__process_mining",
+      "target": "entities_v2/api__apinowtabletablename",
+      "predicate": "HAS_API",
+      "confidence": 0.7,
+      "extraction_type": "inferred",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/impact/accelerator-and-initiative-list/jumpstart-process-mining.md",
+      "source_quote": "Process Mining Reporting",
+      "updated_at": "2026-06-22T12:45:18.705529+00:00"
+     },
+     {
+      "id": "2066544207",
+      "source": "entities_v2/feature__process_mining",
+      "target": "entities_v2/feature__process_mining_properties",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/index.md",
+      "source_quote": "The Process Mining properties page provides configuration options for Process Mining.",
+      "updated_at": null
+     }
+    ],
+    "truncation": {
+     "truncated": true,
+     "available": 316,
+     "returned": 11
+    },
+    "suggest": {
+     "kg_neighbors": {
+      "entity_id": "entities_v2/feature__process_mining",
+      "types": [
+       "CONTAINS",
+       "INTEGRATES_WITH",
+       "REQUIRES_PLUGIN"
+      ],
+      "limit": 100
+     },
+     "multi_hop": "for dependency chains use kg_path(from_id, to_id)"
+    },
+    "error": null
+   },
+   {
+    "concept": "entities_v2/product__process_mining",
+    "variants": [
+     {
+      "id": "entities_v2/product__process_mining",
+      "name": "Process Mining",
+      "type": "Product",
+      "source_documents": [
+       "markdown/employee-service-management/hr-service-delivery/process-opt-hrsd.md",
+       "markdown/release-notes/australia-zurich-combined-release-notes.md",
+       "markdown/platform-security/granular-admin-roles.md",
+       "markdown/now-intelligence/process-mining/process-start-condition.md",
+       "markdown/now-intelligence/process-mining/initiatives-from-process-optimization.md"
+      ],
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-27T15:02:49.102886+00:00",
+      "degree": 302
+     }
+    ],
+    "nodes": [
+     {
+      "id": "entities_v2/module__financial_services_business_loan_operations",
+      "name": "Financial Services Business Loan Operations",
+      "type": "Module",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-26T06:14:21.483740+00:00"
+     },
+     {
+      "id": "entities_v2/module__financial_services_card_operations",
+      "name": "Financial Services Card Operations",
+      "type": "Module",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-26T06:14:21.461046+00:00"
+     },
+     {
+      "id": "entities_v2/module__financial_services_payment_operations",
+      "name": "Financial Services Payment Operations",
+      "type": "Module",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-26T06:14:21.473877+00:00"
+     },
+     {
+      "id": "entities_v2/module__financial_services_personal_loan_operations",
+      "name": "Financial Services Personal Loan Operations",
+      "type": "Module",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-23T03:20:57.280716+00:00"
+     },
+     {
+      "id": "entities_v2/module__group_life_servicing",
+      "name": "Group Life Servicing",
+      "type": "Module",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-23T03:22:22.213220+00:00"
+     },
+     {
+      "id": "entities_v2/module__commercial_lines_claims",
+      "name": "Commercial Lines Claims",
+      "type": "Module",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-26T04:45:46.205563+00:00"
+     },
+     {
+      "id": "entities_v2/role__sn_process_mining_analyst",
+      "name": "sn_process_mining_analyst",
+      "type": "Role",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-06-26T15:33:31.235963+00:00"
+     },
+     {
+      "id": "entities_v2/plugin__com.sn_po",
+      "name": "com.sn_po",
+      "type": "Plugin",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-26T04:18:18.319687+00:00"
+     },
+     {
+      "id": "entities_v2/table__extract_data_logs",
+      "name": "extract data logs",
+      "type": "Table",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-06-22T04:06:26.561111+00:00"
+     },
+     {
+      "id": "entities_v2/feature__task_mining",
+      "name": "Task Mining",
+      "type": "Feature",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-24T08:47:07.308824+00:00"
+     },
+     {
+      "id": "entities_v2/api__apinowv1tableincident",
+      "name": "/api/now/v1/table/incident",
+      "type": "API",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-06-25T20:17:58.280962+00:00"
+     },
+     {
+      "id": "entities_v2/release__washington_dc",
+      "name": "Washington DC",
+      "type": "Release",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-27T08:10:09.077807+00:00"
+     }
+    ],
+    "edges": [
+     {
+      "id": "2466152714",
+      "source": "entities_v2/product__process_mining",
+      "target": "entities_v2/module__financial_services_business_loan_operations",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [],
+      "source_document": "markdown/now-intelligence/process-mining/integration-fso-process-opt.md",
+      "source_quote": "-   Financial Services Business Loan Operations",
+      "updated_at": null
+     },
+     {
+      "id": "2466816280",
+      "source": "entities_v2/product__process_mining",
+      "target": "entities_v2/role__sn_process_mining_analyst",
+      "predicate": "REQUIRES_ROLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/process-mining/po-advanced-conditions.md",
+      "source_quote": "Role required: sn_process_mining_analyst, sn_process_mining_power_user, or sn_process_mining_admin",
+      "updated_at": "2026-06-26T05:23:39.234220+00:00"
+     },
+     {
+      "id": "2470477497",
+      "source": "entities_v2/product__process_mining",
+      "target": "entities_v2/plugin__com.sn_po",
+      "predicate": "REQUIRES_PLUGIN",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/process-mining/setting-up-process-mining.md",
+      "source_quote": "Activate the Process Mining \\(com.sn_po\\) plugin.",
+      "updated_at": "2026-06-23T13:27:35.431778+00:00"
+     },
+     {
+      "id": "2470483187",
+      "source": "entities_v2/product__process_mining",
+      "target": "entities_v2/table__extract_data_logs",
+      "predicate": "USES_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/process-mining/domain-separation-process-optimization.md",
+      "source_quote": "All entities related to a process model definition, such as activity definitions, breakdown definitions, child table definitions, extract data logs, filter sets, notes, and CIM initiatives are created in the same domain as the process model",
+      "updated_at": "2026-06-22T04:06:26.562651+00:00"
+     },
+     {
+      "id": "2470904549",
+      "source": "entities_v2/feature__task_mining",
+      "target": "entities_v2/product__process_mining",
+      "predicate": "INTEGRATES_WITH",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/task-mining/integrations-for-task-mining.md",
+      "source_quote": "An administrator can integrate Task Mining with other ServiceNow applications such as Process Mining and Automation Center.",
+      "updated_at": "2026-06-23T11:44:15.451617+00:00"
+     },
+     {
+      "id": "2472448066",
+      "source": "entities_v2/product__process_mining",
+      "target": "entities_v2/release__washington_dc",
+      "predicate": "INTRODUCED_IN",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/delta-washingtondc-australia/australia-washingtondc-processmining-release-notes.md",
+      "source_quote": "-   **[Introduced Project builder](https://www.servicenow.com/docs/access?context=configure-a-project&family=washingtondc&ft:locale=en-US)**",
+      "updated_at": "2026-06-27T06:54:14.884164+00:00"
+     },
+     {
+      "id": "2470937679",
+      "source": "entities_v2/product__process_mining",
+      "target": "entities_v2/api__apinowv1tableincident",
+      "predicate": "HAS_API",
+      "confidence": 0.7,
+      "extraction_type": "inferred",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/process-mining/integration-with-ac.md",
+      "source_quote": "From Process Mining, you can create automation requests that you want to view in Automation Center Workspace.",
+      "updated_at": "2026-06-23T15:27:42.825300+00:00"
+     },
+     {
+      "id": "2466152734",
+      "source": "entities_v2/product__process_mining",
+      "target": "entities_v2/module__financial_services_card_operations",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [],
+      "source_document": "markdown/now-intelligence/process-mining/integration-fso-process-opt.md",
+      "source_quote": "-   Financial Services Card Operations",
+      "updated_at": null
+     },
+     {
+      "id": "2466152770",
+      "source": "entities_v2/product__process_mining",
+      "target": "entities_v2/module__financial_services_payment_operations",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [],
+      "source_document": "markdown/now-intelligence/process-mining/integration-fso-process-opt.md",
+      "source_quote": "-   Financial Services Payment Operations",
+      "updated_at": null
+     },
+     {
+      "id": "2466152776",
+      "source": "entities_v2/product__process_mining",
+      "target": "entities_v2/module__financial_services_personal_loan_operations",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [],
+      "source_document": "markdown/now-intelligence/process-mining/integration-fso-process-opt.md",
+      "source_quote": "-   Financial Services Personal Loan Operations",
+      "updated_at": null
+     },
+     {
+      "id": "2466152800",
+      "source": "entities_v2/product__process_mining",
+      "target": "entities_v2/module__group_life_servicing",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [],
+      "source_document": "markdown/now-intelligence/process-mining/integration-fso-process-opt.md",
+      "source_quote": "-   Group Life Servicing",
+      "updated_at": null
+     },
+     {
+      "id": "2466152806",
+      "source": "entities_v2/product__process_mining",
+      "target": "entities_v2/module__commercial_lines_claims",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [],
+      "source_document": "markdown/now-intelligence/process-mining/integration-fso-process-opt.md",
+      "source_quote": "-   Commercial Lines Claims",
+      "updated_at": null
+     }
+    ],
+    "truncation": {
+     "truncated": true,
+     "available": 302,
+     "returned": 12
+    },
+    "suggest": {
+     "kg_neighbors": {
+      "entity_id": "entities_v2/product__process_mining",
+      "types": [
+       "CONTAINS",
+       "REQUIRES_ROLE",
+       "REQUIRES_PLUGIN"
+      ],
+      "limit": 100
+     },
+     "multi_hop": "for dependency chains use kg_path(from_id, to_id)"
+    },
+    "error": null
+   },
+   {
+    "concept": "entities_v2/module__process_mining",
+    "variants": [
+     {
+      "id": "entities_v2/module__process_mining",
+      "name": "Process Mining",
+      "type": "Module",
+      "source_documents": [
+       "markdown/now-intelligence/process-mining/configure-worknotes-analysis.md",
+       "markdown/release-notes/australia-yokohama-combined-release-notes.md",
+       "markdown/now-intelligence/process-mining/annotate-project.md",
+       "markdown/now-intelligence/process-mining/config-finding-def-auto-rca.md",
+       "markdown/now-intelligence/process-mining/export-to-playbook.md"
+      ],
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-26T15:08:03.018674+00:00",
+      "degree": 114
+     }
+    ],
+    "nodes": [
+     {
+      "id": "entities_v2/feature__configure_kpis_for_spm_work_items",
+      "name": "Configure KPIs for SPM work items",
+      "type": "Feature",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-05-29T10:33:00.475002+00:00"
+     },
+     {
+      "id": "entities_v2/product__now_intelligence",
+      "name": "Now Intelligence",
+      "type": "Product",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-26T04:19:13.428025+00:00"
+     },
+     {
+      "id": "entities_v2/feature__now_assist_for_process_mining",
+      "name": "Now Assist for Process Mining",
+      "type": "Feature",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-26T15:08:03.021800+00:00"
+     },
+     {
+      "id": "entities_v2/feature__automated_root_cause_analysis",
+      "name": "Automated root cause analysis",
+      "type": "Feature",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-26T15:18:11.737179+00:00"
+     },
+     {
+      "id": "entities_v2/feature__work_notes_analysis",
+      "name": "Work notes analysis",
+      "type": "Feature",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-26T15:18:11.750563+00:00"
+     },
+     {
+      "id": "entities_v2/plugin__com.sn_po",
+      "name": "com.sn_po",
+      "type": "Plugin",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-26T04:18:18.319687+00:00"
+     },
+     {
+      "id": "entities_v2/release__yokohama",
+      "name": "Yokohama",
+      "type": "Release",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-07-09T06:56:52.217503+00:00"
+     },
+     {
+      "id": "entities_v2/api__processminingintegrationapi",
+      "name": "ProcessMiningIntegrationAPI",
+      "type": "API",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-27T08:36:30.440569+00:00"
+     },
+     {
+      "id": "entities_v2/role__pd_author",
+      "name": "pd_author",
+      "type": "Role",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-27T06:39:30.122088+00:00"
+     },
+     {
+      "id": "entities_v2/businessprocess__root_cause_analysis",
+      "name": "Root cause analysis",
+      "type": "BusinessProcess",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-25T23:18:13.076489+00:00"
+     },
+     {
+      "id": "entities_v2/table__activity_definition",
+      "name": "Activity Definition",
+      "type": "Table",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-23T14:17:16.925424+00:00"
+     },
+     {
+      "id": "entities_v2/feature__playbooks",
+      "name": "Playbooks",
+      "type": "Feature",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-27T19:21:16.832942+00:00"
+     }
+    ],
+    "edges": [
+     {
+      "id": "1452813431",
+      "source": "entities_v2/module__process_mining",
+      "target": "entities_v2/feature__configure_kpis_for_spm_work_items",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/process-mining/configure-kpis-for-spm.md",
+      "source_quote": "Configure KPIs for SPM work items in the Process Mining dashboard",
+      "updated_at": null
+     },
+     {
+      "id": "2066962267",
+      "source": "entities_v2/module__process_mining",
+      "target": "entities_v2/plugin__com.sn_po",
+      "predicate": "REQUIRES_PLUGIN",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/index.md",
+      "source_quote": "\"activation of the com.sn_po plugin\"",
+      "updated_at": null
+     },
+     {
+      "id": "2467302856",
+      "source": "entities_v2/module__process_mining",
+      "target": "entities_v2/release__yokohama",
+      "predicate": "INTRODUCED_IN",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/release-notes/australia-yokohama-combined-release-notes.md",
+      "source_quote": "Process Mining",
+      "updated_at": "2026-06-23T04:19:36.187958+00:00"
+     },
+     {
+      "id": "43033314",
+      "source": "entities_v2/module__process_mining",
+      "target": "entities_v2/api__processminingintegrationapi",
+      "predicate": "HAS_API",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "servicenow-australia-api-reference-enus.pdf",
+      "source_quote": "ProcessMiningIntegrationAPI - getFindings(String projectId)",
+      "updated_at": null
+     },
+     {
+      "id": "44119596",
+      "source": "entities_v2/module__process_mining",
+      "target": "entities_v2/role__pd_author",
+      "predicate": "REQUIRES_ROLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": null,
+      "source_document": "servicenow-australia-now-intelligence-enus.pdf",
+      "source_quote": "Role required: pd_author, pd_operator, sn_process_mining_analyst, sn_process_mining_power_user, or sn_process_mining_admin.",
+      "updated_at": null
+     },
+     {
+      "id": "5068714",
+      "source": "entities_v2/module__process_mining",
+      "target": "entities_v2/businessprocess__root_cause_analysis",
+      "predicate": "IMPLEMENTS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "zurich"
+      ],
+      "source_document": "servicenow-zurich-now-intelligence-enus.pdf",
+      "source_quote": "Set properties that determine the thresholds for root cause analysis.",
+      "updated_at": null
+     },
+     {
+      "id": "5070151",
+      "source": "entities_v2/module__process_mining",
+      "target": "entities_v2/table__activity_definition",
+      "predicate": "USES_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "zurich"
+      ],
+      "source_document": "servicenow-zurich-now-intelligence-enus.pdf",
+      "source_quote": "Activity Definition [promin_activity_def] | Stores the activities depicting the audit log changes to a field on the process graph.",
+      "updated_at": null
+     },
+     {
+      "id": "5149077",
+      "source": "entities_v2/module__process_mining",
+      "target": "entities_v2/feature__playbooks",
+      "predicate": "INTEGRATES_WITH",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "zurich"
+      ],
+      "source_document": "servicenow-zurich-release-notes-enus.pdf",
+      "source_quote": "Process Mining has been integrated with ServiceNow playbook.",
+      "updated_at": null
+     },
+     {
+      "id": "2066960805",
+      "source": "entities_v2/product__now_intelligence",
+      "target": "entities_v2/module__process_mining",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/index.md",
+      "source_quote": "\"- [Process Mining]\"",
+      "updated_at": "2026-06-26T04:17:48.026028+00:00"
+     },
+     {
+      "id": "2066961254",
+      "source": "entities_v2/module__process_mining",
+      "target": "entities_v2/feature__now_assist_for_process_mining",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/index.md",
+      "source_quote": "\"- [Now Assist for Process Mining] -- Use ServiceNow Now Assist for Process Mining to minimize time, maximize effort, and reduce complexity in project setup\"",
+      "updated_at": "2026-06-26T15:08:03.023386+00:00"
+     },
+     {
+      "id": "2066961489",
+      "source": "entities_v2/module__process_mining",
+      "target": "entities_v2/feature__automated_root_cause_analysis",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/index.md",
+      "source_quote": "\"- [Automated root cause analysis] -- Find where and why inefficiencies occur within your processes using automated root cause analysis\"",
+      "updated_at": "2026-06-26T04:18:02.298604+00:00"
+     },
+     {
+      "id": "2066961723",
+      "source": "entities_v2/module__process_mining",
+      "target": "entities_v2/feature__work_notes_analysis",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/now-intelligence/index.md",
+      "source_quote": "\"- [Work notes analysis] -- Work notes analysis helps you understand the operational reasons behind activity transitions, as recorded in work notes and comments\"",
+      "updated_at": "2026-06-26T04:18:02.288125+00:00"
+     }
+    ],
+    "truncation": {
+     "truncated": true,
+     "available": 114,
+     "returned": 12
+    },
+    "suggest": {
+     "kg_neighbors": {
+      "entity_id": "entities_v2/module__process_mining",
+      "types": [
+       "CONTAINS",
+       "REQUIRES_ROLE",
+       "REQUIRES_PLUGIN"
+      ],
+      "limit": 100
+     },
+     "multi_hop": "for dependency chains use kg_path(from_id, to_id)"
+    },
+    "error": null
+   }
+  ],
+  "errors": {},
+  "budget": {
+   "edge_budget": 60,
+   "returned": 35,
+   "truncated": true
+  },
+  "warnings": []
+ }
+}

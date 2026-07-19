@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.5.0 — 2026-07-18
+
+Closes #46 (measurement foundation: `updated_at` envelope surfacing, battery
+instrumentation, frozen gold set, pre-change baseline).
+
+- `updated_at` surfaced on KG nodes and edges in `enrich`/`kg_neighbors`/`kg_find_entities`
+  (recency visible, not ranked; see RESPONSE_SHAPES.md).
+- Battery instrumentation: JSON results, sub-call counts, repeated-run latency
+  (median/IQR); frozen cross-model-validated gold set (`mcp/tests/gold/`, 121
+  relevant of 2,765 pool edges, cross-family 2-of-3 majority) + committed
+  pre-change baseline (mean gold-recall 0.130) with the PR 3 acceptance floor
+  (≥0.280) pinned.
+
 ## v0.3.0 — 2026-07-17
 
 Fixes #28 (enrich payloads exceeded the MCP client tool-result cap).

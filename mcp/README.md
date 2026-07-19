@@ -111,6 +111,11 @@ Every tool returns structured JSON, never prose. Edges carry their
 cite verbatim, treat inferred edges as tentative, and scope version-sensitive
 claims. The Stranger appreciates a man who shows his sources.
 
+Nodes and edges also carry `updated_at` — an ISO timestamp of the last KG
+write, sparse on edges. It's recency metadata, not a ranking signal: nothing
+in `find_entities`/`neighbors`/`enrich` sorts or filters by it. See
+`RESPONSE_SHAPES.md` for the exact shape per tool.
+
 ## The files in this folder
 
 | File                  | Purpose                                                                                          |

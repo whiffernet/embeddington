@@ -217,3 +217,98 @@ def test_neighbors_stratified_predicates_upper_normalized(kg_client):
 def test_count_edges_uses_count_aggregate(kg_client):
     kg_client._db.aql.execute.return_value = iter([57])
     assert kg_client.count_edges("entities_v2/x", predicates=["CONTAINS"]) == 57
+
+
+def _stub_rows(kg_client, rows):
+    kg_client._db.aql.execute.return_value = iter(rows)
+
+
+def test_find_entities_projects_updated_at(kg_client):
+    _stub_rows(
+        kg_client,
+        [
+            {
+                "id": "entities_v2/a",
+                "name": "Discovery",
+                "type": "product",
+                "source_documents": [],
+                "releases": None,
+                "degree": 3,
+                "updated_at": "2026-06-04T00:00:00Z",
+            }
+        ],
+    )
+    out = kg_client.find_entities("Discovery", limit=1)
+    aql = kg_client._db.aql.execute.call_args[0][0]
+    assert "updated_at: e.updated_at" in aql
+    assert out[0]["updated_at"] == "2026-06-04T00:00:00Z"
+
+
+def test_neighbors_projects_updated_at_on_nodes_and_edges(kg_client):
+    _stub_rows(
+        kg_client,
+        [
+            {
+                "vertex": {
+                    "id": "entities_v2/a",
+                    "name": "A",
+                    "type": "product",
+                    "releases": None,
+                    "updated_at": "2026-06-04T00:00:00Z",
+                },
+                "edge": {
+                    "id": "e1",
+                    "source": "entities_v2/a",
+                    "target": "entities_v2/b",
+                    "predicate": "CONTAINS",
+                    "confidence": 0.9,
+                    "extraction_type": "explicit",
+                    "releases": None,
+                    "source_document": "ITSM",
+                    "source_quote": "q",
+                    "updated_at": None,
+                },
+            }
+        ],
+    )
+    out = kg_client.neighbors("entities_v2/a")
+    aql = kg_client._db.aql.execute.call_args[0][0]
+    assert "updated_at: v.updated_at" in aql  # vertex projection
+    assert "updated_at: e.updated_at" in aql  # edge projection
+    assert out["nodes"][0]["updated_at"] == "2026-06-04T00:00:00Z"
+    assert out["edges"][0]["updated_at"] is None
+
+
+def test_neighbors_stratified_projects_updated_at(kg_client):
+    _stub_rows(
+        kg_client,
+        [
+            {
+                "vertex": {
+                    "id": "entities_v2/a",
+                    "name": "A",
+                    "type": "product",
+                    "releases": None,
+                    "updated_at": None,
+                },
+                "edge": {
+                    "id": "e1",
+                    "source": "entities_v2/a",
+                    "target": "entities_v2/b",
+                    "predicate": "CONTAINS",
+                    "confidence": 0.9,
+                    "extraction_type": "explicit",
+                    "releases": None,
+                    "source_document": "ITSM",
+                    "source_quote": "q",
+                    "updated_at": "2026-07-01T00:00:00Z",
+                },
+                "fetched": 1,
+            }
+        ],
+    )
+    out = kg_client.neighbors_stratified("entities_v2/a")
+    aql = kg_client._db.aql.execute.call_args[0][0]
+    assert "updated_at: v.updated_at" in aql  # vertex projection
+    assert "updated_at: e.updated_at" in aql  # edge projection
+    assert out["edges"][0]["updated_at"] == "2026-07-01T00:00:00Z"

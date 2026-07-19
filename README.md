@@ -609,6 +609,11 @@ pytest
 cd ..
 ```
 
+The battery (`mcp/tests/battery_sweep.py`) now records latency (median/IQR
+over repeats), per-call counts, and machine-readable JSON results;
+retrieval changes are gated on a frozen, cross-model-validated gold set
+(`mcp/tests/gold/`).
+
 ---
 
 ## When the plan comes apart (troubleshooting)
