@@ -2,7 +2,23 @@
 
 import json
 
+import pytest
 import sweep_io
+from battery_queries import IDENTIFIER_QUERIES
+from battery_queries import QUERIES as FIXED_QUERIES
+
+
+def test_select_cohort_fixed_default():
+    assert sweep_io.select_cohort("fixed") is FIXED_QUERIES
+
+
+def test_select_cohort_identifier():
+    assert sweep_io.select_cohort("identifier") is IDENTIFIER_QUERIES
+
+
+def test_select_cohort_unknown_raises():
+    with pytest.raises(ValueError, match="unknown cohort"):
+        sweep_io.select_cohort("bogus")
 
 
 def _combo():

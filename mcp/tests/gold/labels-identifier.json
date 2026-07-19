@@ -1,0 +1,1464 @@
+{
+ "id_disc_plugin": {},
+ "id_mim_plugin": {},
+ "id_pm_project": {
+  "1856318163": {
+   "label": "marginal",
+   "rationale": "Names pm_project as one of two valid tables for a cost-plan sys_id field, showing an integration point but not describing the table's general purpose."
+  },
+  "1856318169": {
+   "label": "relevant",
+   "rationale": "Directly and generally states that projects are created in the pm_project table, which is exactly what the query asks for and is not narrowed to a niche integration scenario. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
+  },
+  "2464225380": {
+   "label": "marginal",
+   "rationale": "Describes mapping the Number field to pm_project during scenario-planning field mapping, a specific integration detail rather than the table's purpose."
+  },
+  "2465277439": {
+   "label": "marginal",
+   "rationale": "Describes where project tasks are stored (pm_project_task), the companion table, but the quote itself does not describe pm_project."
+  },
+  "2465823417": {
+   "label": "irrelevant",
+   "rationale": "Concerns a dictionary override on the pm_project_task table, not pm_project."
+  },
+  "2466009754": {
+   "label": "irrelevant",
+   "rationale": "Describes a UI view of the pm_project_task table, unrelated to pm_project's purpose."
+  },
+  "2466046716": {
+   "label": "marginal",
+   "rationale": "Says only 'a new record is created in the Project table' inside an MSP-import procedure step, never stating explicitly that the record is a project, so it is a narrow integration detail rather than a load-bearing purpose statement."
+  },
+  "2466046722": {
+   "label": "marginal",
+   "rationale": "Describes tasks being added to the Project Task table during MSP import, related but about pm_project_task not pm_project."
+  },
+  "2466046734": {
+   "label": "marginal",
+   "rationale": "Duplicate statement about tasks added to Project Task table, related context but about pm_project_task."
+  },
+  "2466058198": {
+   "label": "marginal",
+   "rationale": "Simple name/table-id pairing for Project without explanation of its purpose."
+  },
+  "2466058204": {
+   "label": "irrelevant",
+   "rationale": "Name/table-id pairing for Project Task (pm_project_task), a different table."
+  },
+  "2466094693": {
+   "label": "marginal",
+   "rationale": "Shows a script instantiating a GlideRecord on pm_project, evidence it's queryable but no explanation of purpose."
+  },
+  "2466112120": {
+   "label": "marginal",
+   "rationale": "Mentions pm_project as one of several planning item types in the roadmap view without explaining its purpose."
+  },
+  "2466112850": {
+   "label": "marginal",
+   "rationale": "Notes a field is relevant only for the Project [pm_project] table map, a configuration detail not a purpose statement."
+  },
+  "2466124731": {
+   "label": "irrelevant",
+   "rationale": "References the Project task [pm_project_task] table, not pm_project."
+  },
+  "2466163640": {
+   "label": "marginal",
+   "rationale": "Instructs selecting pm_project for projects in an SPW setup step, a configuration detail rather than a purpose description."
+  },
+  "2466301681": {
+   "label": "marginal",
+   "rationale": "Lists pm_project as an example planning item type in roadmap/portfolio planning, tangential to defining the table's purpose."
+  },
+  "2466341233": {
+   "label": "marginal",
+   "rationale": "Simple table name reference in an order-management table mapping list, no explanation of purpose."
+  },
+  "2466341239": {
+   "label": "irrelevant",
+   "rationale": "References the Project Task [pm_project_task] table, not pm_project."
+  },
+  "2466341269": {
+   "label": "marginal",
+   "rationale": "Shows an order-management integration mapping Order Line Item to Project [pm_project], a specific integration detail rather than a general purpose statement."
+  },
+  "2466341287": {
+   "label": "irrelevant",
+   "rationale": "Maps Domain Order to Project Task [pm_project_task], a different table."
+  },
+  "2466341305": {
+   "label": "irrelevant",
+   "rationale": "Maps Order Task to Project Task [pm_project_task], a different table."
+  },
+  "2466359237": {
+   "label": "irrelevant",
+   "rationale": "Concerns pm_project_task assignment notifications, not pm_project."
+  },
+  "2466426546": {
+   "label": "marginal",
+   "rationale": "Shows a widget script instantiating GlideRecord on pm_project, technical usage evidence without a purpose explanation."
+  },
+  "2466504193": {
+   "label": "irrelevant",
+   "rationale": "Describes the Project Template Configuration list generically without mentioning the pm_project table."
+  },
+  "2466504199": {
+   "label": "irrelevant",
+   "rationale": "Lists default template configuration items generically, no reference to the pm_project table."
+  },
+  "2466504205": {
+   "label": "irrelevant",
+   "rationale": "Describes a generic parent-table link mechanism for a task object, no mention of pm_project."
+  },
+  "2466504211": {
+   "label": "irrelevant",
+   "rationale": "Describes a generic parent-table link mechanism for a subtask object, no mention of pm_project."
+  },
+  "2466544480": {
+   "label": "marginal",
+   "rationale": "Instructs setting the Active field true for dmn_demand and pm_project as an integration setup step, a configuration detail not a purpose statement."
+  },
+  "2466577931": {
+   "label": "marginal",
+   "rationale": "Uses 'Project report pm_project' as an example parent table for PowerPoint export, a usage example rather than a definition."
+  },
+  "2466577937": {
+   "label": "marginal",
+   "rationale": "Duplicate of the PowerPoint export parent-table example referencing pm_project."
+  },
+  "2466577943": {
+   "label": "marginal",
+   "rationale": "Shows a script instantiating GlideRecord on pm_project for PPT export, technical evidence without purpose explanation."
+  },
+  "2466654130": {
+   "label": "marginal",
+   "rationale": "Uses Project [pm_project] as an example table for a scorecard link, a usage example not a definition."
+  },
+  "2466704970": {
+   "label": "marginal",
+   "rationale": "Instructs selecting Project[pm_project] in the Planning Console context list, a configuration step not a purpose statement."
+  },
+  "2466705610": {
+   "label": "irrelevant",
+   "rationale": "Generic instruction to select a Project for an external task dependency, does not mention the pm_project table."
+  },
+  "2466710428": {
+   "label": "marginal",
+   "rationale": "Instructs selecting the pm_project table name in a column-mapping configuration step, not a purpose statement."
+  },
+  "2466710476": {
+   "label": "marginal",
+   "rationale": "Describes adding an activity formatter to the Project form, UI customization detail tangential to table purpose."
+  },
+  "2466726515": {
+   "label": "marginal",
+   "rationale": "Describes the pm_project_metric database view built on top of pm_project for reporting purposes, which is about a derived view's use-case rather than a statement of what pm_project itself is for."
+  },
+  "2466726545": {
+   "label": "marginal",
+   "rationale": "Describes the pm_project_sla database view joining pm_project to SLA data for reporting, again characterizing a downstream view's use rather than pm_project's own purpose."
+  },
+  "2466726569": {
+   "label": "irrelevant",
+   "rationale": "Describes the pm_project_task_metric view joining pm_project_task, not pm_project."
+  },
+  "2466726609": {
+   "label": "marginal",
+   "rationale": "Describes the pm_project_task_sla view for reporting on release tasks; mentions pm_project only incidentally in a task-focused reporting context."
+  },
+  "2466726647": {
+   "label": "irrelevant",
+   "rationale": "Describes the pm_project_task_time_worked view joining pm_project_task, not pm_project."
+  },
+  "2466731913": {
+   "label": "relevant",
+   "rationale": "Directly asserts that 'site projects are created on pm_project table,' a clear definitional statement of what kind of records the table stores even though scoped to the order-management/SPM context. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
+  },
+  "2466731925": {
+   "label": "relevant",
+   "rationale": "Duplicate of the direct statement that site projects are created on the pm_project table, equally load-bearing as its twin. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
+  },
+  "2466811218": {
+   "label": "marginal",
+   "rationale": "Describes AI-recognized document data being mapped to pm_project and pm_project_task columns, a specific feature detail rather than a general purpose statement."
+  },
+  "2466811224": {
+   "label": "marginal",
+   "rationale": "Duplicate of the AI document-recognition mapping detail for pm_project columns."
+  },
+  "2466875503": {
+   "label": "marginal",
+   "rationale": "Lists specific UI columns (Status, Percent complete, Phase) sourced from pm_project in a project card widget, a display detail rather than a purpose statement."
+  },
+  "2466875515": {
+   "label": "marginal",
+   "rationale": "Describes the project workspace overview displaying projects as cards without explicitly referencing the pm_project table."
+  },
+  "2466883593": {
+   "label": "marginal",
+   "rationale": "Describes an aggregation column config on the Project [pm_project] table for a widget, a configuration detail not a purpose statement."
+  },
+  "2466883599": {
+   "label": "marginal",
+   "rationale": "This is circular UI help text for a widget field literally named 'Project table' ('table from which projects are being filtered') that merely restates the field's own label rather than substantively explaining pm_project's purpose."
+  },
+  "2466883605": {
+   "label": "marginal",
+   "rationale": "Describes filter criteria applied against the Project table in a widget, a configuration detail closely tied to but narrower than the table's general purpose."
+  },
+  "2466884937": {
+   "label": "marginal",
+   "rationale": "Lists pm_project among delivered tables relevant to integration table maps, a configuration/troubleshooting detail."
+  },
+  "2466886825": {
+   "label": "marginal",
+   "rationale": "Duplicate statement that recognized document data maps to pm_project and pm_project_task columns, a specific feature detail."
+  },
+  "2466886831": {
+   "label": "marginal",
+   "rationale": "Describes Now Assist extracting project/task details from uploaded documents without explicitly naming the pm_project table."
+  },
+  "2466987237": {
+   "label": "irrelevant",
+   "rationale": "Describes overdue tasks/milestones tracked in the Project Task [pm_project_task] table, not pm_project."
+  },
+  "2467017126": {
+   "label": "irrelevant",
+   "rationale": "Duplicate reference to overdue tasks in the Project Task [pm_project_task] table, not pm_project."
+  },
+  "2467073512": {
+   "label": "relevant",
+   "rationale": "Directly and unambiguously states that project records are stored in the PPM Project [pm_project] table, squarely answering the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
+  },
+  "2467075128": {
+   "label": "irrelevant",
+   "rationale": "This quote references the Project Task [pm_project_task] table for locating a sys_id, not pm_project."
+  },
+  "2467146163": {
+   "label": "irrelevant",
+   "rationale": "Describes the Time worked field on Project Task, Incident, Problem, and Change records without referencing pm_project."
+  },
+  "2467146187": {
+   "label": "irrelevant",
+   "rationale": "Describes generating time cards for project tasks, not the pm_project table."
+  },
+  "2467226978": {
+   "label": "marginal",
+   "rationale": "Lists pm_project among plugins to install for Demand Management, a setup/packaging detail rather than a purpose statement."
+  },
+  "2467237842": {
+   "label": "marginal",
+   "rationale": "Simple table name reference in a list of tables installed with PPM finance, no purpose explanation."
+  },
+  "2467313933": {
+   "label": "marginal",
+   "rationale": "Shows a GlideRecord API example script targeting pm_project, technical evidence without purpose explanation."
+  },
+  "2467313999": {
+   "label": "irrelevant",
+   "rationale": "Shows a GlideRecord script example targeting pm_project_task, not pm_project."
+  },
+  "2467345720": {
+   "label": "marginal",
+   "rationale": "Shows configuring the default state value on pm_project.state, a configuration detail rather than a general purpose statement."
+  },
+  "2467362375": {
+   "label": "marginal",
+   "rationale": "Instructs selecting Project[pm_project] to add a planning console column, a configuration example not a purpose statement."
+  },
+  "2467362381": {
+   "label": "marginal",
+   "rationale": "Instructs selecting pm_project or pm_project_task as the table for a display column, a configuration detail."
+  },
+  "2467383890": {
+   "label": "marginal",
+   "rationale": "Shows a diagnostic script instantiating GlideRecord on pm_project, technical evidence without purpose explanation."
+  },
+  "2467435876": {
+   "label": "marginal",
+   "rationale": "Shows a Jelly UI reference tag pointing at the pm_project table for an autocomplete field, a technical usage detail."
+  },
+  "2470340123": {
+   "label": "irrelevant",
+   "rationale": "Duplicate reference describing a UI view of the pm_project_task table, not pm_project."
+  },
+  "2470363744": {
+   "label": "marginal",
+   "rationale": "Describes business-stakeholder role access to PPM dashboard tables, truncated reference to a project-task-related table rather than a clear pm_project purpose statement."
+  },
+  "2470381024": {
+   "label": "marginal",
+   "rationale": "Duplicate script example instantiating GlideRecord on pm_project."
+  },
+  "2470539909": {
+   "label": "marginal",
+   "rationale": "Duplicate widget script example instantiating GlideRecord on pm_project."
+  },
+  "2470607739": {
+   "label": "marginal",
+   "rationale": "Lists pm_project among delivered tables relevant to APW integration troubleshooting, a configuration detail."
+  },
+  "2470615333": {
+   "label": "marginal",
+   "rationale": "Duplicate PowerPoint export example referencing 'Project report pm_project' as a parent table."
+  },
+  "2471240186": {
+   "label": "irrelevant",
+   "rationale": "Describes summarizing demand records via a demand summarization skill, unrelated to the pm_project table."
+  },
+  "2471554175": {
+   "label": "irrelevant",
+   "rationale": "Describes a project-tasks widget listing unassigned tasks, without referencing the pm_project table."
+  },
+  "2471554181": {
+   "label": "irrelevant",
+   "rationale": "Describes tracking project task states by assignee/group, without referencing the pm_project table."
+  },
+  "2471554187": {
+   "label": "irrelevant",
+   "rationale": "Describes a donut chart of project task stages, without referencing the pm_project table."
+  },
+  "2472560504": {
+   "label": "marginal",
+   "rationale": "Lists pm_project as a supported table for partitioning in EWD alongside dmn_demand, a configuration/support-scope detail rather than a purpose statement."
+  },
+  "2472560552": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"ridac_m2m|RIDAC|pm_project / dmn_demand\""
+  },
+  "2472560564": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"pm_m2m_project_stakeholder|Stakeholder|pm_project\""
+  },
+  "2472560582": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"sn_gf_goal_m2m_relationship|Goal|pm_project / dmn_demand / pm_program\""
+  },
+  "2472560600": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"cost_plan|Financial|pm_project / dmn_demand\""
+  },
+  "2472560612": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"cost_plan_breakdown|Financial|pm_project / dmn_demand / pm_program / pm_portfolio\""
+  },
+  "2472560636": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"benefit_plan|Financial|pm_project / dmn_demand\""
+  },
+  "2472560648": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"benefit_plan_breakdown|Financial|pm_project / dmn_demand / pm_program / pm_portfolio\""
+  },
+  "2472560672": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"nm_benefit_plan_breakdown|Financial|pm_project / dmn_demand / pm_program / pm_portfolio\""
+  },
+  "2472560696": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"fm_expense_line|Financial|pm_project / dmn_demand\""
+  },
+  "2472560720": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"sn_invst_pln_invst_investment|Financial|pm_project\""
+  },
+  "2472560732": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"project_funding|Financial|pm_project / dmn_demand / pm_program / pm_portfolio\""
+  },
+  "2472560840": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"sn_invst_pln_invst_investment_baseline_header|Baseline|pm_project (via investment)\""
+  },
+  "2472560882": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"sn_plng_att_core_cpaam_capacity|Resource|pm_project / dmn_demand\""
+  },
+  "2472560894": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"resource_aggregate_daily|Resource|pm_project / dmn_demand\""
+  },
+  "2472560906": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"resource_aggregate_weekly|Resource|pm_project / dmn_demand\""
+  },
+  "2472560918": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"resource_aggregate_monthly|Resource|pm_project / dmn_demand\""
+  },
+  "2472560930": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"time_card|Time|pm_project\""
+  },
+  "2472560942": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"time_sheet|Time|pm_project\""
+  },
+  "41410502": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Sys_id of the project or demand to associate with this cost plan. You can locate this value in one of the following tabl\""
+  },
+  "41410508": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Sys_id of the project or demand to associate with this cost plan. You can locate this value in one of the following tabl\""
+  },
+  "41418462": {
+   "label": "irrelevant",
+   "rationale": "The quote is GlideRecord code against pm_project_task, a different table, not pm_project itself."
+  },
+  "41577416": {
+   "label": "irrelevant",
+   "rationale": "The quote is GlideRecord code against pm_project_task, not pm_project."
+  },
+  "42537531": {
+   "label": "irrelevant",
+   "rationale": "The quote is GlideRecord code against pm_project_task, not pm_project."
+  },
+  "42919737": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"task ... Table: Project [pm_project]\""
+  },
+  "42919779": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"task ... Table: Project [pm_project]\""
+  },
+  "42920077": {
+   "label": "relevant",
+   "rationale": "Directly states that projects are created in the Project [pm_project] table, a clean general-purpose statement matching the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
+  },
+  "42920083": {
+   "label": "irrelevant",
+   "rationale": "The quote describes where project tasks are stored (pm_project_task), not what pm_project is used for."
+  },
+  "43146997": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Change the Table name to the table on which you want the UI action to appear. For example, you might select Project [pm_\""
+  },
+  "43306614": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Install plugins for Demand Management: idea_core, dmn_demand, and pm_project\""
+  },
+  "43355040": {
+   "label": "irrelevant",
+   "rationale": "The quote is GlideRecord code against pm_project_task, not pm_project."
+  },
+  "43365043": {
+   "label": "irrelevant",
+   "rationale": "The quote is GlideRecord code querying pm_project_task by parent, not about pm_project's purpose."
+  },
+  "43365059": {
+   "label": "irrelevant",
+   "rationale": "The quote is GlideRecord code querying pm_project_task by parent, not about pm_project's purpose."
+  },
+  "43384529": {
+   "label": "irrelevant",
+   "rationale": "The quote describes the pm_project_task table, a different table from pm_project."
+  },
+  "43384549": {
+   "label": "irrelevant",
+   "rationale": "The quote describes the pm_project_task table, a different table from pm_project."
+  },
+  "43436415": {
+   "label": "irrelevant",
+   "rationale": "The quote is GlideRecord code against pm_project_task, not pm_project."
+  },
+  "43638331": {
+   "label": "relevant",
+   "rationale": "Same direct general statement that projects are created in pm_project (and tasks in pm_project_task), squarely answering the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
+  },
+  "43726494": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Change the Table name to the table on which you want the UI action to appear. For example, you might select Project [pm_\""
+  },
+  "43924627": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Join pm_project to metric definition to metric instance creating a view that can be reported on for things like: Project\""
+  },
+  "43924631": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Join pm_project to sla(task_sla) to report on things like project names by sla.\""
+  },
+  "43924639": {
+   "label": "irrelevant",
+   "rationale": "The quote is about joining pm_project_task for reporting, not about pm_project."
+  },
+  "43924643": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Join pm_project to sla(task_sla) to report on things like release tasks by sla.\""
+  },
+  "43924651": {
+   "label": "irrelevant",
+   "rationale": "The quote is about joining pm_project_task to time worked, not about pm_project."
+  },
+  "44015724": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Set the Active field to true for dmn_demand and pm_project.\""
+  },
+  "44016949": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Execution table ... For example, Project [pm_project] table map.\""
+  },
+  "44020898": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"If your free-form roadmap was built on one of the PPM tables, such as project [pm_project] or demand [dmn_demand]\""
+  },
+  "44022107": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"new GlideRecord('pm_project')\""
+  },
+  "44025556": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"pm_project | project_manager\""
+  },
+  "44025560": {
+   "label": "irrelevant",
+   "rationale": "The quote maps a project_manager field on pm_project_task, a different table from pm_project."
+  },
+  "44029762": {
+   "label": "marginal",
+   "rationale": "Describes a structural implementation detail (project/project-task states inherit from the Task table) rather than explaining what business purpose the pm_project table serves."
+  },
+  "44029774": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"In the Project or Project Task form, right-click the header bar and select Copy partial project.\""
+  },
+  "44029810": {
+   "label": "irrelevant",
+   "rationale": "The quote is about a dictionary override on pm_project_task, not pm_project."
+  },
+  "44030114": {
+   "label": "irrelevant",
+   "rationale": "The quote is a notification trigger definition on pm_project_task, not pm_project."
+  },
+  "44030118": {
+   "label": "irrelevant",
+   "rationale": "The quote is a notification trigger definition on pm_project_task, not pm_project."
+  },
+  "44030122": {
+   "label": "irrelevant",
+   "rationale": "The quote is a notification trigger definition on pm_project_task, not pm_project."
+  },
+  "44030210": {
+   "label": "irrelevant",
+   "rationale": "The quote merely names the Project task [pm_project_task] table, unrelated to pm_project's purpose."
+  },
+  "44030222": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Changing the planned start date of a project also moves all its tasks\""
+  },
+  "44030238": {
+   "label": "irrelevant",
+   "rationale": "The quote describes selecting a project task in a related list, about pm_project_task not pm_project."
+  },
+  "44030662": {
+   "label": "irrelevant",
+   "rationale": "The quote names 'Project task object | pm_project_task', unrelated to pm_project."
+  },
+  "44030686": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"The tasks associated with the project are added to the Project Task [pm_project_task] table.\""
+  },
+  "44030694": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Export project data, such as project tasks and task constraints, can be exported as an export file.\""
+  },
+  "44030734": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"The tasks associated with the project are added to the Project Task [pm_project_task] table.\""
+  },
+  "44032447": {
+   "label": "irrelevant",
+   "rationale": "The quote references conditions in the pm_project_task table, not pm_project."
+  },
+  "44033480": {
+   "label": "irrelevant",
+   "rationale": "The quote references overdue tasks/milestones in the pm_project_task table, not pm_project."
+  },
+  "44157686": {
+   "label": "relevant",
+   "rationale": "Directly asserts that site projects are created on the pm_project table, a clear statement of what the table is used to store. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
+  },
+  "44157814": {
+   "label": "irrelevant",
+   "rationale": "The quote merely names the Project Task [pm_project_task] table, unrelated to pm_project."
+  },
+  "4453698": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"To see demand data: Install plugins for Demand Management: idea_core, dmn_demand, and pm_project\""
+  },
+  "4606793": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"<g:ui_reference name=\"parent_id\" id=\"parent_id\" table=\"pm_project\" query=\"active=true\" completer=\"AJAXTableCompleter\" co\""
+  },
+  "4623833": {
+   "label": "irrelevant",
+   "rationale": "The quote is GlideRecord code against pm_project_task, not pm_project."
+  },
+  "4669504": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"task ... Table: Project [pm_project] or Demand [dmn_demand]\""
+  },
+  "4669512": {
+   "label": "irrelevant",
+   "rationale": "The quote describes where project tasks are created (pm_project_task), not pm_project."
+  },
+  "5027687": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"If your free-form roadmap was built on one of the PPM tables, such as project [pm_project] or demand [dmn_demand]\""
+  },
+  "5028328": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Milestone table map | This field is relevant only for Project [pm_project] table map.\""
+  },
+  "5028360": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Milestone table map ... for Project [pm_project] table map.\""
+  },
+  "5032231": {
+   "label": "irrelevant",
+   "rationale": "The quote describes a skill analyzing project elements generically without naming or describing the pm_project table."
+  },
+  "5032235": {
+   "label": "irrelevant",
+   "rationale": "Duplicate of the same generic skill description; does not name or describe the pm_project table."
+  },
+  "5033508": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Entities: Project [pm_project]\""
+  },
+  "5033556": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"You can enable data separation on the following entities and related entities. - Entities: - Project [pm_project] ...\""
+  },
+  "5033572": {
+   "label": "irrelevant",
+   "rationale": "The quote lists Project Task [pm_project_task] as a related entity, not pm_project itself."
+  },
+  "5035142": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"The new tasks appear in the Project Tasks related list.\""
+  },
+  "5035266": {
+   "label": "marginal",
+   "rationale": "Topically touches pm_project (e.g. as a linked/partitioned/example table or field) but does not state what the table itself is used for, so it would not change the answer. Quote: \"Select the pm_project table name that has no corresponding Column name\""
+  },
+  "5035270": {
+   "label": "irrelevant",
+   "rationale": "This is about selecting a pm_project table name during a column-mapping UI task, not about the table's purpose."
+  },
+  "5035358": {
+   "label": "irrelevant",
+   "rationale": "Names the pm_project_task table, a different table from pm_project, with no info on pm_project itself."
+  },
+  "5035494": {
+   "label": "marginal",
+   "rationale": "Says a report section is built from fields on the pm_project table, implying it holds project data but not explaining the table's purpose directly."
+  },
+  "5035522": {
+   "label": "marginal",
+   "rationale": "Duplicate of the same quote noting a section is built from pm_project fields, indirectly indicating stored data rather than defining the table's purpose."
+  },
+  "5035550": {
+   "label": "marginal",
+   "rationale": "Describes pm_project's structural role as the top-level object within a project template hierarchy, which answers a template-structure question rather than the general purpose of the table."
+  },
+  "5035582": {
+   "label": "marginal",
+   "rationale": "Describes the pm_project_task table receiving a project's tasks, which only indirectly implies pm_project represents the project itself."
+  },
+  "5035854": {
+   "label": "irrelevant",
+   "rationale": "Just names 'Project [pm_project] table ...' with the rest truncated, giving no substantive information about its use."
+  },
+  "5036487": {
+   "label": "marginal",
+   "rationale": "Shows a GlideRecord script querying pm_project, demonstrating it's a queryable table but not stating what it's used for."
+  },
+  "5036699": {
+   "label": "marginal",
+   "rationale": "Notes aggregation can be applied to a pm_project column, a minor reporting detail rather than a description of the table's core purpose."
+  },
+  "5037241": {
+   "label": "irrelevant",
+   "rationale": "Describes the pm_project_task table's fields in the project workspace planning page, not the pm_project table."
+  },
+  "5037249": {
+   "label": "irrelevant",
+   "rationale": "Duplicate quote about pm_project_task fields in the planning page, unrelated to pm_project's purpose."
+  },
+  "5037261": {
+   "label": "irrelevant",
+   "rationale": "Duplicate quote about pm_project_task fields in the planning page, unrelated to pm_project's purpose."
+  },
+  "5037273": {
+   "label": "irrelevant",
+   "rationale": "Duplicate quote about pm_project_task fields in the planning page, unrelated to pm_project's purpose."
+  },
+  "5037922": {
+   "label": "marginal",
+   "rationale": "Lists specific UI columns (Status, Percent complete, Phase) shown from pm_project in a widget row, a display-configuration detail rather than a purpose statement, consistent with other column-listing edges already marked marginal."
+  },
+  "5038010": {
+   "label": "irrelevant",
+   "rationale": "Describes the Planning tab showing a selected project in the console but does not mention or describe the pm_project table."
+  },
+  "5038018": {
+   "label": "irrelevant",
+   "rationale": "Describes the Resources tab showing resource plans, unrelated to the pm_project table's purpose."
+  },
+  "5038078": {
+   "label": "marginal",
+   "rationale": "Mentions associating a widget to 'the Project table,' a vague reporting-configuration detail rather than an explanation of the table's use."
+  },
+  "5126807": {
+   "label": "irrelevant",
+   "rationale": "A bare 'Project [pm_project]' label from an unrelated Order Management document with no context on the table's purpose."
+  }
+ },
+ "id_sc_cat_item": {
+  "1831493030": {
+   "label": "marginal",
+   "rationale": "Names the Record Producer [sc_cat_item_producer] table but only in the narrow context of appointment-booking config, not the sc_cat_item table's role in the catalog."
+  },
+  "1831493098": {
+   "label": "marginal",
+   "rationale": "Same appointment-booking Record Producer table reference; tangential to sc_cat_item's own relation to the catalog."
+  },
+  "1838635565": {
+   "label": "marginal",
+   "rationale": "Cites the Execution Plan Task [sc_cat_item_delivery_task] table in case-api context, a sibling table rather than a statement about sc_cat_item itself."
+  },
+  "1838635850": {
+   "label": "marginal",
+   "rationale": "Duplicate reference to Execution Plan Task [sc_cat_item_delivery_task] in case-api, not about sc_cat_item's relation to the catalog."
+  },
+  "1838636469": {
+   "label": "marginal",
+   "rationale": "Describes the delivery_task sys_id field pointing at [sc_cat_item_delivery_task], a related-but-different table from sc_cat_item."
+  },
+  "1839478238": {
+   "label": "marginal",
+   "rationale": "Change-management API reference to Execution Plan Task [sc_cat_item_delivery_task], a sibling fulfillment table."
+  },
+  "1952711860": {
+   "label": "relevant",
+   "rationale": "Directly and explanatorily states the Service Catalog API defines catalog items [sc_cat_item] as part of the related aspects of service catalogs, establishing the core relationship rather than merely naming the table. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
+  },
+  "2023630240": {
+   "label": "irrelevant",
+   "rationale": "Just an example catalog item title with no information about the sc_cat_item table or its relation to the catalog."
+  },
+  "2159762430": {
+   "label": "irrelevant",
+   "rationale": "About ATF test failure-resolution feature limitations on sc_cat_item_delivery_task, unrelated to how sc_cat_item relates to the catalog."
+  },
+  "2465959682": {
+   "label": "irrelevant",
+   "rationale": "Bare mention of sc_cat_item_producer in a supported-metadata list with no explanatory context."
+  },
+  "2466133995": {
+   "label": "marginal",
+   "rationale": "Notes a different table extends sc_cat_item_producer (not sc_cat_item), only tangentially related to the query."
+  },
+  "2466256430": {
+   "label": "marginal",
+   "rationale": "Shows sc_cat_item as one of two tables used for wizard question field mapping, a specific feature rather than the core table relationship."
+  },
+  "2466322344": {
+   "label": "irrelevant",
+   "rationale": "Mentions sc_cat_item only as an example of a large table for an AI Search record-count threshold, unrelated to the catalog relationship."
+  },
+  "2466331164": {
+   "label": "marginal",
+   "rationale": "Labels sc_cat_item as 'Order' in an AI Search assist-actions context, a tangential naming/use case."
+  },
+  "2466346855": {
+   "label": "marginal",
+   "rationale": "Describes a sys_id field referencing the Record Producer table, tangential to sc_cat_item's own catalog relationship."
+  },
+  "2466366876": {
+   "label": "irrelevant",
+   "rationale": "Uses sc_cat_item merely as an example table name for a missing-image property setting, unrelated to catalog structure."
+  },
+  "2466382564": {
+   "label": "marginal",
+   "rationale": "Describes using a Catalog Item record to populate a variables slush bucket in Workflow Studio, a specific feature usage."
+  },
+  "2466402899": {
+   "label": "irrelevant",
+   "rationale": "Vague mention that a portal search returns catalog items, no table-relationship information."
+  },
+  "2466448466": {
+   "label": "irrelevant",
+   "rationale": "About filtering/grouping DV questions on tables extended from Task, only incidentally naming the Record Producer table as an example."
+  },
+  "2466634468": {
+   "label": "irrelevant",
+   "rationale": "A UI navigation-filter example using sc_cat_item.LIST, unrelated to describing its catalog relationship."
+  },
+  "2466719353": {
+   "label": "marginal",
+   "rationale": "Notes a Secondary owner field shared by sc_cat_item and sc_cat_item_producer, a specific release feature rather than the core relationship."
+  },
+  "2466770681": {
+   "label": "irrelevant",
+   "rationale": "Bare string mention of sc_cat_item in a localization content list with no context."
+  },
+  "2466864450": {
+   "label": "marginal",
+   "rationale": "Describes hiding prices for catalog items via a property list containing sc_cat_item, a specific admin feature."
+  },
+  "2466894603": {
+   "label": "marginal",
+   "rationale": "Only bare-labels sc_cat_item as 'Service Catalog items' table inside a role-requirements list for translation access, so the naming is incidental to the actual point of the sentence (role needed), not an explanation of the catalog relationship."
+  },
+  "2466894639": {
+   "label": "irrelevant",
+   "rationale": "Describes a Machine Translations option for catalog items, unrelated to the sc_cat_item/catalog relationship."
+  },
+  "2466894651": {
+   "label": "irrelevant",
+   "rationale": "Describes an Export Source File translation option, unrelated to the query."
+  },
+  "2466894663": {
+   "label": "irrelevant",
+   "rationale": "Describes an Import Source File translation option, unrelated to the query."
+  },
+  "2466894675": {
+   "label": "irrelevant",
+   "rationale": "Describes a Publish Translations button, unrelated to the query."
+  },
+  "2466938639": {
+   "label": "irrelevant",
+   "rationale": "About search index format (V4) for the Catalog Item table, unrelated to its relation to the service catalog."
+  },
+  "2466938673": {
+   "label": "irrelevant",
+   "rationale": "Duplicate index-format detail for Catalog Item table, unrelated to the catalog relationship."
+  },
+  "2467024432": {
+   "label": "irrelevant",
+   "rationale": "Lists Catalog item as one of many tables in an AI Search config list, no relational detail."
+  },
+  "2467193485": {
+   "label": "irrelevant",
+   "rationale": "Lists Catalog Item under a search-settings filter group, a search-configuration detail unrelated to the query."
+  },
+  "2467193557": {
+   "label": "irrelevant",
+   "rationale": "Duplicate search filter-group listing of Catalog Item, unrelated to the query."
+  },
+  "2467267076": {
+   "label": "irrelevant",
+   "rationale": "A GlideRecord code example against sc_cat_item_delivery_task, unrelated to sc_cat_item's catalog relationship."
+  },
+  "2467289135": {
+   "label": "marginal",
+   "rationale": "Describes creating a record producer for task-based records via the Fluent SDK, related to the catalog item family but not sc_cat_item directly."
+  },
+  "2467294973": {
+   "label": "irrelevant",
+   "rationale": "Bare mention of sc_cat_item in a Studio file-navigator taxonomy list, no context."
+  },
+  "2467295033": {
+   "label": "irrelevant",
+   "rationale": "Bare mention of sc_cat_item_producer in a taxonomy list, no context."
+  },
+  "2467295097": {
+   "label": "irrelevant",
+   "rationale": "Duplicate bare mention of sc_cat_item_producer in a taxonomy list."
+  },
+  "2467309946": {
+   "label": "marginal",
+   "rationale": "References the Execution Plan Task [sc_cat_item_delivery_task] table in a table-definitions reference, a sibling table."
+  },
+  "2467321492": {
+   "label": "irrelevant",
+   "rationale": "Describes a SQLException bug when loading sc_cat_item with translations, a defect report unrelated to the relationship question."
+  },
+  "2467325988": {
+   "label": "irrelevant",
+   "rationale": "Duplicate SQLException bug report, unrelated to the query."
+  },
+  "2467393222": {
+   "label": "marginal",
+   "rationale": "Names Catalog Item [sc_cat_item] as the source table for a global-search nav tab, a specific feature usage."
+  },
+  "2467401436": {
+   "label": "marginal",
+   "rationale": "Labels sc_cat_item as 'Request Catalog table' in a CSM use-case table list, a specific naming context."
+  },
+  "2467425027": {
+   "label": "irrelevant",
+   "rationale": "A GlideRecord script example against sc_cat_item, unrelated to describing its catalog relationship."
+  },
+  "2467425037": {
+   "label": "irrelevant",
+   "rationale": "A GlideRecord script example against sc_cat_item_delivery_task, unrelated to the query."
+  },
+  "2467425043": {
+   "label": "irrelevant",
+   "rationale": "Another GlideRecord script example against sc_cat_item, unrelated to describing its catalog relationship."
+  },
+  "2467425049": {
+   "label": "irrelevant",
+   "rationale": "Another GlideRecord script example against sc_cat_item_delivery_task, unrelated to the query."
+  },
+  "2467440714": {
+   "label": "marginal",
+   "rationale": "Lists sc_cat_item_guide, sc_cat_item_producer, sc_cat_item_wizard as a property default, showing the catalog-item table family without describing sc_cat_item itself."
+  },
+  "2470209485": {
+   "label": "marginal",
+   "rationale": "References the Record Producer [sc_cat_item_producer] table in a CSM catalog-items article, tangential to sc_cat_item directly."
+  },
+  "2470250916": {
+   "label": "irrelevant",
+   "rationale": "Describes an HR AI agent searching catalog items, no table-relationship detail."
+  },
+  "2470300087": {
+   "label": "marginal",
+   "rationale": "Explains what Record Producer [sc_cat_item_producer] does for non-Request-Management services, related to but distinct from sc_cat_item."
+  },
+  "2470306186": {
+   "label": "marginal",
+   "rationale": "Duplicate of the wizard question-field mapping between Catalog Item and Record Producer tables, a specific feature usage."
+  },
+  "2470306192": {
+   "label": "marginal",
+   "rationale": "Duplicate wizard field-mapping reference, a specific feature usage rather than core relationship."
+  },
+  "2470306204": {
+   "label": "marginal",
+   "rationale": "Duplicate wizard field-mapping reference, a specific feature usage rather than core relationship."
+  },
+  "2470306216": {
+   "label": "marginal",
+   "rationale": "Duplicate wizard field-mapping reference, a specific feature usage rather than core relationship."
+  },
+  "2470307315": {
+   "label": "marginal",
+   "rationale": "Uses Catalog Items [sc_cat_item] merely as an example table for a localization artifact identifier field."
+  },
+  "2470315254": {
+   "label": "marginal",
+   "rationale": "Links Record Producer to sc_cat_item_producer in supported-metadata documentation, tangential to sc_cat_item itself."
+  },
+  "2470332363": {
+   "label": "irrelevant",
+   "rationale": "Duplicate mention of Record Producer table as an example for DV question filtering, unrelated to the query."
+  },
+  "2470384861": {
+   "label": "irrelevant",
+   "rationale": "Lists Catalog Item as a table for activating a People Genius Result AI Search config, no relational detail."
+  },
+  "2470406725": {
+   "label": "marginal",
+   "rationale": "Same role-list context repeated (catalog_admin access requirement) where sc_cat_item naming is incidental to the sentence's real point about translation permissions, not an explanation of the relationship."
+  },
+  "2470412993": {
+   "label": "marginal",
+   "rationale": "Describes navigating to the Catalog Items [sc_cat_item] table when building a service catalog flow, a UI step rather than a definitional statement."
+  },
+  "2470570621": {
+   "label": "irrelevant",
+   "rationale": "Lists Catalog Item as a global-search default table, no relational detail about the service catalog."
+  },
+  "2470725185": {
+   "label": "irrelevant",
+   "rationale": "Describes a WhereClause bug involving sc_cat_item translations, a defect report unrelated to the query."
+  },
+  "2470789892": {
+   "label": "marginal",
+   "rationale": "This is a narrow API parameter description ('name of the table that extends...') describing table inheritance among catalog-item subtypes, not sc_cat_item's relationship to the service catalog itself."
+  },
+  "2470789898": {
+   "label": "marginal",
+   "rationale": "Describes a Record Producer sys_id field on the CatItem API, tangential to sc_cat_item's own catalog relationship."
+  },
+  "2470789904": {
+   "label": "marginal",
+   "rationale": "Generic description of updating catalog item field values via the CatItem API, not about the table's relation to the catalog."
+  },
+  "2470834778": {
+   "label": "irrelevant",
+   "rationale": "Bare mention of sc_cat_item in a Studio taxonomy list with no context."
+  },
+  "2470943682": {
+   "label": "marginal",
+   "rationale": "References the Execution Plan Task [sc_cat_item_delivery_task] table in the Integrations API, a sibling fulfillment table."
+  },
+  "2470945254": {
+   "label": "marginal",
+   "rationale": "A UI instruction step naming the 'Service Catalog Item [sc_cat_item] table' while explaining how to pick a flow field — the table name is incidental to a workflow-configuration step, not an explanation of the catalog relationship."
+  },
+  "2470953254": {
+   "label": "marginal",
+   "rationale": "References the sc_cat_item_delivery_task table's sys_id field in case-api docs, a sibling table."
+  },
+  "2470968759": {
+   "label": "marginal",
+   "rationale": "Duplicate reference to Execution Plan Task [sc_cat_item_delivery_task] in case-api."
+  },
+  "2470973686": {
+   "label": "irrelevant",
+   "rationale": "Bare listing of sc_cat_item as an unsupported ATF table, unrelated to the catalog relationship."
+  },
+  "2470973692": {
+   "label": "irrelevant",
+   "rationale": "Bare listing of sc_cat_item_delivery_task as an unsupported ATF table, unrelated to the query."
+  },
+  "2470992621": {
+   "label": "marginal",
+   "rationale": "Lists Record Producer/sc_cat_item_producer as a supported metadata feature in App Engine Studio templates, tangential to sc_cat_item."
+  },
+  "2470996255": {
+   "label": "marginal",
+   "rationale": "Duplicate reference to the Execution Plan Task [sc_cat_item_delivery_task] table's sys_id field."
+  },
+  "2471043797": {
+   "label": "marginal",
+   "rationale": "Appointment API reference to the Record Producer [sc_cat_item_producer] table, tangential to sc_cat_item."
+  },
+  "2471043815": {
+   "label": "marginal",
+   "rationale": "Duplicate appointment API Record Producer table reference."
+  },
+  "2471044253": {
+   "label": "marginal",
+   "rationale": "Duplicate appointment API Record Producer table reference."
+  },
+  "2471044569": {
+   "label": "marginal",
+   "rationale": "Duplicate appointment API Record Producer table reference."
+  },
+  "2471044603": {
+   "label": "marginal",
+   "rationale": "Duplicate appointment API Record Producer table reference."
+  },
+  "2471164210": {
+   "label": "irrelevant",
+   "rationale": "Generic sys_class_name field description that only uses sc_cat_item_producer as an incidental example, saying nothing about sc_cat_item's relation to the service catalog."
+  },
+  "2471164228": {
+   "label": "irrelevant",
+   "rationale": "Duplicate of the same generic sys_class_name field example mentioning sc_cat_item_producer incidentally, not sc_cat_item or the service catalog."
+  },
+  "2471169156": {
+   "label": "marginal",
+   "rationale": "Just labels sc_cat_item as the resource table for the Service Catalog API without explaining the relationship."
+  },
+  "2471169186": {
+   "label": "marginal",
+   "rationale": "Same bare 'Table: Catalog Item [sc_cat_item]' label from the Service Catalog API doc, topical but not explanatory."
+  },
+  "2471169902": {
+   "label": "marginal",
+   "rationale": "Same bare 'Table: Catalog Item [sc_cat_item]' label repeated again, topically related but uninformative on its own."
+  },
+  "2471180626": {
+   "label": "irrelevant",
+   "rationale": "Describes a generic record-producer form type without mentioning sc_cat_item or the service catalog at all."
+  },
+  "2471216747": {
+   "label": "marginal",
+   "rationale": "Describes an ATF test step validating catalog item variables in Service Portal, topically about catalog items but not the table's relation to the catalog."
+  },
+  "2471216759": {
+   "label": "marginal",
+   "rationale": "Describes an ATF price-validation test step for a catalog item, tangential to how sc_cat_item relates to the service catalog."
+  },
+  "2471216771": {
+   "label": "marginal",
+   "rationale": "Describes an ATF quantity-setting test step for a catalog item, tangential to the table-catalog relationship."
+  },
+  "2471235693": {
+   "label": "marginal",
+   "rationale": "Discusses the Record Producer table's lineage from Task for dashboard question filtering, adjacent to sc_cat_item but not about it directly."
+  },
+  "2471294253": {
+   "label": "marginal",
+   "rationale": "A code snippet instantiating a GlideRecord on sc_cat_item shows usage but doesn't explain the table's role in the service catalog."
+  },
+  "2471294277": {
+   "label": "marginal",
+   "rationale": "Notes a Service Portal API returns a model for sc_cat_item or sc_cat_item_guide, tangential API detail rather than a relationship explanation."
+  },
+  "2471586912": {
+   "label": "marginal",
+   "rationale": "Lists 'Catalog item [sc_cat_item]' as an AI Search content type, topically related but not explanatory of the catalog relationship."
+  },
+  "2471661059": {
+   "label": "marginal",
+   "rationale": "Describes a default portal URL mapping for sc_cat_item, a UI detail rather than an explanation of its relation to the service catalog."
+  },
+  "2471779707": {
+   "label": "marginal",
+   "rationale": "Code snippet setting a Genius Result answer's table to sc_cat_item shows usage, not the conceptual relationship."
+  },
+  "2471779813": {
+   "label": "marginal",
+   "rationale": "Describes a search query over the Catalog Item [sc_cat_item] table for Genius Results, tangential to explaining the catalog relationship."
+  },
+  "2471779825": {
+   "label": "marginal",
+   "rationale": "Duplicate code snippet setting table to sc_cat_item, usage detail rather than relationship explanation."
+  },
+  "2471879023": {
+   "label": "irrelevant",
+   "rationale": "Duplicate generic record-producer form type description with no mention of sc_cat_item or the service catalog."
+  },
+  "2471883610": {
+   "label": "marginal",
+   "rationale": "Duplicate note about the Record Producer table extending Task, adjacent to sc_cat_item but not directly about it."
+  },
+  "2472108730": {
+   "label": "relevant",
+   "rationale": "Same direct explanatory statement that catalog items [sc_cat_item] are defined as part of service catalogs, which genuinely answers the query rather than being merely on-topic. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
+  },
+  "2472108736": {
+   "label": "relevant",
+   "rationale": "Duplicate of the same direct explanatory statement tying sc_cat_item to service catalogs; the fact itself is load-bearing regardless of duplication. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
+  },
+  "2472186188": {
+   "label": "marginal",
+   "rationale": "Bare mention of 'sc_cat_item' in a file-navigator taxonomy list with no surrounding context explaining its catalog relationship."
+  },
+  "2472189336": {
+   "label": "marginal",
+   "rationale": "Describes the sc_cat_item_delivery_task table field, a related-but-distinct table rather than sc_cat_item itself."
+  },
+  "2472225026": {
+   "label": "marginal",
+   "rationale": "Describes a catalog_id field referencing the Record Producer [sc_cat_item_producer] table, adjacent but not about sc_cat_item directly."
+  },
+  "2472225062": {
+   "label": "marginal",
+   "rationale": "Duplicate description of the catalog_id field referencing sc_cat_item_producer, not sc_cat_item itself."
+  },
+  "2472225444": {
+   "label": "marginal",
+   "rationale": "Names the Record Producer [sc_cat_item_producer] table, a sibling table rather than sc_cat_item."
+  },
+  "2472331023": {
+   "label": "marginal",
+   "rationale": "Bare 'Catalog Item [sc_cat_item]' label from a service-catalog portal doc without explanatory relationship content."
+  },
+  "41168508": {
+   "label": "marginal",
+   "rationale": "Code instantiating GlideRecord on sc_cat_item_delivery_task, a related delivery-task table, not sc_cat_item itself."
+  },
+  "41253223": {
+   "label": "marginal",
+   "rationale": "Describes the Record Producer [sc_cat_item_producer] table field, adjacent to but not explaining sc_cat_item's catalog relationship."
+  },
+  "41413577": {
+   "label": "marginal",
+   "rationale": "Code snippet setting a table to sc_cat_item, usage detail rather than relationship explanation."
+  },
+  "42704364": {
+   "label": "marginal",
+   "rationale": "States the remote record producer table extends sc_cat_item_producer, a sibling table rather than sc_cat_item."
+  },
+  "42704376": {
+   "label": "marginal",
+   "rationale": "Duplicate EXTENDS_TABLE fact about the remote record producer table extending sc_cat_item_producer, not sc_cat_item."
+  },
+  "42705711": {
+   "label": "marginal",
+   "rationale": "Describes a catalog_id field referencing the Record Producer [sc_cat_item_producer] table, not sc_cat_item directly."
+  },
+  "42746363": {
+   "label": "marginal",
+   "rationale": "Notes record producer records live in the Catalog Item [sc_cat_item] table for a specific Opportunity/Roles use case, narrow rather than a general explanation of the catalog relationship."
+  },
+  "42934189": {
+   "label": "irrelevant",
+   "rationale": "Generic sys_class_name description using sc_cat_item_producer only as an incidental example, unrelated to explaining sc_cat_item's catalog relationship."
+  },
+  "43012783": {
+   "label": "marginal",
+   "rationale": "Code instantiating GlideRecord on sc_cat_item_delivery_task, a related but distinct table from sc_cat_item."
+  },
+  "43157825": {
+   "label": "marginal",
+   "rationale": "Describes an alternative field being a column in the Catalog Item [sc_cat_item] table, a configuration detail rather than a relationship explanation."
+  },
+  "43164653": {
+   "label": "marginal",
+   "rationale": "Describes the end-user 'Add to Cart' action for a catalog item, a UI behavior rather than the table's relation to the service catalog."
+  },
+  "43164659": {
+   "label": "marginal",
+   "rationale": "Describes the end-user 'Add to Wish List' action for a catalog item, tangential UI behavior."
+  },
+  "43167472": {
+   "label": "marginal",
+   "rationale": "Lists sc_cat_item among domain-separated tables, a platform feature detail rather than an explanation of its catalog relationship."
+  },
+  "43354283": {
+   "label": "marginal",
+   "rationale": "Code querying sc_cat_item and checking read access in Service Portal, a usage example rather than relationship explanation."
+  },
+  "43370177": {
+   "label": "marginal",
+   "rationale": "States the remote record producer table extends sc_cat_item_producer, a sibling table rather than sc_cat_item itself."
+  },
+  "43373677": {
+   "label": "marginal",
+   "rationale": "Describes a delivery_task field referencing the Execution Plan Task [sc_cat_item_delivery_task] table, not sc_cat_item directly."
+  },
+  "43373709": {
+   "label": "marginal",
+   "rationale": "Duplicate description of the delivery_task field referencing sc_cat_item_delivery_task, not sc_cat_item."
+  },
+  "43373873": {
+   "label": "marginal",
+   "rationale": "Describes the delivery_task field referencing sc_cat_item_delivery_task, a related-but-distinct table."
+  },
+  "43379256": {
+   "label": "marginal",
+   "rationale": "Describes the execution plan task sys_id field referencing sc_cat_item_delivery_task, not sc_cat_item itself."
+  },
+  "43386904": {
+   "label": "marginal",
+   "rationale": "JSON snippet showing sys_class_name of sc_cat_item_producer, a sibling table rather than sc_cat_item."
+  },
+  "43435294": {
+   "label": "marginal",
+   "rationale": "Code comment and GlideRecord call retrieving the catalog item for a requested item, a usage example rather than a relationship explanation."
+  },
+  "43436829": {
+   "label": "marginal",
+   "rationale": "An example/log-style confirmation message that a record was created in sc_cat_item, functionally equivalent to a usage/code example rather than an explanatory statement of the table's role in the service catalog."
+  },
+  "43470073": {
+   "label": "marginal",
+   "rationale": "Describes the Record Producer [sc_cat_item_producer] table for a vaccination program, a sibling table in a specific domain."
+  },
+  "43542540": {
+   "label": "marginal",
+   "rationale": "States record producers are available in the sc_cat_item_producer table, a sibling table rather than sc_cat_item."
+  },
+  "43599665": {
+   "label": "marginal",
+   "rationale": "Names the Execution Plan Task [sc_cat_item_delivery_task] table, related but distinct from sc_cat_item."
+  },
+  "43612344": {
+   "label": "relevant",
+   "rationale": "Explicitly explains that a service catalog content type references the sc_cat_item table, describing the functional link between the table and how the catalog is rendered, not just naming it. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
+  },
+  "43612421": {
+   "label": "relevant",
+   "rationale": "Explicitly calls sc_cat_item 'the Service Catalog table' and explains that the content type built on it controls how catalog list blocks are displayed — the most direct, explanatory statement of the relationship in the set. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
+  },
+  "43636828": {
+   "label": "marginal",
+   "rationale": "Instructs entering sc_cat_item.LIST in the navigation filter, a UI navigation tip rather than a relationship explanation."
+  },
+  "43637075": {
+   "label": "marginal",
+   "rationale": "Code instantiating a GlideRecord on sc_cat_item, a usage example rather than an explanation of its catalog relationship."
+  },
+  "43641517": {
+   "label": "marginal",
+   "rationale": "Duplicate instruction to enter sc_cat_item.LIST in the navigation filter, a UI tip rather than relationship content."
+  },
+  "43673854": {
+   "label": "marginal",
+   "rationale": "Describes a keyword search script running against the sc_cat_item table, a technical usage detail rather than relationship explanation."
+  },
+  "43720708": {
+   "label": "marginal",
+   "rationale": "Notes a target column is Catalog item (sc_cat_item) in some configuration context, without explaining the catalog relationship."
+  },
+  "43728271": {
+   "label": "marginal",
+   "rationale": "Describes entering an alternative field name as a column in the Catalog Item [sc_cat_item] table, a configuration detail."
+  },
+  "43740805": {
+   "label": "marginal",
+   "rationale": "States that some other, unnamed table extends sc_cat_item — an inheritance fact about a sibling table's schema, not an explanation of sc_cat_item's relationship to the service catalog concept itself."
+  },
+  "43871956": {
+   "label": "marginal",
+   "rationale": "Instructs navigating to sc_cat_item_producer.list to view record producers, about a sibling table rather than sc_cat_item."
+  },
+  "43921378": {
+   "label": "marginal",
+   "rationale": "Vaguely references a catalog item used to create a Task record, topically related but not a clear statement about sc_cat_item's relation to the catalog."
+  },
+  "43928288": {
+   "label": "marginal",
+   "rationale": "Lists fields (short description, description, category, price) for the Catalog Item [sc_cat_item] table without explaining its catalog relationship."
+  },
+  "43928384": {
+   "label": "marginal",
+   "rationale": "Lists Catalog Item [sc_cat_item] under a Knowledge & Catalog module heading, showing classification but not an explicit relationship explanation."
+  },
+  "43928424": {
+   "label": "marginal",
+   "rationale": "Lists Catalog Item [sc_cat_item] alongside Knowledge under a Knowledge & Catalog heading, topical classification without explanation."
+  },
+  "43928492": {
+   "label": "marginal",
+   "rationale": "Duplicate listing of Catalog Item [sc_cat_item] under the Knowledge & Catalog module heading."
+  },
+  "43928828": {
+   "label": "marginal",
+   "rationale": "Describes selective reindexing behavior when choosing the sc_cat_item table, a search feature detail rather than a catalog relationship explanation."
+  },
+  "43929273": {
+   "label": "marginal",
+   "rationale": "Describes AI Search indexing of variables on Catalog Item [sc_cat_item] records, a feature detail rather than an explanation of the catalog relationship."
+  },
+  "43929309": {
+   "label": "marginal",
+   "rationale": "Duplicate description of AI Search indexing variables from the Catalog Item [sc_cat_item] table."
+  },
+  "43929833": {
+   "label": "marginal",
+   "rationale": "Lists Catalog Item [sc_cat_item] among tables subject to a record-count warning for a search feature, tangential to the catalog relationship."
+  },
+  "43931033": {
+   "label": "marginal",
+   "rationale": "Bare field reference 'sc_cat_item.owner' with no context explaining the table's catalog relationship."
+  },
+  "43931790": {
+   "label": "marginal",
+   "rationale": "Notes AI Platform records are indexed from the Catalog Item [sc_cat_item] table, a search feature detail rather than a catalog relationship explanation."
+  },
+  "43931798": {
+   "label": "marginal",
+   "rationale": "Duplicate note about AI Platform indexing records from the Catalog Item [sc_cat_item] table."
+  },
+  "43938200": {
+   "label": "marginal",
+   "rationale": "Duplicate role-requirement sentence where the 'Service Catalog items [sc_cat_item]' label is incidental to describing catalog_admin access, not an explanation of how the table relates to the catalog."
+  },
+  "43950437": {
+   "label": "marginal",
+   "rationale": "Describes CSM customers linking to the Catalog Items table [sc_cat_item] to request services, a domain-specific usage rather than a general catalog relationship explanation."
+  },
+  "43961541": {
+   "label": "marginal",
+   "rationale": "References an 'Order [sc_cat_item] page' security configuration step, a UI/security detail rather than an explanation of the catalog relationship."
+  },
+  "43961545": {
+   "label": "marginal",
+   "rationale": "Discusses rate limiting REST APIs for catalog items without naming sc_cat_item, tangential API-management advice."
+  },
+  "43961581": {
+   "label": "marginal",
+   "rationale": "Describes selecting 'Order [sc_cat_item]' as a resource in an AI Search Assist Action configuration, a setup detail rather than relationship explanation."
+  },
+  "43973269": {
+   "label": "marginal",
+   "rationale": "Describes a sys_id field for the catalog item sourced from the Record Producer [sc_cat_item_producer] table, about a sibling table rather than sc_cat_item directly."
+  },
+  "44052732": {
+   "label": "marginal",
+   "rationale": "Just confirms 'sc_cat_item' is the table name behind the 'Catalog Item' label without explaining its relation to the service catalog."
+  },
+  "44058117": {
+   "label": "relevant",
+   "rationale": "Directly and more fully explains that the Service Catalog API defines catalog items [sc_cat_item] plus categories, record producers, variables, and other catalog aspects — a genuine explanatory answer to the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
+  },
+  "44058289": {
+   "label": "irrelevant",
+   "rationale": "Discusses using catalog UI policies for show/hide logic and never mentions the sc_cat_item table."
+  },
+  "44058293": {
+   "label": "marginal",
+   "rationale": "Describes variable sets attaching to catalog items generically, topically related to sc_cat_item but not explaining its relation to the overall service catalog."
+  },
+  "44067050": {
+   "label": "irrelevant",
+   "rationale": "Lists sc_cat_item_delivery_task as unsupported by ATF failure resolution, a different table and unrelated to the query."
+  },
+  "44100986": {
+   "label": "marginal",
+   "rationale": "States a role requirement to delete Catalog Item records, a security detail rather than an explanation of the table's catalog relationship."
+  },
+  "44100994": {
+   "label": "marginal",
+   "rationale": "States a role requirement to create Catalog Item records, a security detail rather than an explanation of the table's catalog relationship."
+  },
+  "4429610": {
+   "label": "marginal",
+   "rationale": "Same generic 'this table extends Catalog Item [sc_cat_item]' inheritance fact about an unspecified other table, tangential to explaining sc_cat_item's own relation to the service catalog."
+  },
+  "4589219": {
+   "label": "marginal",
+   "rationale": "Describes mapping a catalog question to a field on the sc_cat_item or sc_cat_item_producer table, a variable-mechanism detail rather than the table's overall catalog relationship."
+  },
+  "4589223": {
+   "label": "marginal",
+   "rationale": "Duplicate of the question-to-field mapping detail for sc_cat_item/sc_cat_item_producer, tangential to the catalog relationship question."
+  },
+  "4589227": {
+   "label": "irrelevant",
+   "rationale": "Describes 'the table in which the record producer creates records' without naming or tying back to sc_cat_item specifically."
+  },
+  "4606322": {
+   "label": "irrelevant",
+   "rationale": "A code snippet instantiating a GlideRecord on sc_cat_item_delivery_task, a different table unrelated to explaining sc_cat_item's catalog relation."
+  },
+  "4606330": {
+   "label": "irrelevant",
+   "rationale": "A code snippet instantiating a GlideRecord on sc_cat_item_delivery_task, a different table unrelated to explaining sc_cat_item's catalog relation."
+  },
+  "4612105": {
+   "label": "irrelevant",
+   "rationale": "References the sys_id of a record producer from the sc_cat_item_producer table, a distinct table not addressing sc_cat_item's relation to the catalog."
+  },
+  "4648443": {
+   "label": "irrelevant",
+   "rationale": "Just labels the Record Producer [sc_cat_item_producer] table, a different table from sc_cat_item."
+  },
+  "4651006": {
+   "label": "irrelevant",
+   "rationale": "Labels the Execution Plan Task [sc_cat_item_delivery_task] table, unrelated to sc_cat_item's relation to the service catalog."
+  },
+  "4651183": {
+   "label": "irrelevant",
+   "rationale": "Labels the Execution Plan Task [sc_cat_item_delivery_task] table, unrelated to sc_cat_item's relation to the service catalog."
+  },
+  "4651255": {
+   "label": "irrelevant",
+   "rationale": "Labels the Execution Plan Task [sc_cat_item_delivery_task] table, unrelated to sc_cat_item's relation to the service catalog."
+  },
+  "4653800": {
+   "label": "irrelevant",
+   "rationale": "Describes a deprecated delivery_task field pointing to sc_cat_item_delivery_task, a different table unrelated to the query."
+  },
+  "5008376": {
+   "label": "irrelevant",
+   "rationale": "Labels the Record Producer [sc_cat_item_producer] table, a distinct table not explaining sc_cat_item's catalog relation."
+  },
+  "5079639": {
+   "label": "marginal",
+   "rationale": "A UI navigation-step confirmation ('The Catalog Items [sc_cat_item] table opens') during flow building — the identical statement elsewhere in the same gold set was already judged marginal as a UI step rather than a definitional relationship statement, and this one is no different."
+  },
+  "5089458": {
+   "label": "marginal",
+   "rationale": "A thin fragment noting catalog items are sourced from the Catalog Item [sc_cat_item] table within a conversational-interfaces URL-mapping context, providing incidental naming rather than a substantive explanation of the catalog relationship."
+  },
+  "5195720": {
+   "label": "irrelevant",
+   "rationale": "States record producers are available in the sc_cat_item_producer table, a different table unrelated to sc_cat_item's catalog relationship."
+  },
+  "5205105": {
+   "label": "irrelevant",
+   "rationale": "Labels the Execution Plan Task [sc_cat_item_delivery_task] table, unrelated to sc_cat_item's relation to the service catalog."
+  },
+  "5205177": {
+   "label": "irrelevant",
+   "rationale": "References the sc_cat_item_delivery_task table for an execution plan task field, unrelated to sc_cat_item's catalog relationship."
+  },
+  "5205620": {
+   "label": "irrelevant",
+   "rationale": "References the sc_cat_item_delivery_task table for an execution plan task sys_id, unrelated to sc_cat_item's catalog relationship."
+  }
+ }
+}

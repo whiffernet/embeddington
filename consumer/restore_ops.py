@@ -7,8 +7,9 @@ These turn a downloaded baseline into a live local stack:
   * ``restore_arango_dump`` — ``arangorestore`` into the local Arango (creates the db).
   * ``ensure_named_graph`` — creates ``servicenow_graph_v2`` (arangodump can't carry it,
     but embeddington's traversal tools require it).
-  * ``make_baseline_importer`` — composes the above into the ``baseline_importer``
-    callable that ``consumer.updater.update`` invokes on a fresh install.
+  * ``make_baseline_importer`` — composes the above (plus ``lexical_index``'s warm-up)
+    into the ``baseline_importer`` callable that ``consumer.updater.update`` invokes
+    on a fresh install.
 
 System dependencies (a consumer already has these to run the stack): ``docker`` for
 ``arangorestore`` and ``curl`` for the streamed (large) Qdrant snapshot upload.
@@ -20,6 +21,7 @@ from pathlib import Path
 
 import zstandard
 
+from consumer import lexical_index
 from consumer.baseline_import import GRAPH_NAME, import_baseline
 
 # Arango image used for the one-shot arangorestore — pin to the consumer stack's version.
@@ -157,15 +159,17 @@ def make_baseline_importer(
     """Build the ``baseline_importer`` callable that ``updater.update`` calls on first run.
 
     Composes download (checksum-verified by the release client) + decompress + restore +
-    named-graph creation into a single ``callable(baseline_entry)`` via
+    named-graph creation + the lexical-index warm-up into a single
+    ``callable(baseline_entry) -> {"head_sha", "chunk_text_status"}`` via
     ``consumer.baseline_import.import_baseline``.
 
     Returns:
-        A callable taking one manifest baseline entry and restoring it locally.
+        A callable taking one manifest baseline entry, restoring it locally, and
+        returning the import result dict (see ``import_baseline``).
     """
 
     def _import(baseline_entry):
-        return import_baseline(
+        result = import_baseline(
             baseline_entry,
             work_dir,
             download_asset=lambda tag, asset, dest, sha: release_client.download_asset(
@@ -177,6 +181,17 @@ def make_baseline_importer(
                 arango_url, db, username, password, dump
             ),
             ensure_graph=lambda: ensure_named_graph(arango_url, db, username, password),
+            ensure_lexical_index=lambda: lexical_index.ensure_chunk_text_index(
+                qdrant_url, collection
+            ),
         )
+        # import_baseline() stays a pure orchestrator (its own docstring's promise);
+        # this is the IO layer, so the one visible trace an ordinary `update` run
+        # leaves for the warm-up lives here, not threaded into updater.update's
+        # structured receipt -- deliberately deferred (team-lead-confirmed):
+        # updater.py is ~20 tightly-scenario-tested behaviors, not worth the
+        # blast radius for a status ordinary callers can already see via this print.
+        print(f"chunk_text index: {result['chunk_text_status']}")
+        return result
 
     return _import

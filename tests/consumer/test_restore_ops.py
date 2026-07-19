@@ -54,6 +54,11 @@ def test_make_baseline_importer_wires_ops_in_order(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(restore_ops, "restore_arango_dump", lambda *a: calls.append(("arango", a)))
     monkeypatch.setattr(restore_ops, "ensure_named_graph", lambda *a: calls.append(("graph", a)))
+    monkeypatch.setattr(
+        restore_ops.lexical_index,
+        "ensure_chunk_text_index",
+        lambda *a, **k: calls.append(("lexical", a)) or "ready",
+    )
 
     importer = restore_ops.make_baseline_importer(
         _RC(),
@@ -74,11 +79,44 @@ def test_make_baseline_importer_wires_ops_in_order(tmp_path, monkeypatch):
         },
         "sha256": {"qdrant": "qs", "arango": "as"},
     }
-    head = importer(entry)
+    result = importer(entry)
 
-    assert head == "abc123"
+    assert result == {"head_sha": "abc123", "chunk_text_status": "ready"}
     kinds = [c[0] for c in calls]
     assert kinds.count("download") == 2
     assert kinds.count("decompress") == 2
     assert "qdrant" in kinds and "arango" in kinds
-    assert kinds[-1] == "graph"  # named graph created last
+    # named graph created, THEN the lexical index warmed, against the same qdrant url/collection
+    assert kinds[-2:] == ["graph", "lexical"]
+    assert calls[-1] == ("lexical", ("http://q", "technology"))
+
+
+def test_make_baseline_importer_prints_the_chunk_text_status(tmp_path, monkeypatch, capsys):
+    """An ordinary `update` run through a real baseline restore leaves a visible trace,
+    even though the status isn't threaded into updater.update's structured receipt."""
+
+    class _RC:
+        def download_asset(self, tag, asset, dest, sha):
+            return str(dest)
+
+    monkeypatch.setattr(restore_ops, "decompress", lambda p: f"{p}.out")
+    monkeypatch.setattr(restore_ops, "restore_qdrant_snapshot", lambda *a: None)
+    monkeypatch.setattr(restore_ops, "restore_arango_dump", lambda *a: None)
+    monkeypatch.setattr(restore_ops, "ensure_named_graph", lambda *a: None)
+    monkeypatch.setattr(
+        restore_ops.lexical_index, "ensure_chunk_text_index", lambda *a, **k: "building"
+    )
+
+    importer = restore_ops.make_baseline_importer(
+        _RC(), tmp_path, "http://q", "technology", "http://a", "technology_kg", "root", "pw"
+    )
+    entry = {
+        "tag": "baseline-2026-06",
+        "head_sha": "abc123",
+        "assets": {"qdrant": "technology.snapshot.zst", "arango": "arango-dump.tar.zst"},
+        "sha256": {"qdrant": "qs", "arango": "as"},
+    }
+
+    importer(entry)
+
+    assert "chunk_text index: building" in capsys.readouterr().out

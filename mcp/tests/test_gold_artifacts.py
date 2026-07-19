@@ -23,6 +23,16 @@ def labels():
     return json.loads((GOLD / "labels.json").read_text())
 
 
+@pytest.fixture(scope="module")
+def pools_identifier():
+    return json.loads((GOLD / "pools-identifier.json").read_text())
+
+
+@pytest.fixture(scope="module")
+def labels_identifier():
+    return json.loads((GOLD / "labels-identifier.json").read_text())
+
+
 def test_gold_binding_is_the_frozen_baseline(pools):
     assert pools["binding"]["baseline"] == "baseline-2026-07b"
     assert pools["binding"]["points"] == 152194
@@ -57,3 +67,60 @@ def test_pr3_floor_is_pinned():
     text = (GOLD / "README.md").read_text()
     assert "PR 3 (#36) acceptance floor" in text
     assert "[M" not in text, "floor still has unfilled placeholders"
+
+
+# Identifier cohort (2026-07-19) — four NL-phrased queries with controller-verified corpus presence.
+# Two pools (id_disc_plugin, id_mim_plugin) are legitimately empty; the KG extraction lane
+# cannot resolve dotted plugin identifiers (measured deficiency). Vector lane gates both.
+
+
+class TestIdentifierCohortGoldArtifacts:
+    """Cohort-adapted gold-artifact tests for identifier queries."""
+
+    def test_identifier_binding_is_the_frozen_baseline(self, pools_identifier):
+        """Verify the identifier cohort binds to the frozen baseline."""
+        assert pools_identifier["binding"]["baseline"] == "baseline-2026-07b"
+        assert pools_identifier["binding"]["points"] == 152194
+        assert pools_identifier["binding"]["entities"] == 310364
+        assert pools_identifier["binding"]["edges"] == 683651
+
+    def test_identifier_labels_cover_pools_exactly(self, pools_identifier, labels_identifier):
+        """Verify labels dict covers each pool's edges exactly, including empty pools."""
+        assert set(labels_identifier) == set(pools_identifier["queries"]), (
+            "label/query name mismatch"
+        )
+        for name, q in pools_identifier["queries"].items():
+            assert set(labels_identifier[name]) == set(q["edges"]), (
+                f"{name}: label edge ids != pool edge ids"
+            )
+
+    def test_identifier_labels_are_well_formed(self, labels_identifier):
+        """Verify non-empty pool labels use allowed vocab and have rationales."""
+        for name, per_edge in labels_identifier.items():
+            for eid, rec in per_edge.items():
+                assert rec["label"] in ALLOWED, f"{name}/{eid}: bad label {rec['label']}"
+                assert rec["rationale"].strip(), f"{name}/{eid}: empty rationale"
+
+    def test_identifier_empty_pools_pinned_to_plugin_deficiency(self, pools_identifier):
+        """
+        Pin the measured deficiency: _extract_entity_hints cannot resolve dotted
+        identifiers. This test will fail if the hint extractor is fixed and re-run
+        against the corpus, forcing a deliberate update to this cohort.
+        """
+        empty_pools = {n for n, q in pools_identifier["queries"].items() if not q["edges"]}
+        assert empty_pools == {"id_disc_plugin", "id_mim_plugin"}, (
+            f"empty pool names diverged from pinned deficiency: {empty_pools}"
+        )
+
+    def test_identifier_nonempty_queries_have_some_relevant(
+        self, pools_identifier, labels_identifier
+    ):
+        """Verify each non-empty pool query has ≥1 relevant edge."""
+        nonempty_queries = {n for n, q in pools_identifier["queries"].items() if q["edges"]}
+
+        starved = [
+            n
+            for n in nonempty_queries
+            if not any(r["label"] == "relevant" for r in labels_identifier[n].values())
+        ]
+        assert not starved, f"non-empty identifier queries with no relevant edges: {starved}"

@@ -2,12 +2,15 @@
 
 The first-run path (Plan 3b): download the baseline assets (checksum-verified by the
 release client), decompress, restore the Qdrant snapshot + Arango dump into the user's
-local stores, and create the named graph ``servicenow_graph_v2`` — which ``arangodump``
-does NOT capture but embeddington's traversal tools require. Returns the baseline's
-head_sha so the caller can seed the local cursor.
+local stores, create the named graph ``servicenow_graph_v2`` — which ``arangodump``
+does NOT capture but embeddington's traversal tools require — and finally warm the
+consumer-local ``chunk_text`` lexical index (a bare vector snapshot restore always
+drops it; see ``consumer/lexical_index.py``). Returns the baseline's head_sha and the
+lexical index's resulting status so the caller can seed the cursor and report it.
 
 All heavy operations are injected, so the orchestration is pure and unit-testable; the
-real adapters (download/decompress/restore/graph) are wired by the CLI / Plan-3b ops.
+real adapters (download/decompress/restore/graph/lexical-index) are wired by the CLI /
+Plan-3b ops.
 """
 
 from pathlib import Path
@@ -23,8 +26,9 @@ def import_baseline(
     restore_qdrant,
     restore_arango,
     ensure_graph,
+    ensure_lexical_index,
 ):
-    """Download, restore, and graph-init one baseline; return its head_sha.
+    """Download, restore, graph-init, and warm-index one baseline.
 
     Args:
         baseline_entry: a manifest baseline entry (tag, head_sha, assets, sha256, ...).
@@ -35,9 +39,15 @@ def import_baseline(
         restore_qdrant: callable(snapshot_path) -> restores the Qdrant collection.
         restore_arango: callable(dump_dir) -> arangorestore into the local db.
         ensure_graph: callable() -> create the ``servicenow_graph_v2`` named graph if absent.
+        ensure_lexical_index: callable() -> str, warms the chunk_text field + full-text
+            index and returns its resulting status ("ready"/"building"/"absent"/
+            "unavailable"). Run LAST, after the graph, since it reads the collection
+            ``restore_qdrant`` just populated.
 
     Returns:
-        The baseline's head_sha (to seed the local cursor).
+        dict {"head_sha", "chunk_text_status"}: the baseline's head_sha (to seed the
+        local cursor) and the lexical index's resulting status (to report to the user;
+        never raised for a degraded status -- see ``ensure_lexical_index``'s contract).
     """
     work = Path(work_dir)
     work.mkdir(parents=True, exist_ok=True)
@@ -54,5 +64,6 @@ def import_baseline(
     restore_qdrant(snapshot_path)
     restore_arango(dump_dir)
     ensure_graph()  # the named graph arangodump can't carry — required for embeddington
+    chunk_text_status = ensure_lexical_index()  # warm it now, not at the first MCP request
 
-    return baseline_entry["head_sha"]
+    return {"head_sha": baseline_entry["head_sha"], "chunk_text_status": chunk_text_status}

@@ -15,7 +15,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from consumer import release_client, restore_ops, state_paths, updater, writers
+from consumer import lexical_index, release_client, restore_ops, state_paths, updater, writers
 from consumer.fetcher import HttpFetcher
 
 
@@ -138,6 +138,25 @@ def _cmd_update(args):
     return 0
 
 
+def _cmd_ensure_index(args):
+    """Warm the local chunk_text lexical index; print and return its status.
+
+    Standalone entry point for the same warm-up ``update`` runs automatically
+    after a baseline restore -- useful to re-run by hand (e.g. after a manual
+    Qdrant snapshot restore outside ``embeddington-consume``) without a full
+    ``update``.
+
+    Args:
+        args: Parsed CLI namespace (qdrant_url, collection).
+
+    Returns:
+        0 if the index reached "ready", 1 for any degraded status.
+    """
+    status = lexical_index.ensure_chunk_text_index(args.qdrant_url, args.collection)
+    print(f"chunk_text index: {status}")
+    return 0 if status == "ready" else 1
+
+
 def _format_update(result):
     """Render an update result as a human-readable, mode-specific summary block.
 
@@ -220,6 +239,21 @@ def _build_parser():
         default=os.environ.get("ARANGO_ROOT_PASSWORD") or os.environ.get("ARANGO_PASSWORD", ""),
     )
     p_up.set_defaults(func=_cmd_update)
+
+    p_ei = sub.add_parser(
+        "ensure-index",
+        help="warm the local chunk_text lexical index (materialize + full-text index)",
+        description=(
+            "Materialize the chunk_text payload field and build its full-text index on "
+            "the local Qdrant collection, then print the resulting status. `update` runs "
+            "this automatically after a baseline restore; this is for re-running it by "
+            "hand. Exit code: 0 when the index reaches 'ready', 1 for any degraded "
+            "status ('building', 'absent', or 'unavailable')."
+        ),
+    )
+    p_ei.add_argument("--qdrant-url", default="http://localhost:6333")
+    p_ei.add_argument("--collection", default="technology")
+    p_ei.set_defaults(func=_cmd_ensure_index)
     return parser
 
 

@@ -53,6 +53,8 @@ binding (``gold_pools.stack_binding``/``assert_binding``) and hard-fails on
 drift — set ``SWEEP_SKIP_BINDING=1`` to bypass for unit/dev runs (never for a
 committed sweep). ``SWEEP_REPS`` (default 1) controls repeated timing samples
 per combo/query; ``SWEEP_TAG`` (default today's date) names the output files.
+``SWEEP_COHORT`` (``fixed`` default | ``identifier``, spec §3.4) selects the
+query list; ``identifier`` also appends ``-identifier`` to the tag.
 
 Writes ``battery_results/<tag>-sweep.md`` (a committed artifact for the
 default tag), the machine-readable ``battery_results/<tag>-sweep.json``, and
@@ -90,7 +92,6 @@ import config  # noqa: E402
 import gold_pools  # noqa: E402
 import server  # noqa: E402
 import sweep_io  # noqa: E402
-from battery_queries import QUERIES  # noqa: E402
 from embedding_client import EmbeddingClient  # noqa: E402
 from gold_pools import (  # noqa: E402
     POOL_OVERALL,
@@ -111,8 +112,17 @@ SHIPPED = (
     5,
 )  # (edge_budget, top_k) currently-committed defaults (re-swept on orphan-fixed data)
 
+# SWEEP_COHORT (spec §3.4): "fixed" (default) runs the frozen 11-query
+# battery; "identifier" runs the identifier cohort into its own tagged
+# results. Ground-truth/gold plumbing below is unchanged — it's query-list
+# agnostic and just iterates whichever QUERIES ends up selected.
+SWEEP_COHORT = os.environ.get("SWEEP_COHORT", "fixed")
+QUERIES = sweep_io.select_cohort(SWEEP_COHORT)  # raises ValueError on unknown cohort
+
 SWEEP_REPS = int(os.environ.get("SWEEP_REPS", "1"))
 SWEEP_TAG = os.environ.get("SWEEP_TAG") or time.strftime("%Y-%m-%d")
+if SWEEP_COHORT == "identifier":
+    SWEEP_TAG += "-identifier"
 RESULTS_PATH = _TESTS / "battery_results" / f"{SWEEP_TAG}-sweep.md"
 RESULTS_JSON = _TESTS / "battery_results" / f"{SWEEP_TAG}-sweep.json"
 WORST_JSON = _TESTS / "battery_results" / f"{SWEEP_TAG}-worst-response.json"
@@ -130,6 +140,10 @@ SHORT = {
     "control_no_hints_snake": "ctl_nh",
     "control_predicate_filter": "ctl_pf",
     "control_multifacet_license": "ctl_ml",
+    "id_disc_plugin": "id_disc",
+    "id_mim_plugin": "id_mim",
+    "id_pm_project": "id_pmproj",
+    "id_sc_cat_item": "id_cat",
 }
 
 CALL_COUNTS: dict[str, int] = {}

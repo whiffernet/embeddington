@@ -126,6 +126,26 @@ yourself about latency: a cold call on a CPU embed sidecar can take several
 seconds (batch-embedding every pooled quote); the LRU cache and a GPU-backed
 embed service both bring warm calls back down to roughly the pre-change cost.
 
+Vector retrieval (`vector_search` and `enrich`'s vector half) is hybrid
+(`v0.7.0`, #38): a dense cosine lane is fused, by reciprocal-rank fusion,
+with a lexical lane per identifier-like token in the query (`cmdb_rel_ci`,
+`com.snc.discovery`) — ServiceNow queries lean hard on exact table/field/
+plugin names, which is precisely where dense-only retrieval was weakest. The
+lexical lane runs against a **consumer-local** `chunk_text` full-text index
+that the server creates automatically on its own — every server start
+ensures it exists, and the first-ever materialization on a fresh restore
+covers the whole corpus (measured ~152k points in ~3.5 minutes on the
+reference stack); a baseline restore recreates the Qdrant collection from
+scratch and drops it, so `embeddington-consume update`'s baseline-import
+path re-warms it as part of the restore itself, not on your first query.
+The dense lane also drops chunks below a minimum similarity score
+(`EMBEDDINGTON_SCORE_THRESHOLD`, default `0.50`) instead of padding weak
+matches in just to hit `top_k`/`limit` — so both tools can legitimately
+return **fewer** results than requested when nothing clears the bar
+(measured: a nonsense-query probe went from 5 padded chunks to 0). See
+`RESPONSE_SHAPES.md` for the exact mechanics, the `chunk_text` index states,
+and the degradation warning string.
+
 ## The files in this folder
 
 | File                  | Purpose                                                                                          |

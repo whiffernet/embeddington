@@ -3,6 +3,7 @@
 import math
 from unittest.mock import AsyncMock, MagicMock
 
+import enrich as enrich_mod
 import pytest
 from arango_client import ArangoError
 from embedding_client import EmbeddingError
@@ -443,7 +444,7 @@ class BatchEmbed:
 
 
 class OkQdrant:
-    async def search(self, vector, limit):
+    async def search(self, vector, limit, match_text=None):
         return [{"id": "c1", "text": "chunk"}]
 
 
@@ -621,3 +622,198 @@ async def test_enrich_diversity_quota_fraction_plumbs_through_to_select_edges():
     assert kept_wide == {"e1", "e3"}  # full quota keeps the P2 edge despite low relevance
     assert kept_narrow == {"e1", "e2"}  # minimal quota fills by relevance rank, drops P2
     assert kept_wide != kept_narrow
+
+
+# --- Hybrid lexical lane + score threshold wired into _vector_side/enrich() ---
+# (spec §5 PR 4, issue #38)
+
+
+class GoodEmbed:
+    """Fake embedder: fixed 1024-dim vector for both embed() and embed_batch().
+
+    Reused across the hybrid-lane tests below, where only Qdrant lane
+    behavior (dense/lexical fan-out, threshold, RRF merge) is under test.
+    """
+
+    async def embed(self, text):
+        return [0.1] * 1024
+
+    async def embed_batch(self, texts):
+        return [[0.1] * 1024 for _ in texts]
+
+
+@pytest.mark.asyncio
+async def test_vector_side_threshold_drops_weak_chunks():
+    class Q:
+        async def search(self, vector, limit, match_text=None):
+            return [
+                {"id": "hi", "score": 0.8, "text": "hi"},
+                {"id": "lo", "score": 0.1, "text": "lo"},
+            ]
+
+    res = await enrich_mod._vector_side(
+        "plain prose query", 5, GoodEmbed(), Q(), score_threshold=0.5
+    )
+    assert [c["id"] for c in res["chunks"]] == ["hi"]  # fewer than top_k, not padded
+
+
+@pytest.mark.asyncio
+async def test_vector_side_lexical_lane_merges_identifier_hits():
+    calls = []
+
+    class Q:
+        async def search(self, vector, limit, match_text=None):
+            calls.append(match_text)
+            if match_text == "cmdb_rel_ci":
+                return [{"id": "lex", "score": 0.2, "text": "cmdb_rel_ci doc"}]
+            return [{"id": "dense", "score": 0.9, "text": "dense"}]
+
+    res = await enrich_mod._vector_side(
+        "What does the cmdb_rel_ci table store?", 5, GoodEmbed(), Q(), lexical_ready=True
+    )
+    ids = [c["id"] for c in res["chunks"]]
+    assert "lex" in ids and "dense" in ids
+    assert calls == [None, "cmdb_rel_ci"]
+    assert res["lexical"] == {"tokens": ["cmdb_rel_ci"], "active": True}
+
+
+@pytest.mark.asyncio
+async def test_vector_side_lexical_lane_postfilters_to_literal_token():
+    """Qdrant's word tokenizer splits identifiers on underscores/punctuation,
+    so MatchText("cmdb_rel_ci") admits any chunk containing the scattered
+    subtokens {cmdb, rel, ci} anywhere — not just chunks with the literal
+    identifier (live-validation defect, issue #38: 5/5 real smoke hits
+    lacked the literal token). The lexical lane must post-filter each hit
+    down to chunks whose text contains the literal token (case-insensitive)
+    before fusion, and over-fetch (limit=max(top_k*2, 25), a measured depth
+    floor for common-subtoken identifiers) to give that filtering some
+    headroom."""
+    calls = []
+
+    class Q:
+        async def search(self, vector, limit, match_text=None):
+            calls.append((match_text, limit))
+            if match_text == "cmdb_rel_ci":
+                return [
+                    # Mixed case pins the postfilter's case-insensitivity —
+                    # an all-lowercase fixture would pass even if the `.lower()`
+                    # on the text side were dropped.
+                    {"id": "literal", "score": 0.5, "text": "the CMDB_Rel_CI table stores rows"},
+                    {"id": "scattered", "score": 0.5, "text": "the cmdb and rel and ci tables"},
+                ]
+            return [{"id": "dense", "score": 0.9, "text": "dense"}]
+
+    res = await enrich_mod._vector_side(
+        "What does the cmdb_rel_ci table store?", 5, GoodEmbed(), Q(), lexical_ready=True
+    )
+    ids = [c["id"] for c in res["chunks"]]
+    assert "literal" in ids
+    assert "scattered" not in ids  # scattered-subtoken match dropped by the postfilter
+    assert ("cmdb_rel_ci", 25) in calls  # lexical lane over-fetches at max(top_k*2, 25) = 25
+
+
+@pytest.mark.asyncio
+async def test_vector_side_lexical_skipped_when_not_ready():
+    calls = []
+
+    class Q:
+        async def search(self, vector, limit, match_text=None):
+            calls.append(match_text)
+            return [{"id": "dense", "score": 0.9, "text": "dense"}]
+
+    res = await enrich_mod._vector_side(
+        "What does the cmdb_rel_ci table store?", 5, GoodEmbed(), Q(), lexical_ready=False
+    )
+    assert calls == [None]
+    assert res["lexical"] == {"tokens": ["cmdb_rel_ci"], "active": False}
+
+
+@pytest.mark.asyncio
+async def test_vector_side_lexical_lane_failure_degrades_active_false():
+    """A lexical lane search raising must not fail the call — it logs, drops
+    that lane's results, and reports active: False (spec §5 PR 4)."""
+
+    from qdrant_client import QdrantError
+
+    class Q:
+        async def search(self, vector, limit, match_text=None):
+            if match_text is not None:
+                raise QdrantError("lexical lane boom")
+            return [{"id": "dense", "score": 0.9, "text": "dense"}]
+
+    res = await enrich_mod._vector_side(
+        "What does the cmdb_rel_ci table store?", 5, GoodEmbed(), Q(), lexical_ready=True
+    )
+    assert [c["id"] for c in res["chunks"]] == ["dense"]  # dense-only, lexical lane dropped
+    assert res["lexical"] == {"tokens": ["cmdb_rel_ci"], "active": False}
+    assert res["error"] is None  # a lexical-only failure is not a top-level error
+
+
+@pytest.mark.asyncio
+async def test_vector_side_threshold_applies_only_to_dense_lane_pre_merge():
+    """The score threshold must filter the DENSE lane BEFORE fusion — never
+    the lexical lane, and never the already-fused result. Kills mutants that
+    swap the apply-threshold/merge order or apply the threshold to both
+    lanes (a lexical hit scoring below threshold must still survive)."""
+
+    class Q:
+        async def search(self, vector, limit, match_text=None):
+            if match_text == "cmdb_rel_ci":
+                # Postfilter to literal token (defect 1 fix) — text must
+                # contain "cmdb_rel_ci" verbatim to survive into the lane.
+                return [{"id": "lex", "score": 0.1, "text": "cmdb_rel_ci lex doc"}]
+            return [
+                {"id": "hi", "score": 0.8, "text": "hi"},
+                {"id": "lo", "score": 0.1, "text": "lo"},
+            ]
+
+    res = await enrich_mod._vector_side(
+        "What does the cmdb_rel_ci table store?",
+        5,
+        GoodEmbed(),
+        Q(),
+        score_threshold=0.5,
+        lexical_ready=True,
+    )
+    ids = [c["id"] for c in res["chunks"]]
+    assert "hi" in ids  # dense chunk above threshold survives
+    assert "lo" not in ids  # dense chunk below threshold dropped
+    assert "lex" in ids  # lexical hit survives despite scoring below the dense threshold
+
+
+@pytest.mark.asyncio
+async def test_vector_side_fused_result_capped_at_top_k():
+    """Dense + lexical lanes together can surface more than top_k distinct
+    ids; the fused result must still be capped to top_k. Kills a mutant that
+    drops (or defaults away, e.g. limit=None) the rrf_merge cap."""
+
+    class Q:
+        async def search(self, vector, limit, match_text=None):
+            if match_text == "cmdb_rel_ci":
+                # Postfilter to literal token (defect 1 fix) — text must
+                # contain "cmdb_rel_ci" verbatim to survive into the lane.
+                return [
+                    {"id": f"lex{i}", "score": 0.9, "text": f"cmdb_rel_ci lex{i}"} for i in range(3)
+                ]
+            return [{"id": f"dense{i}", "score": 0.9, "text": f"dense{i}"} for i in range(3)]
+
+    res = await enrich_mod._vector_side(
+        "What does the cmdb_rel_ci table store?", 2, GoodEmbed(), Q(), lexical_ready=True
+    )
+    assert len(res["chunks"]) == 2
+
+
+@pytest.mark.asyncio
+async def test_enrich_warns_when_lexical_degraded():
+    # identifier query + lexical_ready=False -> explicit envelope warning
+    res = await enrich_mod.enrich(
+        query="What does the cmdb_rel_ci table store?",
+        entity_hints=["cmdb_rel_ci"],
+        top_k=2,
+        edge_budget=4,
+        embedding_client=BatchEmbed(),
+        qdrant_client=OkQdrant(),
+        arango_client=RelArango(),
+        lexical_ready=False,
+    )
+    assert "lexical lane degraded — chunk_text index not ready" in res["warnings"]
