@@ -249,8 +249,13 @@ async def enrich(
     {truncated, available, returned}; when truncated, `suggest` gives the
     kg_neighbors/kg_path drill-down. A server-side token ceiling keeps the
     response within the client cap (or flags it loudly in `warnings` in the
-    rare case per-concept floors force a small overflow) — raising edge_budget
-    adds latency, not size, once the ceiling is reached.
+    rare case per-concept floors force a small overflow). Raising
+    edge_budget spreads the budget across more matched concepts, which can
+    DILUTE query relevance (measured: retention 0.282 -> 0.200 as
+    edge_budget went 40 -> 120 at top_k=3 — see
+    mcp/tests/battery_results/2026-07-17-sweep.md). Past ~40 it adds
+    latency without adding delivered edges. For stronger KG grounding
+    prefer LOWERING top_k rather than raising edge_budget.
 
     Args:
         query: The user's natural-language question.
