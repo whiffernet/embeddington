@@ -9,8 +9,14 @@ services:
   arangodb:
     image: arangodb:3.12.4
     ports: ["19412:8529"]
+    # Cap Arango like the consumer stack (PR #31): uncapped, arangod sizes its
+    # caches as ~54% of TOTAL host RAM — on unified-memory hosts that competes
+    # with the GPU pool and can OOM the whole machine (2026-07-17 incident;
+    # recurred 2026-07-18 under battery sweep load). 4G is the validated floor.
+    mem_limit: ${ARANGO_MEMORY_CAP:-4g}
     environment:
       ARANGO_ROOT_PASSWORD: ${ARANGO_ROOT_PASSWORD:?set in env}
+      ARANGODB_OVERRIDE_DETECTED_TOTAL_MEMORY: ${ARANGO_MEMORY_CAP:-4G}
     volumes: [battery_arango:/var/lib/arangodb3]
   embed:
     # Same image the consumer stack runs — keeps measurement inside the

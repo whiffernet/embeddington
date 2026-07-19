@@ -169,32 +169,84 @@ def coalesced_confidence(edge: dict) -> float:
     return 0.5 if c is None else float(c)
 
 
-def select_edges(edges: list[dict], slots: int) -> list[dict]:
-    """Predicate-diversity floor, then confidence fill (spec §3.3).
+DIVERSITY_QUOTA_FRACTION = 0.40  # tuned by the Task 5 mini-sweep (spec §5 PR 3)
 
-    Pass 1 walks predicates ordered by their best edge's coalesced confidence
-    (desc) taking the best edge per predicate — so a minority predicate's
-    single edge survives 50 high-confidence edges of another class. Pass 2
-    fills remaining slots by coalesced confidence desc. Ties break on edge id
-    for determinism. Floor picks come first in the output — the ceiling trim
-    (Task 5) drops from the tail, so diversity is sacrificed last.
+
+def relevance_rank_key(edge: dict, relevance: dict[str, float]):
+    """Sort key: scored-by-relevance first (desc), then unscored by confidence.
+
+    Unscored edges (no relevance entry — typically a null ``source_quote``)
+    stay eligible and confidence-ordered among themselves rather than being
+    sunk by a missing score (spec §5 PR 3).
+    """
+    eid = str(edge.get("id"))
+    if eid in relevance:
+        return (0, -relevance[eid], eid)
+    return (1, -coalesced_confidence(edge), eid)
+
+
+def select_edges(
+    edges: list[dict],
+    slots: int,
+    relevance: dict[str, float] | None = None,
+    diversity_quota: int | None = None,
+) -> list[dict]:
+    """Diversity quota + relevance fill (spec §5 PR 3); legacy path when
+    ``relevance`` is None.
+
+    With relevance: pass 1 walks predicates ordered by their best edge's rank
+    key, taking the best edge per distinct predicate until ``diversity_quota``
+    picks are placed (default max(1, round(DIVERSITY_QUOTA_FRACTION*slots))).
+    Pass 2 fills remaining slots by rank key. Quota picks come first in the
+    output so the ceiling trim (which pops tails) sacrifices diversity last.
+
+    Without relevance (None): the original predicate-floor + confidence-fill
+    behavior, byte-identical to v0.5.1 — the degradation path when the
+    embedder is unavailable (spec §6).
 
     Args:
-        edges: List of edge dictionaries with 'id', 'predicate', and
-            optional 'confidence' keys.
+        edges: Edge dicts with 'id', 'predicate', optional 'confidence'.
         slots: Maximum number of edges to select.
+        relevance: Injected query-relevance scores keyed by str(edge id).
+        diversity_quota: Pass-1 pick count; None derives the default.
 
     Returns:
-        Selected edges, ordered floor-picks-first.
+        Selected edges, quota/floor picks first. Grounding fields untouched.
     """
     if slots <= 0 or not edges:
         return []
-    ranked = sorted(edges, key=lambda e: (-coalesced_confidence(e), str(e.get("id"))))
-    kept: list[dict] = []
-    kept_ids: set[str] = set()
-    seen_preds: set[str] = set()
-    for e in ranked:  # pass 1: best edge per distinct predicate
-        if len(kept) >= slots:
+    if relevance is None:
+        ranked = sorted(edges, key=lambda e: (-coalesced_confidence(e), str(e.get("id"))))
+        kept: list[dict] = []
+        kept_ids: set[str] = set()
+        seen_preds: set[str] = set()
+        for e in ranked:  # pass 1: best edge per distinct predicate
+            if len(kept) >= slots:
+                break
+            p = str(e.get("predicate"))
+            eid = str(e.get("id"))
+            if p not in seen_preds and eid not in kept_ids:
+                seen_preds.add(p)
+                kept.append(e)
+                kept_ids.add(eid)
+        for e in ranked:  # pass 2: fill by confidence
+            if len(kept) >= slots:
+                break
+            eid = str(e.get("id"))
+            if eid not in kept_ids:
+                kept.append(e)
+                kept_ids.add(eid)
+        return kept
+
+    if diversity_quota is None:
+        diversity_quota = max(1, round(DIVERSITY_QUOTA_FRACTION * slots))
+    diversity_quota = min(diversity_quota, slots)
+    ranked = sorted(edges, key=lambda e: relevance_rank_key(e, relevance))
+    kept = []
+    kept_ids = set()
+    seen_preds = set()
+    for e in ranked:  # pass 1: quota — best edge per predicate, rank order
+        if len(kept) >= diversity_quota:
             break
         p = str(e.get("predicate"))
         eid = str(e.get("id"))
@@ -202,7 +254,7 @@ def select_edges(edges: list[dict], slots: int) -> list[dict]:
             seen_preds.add(p)
             kept.append(e)
             kept_ids.add(eid)
-    for e in ranked:  # pass 2: fill by confidence
+    for e in ranked:  # pass 2: fill by rank
         if len(kept) >= slots:
             break
         eid = str(e.get("id"))

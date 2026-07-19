@@ -116,6 +116,16 @@ write, sparse on edges. It's recency metadata, not a ranking signal: nothing
 in `find_entities`/`neighbors`/`enrich` sorts or filters by it. See
 `RESPONSE_SHAPES.md` for the exact shape per tool.
 
+`enrich`'s KG edge selection is relevance-aware (`v0.6.0`, #36): edge
+`source_quote`s are cosine-scored against the query (one batched, LRU-cached
+embed call per `enrich`) and selected by a diversity-quota-then-relevance
+pass rather than confidence alone — tunable via `EMBEDDINGTON_DIVERSITY_QUOTA`
+(default `0.40`). If the embed call fails, selection degrades loudly to the
+old confidence-order behavior with a warning, never silently. Be honest with
+yourself about latency: a cold call on a CPU embed sidecar can take several
+seconds (batch-embedding every pooled quote); the LRU cache and a GPU-backed
+embed service both bring warm calls back down to roughly the pre-change cost.
+
 ## The files in this folder
 
 | File                  | Purpose                                                                                          |

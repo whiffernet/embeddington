@@ -354,6 +354,109 @@ def test_trim_prunes_orphan_nodes_and_reuses_freed_tokens():
     assert estimate_tokens(out) <= ceiling
 
 
+def _redge(eid, pred, conf=None, quote="q") -> dict:
+    return {"id": eid, "predicate": pred, "confidence": conf, "source_quote": quote}
+
+
+class TestSelectEdgesRelevance:
+    def test_none_relevance_is_byte_identical_to_legacy(self):
+        edges = [_redge("a", "P1", 0.9), _redge("b", "P2", 0.8), _redge("c", "P1", 0.7)]
+        legacy = select_edges(edges, 2)
+        assert select_edges(edges, 2, relevance=None) == legacy
+        assert select_edges(edges, 2, relevance=None, diversity_quota=1) == legacy
+
+    def test_quota_pick_ranks_by_relevance_not_confidence(self):
+        # High-confidence edge loses to high-relevance edge in the quota phase.
+        edges = [_redge("hi_conf", "P1", 0.99), _redge("hi_rel", "P1", 0.10)]
+        rel = {"hi_rel": 0.95, "hi_conf": 0.05}
+        kept = select_edges(edges, 1, relevance=rel, diversity_quota=1)
+        assert [e["id"] for e in kept] == ["hi_rel"]
+
+    def test_quota_picks_come_first_in_rank_order_then_fill(self):
+        # 3 predicates, quota=2: pins the FULL ordered output — quota picks
+        # (best edge per predicate, in rank order across predicates) first,
+        # fill picks (remaining edges, in rank order) after. This is the
+        # property the ceiling trim's tail-pop depends on: it must sacrifice
+        # diversity last, so quota picks can never trail fill picks.
+        edges = [
+            _redge("p1a", "P1"),
+            _redge("p1b", "P1"),
+            _redge("p2a", "P2"),
+            _redge("p3a", "P3"),
+        ]
+        rel = {"p1a": 0.9, "p2a": 0.8, "p1b": 0.5, "p3a": 0.3}
+        kept = select_edges(edges, 4, relevance=rel, diversity_quota=2)
+        assert [e["id"] for e in kept] == ["p1a", "p2a", "p1b", "p3a"]
+
+    def test_quota_preserves_minority_predicate(self):
+        # 3 highly-relevant P1 edges would fill slots=3; quota must save P2's best.
+        edges = [
+            _redge("p1a", "P1", 0.9),
+            _redge("p1b", "P1", 0.9),
+            _redge("p1c", "P1", 0.9),
+            _redge("p2a", "P2", 0.1),
+        ]
+        rel = {"p1a": 0.9, "p1b": 0.8, "p1c": 0.7, "p2a": 0.2}
+        kept = select_edges(edges, 3, relevance=rel, diversity_quota=2)
+        ids = {e["id"] for e in kept}
+        assert "p2a" in ids  # survived via quota
+        assert "p1a" in ids  # best edge overall also present
+
+    def test_default_quota_is_fraction_of_slots_min_one(self):
+        # slots=8 -> quota = max(1, round(DIVERSITY_QUOTA_FRACTION * slots))
+        #          = max(1, round(0.40 * 8)) = max(1, round(3.2)) = 3.
+        # 4 predicates present (P1 x8 high-relevance, p2a/p3a/p4a descending):
+        # pass 1 (quota) walks all edges in relevance order and takes the
+        # first (highest-relevance) edge of each new predicate — P1's best
+        # edge, then p2a, then p3a — hitting the quota=3 cap before p4a is
+        # ever reached, so p4a never wins a quota slot.
+        # Pass 2 (fill) resumes in the same relevance order for the
+        # remaining 8-3=5 slots: the 7 still-unpicked P1 edges (relevance
+        # 0.9) all outrank p4a (relevance 0.1), so fill drains 5 of them
+        # before reaching p4a — p4a is excluded from the result entirely.
+        edges = [_redge(f"p1{i}", "P1", 0.5) for i in range(8)]
+        edges += [_redge("p2a", "P2", 0.5), _redge("p3a", "P3", 0.5), _redge("p4a", "P4", 0.5)]
+        rel = {e["id"]: 0.9 if e["predicate"] == "P1" else 0.1 for e in edges}
+        rel["p2a"] = 0.3  # p2 ranks above p3 ranks above p4 (p4a stays at 0.1)
+        rel["p3a"] = 0.2
+        kept = select_edges(edges, 8, relevance=rel)
+        ids = {e["id"] for e in kept}
+        assert "p2a" in ids  # second quota pick
+        assert "p3a" in ids  # third quota pick — quota now exhausted at 3
+        assert "p4a" not in ids  # never wins quota or fill (7 P1 edges rank above it)
+        assert sum(1 for i in ids if i.startswith("p1")) == 6  # 1 quota P1 + 5 fill P1
+
+    def test_unscored_edges_eligible_not_sunk(self):
+        # Unscored edge: no relevance entry. It must (a) win a quota slot for its
+        # predicate, and (b) rank by confidence among unscored in the fill.
+        edges = [_redge("scored", "P1", 0.1), _redge("unscored", "P2", 0.9, quote=None)]
+        rel = {"scored": 0.5}
+        kept = select_edges(edges, 2, relevance=rel, diversity_quota=1)
+        assert {e["id"] for e in kept} == {"scored", "unscored"}
+
+    def test_scored_zero_relevance_still_outranks_unscored_in_fill(self):
+        edges = [_redge("z", "P1", 0.1), _redge("u", "P1", 0.99, quote=None)]
+        rel = {"z": 0.0}
+        kept = select_edges(edges, 1, relevance=rel, diversity_quota=0)
+        assert [e["id"] for e in kept] == ["z"]
+
+    def test_grounding_fields_never_stripped(self):
+        edges = [_redge("a", "P1", 0.9)]
+        edges[0].update(
+            {"source_document": "ITSM", "extraction_type": "explicit", "releases": ["x"]}
+        )
+        kept = select_edges(edges, 1, relevance={"a": 0.5})
+        assert kept[0]["source_document"] == "ITSM"
+        assert kept[0]["releases"] == ["x"]
+
+    def test_deterministic_on_ties(self):
+        edges = [_redge("b", "P1", 0.5), _redge("a", "P1", 0.5)]
+        rel = {"a": 0.5, "b": 0.5}
+        k1 = select_edges(edges, 1, relevance=rel)
+        k2 = select_edges(list(reversed(edges)), 1, relevance=rel)
+        assert [e["id"] for e in k1] == [e["id"] for e in k2] == ["a"]
+
+
 def test_trim_does_not_invert_to_floor_under_ceiling_eb120_case():
     """The eb=120 inversion: 5 concepts each with 24 edges+nodes overshoot the
     12000 ceiling. Pre-fix, the trim floored every concept to 3 edges (15 total)

@@ -290,6 +290,7 @@ async def enrich(
         qdrant_client=_get_qdrant(),
         arango_client=_get_arango(),
         max_response_tokens=config.MAX_RESPONSE_TOKENS,
+        diversity_quota_fraction=config.DIVERSITY_QUOTA_FRACTION,
     )
     result["warnings"] = server_warnings + result["warnings"]
     return result

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 import re
 from typing import Any, Optional, Protocol
 
@@ -132,6 +133,8 @@ def _extract_entity_hints(query: str) -> list[str]:
 class _Embed(Protocol):
     async def embed(self, text: str) -> list[float]: ...
 
+    async def embed_batch(self, texts: list[str]) -> list[list[float]]: ...
+
 
 class _Qdrant(Protocol):
     async def search(self, vector: list[float], limit: int) -> list[dict]: ...
@@ -162,13 +165,19 @@ async def enrich(
     qdrant_client: _Qdrant,
     arango_client: _Arango,
     max_response_tokens: int = 12000,
+    diversity_quota_fraction: float = 0.40,
 ) -> dict[str, Any]:
-    """Budgeted parallel vector search + KG concept expansion (spec §3–4).
+    """Budgeted parallel vector search + KG concept expansion (spec §3–5).
 
     The KG half dedups matched entities into concepts, expands every variant,
     and selects edges under a response-level budget with predicate diversity.
-    A token-estimate ceiling (server config, not caller-set) trims the whole
-    response — vector chunks included — with per-concept floors.
+    Selection is relevance-injected: quotes from every fetched edge are
+    batch-embedded once and cosine-scored against the query vector, then
+    ranked ahead of raw confidence (spec §5 PR 3). Any embed failure degrades
+    loudly to the legacy confidence-order selection rather than failing the
+    whole call. A token-estimate ceiling (server config, not caller-set)
+    trims the whole response — vector chunks included — with per-concept
+    floors.
 
     Args:
         query: User's natural-language question.
@@ -177,11 +186,15 @@ async def enrich(
         top_k: Number of vector chunks to retrieve.
         edge_budget: Total KG edge slots to split across matched concepts.
         predicates: Optional predicate allowlist to scope KG expansion.
-        embedding_client: Client with async embed() method.
+        embedding_client: Client with async embed() and embed_batch() methods.
         qdrant_client: Client with async search() method.
         arango_client: Client with sync find_entities(), neighbors_stratified(),
             and count_edges() methods.
         max_response_tokens: Token-estimate ceiling for the whole response.
+        diversity_quota_fraction: Fraction of each concept's slots reserved
+            for the predicate-diversity quota when relevance scoring succeeds
+            (server config, wired in via server.py — keeps this module
+            config-free like max_response_tokens).
 
     Returns:
         {vector_chunks, kg_matches, errors, budget, warnings} — all keys
@@ -194,16 +207,49 @@ async def enrich(
 
     vector_task = asyncio.create_task(_vector_side(query, top_k, embedding_client, qdrant_client))
     kg_task = asyncio.create_task(
-        asyncio.to_thread(_kg_side, hints, arango_client, edge_budget, predicates)
+        asyncio.to_thread(_kg_fetch, hints, arango_client, edge_budget, predicates)
     )
-    vector_result, kg_result = await asyncio.gather(vector_task, kg_task)
+    vector_result, kg_fetched = await asyncio.gather(vector_task, kg_task)
 
     errors: dict[str, str] = {}
     if vector_result["error"]:
         errors["qdrant"] = vector_result["error"]
-    if kg_result["error"]:
-        errors["arango"] = kg_result["error"]
-    warnings.extend(kg_result["warnings"])
+    if kg_fetched["error"]:
+        errors["arango"] = kg_fetched["error"]
+    warnings.extend(kg_fetched["warnings"])
+
+    relevance: Optional[dict[str, float]] = None
+    quotes: list[str] = []
+    quote_to_edges: dict[str, list[str]] = {}
+    for item in kg_fetched["prepared"]:
+        for eid, ed in item["pool_edges"].items():
+            sq = ed.get("source_quote")
+            if sq:
+                if sq not in quote_to_edges:
+                    quotes.append(sq)
+                    quote_to_edges[sq] = []
+                quote_to_edges[sq].append(eid)
+    if quotes:
+        try:
+            q_vec = vector_result.get("vector")
+            if q_vec is None:
+                q_vec = await embedding_client.embed(query)
+            quote_vecs = await embedding_client.embed_batch(quotes)
+            relevance = {}
+            for sq, v in zip(quotes, quote_vecs):
+                score = _cosine(q_vec, v)
+                for eid in quote_to_edges[sq]:
+                    relevance[eid] = score
+        except Exception as exc:  # noqa: BLE001 — any embed failure degrades, never fails enrich
+            logger.warning(
+                "relevance scoring failed, degrading to confidence order: %s", exc, exc_info=True
+            )
+            relevance = None
+            warnings.append(
+                "relevance scoring unavailable — selection degraded to confidence order"
+            )
+
+    kg_result = _kg_select(kg_fetched, relevance, diversity_quota_fraction)
 
     chunks = vector_result["chunks"]
     # Vector half claims at most ~60% of the ceiling up front (spec §4.1).
@@ -264,18 +310,170 @@ async def _vector_side(
         qdrant: Qdrant search client.
 
     Returns:
-        dict with keys chunks (list) and error (str or None).
+        dict with keys chunks (list), error (str or None), and vector
+        (the query embedding, reused by relevance scoring in `enrich`; None
+        only when the embed call itself failed).
     """
     try:
         vector = await embed.embed(query)
         chunks = await qdrant.search(vector=vector, limit=top_k)
-        return {"chunks": chunks, "error": None}
+        return {"chunks": chunks, "error": None, "vector": vector}
     except QdrantError as exc:
         logger.warning("vector side failed: %s", exc)
-        return {"chunks": [], "error": str(exc)}
+        return {"chunks": [], "error": str(exc), "vector": vector}
     except Exception as exc:
         logger.warning("embedding failed: %s", exc)
-        return {"chunks": [], "error": f"embedding: {exc}"}
+        return {"chunks": [], "error": f"embedding: {exc}", "vector": None}
+
+
+def _cosine(a: list[float], b: list[float]) -> float:
+    """Cosine similarity of two equal-length vectors (pure python — no numpy
+    in the mcp runtime deps).
+
+    Args:
+        a: First vector.
+        b: Second vector, same length as `a`.
+
+    Returns:
+        Cosine similarity in [-1, 1]. Zero vectors are treated as norm 1 to
+        avoid a division by zero (yields a score of 0.0, not a crash).
+    """
+    dot = sum(x * y for x, y in zip(a, b))
+    na = math.sqrt(sum(x * x for x in a)) or 1.0
+    nb = math.sqrt(sum(x * x for x in b)) or 1.0
+    return dot / (na * nb)
+
+
+def _kg_fetch(
+    hints: list[str],
+    arango: _Arango,
+    edge_budget: int,
+    predicates: Optional[list[str]],
+) -> dict[str, Any]:
+    """Seed, group, budget, and fetch pools — everything before selection.
+
+    Sync (runs in a thread). Selection is deferred so the async caller can
+    inject query-relevance scores (spec §5 PR 3) computed off-thread.
+
+    Args:
+        hints: Entity name strings to look up.
+        arango: ArangoDB KG client.
+        edge_budget: Total edge slots to split across matched concepts.
+        predicates: Optional predicate allowlist to scope KG expansion.
+
+    Returns:
+        dict with keys prepared (list of {match, pool_nodes, pool_edges,
+        n_slots}), error (str or None), warnings (list of str).
+    """
+    if not hints:
+        return {"prepared": [], "error": None, "warnings": []}
+    try:
+        seeded: list[tuple[int, dict]] = []
+        for i, hint in enumerate(hints):
+            for entity in arango.find_entities(hint, limit=3):
+                seeded.append((i, entity))
+    except ArangoError as exc:
+        logger.warning("KG side failed: %s", exc)
+        return {"prepared": [], "error": str(exc), "warnings": []}
+
+    concepts = _budget.group_concepts(seeded)
+    slots = _budget.allocate_budget(concepts, edge_budget)
+    prepared: list[dict] = []
+    for concept, n_slots in zip(concepts, slots + [0] * (len(concepts) - len(slots))):
+        match: dict[str, Any] = {
+            "concept": concept.key,
+            "variants": concept.variants,
+            "nodes": [],
+            "edges": [],
+            "truncation": {"truncated": False, "available": 0, "returned": 0},
+            "suggest": None,
+            "error": None,
+        }
+        pool_nodes: dict[str, dict] = {}
+        pool_edges: dict[str, dict] = {}
+        eff_slots = n_slots
+        try:
+            if predicates:
+                available = sum(arango.count_edges(v["id"], predicates) for v in concept.variants)
+            else:
+                available = sum(int(v.get("degree") or 0) for v in concept.variants)
+            match["truncation"]["available"] = available
+            if n_slots > 0:
+                for v in concept.variants:
+                    fetched = arango.neighbors_stratified(
+                        v["id"],
+                        per_predicate=2,
+                        overall=max(2 * n_slots, 20),
+                        predicates=predicates,
+                    )
+                    for nd in fetched["nodes"]:
+                        pool_nodes.setdefault(nd["id"], nd)
+                    for ed in fetched["edges"]:
+                        pool_edges.setdefault(str(ed["id"]), ed)
+        except ArangoError as exc:
+            logger.warning("concept %s failed: %s", concept.key, exc)
+            match["error"] = str(exc)
+            pool_nodes, pool_edges, eff_slots = {}, {}, 0
+        prepared.append(
+            {
+                "match": match,
+                "pool_nodes": pool_nodes,
+                "pool_edges": pool_edges,
+                "n_slots": eff_slots,
+            }
+        )
+    return {"prepared": prepared, "error": None, "warnings": []}
+
+
+def _kg_select(
+    fetched: dict[str, Any],
+    relevance: Optional[dict[str, float]],
+    diversity_quota_fraction: float,
+) -> dict[str, Any]:
+    """Pure selection + match assembly over pre-fetched pools (spec §5 PR 3).
+
+    Args:
+        fetched: `_kg_fetch` output.
+        relevance: Injected relevance scores keyed by str(edge id); None
+            degrades to the legacy confidence/diversity selection.
+        diversity_quota_fraction: Fraction of each concept's slots reserved
+            for the predicate-diversity quota when relevance is present.
+
+    Returns:
+        dict with keys matches, error, warnings (the historical `_kg_side`
+        shape).
+    """
+    matches: list[dict] = []
+    for item in fetched["prepared"]:
+        match = item["match"]
+        n_slots = item["n_slots"]
+        pool = list(item["pool_edges"].values())
+        if match["error"] is not None:
+            matches.append(match)
+            continue
+        if n_slots > 0:
+            quota = (
+                max(1, round(diversity_quota_fraction * n_slots)) if relevance is not None else None
+            )
+            selected = _budget.select_edges(
+                pool, n_slots, relevance=relevance, diversity_quota=quota
+            )
+            keep_ids = {e["source"] for e in selected} | {e["target"] for e in selected}
+            match["edges"] = selected
+            match["nodes"] = [n for n in item["pool_nodes"].values() if n["id"] in keep_ids]
+            match["truncation"]["returned"] = len(selected)
+            # Compare against the actual fetched pool, not `available` (a
+            # degree-derived estimate) — spec §5.3: never compare
+            # mismatched counting bases.
+            match["truncation"]["truncated"] = len(pool) > len(selected)
+            if match["truncation"]["truncated"]:
+                match["suggest"] = _build_suggest(match["variants"], pool)
+        else:
+            match["truncation"]["truncated"] = match["truncation"]["available"] > 0
+            if match["truncation"]["truncated"]:
+                match["suggest"] = _build_suggest(match["variants"], [])
+        matches.append(match)
+    return {"matches": matches, "error": fetched["error"], "warnings": fetched["warnings"]}
 
 
 def _kg_side(
@@ -284,7 +482,7 @@ def _kg_side(
     edge_budget: int,
     predicates: Optional[list[str]],
 ) -> dict[str, Any]:
-    """Concept-grouped, budget-allocated KG expansion. Sync (runs in a thread).
+    """Legacy composition: fetch then select with no relevance (spec §6 path).
 
     Per-concept errors scope to that match; the top-level error is reserved
     for total failure (e.g. find_entities itself unreachable).
@@ -299,71 +497,8 @@ def _kg_side(
         dict with keys matches (list of match dicts), error (str or None),
         and warnings (list of str).
     """
-    if not hints:
-        return {"matches": [], "error": None, "warnings": []}
-    try:
-        seeded: list[tuple[int, dict]] = []
-        for i, hint in enumerate(hints):
-            for entity in arango.find_entities(hint, limit=3):
-                seeded.append((i, entity))
-    except ArangoError as exc:
-        logger.warning("KG side failed: %s", exc)
-        return {"matches": [], "error": str(exc), "warnings": []}
-
-    concepts = _budget.group_concepts(seeded)
-    slots = _budget.allocate_budget(concepts, edge_budget)
-    warnings: list[str] = []
-    matches: list[dict] = []
-
-    for concept, n_slots in zip(concepts, slots + [0] * (len(concepts) - len(slots))):
-        match: dict[str, Any] = {
-            "concept": concept.key,
-            "variants": concept.variants,
-            "nodes": [],
-            "edges": [],
-            "truncation": {"truncated": False, "available": 0, "returned": 0},
-            "suggest": None,
-            "error": None,
-        }
-        try:
-            if predicates:
-                available = sum(arango.count_edges(v["id"], predicates) for v in concept.variants)
-            else:
-                available = sum(int(v.get("degree") or 0) for v in concept.variants)
-            match["truncation"]["available"] = available
-            if n_slots > 0:
-                pool_nodes: dict[str, dict] = {}
-                pool_edges: dict[str, dict] = {}
-                for v in concept.variants:
-                    fetched = arango.neighbors_stratified(
-                        v["id"],
-                        per_predicate=2,
-                        overall=max(2 * n_slots, 20),
-                        predicates=predicates,
-                    )
-                    for nd in fetched["nodes"]:
-                        pool_nodes.setdefault(nd["id"], nd)
-                    for ed in fetched["edges"]:
-                        pool_edges.setdefault(str(ed["id"]), ed)
-                pool = list(pool_edges.values())
-                selected = _budget.select_edges(pool, n_slots)
-                keep_ids = {e["source"] for e in selected} | {e["target"] for e in selected}
-                match["edges"] = selected
-                match["nodes"] = [n for n in pool_nodes.values() if n["id"] in keep_ids]
-                match["truncation"]["returned"] = len(selected)
-                # Compare against the actual fetched pool, not `available` (a
-                # degree-derived estimate) — spec §5.3: never compare
-                # mismatched counting bases.
-                match["truncation"]["truncated"] = len(pool) > len(selected)
-                if match["truncation"]["truncated"]:
-                    match["suggest"] = _build_suggest(concept.variants, pool)
-            else:
-                match["truncation"]["truncated"] = available > 0
-                if match["truncation"]["truncated"]:
-                    match["suggest"] = _build_suggest(concept.variants, [])
-        except ArangoError as exc:
-            logger.warning("concept %s failed: %s", concept.key, exc)
-            match["error"] = str(exc)
-        matches.append(match)
-
-    return {"matches": matches, "error": None, "warnings": warnings}
+    return _kg_select(
+        _kg_fetch(hints, arango, edge_budget, predicates),
+        relevance=None,
+        diversity_quota_fraction=_budget.DIVERSITY_QUOTA_FRACTION,
+    )

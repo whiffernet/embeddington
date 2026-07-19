@@ -137,7 +137,7 @@ predicates"`. Treat it as an advisory surface, not an error signal —
   ], // union of nodes across all variants' fetched neighborhoods
   "edges": [
     /* edge, ... */
-  ], // budget-selected: predicate-diversity floor, then confidence fill
+  ], // budget-selected: diversity quota + relevance fill (see Ordering note below)
   "truncation": { "truncated": true, "available": 5000, "returned": 10 },
   "suggest": {
     // null unless truncated
@@ -212,7 +212,7 @@ block below reflects `kg_neighbors`/`match.nodes[]`.
 } // verbatim, <=240 chars
 ```
 
-**Ordering (upstream v0.3.7):** `kg_neighbors` edges come back **highest-`confidence` first**, so when `limit` truncates a large (hub) neighborhood it keeps the most-reliable edges rather than an arbitrary slice. `match.edges[]` (enrich, v0.3.0) uses a different order: a predicate-diversity floor pass (best edge per distinct predicate) followed by a confidence-desc fill pass, so a minority predicate's one edge survives ahead of a majority predicate's twentieth. `enrich` stays depth-1 (a real hub already yields hundreds–thousands of depth-1 edges); for true multi-hop "how does A connect to B", use `kg_path`.
+**Ordering (upstream v0.3.7):** `kg_neighbors` edges come back **highest-`confidence` first**, so when `limit` truncates a large (hub) neighborhood it keeps the most-reliable edges rather than an arbitrary slice. `match.edges[]` (enrich) is selected differently, and changed again in `v0.6.0` (#36): quotes from every candidate edge are batch-embedded once per call (`embed_batch`, in-process LRU-cached — repeated quotes across concepts or calls cost nothing extra) and cosine-scored against the query vector. Selection is then two-phase per concept: pass 1 spends a **diversity quota** — `EMBEDDINGTON_DIVERSITY_QUOTA` fraction of that concept's slots (default `0.40`) — walking predicates in relevance order and taking the best edge per distinct predicate, so a minority predicate's most-relevant edge still survives; pass 2 fills the remaining slots by relevance rank. Quota picks are emitted first, so if the response-ceiling trim later pops tail edges it sacrifices diversity last, not first. **Degradation:** if the batched embed call fails for any reason, selection falls back loudly to the pre-`v0.6.0` order (predicate-floor pass, then confidence-desc fill — byte-identical to `v0.5.1`) and `warnings` gets the exact string `"relevance scoring unavailable — selection degraded to confidence order"`; it is never a silent fallback. `enrich` stays depth-1 (a real hub already yields hundreds–thousands of depth-1 edges); for true multi-hop "how does A connect to B", use `kg_path`.
 
 ### `path_edge` (kg_path `edges[]`) — leaner than `edge`
 
