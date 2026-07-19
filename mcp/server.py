@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import sys
+import time
 from pathlib import Path
 from typing import Annotated, Any, Optional
 
@@ -38,16 +39,18 @@ if _ENV_PATH.exists():
 try:
     from . import config
     from .arango_client import ArangoError, ArangoKGClient
-    from .embedding_client import EmbeddingClient, EmbeddingError
+    from .embedding_client import EmbeddingClient
+    from .enrich import _vector_side as _hybrid_vector_side
     from .enrich import enrich as _enrich_impl
-    from .qdrant_client import QdrantError, QdrantSearchClient
+    from .qdrant_client import QdrantSearchClient
 except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import config  # type: ignore[no-redef]
     from arango_client import ArangoError, ArangoKGClient  # type: ignore[no-redef]
-    from embedding_client import EmbeddingClient, EmbeddingError  # type: ignore[no-redef]
+    from embedding_client import EmbeddingClient  # type: ignore[no-redef]
+    from enrich import _vector_side as _hybrid_vector_side  # type: ignore[no-redef]
     from enrich import enrich as _enrich_impl  # type: ignore[no-redef]
-    from qdrant_client import QdrantError, QdrantSearchClient  # type: ignore[no-redef,attr-defined]
+    from qdrant_client import QdrantSearchClient  # type: ignore[no-redef,attr-defined]
 
 # --- Logging — stderr only (stdout reserved for MCP stdio) ----------------
 logging.basicConfig(
@@ -61,6 +64,16 @@ logger = logging.getLogger("mcp.embeddington")
 _embed_clients: dict[str, EmbeddingClient] = {}
 _qdrant_clients: dict[str, QdrantSearchClient] = {}
 _arango: ArangoKGClient | None = None
+
+# --- Lexical (chunk_text) index status --------------------------------------
+# Set at every server start by _isolation_sanity_check(); "ready" is the only
+# state that permits the lexical MatchText lane (spec §5 PR 4, issue #38).
+# Baseline restores recreate the Qdrant collection and silently drop both the
+# field and the index, so a lazy re-ensure (_maybe_reensure, below) self-heals
+# without re-probing on every tool call.
+_lexical_status: str = "absent"
+_LEXICAL_REENSURE_INTERVAL = 60.0
+_lexical_last_reensure: float = 0.0
 
 
 def _get_embed(index: str | None = None) -> EmbeddingClient:
@@ -165,7 +178,15 @@ async def _isolation_sanity_check() -> None:
 
     No Qdrant deny check in v1: there's no credential enforcement at the
     Qdrant layer (see spec §5). The future JWT-enabled version adds that.
+
+    Also ensures the lexical (chunk_text) index and records its status in
+    the module-level `_lexical_status` (spec §5 PR 4, issue #38). A failed
+    ensure is logged and leaves the status "unavailable" — it must never
+    block startup, since the lexical lane is an enhancement, not a
+    dependency of the dense lane.
     """
+    global _lexical_status
+
     qdrant = _get_qdrant()
 
     leaks: list[str] = []
@@ -186,6 +207,32 @@ async def _isolation_sanity_check() -> None:
         "Sanity check passed: Qdrant collections %s reachable",
         sorted(config.ALLOWED_QDRANT_COLLECTIONS),
     )
+
+    try:
+        _lexical_status = await qdrant.ensure_chunk_text()
+        logger.info("Lexical (chunk_text) index status: %s", _lexical_status)
+    except Exception as exc:  # noqa: BLE001 — lexical index ensure must never block startup
+        logger.warning("chunk_text ensure failed at startup: %s", exc)
+        _lexical_status = "unavailable"
+
+
+async def _maybe_reensure() -> None:
+    """Lazily retry the chunk_text ensure, at most once per process per 60s.
+
+    Baseline restores can recreate the Qdrant collection and silently drop
+    the chunk_text field/index outside of a server restart; this lets the
+    lexical lane self-heal without re-probing Qdrant on every tool call.
+    """
+    global _lexical_status, _lexical_last_reensure
+
+    now = time.monotonic()
+    if now - _lexical_last_reensure < _LEXICAL_REENSURE_INTERVAL:
+        return
+    _lexical_last_reensure = now
+    try:
+        _lexical_status = await _get_qdrant().ensure_chunk_text()
+    except Exception as exc:  # noqa: BLE001 — a failed re-ensure must not fail the tool call
+        logger.warning("lazy chunk_text re-ensure failed: %s", exc)
 
 
 # --- MCP server + tools ---------------------------------------------------
@@ -269,6 +316,9 @@ async def enrich(
     Returns:
         dict with keys vector_chunks, kg_matches, errors, budget, warnings.
     """
+    if _lexical_status != "ready":
+        await _maybe_reensure()
+
     server_warnings: list[str] = []
     norm_predicates: Optional[list[str]] = None
     if predicates:
@@ -291,6 +341,8 @@ async def enrich(
         arango_client=_get_arango(),
         max_response_tokens=config.MAX_RESPONSE_TOKENS,
         diversity_quota_fraction=config.DIVERSITY_QUOTA_FRACTION,
+        score_threshold=config.SCORE_THRESHOLD,
+        lexical_ready=(_lexical_status == "ready"),
     )
     result["warnings"] = server_warnings + result["warnings"]
     return result
@@ -315,10 +367,18 @@ async def vector_search(
     Unknown collections are rejected before any client is constructed — the
     allowlist is the only Qdrant scope guard in v1 (see spec §5).
 
+    Hybrid retrieval (spec §5 PR 4, issue #38): the dense lane is filtered by
+    the server-configured score threshold and, when the lexical chunk_text
+    index is ready, fused via reciprocal-rank fusion with a lexical
+    MatchText lane per identifier-like token found in the query. Weak
+    matches are dropped rather than padded back in, so this call MAY return
+    fewer than `limit` results.
+
     Args:
         query: Natural-language search query to embed and search.
         collection: Allowlisted collection name; defaults to technology (m3).
-        limit: Maximum number of results to return (1-50).
+        limit: Maximum number of results to return (1-50); the actual count
+            may be lower once the score threshold and dedup are applied.
 
     Returns:
         dict with keys results, count, collection, and optional error.
@@ -332,13 +392,20 @@ async def vector_search(
             "error": f"unknown collection '{collection}'; allowed: "
             f"{sorted(config.ALLOWED_QDRANT_COLLECTIONS)}",
         }
+    if _lexical_status != "ready":
+        await _maybe_reensure()
     index = config.ALLOWED_QDRANT_COLLECTIONS[collection]
-    try:
-        vec = await _get_embed(index).embed(query)
-        results = await _get_qdrant(collection).search(vector=vec, limit=limit)
-        return {"results": results, "count": len(results), "collection": collection}
-    except (EmbeddingError, QdrantError) as exc:
-        return {"results": [], "count": 0, "collection": collection, "error": str(exc)}
+    result = await _hybrid_vector_side(
+        query,
+        limit,
+        _get_embed(index),
+        _get_qdrant(collection),
+        score_threshold=config.SCORE_THRESHOLD,
+        lexical_ready=(_lexical_status == "ready"),
+    )
+    if result["error"]:
+        return {"results": [], "count": 0, "collection": collection, "error": result["error"]}
+    return {"results": result["chunks"], "count": len(result["chunks"]), "collection": collection}
 
 
 @mcp.tool

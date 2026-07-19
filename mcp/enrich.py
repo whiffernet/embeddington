@@ -25,8 +25,10 @@ except ImportError:
 
 try:
     from . import budget as _budget
+    from . import hybrid
 except ImportError:
     import budget as _budget  # type: ignore[no-redef]
+    import hybrid  # type: ignore[no-redef]
 
 logger = logging.getLogger("embeddington.enrich")
 
@@ -137,7 +139,9 @@ class _Embed(Protocol):
 
 
 class _Qdrant(Protocol):
-    async def search(self, vector: list[float], limit: int) -> list[dict]: ...
+    async def search(
+        self, vector: list[float], limit: int, match_text: Optional[str] = None
+    ) -> list[dict]: ...
 
 
 class _Arango(Protocol):
@@ -166,6 +170,8 @@ async def enrich(
     arango_client: _Arango,
     max_response_tokens: int = 12000,
     diversity_quota_fraction: float = 0.40,
+    score_threshold: float = 0.0,
+    lexical_ready: bool = False,
 ) -> dict[str, Any]:
     """Budgeted parallel vector search + KG concept expansion (spec §3–5).
 
@@ -178,6 +184,12 @@ async def enrich(
     whole call. A token-estimate ceiling (server config, not caller-set)
     trims the whole response — vector chunks included — with per-concept
     floors.
+
+    The vector half is hybrid (spec §5 PR 4, issue #38): the dense lane is
+    filtered by `score_threshold`, then merged via reciprocal-rank fusion
+    with a lexical MatchText lane per identifier-like token in the query
+    (only when `lexical_ready`). When identifier tokens are found but the
+    lexical lane is not active, a `warnings` entry says so explicitly.
 
     Args:
         query: User's natural-language question.
@@ -195,6 +207,11 @@ async def enrich(
             for the predicate-diversity quota when relevance scoring succeeds
             (server config, wired in via server.py — keeps this module
             config-free like max_response_tokens).
+        score_threshold: Minimum dense-lane similarity score a vector chunk
+            must clear to survive (server config, wired in via server.py;
+            0.0 disables the filter).
+        lexical_ready: Whether the lexical MatchText lane may run (server
+            config, wired in via server.py from its chunk_text index status).
 
     Returns:
         {vector_chunks, kg_matches, errors, budget, warnings} — all keys
@@ -205,7 +222,16 @@ async def enrich(
     if not hints:
         warnings.append("no entity hints extracted — pass entity_hints for KG results")
 
-    vector_task = asyncio.create_task(_vector_side(query, top_k, embedding_client, qdrant_client))
+    vector_task = asyncio.create_task(
+        _vector_side(
+            query,
+            top_k,
+            embedding_client,
+            qdrant_client,
+            score_threshold=score_threshold,
+            lexical_ready=lexical_ready,
+        )
+    )
     kg_task = asyncio.create_task(
         asyncio.to_thread(_kg_fetch, hints, arango_client, edge_budget, predicates)
     )
@@ -217,6 +243,10 @@ async def enrich(
     if kg_fetched["error"]:
         errors["arango"] = kg_fetched["error"]
     warnings.extend(kg_fetched["warnings"])
+
+    lexical = vector_result["lexical"]
+    if lexical["tokens"] and not lexical["active"]:
+        warnings.append("lexical lane degraded — chunk_text index not ready")
 
     relevance: Optional[dict[str, float]] = None
     quotes: list[str] = []
@@ -300,30 +330,78 @@ async def _vector_side(
     top_k: int,
     embed: _Embed,
     qdrant: _Qdrant,
+    *,
+    score_threshold: float = 0.0,
+    lexical_ready: bool = False,
 ) -> dict[str, Any]:
-    """Embed query and search Qdrant; returns chunk list and optional error string.
+    """Embed query, run the hybrid dense+lexical search, and fuse the lanes.
+
+    The dense lane over-fetches (``max(top_k*2, 10)``) and is filtered by
+    `score_threshold` (weak chunks dropped, never padded back in — issue
+    #38/#47) before fusion. When `lexical_ready`, one lexical MatchText lane
+    runs per identifier-like token found in the query (spec §5 PR 4 —
+    ``hybrid.extract_identifier_tokens``); all lanes are merged by
+    reciprocal-rank fusion (``hybrid.rrf_merge``) and capped to `top_k`. A
+    lexical lane that raises is logged and dropped (not propagated) — the
+    fused result still reflects any lanes that did succeed.
 
     Args:
         query: Raw query text to embed.
         top_k: Maximum number of chunks to retrieve.
         embed: Embedding client.
         qdrant: Qdrant search client.
+        score_threshold: Minimum dense-lane score to survive (<=0 disables).
+        lexical_ready: Whether the lexical MatchText lane may run.
 
     Returns:
-        dict with keys chunks (list), error (str or None), and vector
-        (the query embedding, reused by relevance scoring in `enrich`; None
-        only when the embed call itself failed).
+        dict with keys chunks (list), error (str or None), vector (the query
+        embedding, reused by relevance scoring in `enrich`; None only when
+        the embed call itself failed), and lexical ({tokens, active} —
+        active is False whenever lexical_ready was False, no identifier
+        tokens were found, or any lexical lane raised).
     """
+    tokens = hybrid.extract_identifier_tokens(query)
     try:
         vector = await embed.embed(query)
-        chunks = await qdrant.search(vector=vector, limit=top_k)
-        return {"chunks": chunks, "error": None, "vector": vector}
-    except QdrantError as exc:
-        logger.warning("vector side failed: %s", exc)
-        return {"chunks": [], "error": str(exc), "vector": vector}
     except Exception as exc:
         logger.warning("embedding failed: %s", exc)
-        return {"chunks": [], "error": f"embedding: {exc}", "vector": None}
+        return {
+            "chunks": [],
+            "error": f"embedding: {exc}",
+            "vector": None,
+            "lexical": {"tokens": tokens, "active": False},
+        }
+
+    try:
+        dense = await qdrant.search(vector=vector, limit=max(top_k * 2, 10))
+    except QdrantError as exc:
+        logger.warning("vector side failed: %s", exc)
+        return {
+            "chunks": [],
+            "error": str(exc),
+            "vector": vector,
+            "lexical": {"tokens": tokens, "active": False},
+        }
+    dense_thresholded = hybrid.apply_threshold(dense, score_threshold)
+
+    lex_lanes: list[list[dict]] = []
+    active = False
+    if lexical_ready and tokens:
+        active = True
+        for tok in tokens:
+            try:
+                lex_lanes.append(await qdrant.search(vector=vector, limit=top_k, match_text=tok))
+            except Exception as exc:  # noqa: BLE001 — a lexical lane degrades, never fails enrich
+                logger.warning("lexical lane failed for token %r: %s", tok, exc)
+                active = False
+
+    fused = hybrid.rrf_merge([dense_thresholded, *lex_lanes], limit=top_k)
+    return {
+        "chunks": fused,
+        "error": None,
+        "vector": vector,
+        "lexical": {"tokens": tokens, "active": active},
+    }
 
 
 def _cosine(a: list[float], b: list[float]) -> float:

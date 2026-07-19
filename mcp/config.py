@@ -63,3 +63,9 @@ MAX_RESPONSE_TOKENS = int(os.environ.get("EMBEDDINGTON_MAX_RESPONSE_TOKENS", "12
 # config-free (like max_response_tokens) — this is wired at the server.py
 # call site, not imported by enrich.py itself.
 DIVERSITY_QUOTA_FRACTION = float(os.environ.get("EMBEDDINGTON_DIVERSITY_QUOTA", "0.40"))
+
+# Minimum dense-lane similarity score a vector chunk must clear to survive
+# (spec §5 PR 4, issue #38). 0.0 disables the filter — the shipped default is
+# picked by Task 6's measurement sweep, not guessed here. Like the knobs
+# above, this is wired at the server.py call site; enrich.py stays config-free.
+SCORE_THRESHOLD = float(os.environ.get("EMBEDDINGTON_SCORE_THRESHOLD", "0.0"))

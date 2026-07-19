@@ -316,6 +316,7 @@ async def test_ensure_absent_materializes_creates_index_and_reprobes():
     c = QdrantSearchClient("http://q", "technology", transport=httpx.MockTransport(handler))
     assert await c.ensure_chunk_text() == "ready"
     assert ("PUT", "/collections/technology/index") in seq
+    assert any(m == "POST" and p.endswith("/points/scroll") for m, p in seq)
     await c.close()
 
 

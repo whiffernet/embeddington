@@ -3,6 +3,7 @@
 import math
 from unittest.mock import AsyncMock, MagicMock
 
+import enrich as enrich_mod
 import pytest
 from arango_client import ArangoError
 from embedding_client import EmbeddingError
@@ -443,7 +444,7 @@ class BatchEmbed:
 
 
 class OkQdrant:
-    async def search(self, vector, limit):
+    async def search(self, vector, limit, match_text=None):
         return [{"id": "c1", "text": "chunk"}]
 
 
@@ -621,3 +622,109 @@ async def test_enrich_diversity_quota_fraction_plumbs_through_to_select_edges():
     assert kept_wide == {"e1", "e3"}  # full quota keeps the P2 edge despite low relevance
     assert kept_narrow == {"e1", "e2"}  # minimal quota fills by relevance rank, drops P2
     assert kept_wide != kept_narrow
+
+
+# --- Hybrid lexical lane + score threshold wired into _vector_side/enrich() ---
+# (spec §5 PR 4, issue #38)
+
+
+class GoodEmbed:
+    """Fake embedder: fixed 1024-dim vector for both embed() and embed_batch().
+
+    Reused across the hybrid-lane tests below, where only Qdrant lane
+    behavior (dense/lexical fan-out, threshold, RRF merge) is under test.
+    """
+
+    async def embed(self, text):
+        return [0.1] * 1024
+
+    async def embed_batch(self, texts):
+        return [[0.1] * 1024 for _ in texts]
+
+
+@pytest.mark.asyncio
+async def test_vector_side_threshold_drops_weak_chunks():
+    class Q:
+        async def search(self, vector, limit, match_text=None):
+            return [
+                {"id": "hi", "score": 0.8, "text": "hi"},
+                {"id": "lo", "score": 0.1, "text": "lo"},
+            ]
+
+    res = await enrich_mod._vector_side(
+        "plain prose query", 5, GoodEmbed(), Q(), score_threshold=0.5
+    )
+    assert [c["id"] for c in res["chunks"]] == ["hi"]  # fewer than top_k, not padded
+
+
+@pytest.mark.asyncio
+async def test_vector_side_lexical_lane_merges_identifier_hits():
+    calls = []
+
+    class Q:
+        async def search(self, vector, limit, match_text=None):
+            calls.append(match_text)
+            if match_text == "cmdb_rel_ci":
+                return [{"id": "lex", "score": 0.2, "text": "cmdb_rel_ci doc"}]
+            return [{"id": "dense", "score": 0.9, "text": "dense"}]
+
+    res = await enrich_mod._vector_side(
+        "What does the cmdb_rel_ci table store?", 5, GoodEmbed(), Q(), lexical_ready=True
+    )
+    ids = [c["id"] for c in res["chunks"]]
+    assert "lex" in ids and "dense" in ids
+    assert calls == [None, "cmdb_rel_ci"]
+    assert res["lexical"] == {"tokens": ["cmdb_rel_ci"], "active": True}
+
+
+@pytest.mark.asyncio
+async def test_vector_side_lexical_skipped_when_not_ready():
+    calls = []
+
+    class Q:
+        async def search(self, vector, limit, match_text=None):
+            calls.append(match_text)
+            return [{"id": "dense", "score": 0.9, "text": "dense"}]
+
+    res = await enrich_mod._vector_side(
+        "What does the cmdb_rel_ci table store?", 5, GoodEmbed(), Q(), lexical_ready=False
+    )
+    assert calls == [None]
+    assert res["lexical"] == {"tokens": ["cmdb_rel_ci"], "active": False}
+
+
+@pytest.mark.asyncio
+async def test_vector_side_lexical_lane_failure_degrades_active_false():
+    """A lexical lane search raising must not fail the call — it logs, drops
+    that lane's results, and reports active: False (spec §5 PR 4)."""
+
+    from qdrant_client import QdrantError
+
+    class Q:
+        async def search(self, vector, limit, match_text=None):
+            if match_text is not None:
+                raise QdrantError("lexical lane boom")
+            return [{"id": "dense", "score": 0.9, "text": "dense"}]
+
+    res = await enrich_mod._vector_side(
+        "What does the cmdb_rel_ci table store?", 5, GoodEmbed(), Q(), lexical_ready=True
+    )
+    assert [c["id"] for c in res["chunks"]] == ["dense"]  # dense-only, lexical lane dropped
+    assert res["lexical"] == {"tokens": ["cmdb_rel_ci"], "active": False}
+    assert res["error"] is None  # a lexical-only failure is not a top-level error
+
+
+@pytest.mark.asyncio
+async def test_enrich_warns_when_lexical_degraded():
+    # identifier query + lexical_ready=False -> explicit envelope warning
+    res = await enrich_mod.enrich(
+        query="What does the cmdb_rel_ci table store?",
+        entity_hints=["cmdb_rel_ci"],
+        top_k=2,
+        edge_budget=4,
+        embedding_client=BatchEmbed(),
+        qdrant_client=OkQdrant(),
+        arango_client=RelArango(),
+        lexical_ready=False,
+    )
+    assert any("lexical lane degraded" in w for w in res["warnings"])
