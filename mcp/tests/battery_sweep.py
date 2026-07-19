@@ -78,14 +78,16 @@ import config  # noqa: E402
 import server  # noqa: E402
 from battery_queries import QUERIES  # noqa: E402
 from embedding_client import EmbeddingClient  # noqa: E402
-from enrich import _extract_entity_hints  # noqa: E402
+from gold_pools import (  # noqa: E402
+    POOL_OVERALL,
+    POOL_PER_PREDICATE,
+)
+from gold_pools import build_pool as _build_pool  # noqa: E402
 
 EDGE_BUDGETS = [20, 40, 60, 80, 120]
 TOP_KS = [3, 5, 10]
 DEDUPS = ["on", "off"]
 GT_K = 10
-POOL_PER_PREDICATE = 2
-POOL_OVERALL = 100
 EMBED_CONCURRENCY = 16
 CEILING = config.MAX_RESPONSE_TOKENS  # 12000 est-tokens
 HEADROOM_TOKENS = int(CEILING * 0.75)  # ≤ this leaves ≥25% ceiling headroom
@@ -110,27 +112,6 @@ SHORT = {
     "control_predicate_filter": "ctl_pf",
     "control_multifacet_license": "ctl_ml",
 }
-
-
-def _resolve_hints(q: dict) -> list[str]:
-    """Hints enrich would use: explicit, else the same regex fallback."""
-    return q["entity_hints"] if q["entity_hints"] is not None else _extract_entity_hints(q["query"])
-
-
-def _build_pool(arango, q: dict) -> dict[str, dict]:
-    """Merged unbudgeted neighbor pool for a query's resolved entities."""
-    pool: dict[str, dict] = {}
-    for hint in _resolve_hints(q):
-        for ent in arango.find_entities(hint, limit=3):
-            fetched = arango.neighbors_stratified(
-                ent["id"],
-                per_predicate=POOL_PER_PREDICATE,
-                overall=POOL_OVERALL,
-                predicates=q["predicates"],
-            )
-            for ed in fetched["edges"]:
-                pool.setdefault(str(ed["id"]), ed)
-    return pool
 
 
 async def _embed_texts(embed: EmbeddingClient, texts: list[str]) -> list[list[float]]:
