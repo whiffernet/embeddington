@@ -7,6 +7,7 @@ loop. Without this reset, the first request hits "Event loop is closed" from
 httpx.AsyncClient instances bound to the now-closed sanity-check loop.
 """
 
+import time
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -79,3 +80,29 @@ async def test_isolation_check_survives_ensure_chunk_text_failure(monkeypatch):
     await srv._isolation_sanity_check()  # must not raise
 
     assert srv._lexical_status == "unavailable"
+
+
+@pytest.mark.asyncio
+async def test_maybe_reensure_throttles_to_once_per_60s(monkeypatch):
+    """_maybe_reensure must not hammer Qdrant on every degraded tool call —
+    at most once per process per 60s via the module-global monotonic guard
+    (spec §5 PR 4, issue #38)."""
+    monkeypatch.setattr(srv, "_lexical_status", "absent")
+    monkeypatch.setattr(srv, "_lexical_last_reensure", 0.0)
+
+    fake_qdrant = AsyncMock()
+    fake_qdrant.ensure_chunk_text = AsyncMock(return_value="building")
+    monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
+
+    await srv._maybe_reensure()
+    await srv._maybe_reensure()  # back-to-back call within the window: no-op
+
+    assert fake_qdrant.ensure_chunk_text.await_count == 1
+
+    # Advance the guard's clock past the interval -> the next call fires again.
+    monkeypatch.setattr(
+        srv, "_lexical_last_reensure", time.monotonic() - srv._LEXICAL_REENSURE_INTERVAL - 1
+    )
+    await srv._maybe_reensure()
+
+    assert fake_qdrant.ensure_chunk_text.await_count == 2

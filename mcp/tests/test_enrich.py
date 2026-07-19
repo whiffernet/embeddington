@@ -715,6 +715,54 @@ async def test_vector_side_lexical_lane_failure_degrades_active_false():
 
 
 @pytest.mark.asyncio
+async def test_vector_side_threshold_applies_only_to_dense_lane_pre_merge():
+    """The score threshold must filter the DENSE lane BEFORE fusion — never
+    the lexical lane, and never the already-fused result. Kills mutants that
+    swap the apply-threshold/merge order or apply the threshold to both
+    lanes (a lexical hit scoring below threshold must still survive)."""
+
+    class Q:
+        async def search(self, vector, limit, match_text=None):
+            if match_text == "cmdb_rel_ci":
+                return [{"id": "lex", "score": 0.1, "text": "lex doc"}]
+            return [
+                {"id": "hi", "score": 0.8, "text": "hi"},
+                {"id": "lo", "score": 0.1, "text": "lo"},
+            ]
+
+    res = await enrich_mod._vector_side(
+        "What does the cmdb_rel_ci table store?",
+        5,
+        GoodEmbed(),
+        Q(),
+        score_threshold=0.5,
+        lexical_ready=True,
+    )
+    ids = [c["id"] for c in res["chunks"]]
+    assert "hi" in ids  # dense chunk above threshold survives
+    assert "lo" not in ids  # dense chunk below threshold dropped
+    assert "lex" in ids  # lexical hit survives despite scoring below the dense threshold
+
+
+@pytest.mark.asyncio
+async def test_vector_side_fused_result_capped_at_top_k():
+    """Dense + lexical lanes together can surface more than top_k distinct
+    ids; the fused result must still be capped to top_k. Kills a mutant that
+    drops (or defaults away, e.g. limit=None) the rrf_merge cap."""
+
+    class Q:
+        async def search(self, vector, limit, match_text=None):
+            if match_text == "cmdb_rel_ci":
+                return [{"id": f"lex{i}", "score": 0.9, "text": f"lex{i}"} for i in range(3)]
+            return [{"id": f"dense{i}", "score": 0.9, "text": f"dense{i}"} for i in range(3)]
+
+    res = await enrich_mod._vector_side(
+        "What does the cmdb_rel_ci table store?", 2, GoodEmbed(), Q(), lexical_ready=True
+    )
+    assert len(res["chunks"]) == 2
+
+
+@pytest.mark.asyncio
 async def test_enrich_warns_when_lexical_degraded():
     # identifier query + lexical_ready=False -> explicit envelope warning
     res = await enrich_mod.enrich(
@@ -727,4 +775,4 @@ async def test_enrich_warns_when_lexical_degraded():
         arango_client=RelArango(),
         lexical_ready=False,
     )
-    assert any("lexical lane degraded" in w for w in res["warnings"])
+    assert "lexical lane degraded — chunk_text index not ready" in res["warnings"]

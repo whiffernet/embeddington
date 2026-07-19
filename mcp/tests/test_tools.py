@@ -34,6 +34,7 @@ def _mock_clients(monkeypatch):
             },
         ]
     )
+    fake_qdrant.ensure_chunk_text = AsyncMock(return_value="absent")
 
     fake_arango = MagicMock()
     fake_arango.find_entities = MagicMock(
@@ -73,6 +74,14 @@ def _mock_clients(monkeypatch):
     monkeypatch.setattr(srv, "_get_embed", get_embed)
     monkeypatch.setattr(srv, "_get_qdrant", get_qdrant)
     monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
+
+    # Hermeticity: the lexical-lane globals are process-wide state mutated by
+    # _maybe_reensure()/_isolation_sanity_check() in server.py. Without a
+    # per-test reset, whichever test in this file runs first "wins" the 60s
+    # reensure guard for the rest of the session, and _lexical_status leaks
+    # a Mock object forward into every later test that reads it.
+    monkeypatch.setattr(srv, "_lexical_status", "absent")
+    monkeypatch.setattr(srv, "_lexical_last_reensure", 0.0)
 
 
 async def _fn(tool_name: str):
