@@ -93,6 +93,49 @@ class EmbeddingClient:
             )
         return vec
 
+    async def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        """Embed many texts in ONE request, preserving order.
+
+        Args:
+            texts: Query/quote strings to embed. An empty list short-circuits
+                to [] without a network call.
+
+        Returns:
+            One 1024-dim vector per input text, in input order.
+
+        Raises:
+            EmbeddingError: On HTTP error, malformed response, count mismatch,
+                or wrong embedding dimension.
+        """
+        if not texts:
+            return []
+        client = await self._http()
+        body: dict[str, object] = {"texts": texts}
+        if self.index is not None:
+            body["index"] = self.index
+        try:
+            resp = await client.post(self.url, json=body)
+        except httpx.HTTPError as exc:
+            raise EmbeddingError(f"embedding request failed: {exc}") from exc
+        if resp.status_code != 200:
+            raise EmbeddingError(
+                f"embedding endpoint returned {resp.status_code}: {resp.text[:200]}"
+            )
+        try:
+            vecs = resp.json()["embeddings"]
+        except (KeyError, ValueError) as exc:
+            raise EmbeddingError(f"malformed embedding response: {exc}") from exc
+        if len(vecs) != len(texts):
+            raise EmbeddingError(
+                f"embedding count mismatch: got {len(vecs)}, expected {len(texts)}"
+            )
+        for v in vecs:
+            if len(v) != EXPECTED_DIM:
+                raise EmbeddingError(
+                    f"unexpected embedding dim: got {len(v)}, expected {EXPECTED_DIM}"
+                )
+        return vecs
+
     async def close(self) -> None:
         """Close the underlying HTTP client connection.
 
