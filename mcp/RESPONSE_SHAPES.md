@@ -114,6 +114,7 @@ predicates"`. Treat it as an advisory surface, not an error signal —
   "type": "Feature",
   "source_documents": ["IT Service Management"], // first 5 only (some entities have 1000s)
   "releases": ["zurich"], // version context; ~41% of entities populated (else null)
+  "updated_at": "2026-06-04T00:00:00Z", // ISO timestamp of last KG write; sparse on edges — recency metadata, not a ranking signal (issue #46)
   "degree": 42, // graph 1-hop edge count, computed at seed time — added v0.3.0
 }
 ```
@@ -187,6 +188,7 @@ All seven keys are **always present** — even when this concept's expansion fai
   "name": "sn_ti.read",
   "type": "Role",
   "releases": ["zurich"],
+  "updated_at": "2026-06-04T00:00:00Z", // ISO timestamp of last KG write; sparse on edges — recency metadata, not a ranking signal (issue #46)
 } // per-entity version context (added upstream v0.3.5; null if unpopulated)
 ```
 
@@ -203,6 +205,7 @@ All seven keys are **always present** — even when this concept's expansion fai
   "releases": ["zurich"], // ~33% of edges populated (else null) — added upstream v0.3.5
   "source_document": "IT Service Management",
   "source_quote": "The Predictive Intelligence ... plugin activates these ...",
+  "updated_at": null, // ISO timestamp of last KG write; sparse on edges — recency metadata, not a ranking signal (issue #46)
 } // verbatim, <=240 chars
 ```
 
@@ -245,6 +248,7 @@ Surfacing these fields only helps if the synthesizing prompt uses them:
 - **`extraction_type`** — `explicit` (directly stated) vs `inferred`. **Hedge inferred edges.** (Note: a `explet` typo value exists in some edges — treat as `explicit`; it's a data-quality item, surfaced as-is.)
 - **`confidence`** — float 0–1 on `edge` (not on `path_edge`). Treat low-confidence edges as tentative.
 - **`degree`** — graph 1-hop edge count on `entity`. A cheap "how big is this neighborhood" signal before you spend a `kg_neighbors` call; also the estimate basis behind `match.truncation.available` for unfiltered `enrich` concepts (see the basis-semantics note under the `match` sub-shape).
+- **`updated_at`** (added issue #46) — ISO timestamp of last KG write; sparse on edges. Recency metadata, not a ranking signal — nothing in `find_entities`/`neighbors`/`enrich` sorts or filters by it.
 
 ---
 

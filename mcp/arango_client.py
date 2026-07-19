@@ -67,11 +67,13 @@ class ArangoKGClient:
         Returns:
             List of dicts with keys ``id``, ``name``, ``type``,
             ``source_documents`` (first 5 provenance docs, for citation),
-            ``releases`` (ServiceNow release tags, for version context), and
-            ``degree`` (graph degree, already computed for ranking — exposed
-            so callers can use it as a neighborhood-size/availability signal
-            without a second traversal). The legacy ``description`` key was
-            removed — that attribute is empty on every entity in the corpus.
+            ``releases`` (ServiceNow release tags, for version context),
+            ``updated_at`` (ISO timestamp of last KG write; recency metadata,
+            not a ranking signal), and ``degree`` (graph degree, already
+            computed for ranking — exposed so callers can use it as a
+            neighborhood-size/availability signal without a second
+            traversal). The legacy ``description`` key was removed — that
+            attribute is empty on every entity in the corpus.
 
         Raises:
             ArangoError: On query failure.
@@ -94,6 +96,7 @@ class ArangoKGClient:
                 type: e.type,
                 source_documents: SLICE(e.source_documents, 0, 5),
                 releases: e.releases,
+                updated_at: e.updated_at,
                 degree: degree,
             }}
         """
@@ -153,13 +156,15 @@ class ArangoKGClient:
                 exploration only when needed.
 
         Returns:
-            Dict with ``nodes`` (``{id, name, type, releases}`` vertex dicts),
-            ``edges`` (``{id, source, target, predicate, confidence,
-            extraction_type, releases, source_document, source_quote}`` dicts),
-            and ``fetched`` (raw pre-dedup traversal row count — lets callers
-            tell "truncated by limit" apart from "genuinely small
-            neighborhood"). ``releases`` gives ServiceNow version context;
-            ``extraction_type`` ("explicit"/"inferred") pairs with
+            Dict with ``nodes`` (``{id, name, type, releases, updated_at}``
+            vertex dicts), ``edges`` (``{id, source, target, predicate,
+            confidence, extraction_type, releases, source_document,
+            source_quote, updated_at}`` dicts), and ``fetched`` (raw
+            pre-dedup traversal row count — lets callers tell "truncated by
+            limit" apart from "genuinely small neighborhood"). ``releases``
+            gives ServiceNow version context; ``updated_at`` is an ISO
+            timestamp of last KG write (recency metadata, not a ranking
+            signal); ``extraction_type`` ("explicit"/"inferred") pairs with
             ``confidence`` as a reliability signal; ``source_quote`` is
             verbatim provenance truncated to 240 chars so a dense
             neighborhood stays under the consumer tool-result cap. Edges are
@@ -194,7 +199,10 @@ class ArangoKGClient:
             SORT e.confidence DESC
             LIMIT @row_cap
             RETURN {{
-                vertex: {{id: v._id, name: v.name, type: v.type, releases: v.releases}},
+                vertex: {{
+                    id: v._id, name: v.name, type: v.type,
+                    releases: v.releases, updated_at: v.updated_at,
+                }},
                 edge: {{
                     id: e._key,
                     source: e._from,
@@ -205,6 +213,7 @@ class ArangoKGClient:
                     releases: e.releases,
                     source_document: e.source_document,
                     source_quote: SUBSTRING(e.source_quote, 0, 240),
+                    updated_at: e.updated_at,
                 }}
             }}
         """
@@ -251,7 +260,8 @@ class ArangoKGClient:
             predicates: Optional predicate filter, case-insensitive.
 
         Returns:
-            ``{nodes, edges, fetched}`` — same node/edge shapes as neighbors().
+            ``{nodes, edges, fetched}`` — same node/edge shapes as neighbors()
+            (including ``updated_at`` on both).
 
         Raises:
             ArangoError: On query failure.
@@ -284,13 +294,17 @@ class ArangoKGClient:
                 SORT e.confidence == null ? 0.5 : e.confidence DESC
                 LIMIT 5000
                 RETURN {{
-                    vertex: {{id: v._id, name: v.name, type: v.type, releases: v.releases}},
+                    vertex: {{
+                        id: v._id, name: v.name, type: v.type,
+                        releases: v.releases, updated_at: v.updated_at,
+                    }},
                     edge: {{
                         id: e._key, source: e._from, target: e._to,
                         predicate: e.predicate, confidence: e.confidence,
                         extraction_type: e.extraction_type, releases: e.releases,
                         source_document: e.source_document,
                         source_quote: SUBSTRING(e.source_quote, 0, 240),
+                        updated_at: e.updated_at,
                     }},
                 }}
         )
