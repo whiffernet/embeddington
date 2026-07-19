@@ -40,7 +40,9 @@ def main() -> None:
         f"| acceptance bar | precision ≥ {BAR:.2f} |\n"
         f"| verdict | **{verdict}** |\n"
     )
-    (GOLD / "JUDGE-VALIDATION.md").write_text(out, encoding="utf-8")
+    # Writes to a metrics side-file: JUDGE-VALIDATION.md is a hand-written history
+    # doc (method decisions, tiebreak record) and must never be machine-overwritten.
+    (GOLD / "JUDGE-VALIDATION-metrics.md").write_text(out, encoding="utf-8")
     print(out)
 
 

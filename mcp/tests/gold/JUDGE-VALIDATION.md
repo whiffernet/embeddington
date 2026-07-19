@@ -51,5 +51,5 @@ _anti_-correlating with relevance on an identifier-style query.
 ## Rebuild triggers
 
 Rebuild labels (PROTOCOL.md pipeline + this majority construction) whenever pools.json
-fingerprints change. `compute_agreement.py` remains the single-referee measurement tool
-used in rounds 1–2; `VALIDATION_SAMPLE.md` holds the seed-47 referee sample.
+fingerprints change. `compute_agreement.py` remains the single-referee measurement tool used in rounds 1–2
+(it writes its numbers to `JUDGE-VALIDATION-metrics.md`, never this file); `VALIDATION_SAMPLE.md` holds the seed-47 referee sample.
