@@ -37,3 +37,13 @@ counts "relevant", so false positives are the dangerous error).
 labels.json must cover every edge id in pools.json exactly (no extras, no
 omissions) — enforced by tests/test_gold_artifacts.py. Scope-scrub
 (scope_scrub.sh) must pass before commit.
+
+## Revision — cross-family majority construction (2026-07-18)
+
+The human validation gate was replaced by a cross-model referee (maintainer decision),
+which REJECTED the judge+skeptic labels (precision 0.41 vs gpt-oss-120b; llama-3.3-70b
+tiebreak sided with the referee 14/15). Final gold-relevant is therefore a **2-of-3
+family majority vote** (Claude judge / gpt-oss-120b / llama-3.3-70b, identical rubric,
+temperature 0, blind): 121 relevant of 2,765. Full history, per-round numbers, and the
+bar disposition live in JUDGE-VALIDATION.md. Rebuilds must reproduce the whole pipeline:
+judge -> skeptic -> both referee-family votes -> majority.

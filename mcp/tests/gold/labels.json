@@ -45,8 +45,8 @@
    "rationale": "Generic mention of a Process Mining properties page gives no specific data source, output surface, plugin, or license detail."
   },
   "2066544219": {
-   "label": "relevant",
-   "rationale": "Names automated root cause analysis, a concrete OOB output surface for finding process inefficiencies driving bottlenecks."
+   "label": "marginal",
+   "rationale": "Names automated root cause analysis, a concrete OOB output surface for finding process inefficiencies driving bottlenecks. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2066960805": {
    "label": "irrelevant",
@@ -61,24 +61,24 @@
    "rationale": "Verbatim duplicate of the automated-root-cause-analysis quote already captured elsewhere; adds no independent load-bearing content."
   },
   "2066961495": {
-   "label": "relevant",
-   "rationale": "Cluster analysis is explicitly tied to identifying 'a potential bottleneck', a direct hit on the query's detection ask."
+   "label": "marginal",
+   "rationale": "Cluster analysis is explicitly tied to identifying 'a potential bottleneck', a direct hit on the query's detection ask. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2066961676": {
    "label": "marginal",
    "rationale": "Intent and activity analysis extracts work-note patterns generally; the quote never ties this to bottleneck detection or remediation, just note-taking patterns."
   },
   "2066961723": {
-   "label": "relevant",
-   "rationale": "Work notes analysis explains the operational reasons behind activity transitions, directly useful for diagnosing why an incident stalled."
+   "label": "marginal",
+   "rationale": "Work notes analysis explains the operational reasons behind activity transitions, directly useful for diagnosing why an incident stalled. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2066961729": {
-   "label": "relevant",
-   "rationale": "Idle time analysis names the exact mechanism (case parked before resource assignment) that IS an incident-resolution bottleneck."
+   "label": "marginal",
+   "rationale": "Idle time analysis names the exact mechanism (case parked before resource assignment) that IS an incident-resolution bottleneck. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2066961735": {
-   "label": "relevant",
-   "rationale": "Touchpoint analysis is a concretely named OOB surface for locating high-interaction (bottleneck) areas in a process."
+   "label": "marginal",
+   "rationale": "Touchpoint analysis is a concretely named OOB surface for locating high-interaction (bottleneck) areas in a process. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2066961965": {
    "label": "irrelevant",
@@ -93,8 +93,8 @@
    "rationale": "Naming the Process Mining Analyst role is unrelated to the specific facts the query requests."
   },
   "2066962267": {
-   "label": "relevant",
-   "rationale": "Names the concrete plugin (com.sn_po) that gates Process Mining, the first link in the plugin dependency chain the query asks for."
+   "label": "marginal",
+   "rationale": "Names the concrete plugin (com.sn_po) that gates Process Mining, the first link in the plugin dependency chain the query asks for. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2094919502": {
    "label": "marginal",
@@ -189,16 +189,16 @@
    "rationale": "A bare table header fragment about Predictive Intelligence plugins/platform version conveys no usable information."
   },
   "2465978973": {
-   "label": "relevant",
-   "rationale": "Creating a records table for the external-dataset feature is a direct answer to what data source Process Mining can ingest from."
+   "label": "marginal",
+   "rationale": "Creating a records table for the external-dataset feature is a direct answer to what data source Process Mining can ingest from. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2465978979": {
-   "label": "relevant",
-   "rationale": "Creating a project from imported external data directly answers the data-source-ingestion sub-question."
+   "label": "marginal",
+   "rationale": "Creating a project from imported external data directly answers the data-source-ingestion sub-question. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2465984421": {
-   "label": "relevant",
-   "rationale": "States Process Mining can be integrated with ITSM specifically, grounding the query's incident-resolution scenario in a named OOB integration."
+   "label": "marginal",
+   "rationale": "States Process Mining can be integrated with ITSM specifically, grounding the query's incident-resolution scenario in a named OOB integration. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2465984475": {
    "label": "marginal",
@@ -213,8 +213,8 @@
    "rationale": "Linking connected processes for a broader business view is a general feature, not one of the specifically requested facts."
   },
   "2465989148": {
-   "label": "relevant",
-   "rationale": "Viewing top contributing activity transitions across metrics is a concrete OOB surface for isolating bottleneck transitions."
+   "label": "marginal",
+   "rationale": "Viewing top contributing activity transitions across metrics is a concrete OOB surface for isolating bottleneck transitions. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466016977": {
    "label": "irrelevant",
@@ -254,15 +254,15 @@
   },
   "2466096754": {
    "label": "relevant",
-   "rationale": "The single clearest, most direct statement that Process Mining's mining engine extracts data from audit history — exactly the data-source answer requested."
+   "rationale": "The single clearest, most direct statement that Process Mining's mining engine extracts data from audit history — exactly the data-source answer requested. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2466096760": {
-   "label": "relevant",
-   "rationale": "Describes the data file being uploaded to the Predictive Intelligence training server — a concrete technical link in the PM-to-PI dependency chain."
+   "label": "marginal",
+   "rationale": "Describes the data file being uploaded to the Predictive Intelligence training server — a concrete technical link in the PM-to-PI dependency chain. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466096772": {
-   "label": "relevant",
-   "rationale": "Names the Analyst workbench UI as the concrete visualization surface for a mined project, a direct OOB output surface."
+   "label": "marginal",
+   "rationale": "Names the Analyst workbench UI as the concrete visualization surface for a mined project, a direct OOB output surface. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466119448": {
    "label": "marginal",
@@ -293,12 +293,12 @@
    "rationale": "Min Duration metric definition is a supplementary detail, less central than max/avg duration to bottleneck detection."
   },
   "2466119854": {
-   "label": "relevant",
-   "rationale": "Max Duration is a named, concrete metric for the longest time to complete a route — precisely a bottleneck-detection metric."
+   "label": "marginal",
+   "rationale": "Max Duration is a named, concrete metric for the longest time to complete a route — precisely a bottleneck-detection metric. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466119860": {
    "label": "relevant",
-   "rationale": "Avg Duration is a named, concrete metric measuring route completion time — directly usable to flag slow (bottleneck) incident routes."
+   "rationale": "Avg Duration is a named, concrete metric measuring route completion time — directly usable to flag slow (bottleneck) incident routes. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2466119866": {
    "label": "marginal",
@@ -417,12 +417,12 @@
    "rationale": "Describes a PI Usage Analytics dashboard for overall solution effectiveness, tangential PI output surface not specific to the query's Process Mining focus."
   },
   "2466396179": {
-   "label": "relevant",
-   "rationale": "Names Playbook data as an alternate ingestion source for a Process Mining project, directly answering the data-source sub-question."
+   "label": "marginal",
+   "rationale": "Names Playbook data as an alternate ingestion source for a Process Mining project, directly answering the data-source sub-question. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466396185": {
-   "label": "relevant",
-   "rationale": "Names Classic view (event/table data) as an alternate ingestion source, directly answering the data-source sub-question."
+   "label": "marginal",
+   "rationale": "Names Classic view (event/table data) as an alternate ingestion source, directly answering the data-source sub-question. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=irrelevant)."
   },
   "2466396197": {
    "label": "marginal",
@@ -433,8 +433,8 @@
    "rationale": "Names an inflow/outflow node star diagram analysis feature; a narrow Process Mining capability not squarely one of the four asks."
   },
   "2466396789": {
-   "label": "relevant",
-   "rationale": "Viewing/creating/associating improvement initiatives from within Process Mining is a concrete remediation-feedback output surface."
+   "label": "marginal",
+   "rationale": "Viewing/creating/associating improvement initiatives from within Process Mining is a concrete remediation-feedback output surface. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466441336": {
    "label": "marginal",
@@ -465,8 +465,8 @@
    "rationale": "Navigation path to PI Clustering Solutions, unrelated to Process Mining or the query's asks."
   },
   "2466469689": {
-   "label": "relevant",
-   "rationale": "Directly grounds the query's incident-resolution use case: ITSM customers evaluate Process Mining against their Incident Management process."
+   "label": "marginal",
+   "rationale": "Directly grounds the query's incident-resolution use case: ITSM customers evaluate Process Mining against their Incident Management process. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466471149": {
    "label": "marginal",
@@ -577,12 +577,12 @@
    "rationale": "Generic marketing blurb for Process Mining ('visualize process and identify improvement opportunities') on an FSO loan-ops landing page, topical but not domain-specific."
   },
   "2466649488": {
-   "label": "relevant",
-   "rationale": "PI similarity solutions recommending resolutions for records is a direct match to the query's 'feeding recommendations back into Predictive Intelligence' requirement."
+   "label": "marginal",
+   "rationale": "PI similarity solutions recommending resolutions for records is a direct match to the query's 'feeding recommendations back into Predictive Intelligence' requirement. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466649500": {
-   "label": "relevant",
-   "rationale": "PI regression solutions predicting time-to-resolve-an-incident is a direct, concrete match to detecting/remediating incident-resolution bottlenecks via PI."
+   "label": "marginal",
+   "rationale": "PI regression solutions predicting time-to-resolve-an-incident is a direct, concrete match to detecting/remediating incident-resolution bottlenecks via PI. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466656434": {
    "label": "irrelevant",
@@ -653,16 +653,16 @@
    "rationale": "Describes monitoring ML training jobs for Predictive Intelligence, tangential background not addressing the query's specific asks."
   },
   "2466811876": {
-   "label": "relevant",
-   "rationale": "States the Process Mining plugin is activated by default in production, directly bearing on the plugin-dependency/licensing status the query asks to design around."
+   "label": "marginal",
+   "rationale": "States the Process Mining plugin is activated by default in production, directly bearing on the plugin-dependency/licensing status the query asks to design around. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466811882": {
    "label": "marginal",
    "rationale": "Identical source quote to 2466811876 just re-tagged with a different predicate label — the rationale itself concedes it is 'the same fact', adding no new information."
   },
   "2466811894": {
-   "label": "relevant",
-   "rationale": "States Process Mining is used to proactively assess and improve ITSM processes, directly supporting the incident-resolution design ask."
+   "label": "marginal",
+   "rationale": "States Process Mining is used to proactively assess and improve ITSM processes, directly supporting the incident-resolution design ask. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466811900": {
    "label": "marginal",
@@ -673,8 +673,8 @@
    "rationale": "Rationale explicitly flags this as a 'duplicate extraction' of the same ITSM/CSM/HR quote already counted twice over; redundant."
   },
   "2466814380": {
-   "label": "relevant",
-   "rationale": "Names the Process Map node-star-diagram dashboard component, a concrete OOB output surface the query asks to specify."
+   "label": "marginal",
+   "rationale": "Names the Process Map node-star-diagram dashboard component, a concrete OOB output surface the query asks to specify. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466816280": {
    "label": "marginal",
@@ -697,8 +697,8 @@
    "rationale": "Describes HR Professional/Enterprise packages pairing with HRSD and Predictive Intelligence, an analogous but different-domain license fact from the ITSM Pro+ question asked."
   },
   "2466905648": {
-   "label": "relevant",
-   "rationale": "States Process Mining provides solution definitions specifically for incidents (among other tables), directly grounding the data/domain in scope."
+   "label": "marginal",
+   "rationale": "States Process Mining provides solution definitions specifically for incidents (among other tables), directly grounding the data/domain in scope. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466914268": {
    "label": "marginal",
@@ -717,8 +717,8 @@
    "rationale": "Describes a 'Run process analysis' button from a KPI details component, a related but different entry point rather than an OOB Process Mining output surface itself."
   },
   "2467076334": {
-   "label": "relevant",
-   "rationale": "Confirms a dedicated 'Content pack for ITSM' exists for Process Mining, a concrete plugin/content dependency fact tied to the ITSM scenario."
+   "label": "marginal",
+   "rationale": "Confirms a dedicated 'Content pack for ITSM' exists for Process Mining, a concrete plugin/content dependency fact tied to the ITSM scenario. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2467076346": {
    "label": "marginal",
@@ -741,8 +741,8 @@
    "rationale": "Content pack for Field Service Management — not the ITSM incident domain in question."
   },
   "2467085947": {
-   "label": "relevant",
-   "rationale": "Names the Opportunity details tab, a concrete OOB surface for viewing detected improvement opportunities (bottleneck remediation)."
+   "label": "marginal",
+   "rationale": "Names the Opportunity details tab, a concrete OOB surface for viewing detected improvement opportunities (bottleneck remediation). Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=irrelevant)."
   },
   "2467085971": {
    "label": "marginal",
@@ -845,8 +845,8 @@
    "rationale": "Describes PI activating the most recent trained solution version, background PI behavior not tied to the asks."
   },
   "2467341108": {
-   "label": "relevant",
-   "rationale": "Extreme duration explicitly describes records stuck in a step longer than usual — a literal, named bottleneck-detection mechanism."
+   "label": "marginal",
+   "rationale": "Extreme duration explicitly describes records stuck in a step longer than usual — a literal, named bottleneck-detection mechanism. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2467348500": {
    "label": "marginal",
@@ -878,7 +878,7 @@
   },
   "2467409429": {
    "label": "relevant",
-   "rationale": "Directly states Predictive Intelligence provides contextual recommendations for resolving an incident — matching the exact 'feed recommendations back into PI' framing of the query."
+   "rationale": "Directly states Predictive Intelligence provides contextual recommendations for resolving an incident — matching the exact 'feed recommendations back into PI' framing of the query. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "2467447648": {
    "label": "marginal",
@@ -961,16 +961,16 @@
    "rationale": "Describes Predictive Intelligence predicting departments for HR tickets, a different domain (HR) than the ITSM incident-resolution scenario asked about."
   },
   "2470525545": {
-   "label": "relevant",
-   "rationale": "Directly names the ingestion prerequisite (enabling Audit Log on the source table) for building a Process Mining model — a concrete data-source answer."
+   "label": "marginal",
+   "rationale": "Directly names the ingestion prerequisite (enabling Audit Log on the source table) for building a Process Mining model — a concrete data-source answer. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2470535941": {
    "label": "marginal",
    "rationale": "Shows a PI plugin dependency, but for an unrelated Workflow Studio spoke, not the Process Mining->PI chain the query asks about."
   },
   "2470553624": {
-   "label": "relevant",
-   "rationale": "Touchpoint analysis identifying areas of high interaction is a direct, concretely named bottleneck-detection capability."
+   "label": "marginal",
+   "rationale": "Touchpoint analysis identifying areas of high interaction is a direct, concretely named bottleneck-detection capability. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2470556968": {
    "label": "irrelevant",
@@ -1057,8 +1057,8 @@
    "rationale": "PI plugin install note in an HR employee portal context, unrelated to the query."
   },
   "2470937679": {
-   "label": "relevant",
-   "rationale": "States Process Mining can create automation requests viewable in Automation Center Workspace — a concrete OOB remediation output surface."
+   "label": "marginal",
+   "rationale": "States Process Mining can create automation requests viewable in Automation Center Workspace — a concrete OOB remediation output surface. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2470938541": {
    "label": "marginal",
@@ -1081,20 +1081,20 @@
    "rationale": "Describes PI for Project Management similar-project search, unrelated to incident bottlenecks."
   },
   "2471049200": {
-   "label": "relevant",
-   "rationale": "Names Automation Center integration enabling access to automation requests, a concrete OOB remediation output surface."
+   "label": "marginal",
+   "rationale": "Names Automation Center integration enabling access to automation requests, a concrete OOB remediation output surface. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=marginal)."
   },
   "2471049920": {
-   "label": "relevant",
-   "rationale": "Applying KPIs/metrics relevant to process goals is a core, concretely named mechanism for surfacing bottlenecks."
+   "label": "marginal",
+   "rationale": "Applying KPIs/metrics relevant to process goals is a core, concretely named mechanism for surfacing bottlenecks. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2471049926": {
    "label": "marginal",
    "rationale": "Describes a general filter feature on process steps, tangential to bottleneck detection specifics."
   },
   "2471049938": {
-   "label": "relevant",
-   "rationale": "Explicitly states Now Assist for Process Mining is used for 'identifying bottlenecks and retrieving process inefficiencies' — a verbatim match to the query's detection ask."
+   "label": "marginal",
+   "rationale": "Explicitly states Now Assist for Process Mining is used for 'identifying bottlenecks and retrieving process inefficiencies' — a verbatim match to the query's detection ask. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2471099972": {
    "label": "irrelevant",
@@ -1134,7 +1134,7 @@
   },
   "2471323526": {
    "label": "relevant",
-   "rationale": "Names the specific Predictive Intelligence for Incident plugin (com.snc.incident.ml), the most incident-specific link available in the plugin dependency chain to PI."
+   "rationale": "Names the specific Predictive Intelligence for Incident plugin (com.snc.incident.ml), the most incident-specific link available in the plugin dependency chain to PI. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2471355138": {
    "label": "irrelevant",
@@ -1337,20 +1337,20 @@
    "rationale": "Adding notes to a project is an administrative feature unrelated to data sources, outputs, plugin chain, or licensing."
   },
   "2472145587": {
-   "label": "relevant",
-   "rationale": "Export a process to Playbook is a concretely named OOB remediation output surface for acting on detected bottlenecks."
+   "label": "marginal",
+   "rationale": "Export a process to Playbook is a concretely named OOB remediation output surface for acting on detected bottlenecks. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2472145649": {
-   "label": "relevant",
-   "rationale": "Setting improvement opportunities to find areas of process optimization is exactly the bottleneck-remediation mechanism the query asks to design."
+   "label": "marginal",
+   "rationale": "Setting improvement opportunities to find areas of process optimization is exactly the bottleneck-remediation mechanism the query asks to design. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2472145801": {
    "label": "marginal",
    "rationale": "Describes activating a Now Assist skill for work notes analysis, a Process Mining feature but not directly a data source, output surface, PI plugin link, or license fact."
   },
   "2472145939": {
-   "label": "relevant",
-   "rationale": "Process inefficiency highlights via Now Assist is a concretely named OOB mechanism directly matching the detection ask."
+   "label": "marginal",
+   "rationale": "Process inefficiency highlights via Now Assist is a concretely named OOB mechanism directly matching the detection ask. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=marginal)."
   },
   "2472146495": {
    "label": "irrelevant",
@@ -1422,7 +1422,7 @@
   },
   "2472447633": {
    "label": "relevant",
-   "rationale": "States Predictive Intelligence is available via activation of the specific plugin (com.glide.platform_ml) — a core, concrete fact for the plugin dependency chain to PI."
+   "rationale": "States Predictive Intelligence is available via activation of the specific plugin (com.glide.platform_ml) — a core, concrete fact for the plugin dependency chain to PI. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2472448066": {
    "label": "irrelevant",
@@ -1490,7 +1490,7 @@
   },
   "43033314": {
    "label": "relevant",
-   "rationale": "ProcessMiningIntegrationAPI.getFindings(projectId) is a concrete, named API surface through which Process Mining findings could feed other systems — a direct technical OOB output surface."
+   "rationale": "ProcessMiningIntegrationAPI.getFindings(projectId) is a concrete, named API surface through which Process Mining findings could feed other systems — a direct technical OOB output surface. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "43204390": {
    "label": "irrelevant",
@@ -1514,7 +1514,7 @@
   },
   "43305898": {
    "label": "relevant",
-   "rationale": "Directly instructs installing the ITSM Process Mining Content Pack from the Store — a concrete plugin/content dependency fact specific to the ITSM incident scenario."
+   "rationale": "Directly instructs installing the ITSM Process Mining Content Pack from the Store — a concrete plugin/content dependency fact specific to the ITSM incident scenario. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "43317581": {
    "label": "irrelevant",
@@ -1537,8 +1537,8 @@
    "rationale": "Duplicate description of the HRSD Process Mining content pack, showing the plugin-pack pattern but not for ITSM."
   },
   "43528696": {
-   "label": "relevant",
-   "rationale": "Names the concrete backend table field (promin_activity_def) Process Mining stores its data in — a specific technical data-source fact."
+   "label": "marginal",
+   "rationale": "Names the concrete backend table field (promin_activity_def) Process Mining stores its data in — a specific technical data-source fact. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=marginal)."
   },
   "43528708": {
    "label": "marginal",
@@ -1745,32 +1745,32 @@
    "rationale": "Describes the sn_process_mining_admin role for the Process Mining workspace, an access-control fact tangential to the query's four specific asks."
   },
   "44118252": {
-   "label": "relevant",
-   "rationale": "Directly names Performance Analytics and Continual Improvement Management integration for discovering process-improvement opportunities — a concrete OOB output surface for remediation."
+   "label": "marginal",
+   "rationale": "Directly names Performance Analytics and Continual Improvement Management integration for discovering process-improvement opportunities — a concrete OOB output surface for remediation. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "44118260": {
    "label": "marginal",
    "rationale": "Restates the same 'sn_po enabled by default in production' fact already established more directly elsewhere; this instance adds no new angle on the license/plugin question."
   },
   "44118420": {
-   "label": "relevant",
-   "rationale": "Names the KPI dashboard as a configured project surface — a concrete OOB output surface for tracking bottleneck-relevant KPIs."
+   "label": "marginal",
+   "rationale": "Names the KPI dashboard as a configured project surface — a concrete OOB output surface for tracking bottleneck-relevant KPIs. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=irrelevant)."
   },
   "44118432": {
    "label": "marginal",
    "rationale": "Mentions activating Process Mining content packs for prebuilt projects generally, related to setup but not the specific data source/output/license asks."
   },
   "44118436": {
-   "label": "relevant",
-   "rationale": "States Process Mining evaluation projects are available specifically for ITSM, directly tying Process Mining's OOB tooling to the ITSM incident domain of the query."
+   "label": "marginal",
+   "rationale": "States Process Mining evaluation projects are available specifically for ITSM, directly tying Process Mining's OOB tooling to the ITSM incident domain of the query. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "44118552": {
    "label": "marginal",
    "rationale": "Duplicate mention of activating Process Mining content packs, generic setup info not specific to the query's four asks."
   },
   "44118604": {
-   "label": "relevant",
-   "rationale": "Configuring KPIs for ITSM work items in the Process Mining dashboard is a concrete, ITSM-specific OOB output surface directly on point."
+   "label": "marginal",
+   "rationale": "Configuring KPIs for ITSM work items in the Process Mining dashboard is a concrete, ITSM-specific OOB output surface directly on point. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "44118612": {
    "label": "marginal",
@@ -1817,8 +1817,8 @@
    "rationale": "Refers to creating a Task Mining project, a sibling feature to Process Mining but not directly answering the query's specific asks."
   },
   "44119248": {
-   "label": "relevant",
-   "rationale": "Idle time analysis for cases awaiting resource assignment is a concretely named bottleneck-detection mechanism."
+   "label": "marginal",
+   "rationale": "Idle time analysis for cases awaiting resource assignment is a concretely named bottleneck-detection mechanism. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "44119272": {
    "label": "marginal",
@@ -1857,12 +1857,12 @@
    "rationale": "Describes a Cancelled mining state on the Project Definition form, a status detail unrelated to the query's asks."
   },
   "44119736": {
-   "label": "relevant",
-   "rationale": "Names the Improvement opportunity definition page, a concrete remediation-configuration output surface for detected bottlenecks."
+   "label": "marginal",
+   "rationale": "Names the Improvement opportunity definition page, a concrete remediation-configuration output surface for detected bottlenecks. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=irrelevant)."
   },
   "44120064": {
-   "label": "relevant",
-   "rationale": "Names the 'Save as improvement opportunity' action, a concrete remediation output surface tying detection to a recorded recommendation."
+   "label": "marginal",
+   "rationale": "Names the 'Save as improvement opportunity' action, a concrete remediation output surface tying detection to a recorded recommendation. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "44120072": {
    "label": "marginal",
@@ -1874,11 +1874,11 @@
   },
   "44120845": {
    "label": "relevant",
-   "rationale": "Names the inflow/outflow node-star-diagram visualization, a concrete OOB output surface for viewing flow bottlenecks."
+   "rationale": "Names the inflow/outflow node-star-diagram visualization, a concrete OOB output surface for viewing flow bottlenecks. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "44120925": {
    "label": "relevant",
-   "rationale": "States importing an external dataset into the audit table is how Process Mining ingests external data — a direct, concrete data-source answer."
+   "rationale": "States importing an external dataset into the audit table is how Process Mining ingests external data — a direct, concrete data-source answer. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "44121273": {
    "label": "marginal",
@@ -1993,56 +1993,56 @@
    "rationale": "Predictive Intelligence for Customer Service Management plugin (com.snc.csm_ml) is the wrong domain (CSM, not ITSM incident)."
   },
   "5043918": {
-   "label": "relevant",
-   "rationale": "Defines Process Mining's core purpose as optimizing process flows — directly frames the bottleneck-detection design task, even if high-level."
+   "label": "marginal",
+   "rationale": "Defines Process Mining's core purpose as optimizing process flows — directly frames the bottleneck-detection design task, even if high-level. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068105": {
-   "label": "relevant",
-   "rationale": "Names Performance Analytics and Continual Improvement Management integration for discovering process-improvement opportunities — a concrete OOB output surface for remediation."
+   "label": "marginal",
+   "rationale": "Names Performance Analytics and Continual Improvement Management integration for discovering process-improvement opportunities — a concrete OOB output surface for remediation. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068145": {
-   "label": "relevant",
-   "rationale": "Creating and viewing statuses of improvement initiatives is a concrete OOB output surface for tracking remediation actions."
+   "label": "marginal",
+   "rationale": "Creating and viewing statuses of improvement initiatives is a concrete OOB output surface for tracking remediation actions. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068149": {
    "label": "marginal",
    "rationale": "Describes multi-dimensional mining of table hierarchies generically, without specifying the incident data source itself."
   },
   "5068153": {
-   "label": "relevant",
-   "rationale": "Names the bottleneck analysis feature explicitly by name — a direct, concrete hit on the query's detection ask."
+   "label": "marginal",
+   "rationale": "Names the bottleneck analysis feature explicitly by name — a direct, concrete hit on the query's detection ask. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068157": {
    "label": "marginal",
    "rationale": "ML pattern clustering of records is a tangential Process Mining capability, not directly about feeding recommendations to Predictive Intelligence."
   },
   "5068213": {
-   "label": "relevant",
-   "rationale": "Automation Opportunities tab, explicitly called out as ITSM-only, is a concrete OOB remediation output surface directly tied to the query's ITSM scenario."
+   "label": "marginal",
+   "rationale": "Automation Opportunities tab, explicitly called out as ITSM-only, is a concrete OOB remediation output surface directly tied to the query's ITSM scenario. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068217": {
    "label": "marginal",
    "rationale": "Generic KPI Dashboard tab description doesn't specifically address bottleneck detection, output surfaces for recommendations, or the PI chain."
   },
   "5068221": {
-   "label": "relevant",
-   "rationale": "The interactive process map with metrics is a concrete, named primary OOB output surface for viewing incident-resolution bottlenecks."
+   "label": "marginal",
+   "rationale": "The interactive process map with metrics is a concrete, named primary OOB output surface for viewing incident-resolution bottlenecks. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068229": {
-   "label": "relevant",
-   "rationale": "Names the Improvement opportunities overview on the Summary and insights page — a concrete OOB output surface for remediation recommendations."
+   "label": "marginal",
+   "rationale": "Names the Improvement opportunities overview on the Summary and insights page — a concrete OOB output surface for remediation recommendations. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068237": {
-   "label": "relevant",
-   "rationale": "Names the rule-based and automated improvement opportunities list — the concrete remediation-recommendation output the query asks about."
+   "label": "marginal",
+   "rationale": "Names the rule-based and automated improvement opportunities list — the concrete remediation-recommendation output the query asks about. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068241": {
    "label": "marginal",
    "rationale": "Integrating Performance Analytics dashboards for KPIs/visualizations is generic dashboard configuration, largely redundant with the more specific Goals/KPIs and Benchmarks facts already captured elsewhere."
   },
   "5068245": {
-   "label": "relevant",
-   "rationale": "The Opportunity details page surfacing remediation-recommendation details is a concrete OOB output surface."
+   "label": "marginal",
+   "rationale": "The Opportunity details page surfacing remediation-recommendation details is a concrete OOB output surface. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=irrelevant)."
   },
   "5068249": {
    "label": "marginal",
@@ -2114,11 +2114,11 @@
   },
   "5068565": {
    "label": "relevant",
-   "rationale": "Activating the core Process Mining plugin (com.sn_po) is a direct, named link in the plugin dependency chain the query asks for."
+   "rationale": "Activating the core Process Mining plugin (com.sn_po) is a direct, named link in the plugin dependency chain the query asks for. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "5068577": {
-   "label": "relevant",
-   "rationale": "Explicitly states Process Mining integrates with ITSM among other apps — directly addresses the OOB integration surface for the query's ITSM incident scenario."
+   "label": "marginal",
+   "rationale": "Explicitly states Process Mining integrates with ITSM among other apps — directly addresses the OOB integration surface for the query's ITSM incident scenario. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068581": {
    "label": "marginal",
@@ -2133,8 +2133,8 @@
    "rationale": "Same integration list but calls out Financial Services Operations, not ITSM-specific and thus only tangential."
   },
   "5068593": {
-   "label": "relevant",
-   "rationale": "ITSM Benchmarks integration letting Process Mining analyze KPIs and create/view associated incidents is a concrete OOB output surface directly tied to incident resolution."
+   "label": "marginal",
+   "rationale": "ITSM Benchmarks integration letting Process Mining analyze KPIs and create/view associated incidents is a concrete OOB output surface directly tied to incident resolution. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068609": {
    "label": "marginal",
@@ -2153,12 +2153,12 @@
    "rationale": "Requiring the pa_viewer role for Process Mining users relates to the Performance Analytics integration but is about role assignment, not the output surface or plugin chain itself."
   },
   "5068714": {
-   "label": "relevant",
-   "rationale": "Setting thresholds for root cause analysis is a concrete, actionable mechanism directly supporting the bottleneck detection/remediation design the query asks for."
+   "label": "marginal",
+   "rationale": "Setting thresholds for root cause analysis is a concrete, actionable mechanism directly supporting the bottleneck detection/remediation design the query asks for. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068730": {
-   "label": "relevant",
-   "rationale": "Configuring the Process Mining process graph in the PAR dashboard is a concrete, named OOB output surface for bottleneck visualization."
+   "label": "marginal",
+   "rationale": "Configuring the Process Mining process graph in the PAR dashboard is a concrete, named OOB output surface for bottleneck visualization. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068734": {
    "label": "marginal",
@@ -2185,8 +2185,8 @@
    "rationale": "Rationale itself calls this a 'duplicate lead-in' to the improvement-opportunities list already captured twice elsewhere; adds no independent content."
   },
   "5069971": {
-   "label": "relevant",
-   "rationale": "Creating an improvement initiative tied to a Process Mining project is the concrete remediation action the query is designing for."
+   "label": "marginal",
+   "rationale": "Creating an improvement initiative tied to a Process Mining project is the concrete remediation action the query is designing for. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5070035": {
    "label": "irrelevant",
@@ -2209,8 +2209,8 @@
    "rationale": "Same issue as the sibling Process Mining Record Definition table entry — no explicit mention of Predictive Intelligence in the quote itself."
   },
   "5070151": {
-   "label": "relevant",
-   "rationale": "The Activity Definition table (promin_activity_def) storing audit-log field changes is a concrete, technical data-source fact directly answering what Process Mining ingests from."
+   "label": "marginal",
+   "rationale": "The Activity Definition table (promin_activity_def) storing audit-log field changes is a concrete, technical data-source fact directly answering what Process Mining ingests from. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5070155": {
    "label": "marginal",
@@ -2333,16 +2333,16 @@
    "rationale": "Roles for the FSM Process Mining content pack are unrelated to the ITSM/Predictive Intelligence scenario in the query."
   },
   "5144311": {
-   "label": "relevant",
-   "rationale": "Creating/associating improvement initiatives from within Process Mining is a concrete remediation-feedback output surface."
+   "label": "marginal",
+   "rationale": "Creating/associating improvement initiatives from within Process Mining is a concrete remediation-feedback output surface. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5144331": {
    "label": "marginal",
    "rationale": "General description of what Process Mining does provides background but doesn't answer the specific data-source, plugin, or licensing asks."
   },
   "5146786": {
-   "label": "relevant",
-   "rationale": "States Process Mining has been integrated with ServiceNow Playbook — a concrete OOB output surface usable for remediating bottlenecks."
+   "label": "marginal",
+   "rationale": "States Process Mining has been integrated with ServiceNow Playbook — a concrete OOB output surface usable for remediating bottlenecks. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5146790": {
    "label": "irrelevant",
@@ -2353,8 +2353,8 @@
    "rationale": "Rationale explicitly flags this as a duplicate of the Process Mining-to-Playbook integration fact already captured; redundant."
   },
   "5149081": {
-   "label": "relevant",
-   "rationale": "Describes exporting routes from the Analyst Workbench to ServiceNow Playbook via the Playbooks icon — a concrete, actionable OOB remediation output surface."
+   "label": "marginal",
+   "rationale": "Describes exporting routes from the Analyst Workbench to ServiceNow Playbook via the Playbooks icon — a concrete, actionable OOB remediation output surface. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5152188": {
    "label": "irrelevant",
@@ -2365,8 +2365,8 @@
    "rationale": "A table-of-contents page reference for Process Mining carries no substantive information for the query."
   },
   "5199245": {
-   "label": "relevant",
-   "rationale": "States Process Mining is used to visualize process and identify improvement opportunities — directly supports the bottleneck-detection design goal, in an FSO-specific doc but stating the general PM capability."
+   "label": "marginal",
+   "rationale": "States Process Mining is used to visualize process and identify improvement opportunities — directly supports the bottleneck-detection design goal, in an FSO-specific doc but stating the general PM capability. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5214044": {
    "label": "marginal",
@@ -2444,7 +2444,7 @@
   },
   "2467185100": {
    "label": "relevant",
-   "rationale": "Shows a generic API mechanism for retrieving ALL relationships of a CI from the table, not tied to any single relationship type or feature, so it directly illustrates the table's general function."
+   "rationale": "Shows a generic API mechanism for retrieving ALL relationships of a CI from the table, not tied to any single relationship type or feature, so it directly illustrates the table's general function. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2467191992": {
    "label": "marginal",
@@ -2516,7 +2516,7 @@
   },
   "2471528336": {
    "label": "relevant",
-   "rationale": "Describes the table's actual schema (Parent/Child CI fields) as a many-to-many join table, structural information that directly explains what the table represents."
+   "rationale": "Describes the table's actual schema (Parent/Child CI fields) as a many-to-many join table, structural information that directly explains what the table represents. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2471859433": {
    "label": "marginal",
@@ -2560,7 +2560,7 @@
   },
   "42729549": {
    "label": "relevant",
-   "rationale": "Directly and generically defines the class as one that 'defines all relationships between CIs' — the core, feature-agnostic answer to the query."
+   "rationale": "Directly and generically defines the class as one that 'defines all relationships between CIs' — the core, feature-agnostic answer to the query. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "42729849": {
    "label": "marginal",
@@ -2572,11 +2572,11 @@
   },
   "42945045": {
    "label": "relevant",
-   "rationale": "Generic, feature-agnostic statement that CIs are connected by relationships stored in this table — directly answers the query."
+   "rationale": "Generic, feature-agnostic statement that CIs are connected by relationships stored in this table — directly answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "42947044": {
    "label": "relevant",
-   "rationale": "Generic, feature-agnostic statement that relationship connections are based on records in this table — directly answers the query."
+   "rationale": "Generic, feature-agnostic statement that relationship connections are based on records in this table — directly answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "42951145": {
    "label": "marginal",
@@ -2660,7 +2660,7 @@
   },
   "43695900": {
    "label": "relevant",
-   "rationale": "Uniquely names the table's parent, child, and type columns, revealing its schema and thus its general structural purpose beyond the bare column-restriction shared with already-marginal twins."
+   "rationale": "Uniquely names the table's parent, child, and type columns, revealing its schema and thus its general structural purpose beyond the bare column-restriction shared with already-marginal twins. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "43697635": {
    "label": "marginal",
@@ -2688,11 +2688,11 @@
   },
   "4521036": {
    "label": "relevant",
-   "rationale": "Generic, feature-agnostic statement that CIs are connected by relationships stored in this table — directly answers the query."
+   "rationale": "Generic, feature-agnostic statement that CIs are connected by relationships stored in this table — directly answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "4521618": {
    "label": "relevant",
-   "rationale": "Generic, feature-agnostic statement that CIs are connected by relationships stored in this table — directly answers the query."
+   "rationale": "Generic, feature-agnostic statement that CIs are connected by relationships stored in this table — directly answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "4521687": {
    "label": "marginal",
@@ -2776,23 +2776,23 @@
   },
   "5040598": {
    "label": "relevant",
-   "rationale": "States verbatim that the table 'provides a list of all relationships between configuration items' — the most direct, feature-agnostic answer to the query."
+   "rationale": "States verbatim that the table 'provides a list of all relationships between configuration items' — the most direct, feature-agnostic answer to the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "5040674": {
    "label": "relevant",
-   "rationale": "States verbatim that the table 'provides a list of all relationships between configuration items' — the most direct, feature-agnostic answer to the query."
+   "rationale": "States verbatim that the table 'provides a list of all relationships between configuration items' — the most direct, feature-agnostic answer to the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "5041194": {
    "label": "relevant",
-   "rationale": "States verbatim that the table 'provides a list of all relationships between configuration items' — the most direct, feature-agnostic answer to the query."
+   "rationale": "States verbatim that the table 'provides a list of all relationships between configuration items' — the most direct, feature-agnostic answer to the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "5041198": {
    "label": "relevant",
-   "rationale": "States verbatim that the table 'provides a list of all relationships between configuration items' — the most direct, feature-agnostic answer to the query."
+   "rationale": "States verbatim that the table 'provides a list of all relationships between configuration items' — the most direct, feature-agnostic answer to the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "5041206": {
    "label": "relevant",
-   "rationale": "States verbatim that the table 'provides a list of all relationships between configuration items' — the most direct, feature-agnostic answer to the query."
+   "rationale": "States verbatim that the table 'provides a list of all relationships between configuration items' — the most direct, feature-agnostic answer to the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "5163142": {
    "label": "marginal",
@@ -2954,11 +2954,11 @@
   },
   "2471413795": {
    "label": "relevant",
-   "rationale": "Domain-separation status is a well-known, load-bearing structural gotcha for cmdb_rel_ci, not a tangential detail."
+   "rationale": "Domain-separation status is a well-known, load-bearing structural gotcha for cmdb_rel_ci, not a tangential detail. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2471528336": {
    "label": "relevant",
-   "rationale": "Directly names the table and states its Parent/Child (cmdb_ci) field structure, core to understanding what the table models."
+   "rationale": "Directly names the table and states its Parent/Child (cmdb_ci) field structure, core to understanding what the table models. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2471859433": {
    "label": "marginal",
@@ -3002,7 +3002,7 @@
   },
   "42729549": {
    "label": "relevant",
-   "rationale": "This is the primary definitional sentence -- what cmdb_rel_ci is -- and directly answers the query."
+   "rationale": "This is the primary definitional sentence -- what cmdb_rel_ci is -- and directly answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "42729849": {
    "label": "marginal",
@@ -3014,11 +3014,11 @@
   },
   "42945045": {
    "label": "relevant",
-   "rationale": "Core definitional statement of the table's purpose (storing CI-to-CI relationships), directly answers the query."
+   "rationale": "Core definitional statement of the table's purpose (storing CI-to-CI relationships), directly answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "42947044": {
    "label": "relevant",
-   "rationale": "Core definitional statement that relationship connections are based on cmdb_rel_ci records, directly answers the query."
+   "rationale": "Core definitional statement that relationship connections are based on cmdb_rel_ci records, directly answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "42951145": {
    "label": "marginal",
@@ -3126,19 +3126,19 @@
   },
   "4512897": {
    "label": "relevant",
-   "rationale": "Restates the load-bearing domain-separation fact plus its concrete visibility implication for parent/child CIs."
+   "rationale": "Restates the load-bearing domain-separation fact plus its concrete visibility implication for parent/child CIs. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "4521036": {
    "label": "relevant",
-   "rationale": "Core definitional statement of the table's purpose, directly answers the query."
+   "rationale": "Core definitional statement of the table's purpose, directly answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "4521618": {
    "label": "relevant",
-   "rationale": "Core definitional statement of the table's purpose, directly answers the query."
+   "rationale": "Core definitional statement of the table's purpose, directly answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "4521687": {
    "label": "relevant",
-   "rationale": "Names a primary, well-known consumer/purpose of the table (dependency views), directly explaining what it's used for."
+   "rationale": "Names a primary, well-known consumer/purpose of the table (dependency views), directly explaining what it's used for. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "4562346": {
    "label": "marginal",
@@ -3218,23 +3218,23 @@
   },
   "5040598": {
    "label": "relevant",
-   "rationale": "Core definitional sentence stating exactly what the table provides, directly answers the query."
+   "rationale": "Core definitional sentence stating exactly what the table provides, directly answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "5040674": {
    "label": "relevant",
-   "rationale": "Core definitional sentence stating exactly what the table provides, directly answers the query."
+   "rationale": "Core definitional sentence stating exactly what the table provides, directly answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "5041194": {
    "label": "relevant",
-   "rationale": "Core definitional sentence stating exactly what the table provides, directly answers the query."
+   "rationale": "Core definitional sentence stating exactly what the table provides, directly answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "5041198": {
    "label": "relevant",
-   "rationale": "Core definitional sentence stating exactly what the table provides, directly answers the query."
+   "rationale": "Core definitional sentence stating exactly what the table provides, directly answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "5041206": {
    "label": "relevant",
-   "rationale": "Core definitional sentence stating exactly what the table provides, directly answers the query."
+   "rationale": "Core definitional sentence stating exactly what the table provides, directly answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "5163142": {
    "label": "marginal",
@@ -3280,7 +3280,7 @@
   },
   "2066544219": {
    "label": "relevant",
-   "rationale": "Names and defines automated root cause analysis, a genuine core analytical capability needed to explain what Process Mining does."
+   "rationale": "Names and defines automated root cause analysis, a genuine core analytical capability needed to explain what Process Mining does. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2066960805": {
    "label": "irrelevant",
@@ -3295,20 +3295,20 @@
    "rationale": "Word-for-word duplicate extraction of 2066544219 from the same source document; not independently informative."
   },
   "2066961495": {
-   "label": "relevant",
-   "rationale": "Defines cluster analysis's role in bottleneck identification, a distinct core analytical capability."
+   "label": "marginal",
+   "rationale": "Defines cluster analysis's role in bottleneck identification, a distinct core analytical capability. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2066961676": {
-   "label": "relevant",
-   "rationale": "Defines intent and activity analysis (automated interpretation of work notes for task patterns), a distinct core capability."
+   "label": "marginal",
+   "rationale": "Defines intent and activity analysis (automated interpretation of work notes for task patterns), a distinct core capability. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2066961723": {
-   "label": "relevant",
-   "rationale": "Defines work notes analysis and its purpose, a distinct core capability with real explanatory content."
+   "label": "marginal",
+   "rationale": "Defines work notes analysis and its purpose, a distinct core capability with real explanatory content. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2066961729": {
-   "label": "relevant",
-   "rationale": "Defines idle time analysis (unassigned-but-team-assigned periods), a distinct core analytical capability."
+   "label": "marginal",
+   "rationale": "Defines idle time analysis (unassigned-but-team-assigned periods), a distinct core analytical capability. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2066961735": {
    "label": "marginal",
@@ -3360,7 +3360,7 @@
   },
   "2465984421": {
    "label": "relevant",
-   "rationale": "States which major ServiceNow applications Process Mining integrates with, establishing the product's scope for a general explanation."
+   "rationale": "States which major ServiceNow applications Process Mining integrates with, establishing the product's scope for a general explanation. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "2465984475": {
    "label": "marginal",
@@ -3371,20 +3371,20 @@
    "rationale": "A navigation instruction for reaching the workspace, not an explanation of what Process Mining does."
   },
   "2465989142": {
-   "label": "relevant",
-   "rationale": "Describes linking connected processes for a comprehensive view, a real cross-process analytical capability."
+   "label": "marginal",
+   "rationale": "Describes linking connected processes for a comprehensive view, a real cross-process analytical capability. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2465989148": {
-   "label": "relevant",
-   "rationale": "Describes viewing top contributing activity transitions, a substantive analytical capability, not just a UI label."
+   "label": "marginal",
+   "rationale": "Describes viewing top contributing activity transitions, a substantive analytical capability, not just a UI label. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466096754": {
-   "label": "relevant",
-   "rationale": "Explains the core mechanism -- the mining engine extracts data from audit history -- central to how Process Mining actually works."
+   "label": "marginal",
+   "rationale": "Explains the core mechanism -- the mining engine extracts data from audit history -- central to how Process Mining actually works. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466096772": {
-   "label": "relevant",
-   "rationale": "Explains that mined output is visualized via the Analyst workbench, part of the core mechanism/output of the product."
+   "label": "marginal",
+   "rationale": "Explains that mined output is visualized via the Analyst workbench, part of the core mechanism/output of the product. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466119448": {
    "label": "irrelevant",
@@ -3483,8 +3483,8 @@
    "rationale": "Notes which roles can access the Analyst workbench, an access detail rather than a functional explanation."
   },
   "2466330524": {
-   "label": "relevant",
-   "rationale": "Describes process step filtering for viewing different record routes, a substantive analytical capability."
+   "label": "marginal",
+   "rationale": "Describes process step filtering for viewing different record routes, a substantive analytical capability. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466376052": {
    "label": "marginal",
@@ -3507,8 +3507,8 @@
    "rationale": "Names a feature and its diagram type but gives no explanation of what inflow/outflow analysis actually reveals."
   },
   "2466396789": {
-   "label": "relevant",
-   "rationale": "Describes viewing/creating/associating improvement initiatives directly in Process Mining, closing the loop from insight to action."
+   "label": "marginal",
+   "rationale": "Describes viewing/creating/associating improvement initiatives directly in Process Mining, closing the loop from insight to action. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466441336": {
    "label": "marginal",
@@ -3604,7 +3604,7 @@
   },
   "2466811894": {
    "label": "relevant",
-   "rationale": "States the core business scope Process Mining targets (ITSM, CSM, FSO, HRSD), directly useful for explaining what the product is for."
+   "rationale": "States the core business scope Process Mining targets (ITSM, CSM, FSO, HRSD), directly useful for explaining what the product is for. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2466811900": {
    "label": "marginal",
@@ -3727,8 +3727,8 @@
    "rationale": "Duplicate release-note bullet about filtering multidimensional project data; narrow feature detail."
   },
   "2467341108": {
-   "label": "relevant",
-   "rationale": "Defines extreme duration analysis (steps where records linger abnormally long), a distinct core analytical capability."
+   "label": "marginal",
+   "rationale": "Defines extreme duration analysis (steps where records linger abnormally long), a distinct core analytical capability. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2467384684": {
    "label": "irrelevant",
@@ -3783,12 +3783,12 @@
    "rationale": "Discusses handling incomplete records via date conditions and the Transitions filter; a data-quality nuance, not core explanation."
   },
   "2470525545": {
-   "label": "relevant",
-   "rationale": "States the Audit Log prerequisite for generating a process model, a core mechanism fact directly explaining how Process Mining derives its models."
+   "label": "marginal",
+   "rationale": "States the Audit Log prerequisite for generating a process model, a core mechanism fact directly explaining how Process Mining derives its models. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2470553624": {
    "label": "relevant",
-   "rationale": "Defines touchpoint analysis and its purpose from the dedicated topic page, a distinct core analytical capability."
+   "rationale": "Defines touchpoint analysis and its purpose from the dedicated topic page, a distinct core analytical capability. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2470562182": {
    "label": "irrelevant",
@@ -3815,12 +3815,12 @@
    "rationale": "Describes an auto-populated table field in a condition form; a narrow configuration detail with no explanatory value."
   },
   "2470883452": {
-   "label": "relevant",
-   "rationale": "Defines 'Record,' core conceptual vocabulary needed to explain how Process Mining models process cycles."
+   "label": "marginal",
+   "rationale": "Defines 'Record,' core conceptual vocabulary needed to explain how Process Mining models process cycles. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2470883464": {
-   "label": "relevant",
-   "rationale": "Defines 'Route,' core conceptual vocabulary needed to explain how Process Mining models process variants."
+   "label": "marginal",
+   "rationale": "Defines 'Route,' core conceptual vocabulary needed to explain how Process Mining models process variants. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2470887051": {
    "label": "marginal",
@@ -3847,8 +3847,8 @@
    "rationale": "Describes a narrow operational detail of the Automation Center integration, not essential to a general product explanation."
   },
   "2471049920": {
-   "label": "relevant",
-   "rationale": "Describes applying KPIs/metrics to refine project visualization, a substantive capability tying Process Mining output to process goals."
+   "label": "marginal",
+   "rationale": "Describes applying KPIs/metrics to refine project visualization, a substantive capability tying Process Mining output to process goals. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2471049926": {
    "label": "marginal",
@@ -3856,7 +3856,7 @@
   },
   "2471049938": {
    "label": "relevant",
-   "rationale": "Describes Now Assist for Process Mining and its concrete benefits (faster setup, bottleneck ID, inefficiency retrieval), a named capability with real content."
+   "rationale": "Describes Now Assist for Process Mining and its concrete benefits (faster setup, bottleneck ID, inefficiency retrieval), a named capability with real content. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2471317958": {
    "label": "marginal",
@@ -3876,7 +3876,7 @@
   },
   "2472144113": {
    "label": "relevant",
-   "rationale": "States Process Mining's core purpose -- helping analysts and process owners analyze and optimize business processes -- directly answering the query."
+   "rationale": "States Process Mining's core purpose -- helping analysts and process owners analyze and optimize business processes -- directly answering the query. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2472144509": {
    "label": "marginal",
@@ -3904,7 +3904,7 @@
   },
   "2472145089": {
    "label": "relevant",
-   "rationale": "Describes the core usage workflow -- choose a process, generate data, get actionable insights -- directly explaining how Process Mining is used."
+   "rationale": "Describes the core usage workflow -- choose a process, generate data, get actionable insights -- directly explaining how Process Mining is used. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2472145221": {
    "label": "marginal",
@@ -3912,7 +3912,7 @@
   },
   "2472145257": {
    "label": "relevant",
-   "rationale": "Directly explains the core action of Process Mining: visualizing and analyzing business flows and acting on insights."
+   "rationale": "Directly explains the core action of Process Mining: visualizing and analyzing business flows and acting on insights. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2472145353": {
    "label": "irrelevant",
@@ -3995,8 +3995,8 @@
    "rationale": "Describes launching Process Mining from a Performance Analytics indicator, a specific workflow detail."
   },
   "43603066": {
-   "label": "relevant",
-   "rationale": "Notes Process Mining was renamed from Process Optimization, key background context for correctly explaining/identifying the product."
+   "label": "marginal",
+   "rationale": "Notes Process Mining was renamed from Process Optimization, key background context for correctly explaining/identifying the product. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "43856458": {
    "label": "marginal",
@@ -4044,7 +4044,7 @@
   },
   "44118432": {
    "label": "relevant",
-   "rationale": "Explains that content packs provide prebuilt projects for specific business areas, a genuine onboarding capability of the product."
+   "rationale": "Explains that content packs provide prebuilt projects for specific business areas, a genuine onboarding capability of the product. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "44118436": {
    "label": "marginal",
@@ -4211,16 +4211,16 @@
    "rationale": "Mentions creating/viewing improvement initiative statuses, a specific feature detail."
   },
   "5068149": {
-   "label": "relevant",
-   "rationale": "Defines multi-dimensional processes as mining a hierarchy of tables, a core conceptual fact about how Process Mining models complex processes."
+   "label": "marginal",
+   "rationale": "Defines multi-dimensional processes as mining a hierarchy of tables, a core conceptual fact about how Process Mining models complex processes. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068153": {
    "label": "marginal",
    "rationale": "A thinner PDF restatement of the activity-transitions/bottleneck-analysis capability already captured more fully in edge 2465989148."
   },
   "5068157": {
-   "label": "relevant",
-   "rationale": "Describes the ML-based clustering mechanism, a distinct facet of cluster analysis not covered by the index.md description."
+   "label": "marginal",
+   "rationale": "Describes the ML-based clustering mechanism, a distinct facet of cluster analysis not covered by the index.md description. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068213": {
    "label": "marginal",
@@ -4231,16 +4231,16 @@
    "rationale": "Names a specific UI tab and its display behavior, a narrow UI detail rather than a general product explanation."
   },
   "5068221": {
-   "label": "relevant",
-   "rationale": "Describes the interactive process map, the product's primary visualization output, central to explaining what Process Mining produces."
+   "label": "marginal",
+   "rationale": "Describes the interactive process map, the product's primary visualization output, central to explaining what Process Mining produces. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068229": {
    "label": "marginal",
    "rationale": "This is a UI navigation pointer to an overview page, topically related but too granular to change an explanatory answer."
   },
   "5068237": {
-   "label": "relevant",
-   "rationale": "Explains that opportunities are both rule-based and automated, adding real substance about the nature of Process Mining's opportunity detection."
+   "label": "marginal",
+   "rationale": "Explains that opportunities are both rule-based and automated, adding real substance about the nature of Process Mining's opportunity detection. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068241": {
    "label": "marginal",
@@ -4464,11 +4464,11 @@
   },
   "5144331": {
    "label": "relevant",
-   "rationale": "States Process Mining's core purpose in its own words, a genuine definitional statement useful for the query."
+   "rationale": "States Process Mining's core purpose in its own words, a genuine definitional statement useful for the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "5146786": {
    "label": "relevant",
-   "rationale": "States that Process Mining is integrated with ServiceNow Playbooks, a genuine ecosystem fact worth including in an explanation."
+   "rationale": "States that Process Mining is integrated with ServiceNow Playbooks, a genuine ecosystem fact worth including in an explanation. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "5146790": {
    "label": "marginal",
@@ -4529,24 +4529,24 @@
    "rationale": "Describes GCP-specific discovery, a narrow sub-topic rather than core to explaining Discovery generally."
   },
   "2043099361": {
-   "label": "relevant",
-   "rationale": "Defines the classifier, a core building block that determines which probes fire during identification/exploration — genuinely load-bearing."
+   "label": "marginal",
+   "rationale": "Defines the classifier, a core building block that determines which probes fire during identification/exploration — genuinely load-bearing. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2043099367": {
    "label": "marginal",
    "rationale": "Vague index blurb that only says commands 'access CIs' without explaining how, adding little explanatory value."
   },
   "2043099385": {
-   "label": "relevant",
-   "rationale": "Explains a distinct, substantive fallback mechanism (Nmap credential-less scanning) central to how Discovery handles auth failures."
+   "label": "marginal",
+   "rationale": "Explains a distinct, substantive fallback mechanism (Nmap credential-less scanning) central to how Discovery handles auth failures. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2043099397": {
    "label": "relevant",
-   "rationale": "Defines Application Dependency Mapping's TCP-connection detection, a named core mechanism for CI discovery."
+   "rationale": "Defines Application Dependency Mapping's TCP-connection detection, a named core mechanism for CI discovery. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2043099403": {
-   "label": "relevant",
-   "rationale": "Ties Discovery behaviors to which probes Shazzam launches, a concrete piece of the core scanning mechanism."
+   "label": "marginal",
+   "rationale": "Ties Discovery behaviors to which probes Shazzam launches, a concrete piece of the core scanning mechanism. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2043099409": {
    "label": "marginal",
@@ -4561,8 +4561,8 @@
    "rationale": "Notes some probes need extra permissions, a detail rather than a core explanatory fact about Discovery."
   },
   "2464223593": {
-   "label": "relevant",
-   "rationale": "Explains the concrete IP-scan-to-classifier mechanism, a core step in how Discovery identifies devices."
+   "label": "marginal",
+   "rationale": "Explains the concrete IP-scan-to-classifier mechanism, a core step in how Discovery identifies devices. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2465776050": {
    "label": "irrelevant",
@@ -4582,7 +4582,7 @@
   },
   "2465799176": {
    "label": "relevant",
-   "rationale": "States the fundamental licensing/plugin prerequisite for Discovery to exist at all, genuinely load-bearing."
+   "rationale": "States the fundamental licensing/plugin prerequisite for Discovery to exist at all, genuinely load-bearing. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "2465813624": {
    "label": "marginal",
@@ -4630,7 +4630,7 @@
   },
   "2465992006": {
    "label": "relevant",
-   "rationale": "Explains why the MID Server exists — secure connectivity enabling automated discovery — a core architectural fact even framed as a task link."
+   "rationale": "Explains why the MID Server exists — secure connectivity enabling automated discovery — a core architectural fact even framed as a task link. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "2465992054": {
    "label": "marginal",
@@ -4641,8 +4641,8 @@
    "rationale": "Describes an admin diagnostics feature for anomaly review, on-topic UI trivia not load-bearing for explaining Discovery."
   },
   "2466004566": {
-   "label": "relevant",
-   "rationale": "States the fundamental requirement that credentials are needed to access target systems, core to how Discovery authenticates."
+   "label": "marginal",
+   "rationale": "States the fundamental requirement that credentials are needed to access target systems, core to how Discovery authenticates. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466009680": {
    "label": "irrelevant",
@@ -4725,8 +4725,8 @@
    "rationale": "Describes gMSA accounts enabling credential-less Discovery, an advanced/niche feature detail."
   },
   "2466499188": {
-   "label": "relevant",
-   "rationale": "Explains the concrete mechanism MID Servers use (PowerShell/Remoting) to access CIs during horizontal/top-down discovery."
+   "label": "marginal",
+   "rationale": "Explains the concrete mechanism MID Servers use (PowerShell/Remoting) to access CIs during horizontal/top-down discovery. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466499236": {
    "label": "marginal",
@@ -4818,11 +4818,11 @@
   },
   "2466945203": {
    "label": "relevant",
-   "rationale": "Directly defines horizontal discovery, the central technique by which Discovery scans and populates the CMDB."
+   "rationale": "Directly defines horizontal discovery, the central technique by which Discovery scans and populates the CMDB. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2466950331": {
    "label": "relevant",
-   "rationale": "States the starting step of the core discovery/mapping process — horizontal discovery identifying the host."
+   "rationale": "States the starting step of the core discovery/mapping process — horizontal discovery identifying the host. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2467001901": {
    "label": "marginal",
@@ -4865,8 +4865,8 @@
    "rationale": "Notes Google Cloud discovery patterns ship in a separate store app — packaging detail, tangential to explaining Discovery."
   },
   "2467192674": {
-   "label": "relevant",
-   "rationale": "Explains a genuine architectural relationship — shared patterns between Discovery and Service Mapping — relevant to how Discovery's pattern system works."
+   "label": "marginal",
+   "rationale": "Explains a genuine architectural relationship — shared patterns between Discovery and Service Mapping — relevant to how Discovery's pattern system works. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2467197637": {
    "label": "marginal",
@@ -5162,7 +5162,7 @@
   },
   "2471155591": {
    "label": "relevant",
-   "rationale": "Concisely states the core mechanism — probes and sensors collecting data to update the CMDB — central to explaining Discovery."
+   "rationale": "Concisely states the core mechanism — probes and sensors collecting data to update the CMDB — central to explaining Discovery. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2471160659": {
    "label": "irrelevant",
@@ -5306,7 +5306,7 @@
   },
   "2472562819": {
    "label": "relevant",
-   "rationale": "States a specific, useful fact about how the Discovery plugin gets installed (bundled with ITOM Visibility), genuinely load-bearing setup detail."
+   "rationale": "States a specific, useful fact about how the Discovery plugin gets installed (bundled with ITOM Visibility), genuinely load-bearing setup detail. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "42742583": {
    "label": "irrelevant",
@@ -5334,7 +5334,7 @@
   },
   "42930214": {
    "label": "relevant",
-   "rationale": "Names a specific mechanism (identification API applying dependent relationship rules) central to how Discovery reconciles CI data."
+   "rationale": "Names a specific mechanism (identification API applying dependent relationship rules) central to how Discovery reconciles CI data. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "42959548": {
    "label": "marginal",
@@ -5370,15 +5370,15 @@
   },
   "42979437": {
    "label": "relevant",
-   "rationale": "Ties a named probe type (Horizontal Pattern probe) to the pattern-based discovery mechanism, a core architectural fact."
+   "rationale": "Ties a named probe type (Horizontal Pattern probe) to the pattern-based discovery mechanism, a core architectural fact. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "42984178": {
    "label": "marginal",
    "rationale": "A UI navigation instruction to the Port Probe form, not explanatory content."
   },
   "42984184": {
-   "label": "relevant",
-   "rationale": "Explains the Shazzam probe's port-scanning role, a foundational and frequently-cited mechanism of Discovery."
+   "label": "marginal",
+   "rationale": "Explains the Shazzam probe's port-scanning role, a foundational and frequently-cited mechanism of Discovery. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "42984190": {
    "label": "marginal",
@@ -5462,7 +5462,7 @@
   },
   "43105095": {
    "label": "relevant",
-   "rationale": "States a concrete, defining output of Discovery — CI Relationship record creation per node."
+   "rationale": "States a concrete, defining output of Discovery — CI Relationship record creation per node. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "43106600": {
    "label": "marginal",
@@ -5514,7 +5514,7 @@
   },
   "43630656": {
    "label": "relevant",
-   "rationale": "Explains the multiprobe/multisensor data-processing architecture, a specific and substantive part of Discovery's pipeline."
+   "rationale": "Explains the multiprobe/multisensor data-processing architecture, a specific and substantive part of Discovery's pipeline. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "43631024": {
    "label": "irrelevant",
@@ -5530,7 +5530,7 @@
   },
   "43632797": {
    "label": "relevant",
-   "rationale": "States the fundamental end-to-end outcome of Discovery — adding the found host to the CMDB."
+   "rationale": "States the fundamental end-to-end outcome of Discovery — adding the found host to the CMDB. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "43640203": {
    "label": "irrelevant",
@@ -5661,8 +5661,8 @@
    "rationale": "Names a Performance Analytics 'Discovery' plugin (indicator discovery), a differently-scoped feature from ITOM/CMDB Discovery the query likely means."
   },
   "4513150": {
-   "label": "relevant",
-   "rationale": "Explains the class-extension mechanism used to populate CIs and discover technologies/software, a substantive architectural fact."
+   "label": "marginal",
+   "rationale": "Explains the class-extension mechanism used to populate CIs and discover technologies/software, a substantive architectural fact. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "4570646": {
    "label": "marginal",
@@ -5686,11 +5686,11 @@
   },
   "4846848": {
    "label": "relevant",
-   "rationale": "States concrete, specific output tables Discovery populates for software discovery, a genuinely useful mechanism fact."
+   "rationale": "States concrete, specific output tables Discovery populates for software discovery, a genuinely useful mechanism fact. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "4846852": {
    "label": "relevant",
-   "rationale": "Duplicate of the specific software-discovery table fact, still genuinely informative about Discovery's output mechanism."
+   "rationale": "Duplicate of the specific software-discovery table fact, still genuinely informative about Discovery's output mechanism. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "4851963": {
    "label": "marginal",
@@ -5924,15 +5924,15 @@
   },
   "2465810981": {
    "label": "relevant",
-   "rationale": "Directly defines the base cmdb table as the core CI class, foundational to any explanation of CMDB's data model."
+   "rationale": "Directly defines the base cmdb table as the core CI class, foundational to any explanation of CMDB's data model. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2465810987": {
    "label": "relevant",
-   "rationale": "Directly defines cmdb_ci as the table storing basic attributes for all CIs, foundational structural fact."
+   "rationale": "Directly defines cmdb_ci as the table storing basic attributes for all CIs, foundational structural fact. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2465810993": {
-   "label": "relevant",
-   "rationale": "Directly defines cmdb_rel_ci as the relationship table, foundational to explaining how CMDB models CI relationships."
+   "label": "marginal",
+   "rationale": "Directly defines cmdb_rel_ci as the relationship table, foundational to explaining how CMDB models CI relationships. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2465811023": {
    "label": "marginal",
@@ -6007,8 +6007,8 @@
    "rationale": "Mentions CMDB health dashboards as part of a jumpstart accelerator review, tangential to a core explanation."
   },
   "2466210596": {
-   "label": "relevant",
-   "rationale": "Names and describes CMDB Workspace, one of the canonical CMDB tools also confirmed by the tools-list edge, so it is core to explaining how CMDB is used."
+   "label": "marginal",
+   "rationale": "Names and describes CMDB Workspace, one of the canonical CMDB tools also confirmed by the tools-list edge, so it is core to explaining how CMDB is used. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466257086": {
    "label": "irrelevant",
@@ -6052,11 +6052,11 @@
   },
   "2466756042": {
    "label": "relevant",
-   "rationale": "Gives the core definition of a Configuration Item, essential to any explanation of CMDB."
+   "rationale": "Gives the core definition of a Configuration Item, essential to any explanation of CMDB. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2466756048": {
-   "label": "relevant",
-   "rationale": "Gives the core definition of Relation Type, one of CMDB's fundamental record types."
+   "label": "marginal",
+   "rationale": "Gives the core definition of Relation Type, one of CMDB's fundamental record types. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466759522": {
    "label": "marginal",
@@ -6080,7 +6080,7 @@
   },
   "2466966134": {
    "label": "relevant",
-   "rationale": "States that CMDB consists of entities called CIs, a core definitional fact."
+   "rationale": "States that CMDB consists of entities called CIs, a core definitional fact. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2466966140": {
    "label": "marginal",
@@ -6220,15 +6220,15 @@
   },
   "2470523838": {
    "label": "relevant",
-   "rationale": "Directly explains how the base CI table stores class-tagged records (Application, Computer, IP Router), a real structural fact about CMDB's table design."
+   "rationale": "Directly explains how the base CI table stores class-tagged records (Application, Computer, IP Router), a real structural fact about CMDB's table design. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2470523844": {
    "label": "relevant",
-   "rationale": "Same substantive structural fact about the base CI table's class-based records as the other duplicate; genuinely explains CMDB architecture."
+   "rationale": "Same substantive structural fact about the base CI table's class-based records as the other duplicate; genuinely explains CMDB architecture. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2470523850": {
    "label": "relevant",
-   "rationale": "Same substantive structural fact about the base CI table's class-based records as the other duplicate; genuinely explains CMDB architecture."
+   "rationale": "Same substantive structural fact about the base CI table's class-based records as the other duplicate; genuinely explains CMDB architecture. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2470749187": {
    "label": "marginal",
@@ -6303,8 +6303,8 @@
    "rationale": "Describes converting business services to application services via the cmdb_ci_service table, a specific feature detail."
   },
   "2471155451": {
-   "label": "relevant",
-   "rationale": "Lists the actual CI parent-table hierarchy, a core structural fact about how CMDB's class model is implemented."
+   "label": "marginal",
+   "rationale": "Lists the actual CI parent-table hierarchy, a core structural fact about how CMDB's class model is implemented. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2471189517": {
    "label": "marginal",
@@ -6339,8 +6339,8 @@
    "rationale": "Describes running quick start tests after upgrades to verify CMDB, a narrow operational detail."
   },
   "2471577034": {
-   "label": "relevant",
-   "rationale": "Explains a core mechanism (CMDB instance API) for populating CMDB, directly relevant to how CMDB works."
+   "label": "marginal",
+   "rationale": "Explains a core mechanism (CMDB instance API) for populating CMDB, directly relevant to how CMDB works. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2471593692": {
    "label": "marginal",
@@ -6351,8 +6351,8 @@
    "rationale": "Just a dashboard metric label ('% of duplicate CIs') with no explanatory content about CMDB."
   },
   "2471777613": {
-   "label": "relevant",
-   "rationale": "States the fundamental CMDB-Asset linkage (CI creation creates asset records), a well-known cross-application architectural fact core to explaining CMDB."
+   "label": "marginal",
+   "rationale": "States the fundamental CMDB-Asset linkage (CI creation creates asset records), a well-known cross-application architectural fact core to explaining CMDB. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2471844420": {
    "label": "irrelevant",
@@ -6363,16 +6363,16 @@
    "rationale": "Describes one specific integration (Microsoft SCCM) importing data into CMDB, an illustrative case rather than a general explanation."
   },
   "2472100411": {
-   "label": "relevant",
-   "rationale": "Explains that classifications define the CI class hierarchy, a core structural/conceptual fact about CMDB."
+   "label": "marginal",
+   "rationale": "Explains that classifications define the CI class hierarchy, a core structural/conceptual fact about CMDB. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2472104864": {
    "label": "marginal",
    "rationale": "Describes Now Assist, a specific add-on AI feature, supplementary rather than core to defining what CMDB is."
   },
   "2472105448": {
-   "label": "relevant",
-   "rationale": "States that CMDB APIs/SDK support create, update, and read operations, a core mechanism for interacting with CMDB."
+   "label": "marginal",
+   "rationale": "States that CMDB APIs/SDK support create, update, and read operations, a core mechanism for interacting with CMDB. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2472425517": {
    "label": "marginal",
@@ -6400,7 +6400,7 @@
   },
   "42926401": {
    "label": "relevant",
-   "rationale": "Explains Service Graph Connectors as a core general mechanism for populating CMDB via API ingestion."
+   "rationale": "Explains Service Graph Connectors as a core general mechanism for populating CMDB via API ingestion. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "42938309": {
    "label": "irrelevant",
@@ -6431,8 +6431,8 @@
    "rationale": "Describes the CMDB success advisor application for Hardware Asset Management specifically, a narrow feature detail."
   },
   "42973039": {
-   "label": "relevant",
-   "rationale": "Illustrates the identification-rules and schema/class-hierarchy concept using the Computer class, core to CMDB's data model."
+   "label": "marginal",
+   "rationale": "Illustrates the identification-rules and schema/class-hierarchy concept using the Computer class, core to CMDB's data model. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "42973051": {
    "label": "marginal",
@@ -6532,11 +6532,11 @@
   },
   "43503887": {
    "label": "relevant",
-   "rationale": "Enumerates the canonical set of CMDB tools (workspace, IRE, Data Manager, health dashboards), a core overview fact."
+   "rationale": "Enumerates the canonical set of CMDB tools (workspace, IRE, Data Manager, health dashboards), a core overview fact. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "43503891": {
    "label": "relevant",
-   "rationale": "Same canonical CMDB tools enumeration as the other duplicate, core overview content."
+   "rationale": "Same canonical CMDB tools enumeration as the other duplicate, core overview content. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "43670498": {
    "label": "marginal",
@@ -6668,15 +6668,15 @@
   },
   "43923326": {
    "label": "relevant",
-   "rationale": "Directly explains that the base cmdb table contains records from its child CI classes, a core structural fact about CMDB's table architecture."
+   "rationale": "Directly explains that the base cmdb table contains records from its child CI classes, a core structural fact about CMDB's table architecture. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "43923330": {
    "label": "relevant",
-   "rationale": "Duplicate of the same core structural fact about cmdb containing child-class records."
+   "rationale": "Duplicate of the same core structural fact about cmdb containing child-class records. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "43923358": {
-   "label": "relevant",
-   "rationale": "Explains table flattening and the parent-child hierarchy underlying the cmdb table, core to CMDB's architecture."
+   "label": "marginal",
+   "rationale": "Explains table flattening and the parent-child hierarchy underlying the cmdb table, core to CMDB's architecture. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "43923855": {
    "label": "marginal",
@@ -6699,8 +6699,8 @@
    "rationale": "Describes a narrow specific dashboard (CSDM Data Foundations) rather than a core fact about CMDB itself."
   },
   "4558153": {
-   "label": "relevant",
-   "rationale": "Gives a concrete description of what data deep discovery populates into CMDB, substantive content about how CMDB is filled."
+   "label": "marginal",
+   "rationale": "Gives a concrete description of what data deep discovery populates into CMDB, substantive content about how CMDB is filled. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "4558181": {
    "label": "marginal",
@@ -6719,8 +6719,8 @@
    "rationale": "Describes importing Apigee X API proxy details into CMDB; a specific integration instance, not core explanatory content."
   },
   "4615521": {
-   "label": "relevant",
-   "rationale": "States the CI parent-table hierarchy, a core structural fact about CMDB's class model."
+   "label": "marginal",
+   "rationale": "States the CI parent-table hierarchy, a core structural fact about CMDB's class model. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "4619285": {
    "label": "marginal",
@@ -6740,15 +6740,15 @@
   },
   "4655879": {
    "label": "relevant",
-   "rationale": "Explains the mechanism for creating a CI with relations within a CMDB table, core to CMDB's data/relationship model."
+   "rationale": "Explains the mechanism for creating a CI with relations within a CMDB table, core to CMDB's data/relationship model. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "4655887": {
    "label": "marginal",
    "rationale": "A JSON example showing sys_class_name 'cmdb_ci_linux_server'; a specific CI-type instance, not core explanatory content."
   },
   "4655891": {
-   "label": "relevant",
-   "rationale": "Duplicate of the same core CI-plus-relations creation mechanism within a CMDB table."
+   "label": "marginal",
+   "rationale": "Duplicate of the same core CI-plus-relations creation mechanism within a CMDB table. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "4661210": {
    "label": "marginal",
@@ -6783,8 +6783,8 @@
    "rationale": "Describes a CCG action inserting configuration settings into CMDB; a specific automation-action detail."
   },
   "4842145": {
-   "label": "relevant",
-   "rationale": "Explains a core population mechanism: Discovery scripts collecting and updating CMDB data."
+   "label": "marginal",
+   "rationale": "Explains a core population mechanism: Discovery scripts collecting and updating CMDB data. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "4842771": {
    "label": "marginal",
@@ -6811,12 +6811,12 @@
    "rationale": "A single specific CI type table name (cmdb_ci_spkg) is topically CMDB-related but too granular for a general explanation."
   },
   "4850075": {
-   "label": "relevant",
-   "rationale": "Explains the core Discovery probes/sensors mechanism for populating CMDB, essential to how CMDB works."
+   "label": "marginal",
+   "rationale": "Explains the core Discovery probes/sensors mechanism for populating CMDB, essential to how CMDB works. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "4854688": {
    "label": "relevant",
-   "rationale": "Describes the widely-cited core use case of CMDB data enabling top-down discovery and service mapping."
+   "rationale": "Describes the widely-cited core use case of CMDB data enabling top-down discovery and service mapping. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "4859844": {
    "label": "marginal",
@@ -7082,7 +7082,7 @@
   },
   "2047433755": {
    "label": "relevant",
-   "rationale": "This genuinely explains the core purpose of opening an incident — escalating an alert to someone who can resolve the underlying issue — independent of any specific module or channel."
+   "rationale": "This genuinely explains the core purpose of opening an incident — escalating an alert to someone who can resolve the underlying issue — independent of any specific module or channel. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2203408276": {
    "label": "marginal",
@@ -7109,8 +7109,8 @@
    "rationale": "A table row listing a Verizon eBonding integration that happens to reference Incident, with no explanatory content."
   },
   "2465763626": {
-   "label": "relevant",
-   "rationale": "Describes the actual human diagnosis process that constitutes core incident handling, not a peripheral feature or integration."
+   "label": "marginal",
+   "rationale": "Describes the actual human diagnosis process that constitutes core incident handling, not a peripheral feature or integration. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2465768411": {
    "label": "marginal",
@@ -7133,12 +7133,12 @@
    "rationale": "Notes incidents can be raised for a cloud resource, a specific cloud-governance context rather than a general explanation."
   },
   "2465897684": {
-   "label": "relevant",
-   "rationale": "States the fundamental incident-to-problem relationship, a foundational ITSM concept when explaining what incidents are and how they resolve."
+   "label": "marginal",
+   "rationale": "States the fundamental incident-to-problem relationship, a foundational ITSM concept when explaining what incidents are and how they resolve. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2465897690": {
-   "label": "relevant",
-   "rationale": "States the fundamental incident-to-change relationship, a foundational ITSM concept for explaining incident resolution pathways."
+   "label": "marginal",
+   "rationale": "States the fundamental incident-to-change relationship, a foundational ITSM concept for explaining incident resolution pathways. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2465897714": {
    "label": "marginal",
@@ -7169,8 +7169,8 @@
    "rationale": "Describes an on-call escalation icon in the Assignment group field, with no mention of incidents in the quote."
   },
   "2466079829": {
-   "label": "relevant",
-   "rationale": "States the fundamental incident-to-request relationship, part of the standard ITSM incident resolution pathways alongside problem and change."
+   "label": "marginal",
+   "rationale": "States the fundamental incident-to-request relationship, part of the standard ITSM incident resolution pathways alongside problem and change. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466152162": {
    "label": "marginal",
@@ -7458,7 +7458,7 @@
   },
   "2467157663": {
    "label": "relevant",
-   "rationale": "A direct glossary definition of Incident that squarely answers the query."
+   "rationale": "A direct glossary definition of Incident that squarely answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2467231000": {
    "label": "marginal",
@@ -7762,7 +7762,7 @@
   },
   "2472331815": {
    "label": "relevant",
-   "rationale": "A direct glossary definition of Incident that squarely answers the query."
+   "rationale": "A direct glossary definition of Incident that squarely answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2472336649": {
    "label": "marginal",
@@ -7878,7 +7878,7 @@
   },
   "43323896": {
    "label": "relevant",
-   "rationale": "States the direct, standalone structural fact that Incident extends Task, foundational to explaining the Incident table."
+   "rationale": "States the direct, standalone structural fact that Incident extends Task, foundational to explaining the Incident table. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "43324050": {
    "label": "marginal",
@@ -7910,7 +7910,7 @@
   },
   "43442339": {
    "label": "relevant",
-   "rationale": "A direct glossary definition of Incident that squarely answers the query."
+   "rationale": "A direct glossary definition of Incident that squarely answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "43466247": {
    "label": "irrelevant",
@@ -7938,7 +7938,7 @@
   },
   "43663772": {
    "label": "relevant",
-   "rationale": "A direct definition of Incident (alerts correlating to a significant service disruption) that squarely answers the query."
+   "rationale": "A direct definition of Incident (alerts correlating to a significant service disruption) that squarely answers the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "43667981": {
    "label": "marginal",
@@ -8014,7 +8014,7 @@
   },
   "4461745": {
    "label": "relevant",
-   "rationale": "States the direct, standalone structural fact that Incident extends Task, foundational to explaining the Incident table."
+   "rationale": "States the direct, standalone structural fact that Incident extends Task, foundational to explaining the Incident table. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "4461929": {
    "label": "irrelevant",
@@ -8076,11 +8076,11 @@
   },
   "1838632994": {
    "label": "relevant",
-   "rationale": "States the core general definition of PI (creating ML solutions from historic datasets), which is essential to answering an 'explain PI' query."
+   "rationale": "States the core general definition of PI (creating ML solutions from historic datasets), which is essential to answering an 'explain PI' query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "1838633000": {
    "label": "relevant",
-   "rationale": "Same core definitional fact as 1838632994 restated in another edge, still directly answers what PI fundamentally does."
+   "rationale": "Same core definitional fact as 1838632994 restated in another edge, still directly answers what PI fundamentally does. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2038335144": {
    "label": "marginal",
@@ -8088,7 +8088,7 @@
   },
   "2094919502": {
    "label": "relevant",
-   "rationale": "Gives the foundational definition of what the PI application enables (train ML models to improve system performance/efficiency/flexibility), core to any explanation."
+   "rationale": "Gives the foundational definition of what the PI application enables (train ML models to improve system performance/efficiency/flexibility), core to any explanation. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2218323426": {
    "label": "marginal",
@@ -8164,11 +8164,11 @@
   },
   "2466024569": {
    "label": "relevant",
-   "rationale": "Names the core capability frameworks (classification, similarity, clustering) that structurally define what PI offers, not a peripheral detail."
+   "rationale": "Names the core capability frameworks (classification, similarity, clustering) that structurally define what PI offers, not a peripheral detail. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2466024575": {
    "label": "relevant",
-   "rationale": "States the fundamental architecture fact that any ServiceNow app can invoke a trained solution via API, essential to explaining how PI operates."
+   "rationale": "States the fundamental architecture fact that any ServiceNow app can invoke a trained solution via API, essential to explaining how PI operates. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "2466031443": {
    "label": "irrelevant",
@@ -8232,7 +8232,7 @@
   },
   "2466342447": {
    "label": "relevant",
-   "rationale": "Restates the core PI definition (create/train ML models to improve performance/efficiency/flexibility), directly load-bearing for the query."
+   "rationale": "Restates the core PI definition (create/train ML models to improve performance/efficiency/flexibility), directly load-bearing for the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2466383330": {
    "label": "marginal",
@@ -8344,11 +8344,11 @@
   },
   "2466649488": {
    "label": "relevant",
-   "rationale": "Defines what the similarity-solution framework does, one of PI's core capability types central to an explanation of PI."
+   "rationale": "Defines what the similarity-solution framework does, one of PI's core capability types central to an explanation of PI. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2466649500": {
    "label": "relevant",
-   "rationale": "Defines what the regression-solution framework does, one of PI's core capability types central to an explanation of PI."
+   "rationale": "Defines what the regression-solution framework does, one of PI's core capability types central to an explanation of PI. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2466656434": {
    "label": "irrelevant",
@@ -8488,7 +8488,7 @@
   },
   "2470398927": {
    "label": "relevant",
-   "rationale": "Reinforces the core architectural fact that PI predictions are consumed via an API call, directly relevant to explaining how PI works."
+   "rationale": "Reinforces the core architectural fact that PI predictions are consumed via an API call, directly relevant to explaining how PI works. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "2470398933": {
    "label": "marginal",
@@ -8576,7 +8576,7 @@
   },
   "2471165344": {
    "label": "relevant",
-   "rationale": "Duplicate of the core capability-framework naming fact (classification/similarity/clustering), which is structurally essential to explaining PI."
+   "rationale": "Duplicate of the core capability-framework naming fact (classification/similarity/clustering), which is structurally essential to explaining PI. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2471193835": {
    "label": "marginal",
@@ -8608,7 +8608,7 @@
   },
   "2471442692": {
    "label": "relevant",
-   "rationale": "Duplicate of the core PI definition (create ML solutions using historic datasets), directly load-bearing for the query."
+   "rationale": "Duplicate of the core PI definition (create ML solutions using historic datasets), directly load-bearing for the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2471448180": {
    "label": "marginal",
@@ -8704,7 +8704,7 @@
   },
   "2471453142": {
    "label": "relevant",
-   "rationale": "States a general definition of PI as an AI layer/framework for machine learning models, core to explaining PI."
+   "rationale": "States a general definition of PI as an AI layer/framework for machine learning models, core to explaining PI. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "2471457896": {
    "label": "marginal",
@@ -8792,7 +8792,7 @@
   },
   "2472447633": {
    "label": "relevant",
-   "rationale": "Combines the general definition of PI as an AI Platform feature with the fundamental plugin-activation prerequisite, both core to explaining PI."
+   "rationale": "Combines the general definition of PI as an AI Platform feature with the fundamental plugin-activation prerequisite, both core to explaining PI. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2472573901": {
    "label": "marginal",
@@ -8812,7 +8812,7 @@
   },
   "42978397": {
    "label": "relevant",
-   "rationale": "States the core functional description of PI (creates suggestions with accuracy estimates), directly relevant to explaining what PI does."
+   "rationale": "States the core functional description of PI (creates suggestions with accuracy estimates), directly relevant to explaining what PI does. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "42998647": {
    "label": "marginal",
@@ -8916,15 +8916,15 @@
   },
   "43811517": {
    "label": "relevant",
-   "rationale": "Defines what the classification-solution framework does, one of PI's core capability types central to an explanation of PI."
+   "rationale": "Defines what the classification-solution framework does, one of PI's core capability types central to an explanation of PI. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   },
   "43811525": {
-   "label": "relevant",
-   "rationale": "Defines what the clustering-solution framework does, one of PI's core capability types central to an explanation of PI."
+   "label": "marginal",
+   "rationale": "Defines what the clustering-solution framework does, one of PI's core capability types central to an explanation of PI. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "43811557": {
-   "label": "relevant",
-   "rationale": "Reinforces the core architectural fact that any application can invoke PI predictions via an API, directly relevant to explaining how PI works."
+   "label": "marginal",
+   "rationale": "Reinforces the core architectural fact that any application can invoke PI predictions via an API, directly relevant to explaining how PI works. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "43811565": {
    "label": "marginal",
@@ -8980,7 +8980,7 @@
   },
   "43821065": {
    "label": "relevant",
-   "rationale": "Reinforces the core architectural fact that PI predictions are consumed via an API call, directly relevant to explaining how PI works."
+   "rationale": "Reinforces the core architectural fact that PI predictions are consumed via an API call, directly relevant to explaining how PI works. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "43821073": {
    "label": "marginal",
@@ -9120,7 +9120,7 @@
   },
   "5112245": {
    "label": "relevant",
-   "rationale": "Names the core capability frameworks that structurally define what PI offers, essential to any explanation of PI."
+   "rationale": "Names the core capability frameworks that structurally define what PI offers, essential to any explanation of PI. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "5112269": {
    "label": "marginal",
@@ -9358,7 +9358,7 @@
   },
   "2470423567": {
    "label": "relevant",
-   "rationale": "Concretely states that a record on this table is 'the currently-requested catalog item', which is a substantive (if terse) definition of what an sc_req_item record represents, not just a name or usage mention."
+   "rationale": "Concretely states that a record on this table is 'the currently-requested catalog item', which is a substantive (if terse) definition of what an sc_req_item record represents, not just a name or usage mention. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2470473420": {
    "label": "irrelevant",
@@ -9370,7 +9370,7 @@
   },
   "2470513564": {
    "label": "relevant",
-   "rationale": "Directly states the table's functional purpose — workflows on sc_req_item fulfill the request of a single catalog item — which is load-bearing for answering 'what is this table.'"
+   "rationale": "Directly states the table's functional purpose — workflows on sc_req_item fulfill the request of a single catalog item — which is load-bearing for answering 'what is this table.'. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2470570655": {
    "label": "marginal",
@@ -9461,8 +9461,8 @@
    "rationale": "Defines 'fulfillment process' generically without naming sc_req_item, tangential context."
   },
   "42375881": {
-   "label": "relevant",
-   "rationale": "Places sc_req_item in the list of tables extending task (EXTENDS_TABLE), a genuine structural/hierarchy fact that materially informs what kind of table it is."
+   "label": "marginal",
+   "rationale": "Places sc_req_item in the list of tables extending task (EXTENDS_TABLE), a genuine structural/hierarchy fact that materially informs what kind of table it is. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "43170831": {
    "label": "marginal",
@@ -9506,7 +9506,7 @@
   },
   "43728923": {
    "label": "relevant",
-   "rationale": "Same substantive functional-purpose statement as 2470513564 (workflows fulfill the request of a single catalog item), directly load-bearing for the query."
+   "rationale": "Same substantive functional-purpose statement as 2470513564 (workflows fulfill the request of a single catalog item), directly load-bearing for the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "43729035": {
    "label": "marginal",
@@ -9526,11 +9526,11 @@
   },
   "43922430": {
    "label": "relevant",
-   "rationale": "Establishes the core relational fact that a requested item [sc_req_item] is created on a Service Catalog Request [sc_request], explaining the table's place in the data model."
+   "rationale": "Establishes the core relational fact that a requested item [sc_req_item] is created on a Service Catalog Request [sc_request], explaining the table's place in the data model. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "43923202": {
    "label": "relevant",
-   "rationale": "Same sc_req_item-created-on-sc_request relational fact as 43922430, independently load-bearing for explaining what the table is."
+   "rationale": "Same sc_req_item-created-on-sc_request relational fact as 43922430, independently load-bearing for explaining what the table is. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "43923987": {
    "label": "marginal",
@@ -9542,7 +9542,7 @@
   },
   "43928324": {
    "label": "relevant",
-   "rationale": "Lists the table's actual field set (Number, Item, Stage, State, Requested for, Opened by, Opened), giving genuine schema/structural insight rather than a single incidental field mention."
+   "rationale": "Lists the table's actual field set (Number, Item, Stage, State, Requested for, Opened by, Opened), giving genuine schema/structural insight rather than a single incidental field mention. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "43928368": {
    "label": "marginal",
@@ -9652,11 +9652,11 @@
   },
   "2465951694": {
    "label": "relevant",
-   "rationale": "Explicitly names discovery_admin as the ServiceNow role for a Discovery configuration task, directly answering the query."
+   "rationale": "Explicitly names discovery_admin as the ServiceNow role for a Discovery configuration task, directly answering the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2465951700": {
    "label": "relevant",
-   "rationale": "Same discovery_admin fact as 2465951694, still a direct on-point answer despite being a duplicate edge."
+   "rationale": "Same discovery_admin fact as 2465951694, still a direct on-point answer despite being a duplicate edge. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2466456835": {
    "label": "marginal",
@@ -9664,7 +9664,7 @@
   },
   "2466773155": {
    "label": "relevant",
-   "rationale": "Quote explicitly states \"discovery_admin for Cloud Discovery,\" directly naming the Discovery role."
+   "rationale": "Quote explicitly states \"discovery_admin for Cloud Discovery,\" directly naming the Discovery role. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2466773161": {
    "label": "marginal",
@@ -9688,7 +9688,7 @@
   },
   "2470399179": {
    "label": "relevant",
-   "rationale": "Explicitly states \"Role required: discovery_admin\" for a doc titled 'Configure Discovery Windows Hosts,' directly answering the query."
+   "rationale": "Explicitly states \"Role required: discovery_admin\" for a doc titled 'Configure Discovery Windows Hosts,' directly answering the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2470702052": {
    "label": "marginal",
@@ -9696,7 +9696,7 @@
   },
   "2470899395": {
    "label": "relevant",
-   "rationale": "Explicitly states \"Role required: discovery_admin\" in a discovery-folder doc, directly on point."
+   "rationale": "Explicitly states \"Role required: discovery_admin\" in a discovery-folder doc, directly on point. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2471336526": {
    "label": "marginal",
@@ -9704,11 +9704,11 @@
   },
   "2472362450": {
    "label": "relevant",
-   "rationale": "Names discovery_admin as an accepted role (alongside pki_admin) for a Discovery certificate-inventory task, directly on point."
+   "rationale": "Names discovery_admin as an accepted role (alongside pki_admin) for a Discovery certificate-inventory task, directly on point. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "2472362456": {
    "label": "relevant",
-   "rationale": "Same discovery_admin fact as 2472362450, still directly on point despite duplication."
+   "rationale": "Same discovery_admin fact as 2472362450, still directly on point despite duplication. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "42742583": {
    "label": "marginal",
@@ -9720,15 +9720,15 @@
   },
   "43028034": {
    "label": "relevant",
-   "rationale": "Quote explicitly ties the \"PD user\" role to \"Discovery Pattern Log\" access, directly naming a Discovery role."
+   "rationale": "Quote explicitly ties the \"PD user\" role to \"Discovery Pattern Log\" access, directly naming a Discovery role. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=marginal, llama=relevant)."
   },
   "43028048": {
-   "label": "relevant",
-   "rationale": "\"PDE viewer\" role gates the CommandValidation Tool, a named Discovery/Service Mapping pattern-designer feature, close enough to be load-bearing."
+   "label": "marginal",
+   "rationale": "\"PDE viewer\" role gates the CommandValidation Tool, a named Discovery/Service Mapping pattern-designer feature, close enough to be load-bearing. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=marginal)."
   },
   "43028054": {
    "label": "relevant",
-   "rationale": "\"PD MID\" role explicitly \"enables the MID Server to interpret and run pattern-based probes,\" a core Discovery mechanism."
+   "rationale": "\"PD MID\" role explicitly \"enables the MID Server to interpret and run pattern-based probes,\" a core Discovery mechanism. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "43028060": {
    "label": "marginal",
@@ -9768,7 +9768,7 @@
   },
   "4844669": {
    "label": "relevant",
-   "rationale": "Explicit \"Role required: discovery_admin\" statement, directly answering the query."
+   "rationale": "Explicit \"Role required: discovery_admin\" statement, directly answering the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "4844869": {
    "label": "marginal",
@@ -9776,11 +9776,11 @@
   },
   "4846708": {
    "label": "relevant",
-   "rationale": "Explicit \"Role required: discovery_admin\" statement, directly answering the query."
+   "rationale": "Explicit \"Role required: discovery_admin\" statement, directly answering the query. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "4847013": {
    "label": "relevant",
-   "rationale": "Explicit \"Role required: discovery_admin or agent_admin\" statement, directly naming discovery_admin."
+   "rationale": "Explicit \"Role required: discovery_admin or agent_admin\" statement, directly naming discovery_admin. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "4850617": {
    "label": "irrelevant",
@@ -9820,7 +9820,7 @@
   },
   "4870157": {
    "label": "relevant",
-   "rationale": "\"Role required: pd_admin\" is a standard ServiceNow role statement for the Pattern Designer admin role used in Discovery pattern management."
+   "rationale": "\"Role required: pd_admin\" is a standard ServiceNow role statement for the Pattern Designer admin role used in Discovery pattern management. Cross-family majority: relevant (3/3 votes: claude, gpt-oss=relevant, llama=relevant)."
   },
   "4873139": {
    "label": "marginal",
@@ -9836,7 +9836,7 @@
   },
   "4907673": {
    "label": "relevant",
-   "rationale": "Explicitly states \"Discovery admins and Cloud admins,\" directly naming the Discovery role."
+   "rationale": "Explicitly states \"Discovery admins and Cloud admins,\" directly naming the Discovery role. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=marginal)."
   }
  },
  "control_multifacet_license": {
@@ -9909,8 +9909,8 @@
    "rationale": "Names the Process Mining Analyst role/ID, access-related but not a license statement."
   },
   "2066962267": {
-   "label": "relevant",
-   "rationale": "Names the specific base plugin (com.sn_po) whose activation is the central entitlement gate for using Process Mining at all."
+   "label": "marginal",
+   "rationale": "Names the specific base plugin (com.sn_po) whose activation is the central entitlement gate for using Process Mining at all. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=irrelevant)."
   },
   "2465804209": {
    "label": "irrelevant",
@@ -10177,12 +10177,12 @@
    "rationale": "States a required role ('playbook.write') for playbook access, not a licensing fact."
   },
   "2466811876": {
-   "label": "relevant",
-   "rationale": "States plainly that the base plugin is activated by default in production instances, a concrete answer to whether extra licensing action is needed."
+   "label": "marginal",
+   "rationale": "States plainly that the base plugin is activated by default in production instances, a concrete answer to whether extra licensing action is needed. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2466811882": {
-   "label": "relevant",
-   "rationale": "Independently asserts the same default-activation fact for the base plugin, a direct entitlement statement regardless of predicate mislabeling."
+   "label": "marginal",
+   "rationale": "Independently asserts the same default-activation fact for the base plugin, a direct entitlement statement regardless of predicate mislabeling. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=marginal)."
   },
   "2466811894": {
    "label": "irrelevant",
@@ -10345,8 +10345,8 @@
    "rationale": "Explains adding custom fields to the audit table for breakdown filters, unrelated to licensing."
   },
   "2470477497": {
-   "label": "relevant",
-   "rationale": "Gives an explicit imperative to activate the named plugin (com.sn_po), the core setup/entitlement step for Process Mining."
+   "label": "marginal",
+   "rationale": "Gives an explicit imperative to activate the named plugin (com.sn_po), the core setup/entitlement step for Process Mining. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2470483175": {
    "label": "irrelevant",
@@ -10441,8 +10441,8 @@
    "rationale": "Describes 'Now Assist for Process Mining' as a related AI feature; topically adjacent to licensing (Now Assist add-ons often carry separate entitlements) but states no license fact itself."
   },
   "2471317958": {
-   "label": "relevant",
-   "rationale": "Directly states the product is available by default, answering the core license-activation question from an official release-notes source."
+   "label": "marginal",
+   "rationale": "Directly states the product is available by default, answering the core license-activation question from an official release-notes source. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=marginal)."
   },
   "2471358134": {
    "label": "marginal",
@@ -10453,8 +10453,8 @@
    "rationale": "States the 'sn_process_mining_admin' role is required to import data, an access-control fact rather than a license implication."
   },
   "2472144107": {
-   "label": "relevant",
-   "rationale": "States the edition/platform under which Process Mining is offered (ServiceNow AI Platform), a genuine bundling/entitlement fact analogous to an edition restriction."
+   "label": "marginal",
+   "rationale": "States the edition/platform under which Process Mining is offered (ServiceNow AI Platform), a genuine bundling/entitlement fact analogous to an edition restriction. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=irrelevant)."
   },
   "2472144113": {
    "label": "irrelevant",
@@ -10509,12 +10509,12 @@
    "rationale": "Describes setting improvement opportunities, a feature description not about license."
   },
   "2472145801": {
-   "label": "relevant",
-   "rationale": "Ties a Now Assist for Process Mining capability to activating a specific skill, surfacing dependency on the separately licensed Now Assist product."
+   "label": "marginal",
+   "rationale": "Ties a Now Assist for Process Mining capability to activating a specific skill, surfacing dependency on the separately licensed Now Assist product. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "2472145939": {
-   "label": "relevant",
-   "rationale": "States a Now Assist-based capability requires activating a named skill, a concrete gating requirement tied to the separately licensed Now Assist add-on."
+   "label": "marginal",
+   "rationale": "States a Now Assist-based capability requires activating a named skill, a concrete gating requirement tied to the separately licensed Now Assist add-on. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=irrelevant)."
   },
   "2472146495": {
    "label": "irrelevant",
@@ -10525,8 +10525,8 @@
    "rationale": "Release-note blurb about new use cases/filters, not a license fact."
   },
   "2472307390": {
-   "label": "relevant",
-   "rationale": "Names the specific HRSD content pack plugin (com.sn_hr_process_mining) and what installing it unlocks, a concrete separate-entitlement fact."
+   "label": "marginal",
+   "rationale": "Names the specific HRSD content pack plugin (com.sn_hr_process_mining) and what installing it unlocks, a concrete separate-entitlement fact. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=irrelevant)."
   },
   "2472337150": {
    "label": "irrelevant",
@@ -10545,8 +10545,8 @@
    "rationale": "Describes benefits of integrating Process Mining with HR Service Delivery, not licensing."
   },
   "42959950": {
-   "label": "relevant",
-   "rationale": "Independently corroborates the same specific HRSD content pack plugin ID as a distinct installable entitlement."
+   "label": "marginal",
+   "rationale": "Independently corroborates the same specific HRSD content pack plugin ID as a distinct installable entitlement. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "43033314": {
    "label": "irrelevant",
@@ -10557,16 +10557,16 @@
    "rationale": "Just a document title ('Jumpstart Your Process Mining'), no license content."
   },
   "43305898": {
-   "label": "relevant",
-   "rationale": "Gives an explicit, specific install instruction naming the ITSM content pack and its distribution channel (ServiceNow Store), a concrete entitlement fact."
+   "label": "marginal",
+   "rationale": "Gives an explicit, specific install instruction naming the ITSM content pack and its distribution channel (ServiceNow Store), a concrete entitlement fact. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "43528676": {
    "label": "irrelevant",
    "rationale": "Describes using Process Mining with HR Service Delivery, not a license fact."
   },
   "43528692": {
-   "label": "relevant",
-   "rationale": "Independently corroborates the HRSD content pack plugin ID as a separate installable entitlement, from a different source document."
+   "label": "marginal",
+   "rationale": "Independently corroborates the HRSD content pack plugin ID as a separate installable entitlement, from a different source document. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "43528696": {
    "label": "irrelevant",
@@ -10617,24 +10617,24 @@
    "rationale": "Describes integrating with Performance Analytics/CIM to find improvement opportunities, not a license fact."
   },
   "44118260": {
-   "label": "relevant",
-   "rationale": "States plainly that the base plugin (sn_po) is enabled by default in production instances, directly answering the core activation question."
+   "label": "marginal",
+   "rationale": "States plainly that the base plugin (sn_po) is enabled by default in production instances, directly answering the core activation question. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "44118420": {
    "label": "irrelevant",
    "rationale": "Describes the KPI dashboard page UI, not licensing."
   },
   "44118432": {
-   "label": "relevant",
-   "rationale": "States content packs must be activated to access prebuilt per-business-area projects, a genuine statement that separate activatable entitlements exist."
+   "label": "marginal",
+   "rationale": "States content packs must be activated to access prebuilt per-business-area projects, a genuine statement that separate activatable entitlements exist. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=irrelevant)."
   },
   "44118436": {
    "label": "marginal",
    "rationale": "Mentions free-to-try 'evaluation projects' for ITSM/CSM/HR, loosely touching on trial/license posture without stating a requirement."
   },
   "44118552": {
-   "label": "relevant",
-   "rationale": "Independently states the same content-pack-activation requirement, corroborating that add-on content packs are separately gated."
+   "label": "marginal",
+   "rationale": "Independently states the same content-pack-activation requirement, corroborating that add-on content packs are separately gated. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=irrelevant)."
   },
   "44118604": {
    "label": "irrelevant",
@@ -10717,8 +10717,8 @@
    "rationale": "States a playbook.write role is required, an RBAC fact not licensing."
   },
   "44119620": {
-   "label": "relevant",
-   "rationale": "Explicitly states plugins must be installed and configured, reinforcing the core install/entitlement requirement even though scoped to a sub-feature."
+   "label": "marginal",
+   "rationale": "Explicitly states plugins must be installed and configured, reinforcing the core install/entitlement requirement even though scoped to a sub-feature. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "44119708": {
    "label": "irrelevant",
@@ -10805,8 +10805,8 @@
    "rationale": "Describes ML clustering of similar records, a functional capability with no bearing on licensing."
   },
   "5068213": {
-   "label": "relevant",
-   "rationale": "States a specific tab/capability is restricted to ITSM only, a genuine edition-based feature restriction relevant to license implications."
+   "label": "marginal",
+   "rationale": "States a specific tab/capability is restricted to ITSM only, a genuine edition-based feature restriction relevant to license implications. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=irrelevant)."
   },
   "5068217": {
    "label": "irrelevant",
@@ -10834,7 +10834,7 @@
   },
   "5068249": {
    "label": "relevant",
-   "rationale": "Explicitly requires the Now Assist for Creator role and an activated skill, naming a dependency on the separately licensed Now Assist product."
+   "rationale": "Explicitly requires the Now Assist for Creator role and an activated skill, naming a dependency on the separately licensed Now Assist product. Cross-family majority: relevant (2/3 votes: claude, gpt-oss=relevant, llama=irrelevant)."
   },
   "5068305": {
    "label": "marginal",
@@ -10853,8 +10853,8 @@
    "rationale": "Bare bullet item 'Automated root cause analysis' with no licensing context."
   },
   "5068389": {
-   "label": "relevant",
-   "rationale": "Explicit 'ensure you have X plugin installed' statement naming a concrete additional required entitlement (PPM Standard)."
+   "label": "marginal",
+   "rationale": "Explicit 'ensure you have X plugin installed' statement naming a concrete additional required entitlement (PPM Standard). Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=irrelevant)."
   },
   "5068393": {
    "label": "marginal",
@@ -10897,12 +10897,12 @@
    "rationale": "A bare noun phrase naming a content pack ID with no verb or requirement language, structurally identical to other fragments in this set already judged too thin to be load-bearing."
   },
   "5068541": {
-   "label": "relevant",
-   "rationale": "Names a specific HRSD content pack plugin ID and what it adds, a concrete separate-entitlement fact for that product line."
+   "label": "marginal",
+   "rationale": "Names a specific HRSD content pack plugin ID and what it adds, a concrete separate-entitlement fact for that product line. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=marginal)."
   },
   "5068565": {
-   "label": "relevant",
-   "rationale": "Direct imperative to activate the named base plugin (com.sn_po), the central entitlement action for the product."
+   "label": "marginal",
+   "rationale": "Direct imperative to activate the named base plugin (com.sn_po), the central entitlement action for the product. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5068577": {
    "label": "marginal",
@@ -11029,12 +11029,12 @@
    "rationale": "Duplicate list of default roles added to a property, an access-control fact rather than a licensing statement."
   },
   "5076897": {
-   "label": "relevant",
-   "rationale": "Explicitly conditions a capability on 'if you have the Process Mining application', a direct statement of the entitlement gate."
+   "label": "marginal",
+   "rationale": "Explicitly conditions a capability on 'if you have the Process Mining application', a direct statement of the entitlement gate. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=irrelevant)."
   },
   "5129433": {
-   "label": "relevant",
-   "rationale": "Names a specific FSM content pack plugin ID with an explicit use/activate instruction, a concrete separate-entitlement fact."
+   "label": "marginal",
+   "rationale": "Names a specific FSM content pack plugin ID with an explicit use/activate instruction, a concrete separate-entitlement fact. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=marginal, llama=marginal)."
   },
   "5129437": {
    "label": "marginal",
@@ -11053,8 +11053,8 @@
    "rationale": "States Process Mining is integrated with ServiceNow playbook, a feature/integration fact unrelated to licensing."
   },
   "5146790": {
-   "label": "relevant",
-   "rationale": "Ties a feature directly to the separately licensed Now Assist product, a genuine dependency relevant to license implications."
+   "label": "marginal",
+   "rationale": "Ties a feature directly to the separately licensed Now Assist product, a genuine dependency relevant to license implications. Cross-family majority: demoted to marginal (1/3 votes: gpt-oss=irrelevant, llama=irrelevant)."
   },
   "5149077": {
    "label": "irrelevant",
