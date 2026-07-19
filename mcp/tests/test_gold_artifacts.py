@@ -51,3 +51,9 @@ def test_every_query_has_some_relevant(labels):
     # A query with zero relevant edges can't be scored by gold-recall; if this
     # legitimately happens, it must be an explicit, documented exclusion.
     assert not starved, f"queries with no relevant edges: {starved}"
+
+
+def test_pr3_floor_is_pinned():
+    text = (GOLD / "README.md").read_text()
+    assert "PR 3 (#36) acceptance floor" in text
+    assert "[M" not in text, "floor still has unfilled placeholders"
