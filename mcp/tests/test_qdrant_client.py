@@ -210,3 +210,126 @@ async def test_search_drops_chunks_with_no_recoverable_text():
 
     assert len(results) == 1
     assert results[0]["id"] == "good"
+
+
+# --- chunk_text surface (consumer-local materialize/index/status) --------
+
+
+def _collection_info(payload_schema: dict, status: str = "green") -> dict:
+    return {"result": {"status": status, "payload_schema": payload_schema}}
+
+
+@pytest.mark.asyncio
+async def test_chunk_text_status_ready_building_absent():
+    state = {"schema": {}, "status": "green"}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/collections/technology":
+            return httpx.Response(200, json=_collection_info(state["schema"], state["status"]))
+        raise AssertionError(request.url.path)
+
+    c = QdrantSearchClient("http://q", "technology", transport=httpx.MockTransport(handler))
+    assert await c.chunk_text_status() == "absent"
+    state["schema"] = {"chunk_text": {"data_type": "text", "points": 10}}
+    state["status"] = "yellow"
+    assert await c.chunk_text_status() == "building"
+    state["status"] = "green"
+    assert await c.chunk_text_status() == "ready"
+    await c.close()
+
+
+@pytest.mark.asyncio
+async def test_chunk_text_status_unavailable_on_error():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500, text="boom")
+
+    c = QdrantSearchClient("http://q", "technology", transport=httpx.MockTransport(handler))
+    assert await c.chunk_text_status() == "unavailable"
+    await c.close()
+
+
+@pytest.mark.asyncio
+async def test_materialize_writes_extracted_prose_in_batches():
+    calls = {"scroll": 0, "payload": []}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        if request.url.path.endswith("/points/scroll"):
+            calls["scroll"] += 1
+            if calls["scroll"] == 1:
+                return httpx.Response(
+                    200,
+                    json={
+                        "result": {
+                            "points": [
+                                {
+                                    "id": 1,
+                                    "payload": {"_node_content": json.dumps({"text": "prose one"})},
+                                },
+                                {"id": 2, "payload": {"_node_content": json.dumps({"text": ""})}},
+                                {"id": 3, "payload": {"text": "direct"}},
+                            ],
+                            "next_page_offset": None,
+                        }
+                    },
+                )
+            raise AssertionError("second scroll after next_page_offset=None")
+        if request.url.path.endswith("/points/payload"):
+            calls["payload"].append(body)
+            return httpx.Response(200, json={"result": {}, "status": "ok"})
+        raise AssertionError(request.url.path)
+
+    c = QdrantSearchClient("http://q", "technology", transport=httpx.MockTransport(handler))
+    n = await c.materialize_chunk_text()
+    assert n == 2  # point 2 had no recoverable prose -> skipped
+    # Two distinct texts ("prose one", "direct") -> two set_payload calls,
+    # one per point, covering exactly ids {1} and {3} respectively.
+    assert len(calls["payload"]) == 2
+    by_ids = {
+        tuple(sorted(call["points"])): call["payload"]["chunk_text"] for call in calls["payload"]
+    }
+    assert by_ids == {(1,): "prose one", (3,): "direct"}
+    await c.close()
+
+
+@pytest.mark.asyncio
+async def test_ensure_absent_materializes_creates_index_and_reprobes():
+    seq = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        p = request.url.path
+        seq.append((request.method, p))
+        if p == "/collections/technology" and request.method == "GET":
+            # first probe: absent; final probe: ready
+            schema = (
+                {}
+                if len([s for s in seq if s == ("GET", p)]) == 1
+                else {"chunk_text": {"data_type": "text"}}
+            )
+            return httpx.Response(200, json=_collection_info(schema))
+        if p.endswith("/points/scroll"):
+            return httpx.Response(200, json={"result": {"points": [], "next_page_offset": None}})
+        if p.endswith("/index"):
+            return httpx.Response(200, json={"result": {}, "status": "ok"})
+        raise AssertionError(p)
+
+    c = QdrantSearchClient("http://q", "technology", transport=httpx.MockTransport(handler))
+    assert await c.ensure_chunk_text() == "ready"
+    assert ("PUT", "/collections/technology/index") in seq
+    await c.close()
+
+
+@pytest.mark.asyncio
+async def test_search_match_text_adds_filter_and_plain_search_does_not():
+    bodies = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        bodies.append(json.loads(request.content))
+        return httpx.Response(200, json={"result": []})
+
+    c = QdrantSearchClient("http://q", "technology", transport=httpx.MockTransport(handler))
+    await c.search([0.0] * 3, limit=5)
+    await c.search([0.0] * 3, limit=5, match_text="cmdb_rel_ci")
+    assert "filter" not in bodies[0]
+    assert bodies[1]["filter"]["must"][0] == {"key": "chunk_text", "match": {"text": "cmdb_rel_ci"}}
+    await c.close()
