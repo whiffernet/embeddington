@@ -182,6 +182,9 @@ All seven keys are **always present** — even when this concept's expansion fai
 
 ### `node` (kg_neighbors / kg_path `nodes[]` and `match.nodes[]`)
 
+`kg_path` nodes[] do not carry `updated_at` (out of scope for #46) — the
+block below reflects `kg_neighbors`/`match.nodes[]`.
+
 ```jsonc
 {
   "id": "entities_v2/role__sn_ti.read",

@@ -273,9 +273,8 @@ def test_neighbors_projects_updated_at_on_nodes_and_edges(kg_client):
     )
     out = kg_client.neighbors("entities_v2/a")
     aql = kg_client._db.aql.execute.call_args[0][0]
-    # Each field appears twice per projection (key + accessor, e.g.
-    # "updated_at: v.updated_at"), so 2 projections -> 4 raw occurrences.
-    assert aql.count("updated_at") == 4  # vertex + edge projections
+    assert "updated_at: v.updated_at" in aql  # vertex projection
+    assert "updated_at: e.updated_at" in aql  # edge projection
     assert out["nodes"][0]["updated_at"] == "2026-06-04T00:00:00Z"
     assert out["edges"][0]["updated_at"] is None
 
@@ -310,7 +309,6 @@ def test_neighbors_stratified_projects_updated_at(kg_client):
     )
     out = kg_client.neighbors_stratified("entities_v2/a")
     aql = kg_client._db.aql.execute.call_args[0][0]
-    # Each field appears twice per projection (key + accessor); see the note
-    # in test_neighbors_projects_updated_at_on_nodes_and_edges above.
-    assert aql.count("updated_at") == 4
+    assert "updated_at: v.updated_at" in aql  # vertex projection
+    assert "updated_at: e.updated_at" in aql  # edge projection
     assert out["edges"][0]["updated_at"] == "2026-07-01T00:00:00Z"
