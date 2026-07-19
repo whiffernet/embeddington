@@ -13,6 +13,7 @@ of the published baseline/diff snapshots.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from typing import Any, Optional
@@ -280,6 +281,14 @@ class QdrantSearchClient:
         ("building"/"unavailable") are returned, not raised — the caller
         skips the lexical lane and says so in the envelope.
 
+        Qdrant's index-create PUT acks in milliseconds but its
+        payload_schema registration lands a beat later — an immediate
+        re-probe right after a successful create can still read "absent"
+        even though the create genuinely succeeded. To avoid reporting that
+        false negative (and the wasteful re-materialize it would trigger on
+        the next `ensure_chunk_text` call), the post-create probe is
+        retried briefly until the status moves off "absent".
+
         Args:
             materialize_batch: Scroll page size passed to
                 `materialize_chunk_text` when materialization is needed.
@@ -296,7 +305,12 @@ class QdrantSearchClient:
             n = await self.materialize_chunk_text(batch=materialize_batch)
             logger.info("chunk_text materialized on %s points", n)
             await self.create_chunk_text_index()
-            status = await self.chunk_text_status()
+            for attempt in range(5):
+                status = await self.chunk_text_status()
+                if status != "absent":
+                    break
+                if attempt < 4:
+                    await asyncio.sleep(0.5)
         return status
 
     async def close(self) -> None:

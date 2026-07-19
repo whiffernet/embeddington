@@ -321,6 +321,51 @@ async def test_ensure_absent_materializes_creates_index_and_reprobes():
 
 
 @pytest.mark.asyncio
+async def test_ensure_post_create_reprobe_polls_past_registration_race(monkeypatch):
+    """Qdrant's index-create PUT acks (~7ms, live-observed) before its
+    payload_schema registration lands a beat later — a re-probe run
+    immediately after a successful create can still read "absent". Without
+    polling, ensure_chunk_text would wrongly report "absent" right after a
+    successful materialize+create, and the next ensure call would trigger a
+    wasteful re-materialize (live-validation defect, issue #38)."""
+    import qdrant_client as qc_mod
+
+    sleep_calls = []
+
+    async def fake_sleep(seconds):
+        sleep_calls.append(seconds)
+
+    monkeypatch.setattr(qc_mod.asyncio, "sleep", fake_sleep)
+
+    state = {"created": False}
+    post_create_probes: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        p = request.url.path
+        if p == "/collections/technology" and request.method == "GET":
+            if not state["created"]:
+                return httpx.Response(200, json=_collection_info({}))  # initial probe: absent
+            post_create_probes.append(1)
+            if len(post_create_probes) == 1:
+                return httpx.Response(200, json=_collection_info({}))  # absent once
+            return httpx.Response(
+                200, json=_collection_info({"chunk_text": {"data_type": "text"}})
+            )  # then ready
+        if p.endswith("/points/scroll"):
+            return httpx.Response(200, json={"result": {"points": [], "next_page_offset": None}})
+        if p.endswith("/index"):
+            state["created"] = True
+            return httpx.Response(200, json={"result": {}, "status": "ok"})
+        raise AssertionError(p)
+
+    c = QdrantSearchClient("http://q", "technology", transport=httpx.MockTransport(handler))
+    assert await c.ensure_chunk_text() == "ready"
+    assert len(post_create_probes) == 2
+    assert sleep_calls == [0.5]  # exactly one sleep, between the two post-create probes
+    await c.close()
+
+
+@pytest.mark.asyncio
 async def test_search_match_text_adds_filter_and_plain_search_does_not():
     bodies = []
 

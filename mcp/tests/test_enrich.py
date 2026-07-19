@@ -678,6 +678,37 @@ async def test_vector_side_lexical_lane_merges_identifier_hits():
 
 
 @pytest.mark.asyncio
+async def test_vector_side_lexical_lane_postfilters_to_literal_token():
+    """Qdrant's word tokenizer splits identifiers on underscores/punctuation,
+    so MatchText("cmdb_rel_ci") admits any chunk containing the scattered
+    subtokens {cmdb, rel, ci} anywhere — not just chunks with the literal
+    identifier (live-validation defect, issue #38: 5/5 real smoke hits
+    lacked the literal token). The lexical lane must post-filter each hit
+    down to chunks whose text contains the literal token (case-insensitive)
+    before fusion, and over-fetch (limit=top_k*2) to give that filtering
+    some headroom."""
+    calls = []
+
+    class Q:
+        async def search(self, vector, limit, match_text=None):
+            calls.append((match_text, limit))
+            if match_text == "cmdb_rel_ci":
+                return [
+                    {"id": "literal", "score": 0.5, "text": "the cmdb_rel_ci table stores rows"},
+                    {"id": "scattered", "score": 0.5, "text": "the cmdb and rel and ci tables"},
+                ]
+            return [{"id": "dense", "score": 0.9, "text": "dense"}]
+
+    res = await enrich_mod._vector_side(
+        "What does the cmdb_rel_ci table store?", 5, GoodEmbed(), Q(), lexical_ready=True
+    )
+    ids = [c["id"] for c in res["chunks"]]
+    assert "literal" in ids
+    assert "scattered" not in ids  # scattered-subtoken match dropped by the postfilter
+    assert ("cmdb_rel_ci", 10) in calls  # lexical lane over-fetches at top_k*2 = 5*2
+
+
+@pytest.mark.asyncio
 async def test_vector_side_lexical_skipped_when_not_ready():
     calls = []
 
@@ -724,7 +755,9 @@ async def test_vector_side_threshold_applies_only_to_dense_lane_pre_merge():
     class Q:
         async def search(self, vector, limit, match_text=None):
             if match_text == "cmdb_rel_ci":
-                return [{"id": "lex", "score": 0.1, "text": "lex doc"}]
+                # Postfilter to literal token (defect 1 fix) — text must
+                # contain "cmdb_rel_ci" verbatim to survive into the lane.
+                return [{"id": "lex", "score": 0.1, "text": "cmdb_rel_ci lex doc"}]
             return [
                 {"id": "hi", "score": 0.8, "text": "hi"},
                 {"id": "lo", "score": 0.1, "text": "lo"},
@@ -753,7 +786,11 @@ async def test_vector_side_fused_result_capped_at_top_k():
     class Q:
         async def search(self, vector, limit, match_text=None):
             if match_text == "cmdb_rel_ci":
-                return [{"id": f"lex{i}", "score": 0.9, "text": f"lex{i}"} for i in range(3)]
+                # Postfilter to literal token (defect 1 fix) — text must
+                # contain "cmdb_rel_ci" verbatim to survive into the lane.
+                return [
+                    {"id": f"lex{i}", "score": 0.9, "text": f"cmdb_rel_ci lex{i}"} for i in range(3)
+                ]
             return [{"id": f"dense{i}", "score": 0.9, "text": f"dense{i}"} for i in range(3)]
 
     res = await enrich_mod._vector_side(

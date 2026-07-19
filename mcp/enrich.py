@@ -188,8 +188,11 @@ async def enrich(
     The vector half is hybrid (spec §5 PR 4, issue #38): the dense lane is
     filtered by `score_threshold`, then merged via reciprocal-rank fusion
     with a lexical MatchText lane per identifier-like token in the query
-    (only when `lexical_ready`). When identifier tokens are found but the
-    lexical lane is not active, a `warnings` entry says so explicitly.
+    (only when `lexical_ready`). Qdrant's word tokenizer splits identifiers
+    on underscores/punctuation, so each lexical lane is post-filtered down
+    to chunks containing the literal token before fusion (see `_vector_side`).
+    When identifier tokens are found but the lexical lane is not active, a
+    `warnings` entry says so explicitly.
 
     Args:
         query: User's natural-language question.
@@ -340,10 +343,17 @@ async def _vector_side(
     `score_threshold` (weak chunks dropped, never padded back in — issue
     #38/#47) before fusion. When `lexical_ready`, one lexical MatchText lane
     runs per identifier-like token found in the query (spec §5 PR 4 —
-    ``hybrid.extract_identifier_tokens``); all lanes are merged by
-    reciprocal-rank fusion (``hybrid.rrf_merge``) and capped to `top_k`. A
-    lexical lane that raises is logged and dropped (not propagated) — the
-    fused result still reflects any lanes that did succeed.
+    ``hybrid.extract_identifier_tokens``); Qdrant's word tokenizer indexes
+    ``chunk_text`` on subtokens split at underscores/punctuation, so a
+    MatchText search for "cmdb_rel_ci" actually matches any chunk containing
+    {cmdb, rel, ci} anywhere (all-subtokens-AND, not the literal identifier)
+    — each lane over-fetches at ``limit=top_k*2`` and is post-filtered to
+    chunks whose text contains the literal token case-insensitively before
+    fusion, to give the shrinkage from filtering some headroom. All
+    surviving lanes are merged by reciprocal-rank fusion (``hybrid.rrf_merge``)
+    and capped to `top_k`. A lexical lane that raises is logged and dropped
+    (not propagated) — the fused result still reflects any lanes that did
+    succeed.
 
     Args:
         query: Raw query text to embed.
@@ -390,7 +400,8 @@ async def _vector_side(
         active = True
         for tok in tokens:
             try:
-                lex_lanes.append(await qdrant.search(vector=vector, limit=top_k, match_text=tok))
+                lane = await qdrant.search(vector=vector, limit=top_k * 2, match_text=tok)
+                lex_lanes.append([c for c in lane if tok in str(c.get("text", "")).lower()])
             except Exception as exc:  # noqa: BLE001 — a lexical lane degrades, never fails enrich
                 logger.warning("lexical lane failed for token %r: %s", tok, exc)
                 active = False
