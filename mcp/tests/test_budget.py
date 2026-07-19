@@ -365,12 +365,28 @@ class TestSelectEdgesRelevance:
         assert select_edges(edges, 2, relevance=None) == legacy
         assert select_edges(edges, 2, relevance=None, diversity_quota=1) == legacy
 
-    def test_fill_ranks_by_relevance_not_confidence(self):
-        # High-confidence edge loses to high-relevance edge in the fill phase.
+    def test_quota_pick_ranks_by_relevance_not_confidence(self):
+        # High-confidence edge loses to high-relevance edge in the quota phase.
         edges = [_redge("hi_conf", "P1", 0.99), _redge("hi_rel", "P1", 0.10)]
         rel = {"hi_rel": 0.95, "hi_conf": 0.05}
         kept = select_edges(edges, 1, relevance=rel, diversity_quota=1)
         assert [e["id"] for e in kept] == ["hi_rel"]
+
+    def test_quota_picks_come_first_in_rank_order_then_fill(self):
+        # 3 predicates, quota=2: pins the FULL ordered output — quota picks
+        # (best edge per predicate, in rank order across predicates) first,
+        # fill picks (remaining edges, in rank order) after. This is the
+        # property the ceiling trim's tail-pop depends on: it must sacrifice
+        # diversity last, so quota picks can never trail fill picks.
+        edges = [
+            _redge("p1a", "P1"),
+            _redge("p1b", "P1"),
+            _redge("p2a", "P2"),
+            _redge("p3a", "P3"),
+        ]
+        rel = {"p1a": 0.9, "p2a": 0.8, "p1b": 0.5, "p3a": 0.3}
+        kept = select_edges(edges, 4, relevance=rel, diversity_quota=2)
+        assert [e["id"] for e in kept] == ["p1a", "p2a", "p1b", "p3a"]
 
     def test_quota_preserves_minority_predicate(self):
         # 3 highly-relevant P1 edges would fill slots=3; quota must save P2's best.
