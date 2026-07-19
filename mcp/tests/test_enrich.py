@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from arango_client import ArangoError
-from enrich import _extract_entity_hints, enrich
+from enrich import _extract_entity_hints, _kg_fetch, _kg_select, _kg_side, enrich
 
 
 def _entity(eid, name, etype="Feature", degree=10):
@@ -283,6 +283,48 @@ async def test_enrich_no_hints_uses_regex_fallback():
     called_with = [call.args[0] for call in arango.find_entities.call_args_list]
     assert "Workflow Studio" in called_with
     assert "PAD" in called_with
+
+
+def test_kg_fetch_plus_select_equals_kg_side():
+    """`_kg_side` must remain exactly `_kg_select(_kg_fetch(...))` composed —
+    the seam the relevance-injection task (PR 3 task 4) will split apart."""
+
+    class FakeArango:
+        def find_entities(self, text, limit=3):
+            return [{"id": "entities_v2/a", "name": text, "type": "t", "degree": 4}]
+
+        def neighbors_stratified(self, eid, per_predicate, overall, predicates):
+            return {
+                "nodes": [{"id": "entities_v2/a"}, {"id": "entities_v2/b"}],
+                "edges": [
+                    {
+                        "id": "e1",
+                        "source": "entities_v2/a",
+                        "target": "entities_v2/b",
+                        "predicate": "P1",
+                        "confidence": 0.9,
+                        "source_quote": "q1",
+                    },
+                    {
+                        "id": "e2",
+                        "source": "entities_v2/a",
+                        "target": "entities_v2/b",
+                        "predicate": "P2",
+                        "confidence": 0.8,
+                        "source_quote": "q2",
+                    },
+                ],
+                "fetched": 2,
+            }
+
+        def count_edges(self, eid, predicates=None):
+            return 2
+
+    fa = FakeArango()
+    legacy = _kg_side(["CMDB"], fa, 10, None)
+    fetched = _kg_fetch(["CMDB"], fa, 10, None)
+    recomposed = _kg_select(fetched, relevance=None, diversity_quota_fraction=0.25)
+    assert recomposed == legacy
 
 
 # --- _extract_entity_hints regex-fallback unit tests ----------------------
