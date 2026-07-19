@@ -401,6 +401,13 @@ Both query styles work out of the box: graph traversal (`kg_find_entities`, `kg_
 collection was built with, so a query lands in the exact vector space of the data. No
 outside embedding API. The `.mcp.json` already points `EMBED_URL` at it.
 
+Vector retrieval is hybrid: a dense (cosine) lane is fused with a lexical lane for
+identifier-style tokens (`cmdb_rel_ci`, `com.snc.discovery`), so table/field/plugin names
+hit their exact chunks instead of getting buried in prose matches. Weak dense matches are
+dropped rather than padded in, so `vector_search` and `enrich` can honestly return fewer
+results than you asked for when nothing clears the relevance floor — see `mcp/README.md`
+and `mcp/RESPONSE_SHAPES.md` for the details.
+
 ---
 
 ## Take 'er for a spin (example prompts)
@@ -494,6 +501,11 @@ vector count over `baseline-2026-06`, and the disk figures moved with it.
   cleanly at the next diff. An interrupted baseline download restarts that one asset from
   zero (it streams to disk, so it won't eat your RAM doing it). This aggression toward data
   loss will not stand.
+- A full baseline restore also warms the MCP server's lexical search index (`chunk_text`)
+  as part of the import, so hybrid retrieval is ready the moment the restore finishes rather
+  than on your first query. It prints its own status line (`chunk_text index: ready`); if
+  you ever restore a Qdrant snapshot by hand outside `embeddington-consume`, re-run it
+  standalone with `embeddington-consume ensure-index`.
 
 ## Configuration
 

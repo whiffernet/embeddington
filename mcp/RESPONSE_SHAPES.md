@@ -38,6 +38,25 @@ guard for missing keys).
 
 ---
 
+> ### ⚠️ Behavioral change (v0.7.0)
+>
+> Vector retrieval (`vector_search`'s `results` and `enrich`'s
+> `vector_chunks`) is now **hybrid**: a dense (cosine) lane is merged via
+> reciprocal-rank fusion with a lexical lane per identifier-like token found
+> in the query (`cmdb_rel_ci`, `com.snc.discovery`), so identifier-heavy
+> queries hit their literal chunks instead of getting drowned out by prose.
+> The dense lane is also filtered to a minimum-score floor
+> (`EMBEDDINGTON_SCORE_THRESHOLD`, default `0.50`) before fusion — weak
+> chunks are **dropped, not padded back in**, so both `results` and
+> `vector_chunks` can legitimately come back with **fewer** entries than the
+> requested `limit`/`top_k`. Measured: a nonsense-query probe that used to
+> pad out to 5 chunks at threshold `0.0` returns **0** at the shipped `0.50`
+> (`mcp/tests/gold/PR4-EVIDENCE.md`). Treat a short result list as normal,
+> not as an error to retry. See "Hybrid vector retrieval" below for the
+> mechanics and the `chunk_text` index lifecycle.
+
+---
+
 ## Tools → top-level envelopes
 
 | Tool                                                                 | Success envelope                                                                                                      |
@@ -264,6 +283,71 @@ embeddington bounds responses by:
 - `kg_neighbors`/`kg_path` row counts capped by `limit` (default 100 / max 500 for neighbors). Don't raise `limit` on dense hub entities without `types` filtering.
 - `enrich`, since v0.3.0, caps `top_k` (vector chunks, 1–50, default **5**, was 10) and `edge_budget` (KG edges **total across the whole response**, 1–200, default **40**, was ~100 _per matched entity_ uncapped in aggregate). The budget is allocated across matched concepts with relevance weighting and a per-concept floor; see the behavioral-change callout at the top of this doc. The default of 40 is the sweep knee (`mcp/tests/battery_results/2026-07-17-sweep.md`): under the response ceiling, edge delivery rises with `edge_budget` and then **plateaus** at `edge_budget≈40` (~28 edges delivered whether you ask for 40 or 120 — the ceiling trim caps the total, dropping the lowest-value edges and their now-orphan nodes explicitly). Raising `edge_budget` past ~40 mainly adds latency, not edges — and measurably dilutes query relevance (retention 0.282→0.200 as edge_budget went 40→120 at top_k=3); for maximal KG grounding prefer lowering `top_k` (to 3), which cedes more of the shared ceiling to KG edges.
 - A server-side response-token ceiling (`EMBEDDINGTON_MAX_RESPONSE_TOKENS`, default `12000` estimated tokens at ~3 chars/token — deliberately pessimistic) trims the _whole_ `enrich` response deterministically (KG edges from the largest match first, then vector chunks, always respecting per-concept floors) if it's still too large after budgeting. This is server config, not a tool parameter — callers cannot raise `edge_budget` past what the ceiling allows.
+
+---
+
+## Hybrid vector retrieval & the `chunk_text` lexical index (v0.7.0)
+
+Every vector call — `vector_search`, and `enrich`'s vector half — runs two
+lanes and fuses them by reciprocal-rank fusion (RRF), spec §5 PR 4 / issue
+#38:
+
+- **Dense lane** — cosine search against the collection's embeddings,
+  over-fetched (`max(limit*2, 10)` for `vector_search`, `max(top_k*2, 10)`
+  for `enrich`), then filtered to `EMBEDDINGTON_SCORE_THRESHOLD` (default
+  `0.50`) before fusion. Weak chunks are dropped, never padded back in to
+  hit `limit`/`top_k` — see the behavioral-change callout above.
+- **Lexical lane** — one MatchText search per identifier-like token
+  (snake_case or dotted, e.g. `cmdb_rel_ci`, `com.snc.discovery`, capped at
+  3 tokens) extracted from the query, against a consumer-local `chunk_text`
+  full-text field. Qdrant's word tokenizer splits on underscores/punctuation,
+  so the raw MatchText hit is subtoken-AND, not literal — the lane
+  post-filters to chunks containing the literal token (case-insensitive)
+  before fusion, and over-fetches to `max(limit*2, 25)` / `max(top_k*2, 25)`:
+  common-subtoken identifiers (`pm_project` → `{pm, project}`) can push a
+  literal-token chunk as deep as rank 14–23 in the subtoken-filtered lane, so
+  a shallower fetch would post-filter to empty. A lexical lane only runs
+  when the `chunk_text` index is `"ready"`; a lane that raises is logged and
+  dropped (never propagated) — the fused result still reflects whichever
+  lanes did succeed. Live-validated: the identifier query cohort gets a
+  literal-match chunk in its fused top-5 4/4 (`PR4-EVIDENCE.md`).
+
+**This envelope does NOT carry a `lexical` key.** Internally, the vector
+fan-out returns `{chunks, error, vector, lexical: {tokens, active}}` from a
+private helper (`enrich.py::_vector_side`) — but only `chunks`/`error` reach
+the tool response, as `vector_chunks`/`errors.qdrant` for `enrich` and
+`results`/`error` for `vector_search`. `lexical.tokens`/`lexical.active` are
+consumed server-side (to decide whether to emit the degradation warning
+below) and never appear in the JSON either tool returns — don't code against
+a `lexical` field in the response.
+
+**`chunk_text` index lifecycle:** the field and its full-text index live on
+the consumer's own Qdrant collection — never part of the published
+baseline/diff snapshots. The server ensures it at every start (materializing
+prose into `chunk_text` and building the index if either is missing) and,
+if it isn't `"ready"` yet, lazily re-checks at most once per 60s per process
+on `enrich`/`vector_search` calls — this self-heals after a baseline
+restore, which recreates the collection and always drops both the field and
+the index. States that matter to a caller:
+
+- **`"ready"`** — the lexical lane runs normally.
+- **`"building"` / `"absent"`** (materialized-but-indexing, or missing
+  entirely) — the lexical lane is skipped for that call (dense-lane-only
+  result), and, **only if the query itself contained identifier tokens**,
+  `warnings` gets the exact string
+  `"lexical lane degraded — chunk_text index not ready"`. A query with no
+  identifier tokens degrades silently — there was nothing for the lexical
+  lane to have contributed either way.
+- **`"unavailable"`** — the startup ensure itself failed (e.g. Qdrant
+  unreachable); same degraded (skip + conditional warning) behavior as
+  above.
+
+A first-ever `ensure` on a fresh restore materializes the whole corpus
+(measured: 152,191/152,194 points in ~3m30s on the reference stack — 3
+no-prose points are excluded by design). Baseline imports pay this cost
+during the restore itself, via the standalone `embeddington-consume
+ensure-index` warm-up, so the first live tool call after an install or
+re-baseline doesn't block on it.
 
 ---
 

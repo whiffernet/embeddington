@@ -251,7 +251,9 @@ async def enrich(
             "Pass these whenever possible; falls back to regex if None."
         ),
     ] = None,
-    top_k: Annotated[int, Field(ge=1, le=50, description="Vector chunks to return.")] = 5,
+    top_k: Annotated[
+        int, Field(ge=1, le=50, description="Max vector chunks to return (may return fewer).")
+    ] = 5,
     edge_budget: Annotated[
         int,
         Field(
@@ -304,10 +306,19 @@ async def enrich(
     latency without adding delivered edges. For stronger KG grounding
     prefer LOWERING top_k rather than raising edge_budget.
 
+    The vector half (`vector_chunks`) is hybrid: a dense lane is filtered by
+    the server-configured score threshold and, when the lexical chunk_text
+    index is ready, fused via reciprocal-rank fusion with a lexical
+    MatchText lane per identifier-like token found in the query. Weak
+    matches are dropped rather than padded back in, so `vector_chunks` MAY
+    number fewer than `top_k`.
+
     Args:
         query: The user's natural-language question.
         entity_hints: Entity names pre-extracted by Claude from the query.
-        top_k: Number of vector chunks to return (1-50).
+        top_k: Maximum number of vector chunks to return (1-50); the actual
+            count may be lower once the score threshold and dedup are
+            applied.
         edge_budget: Total KG edge slots to split across matched concepts
             (1-200, default 40).
         predicates: Optional relationship predicate filter. Unknown
