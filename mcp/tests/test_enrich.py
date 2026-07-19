@@ -694,7 +694,10 @@ async def test_vector_side_lexical_lane_postfilters_to_literal_token():
             calls.append((match_text, limit))
             if match_text == "cmdb_rel_ci":
                 return [
-                    {"id": "literal", "score": 0.5, "text": "the cmdb_rel_ci table stores rows"},
+                    # Mixed case pins the postfilter's case-insensitivity —
+                    # an all-lowercase fixture would pass even if the `.lower()`
+                    # on the text side were dropped.
+                    {"id": "literal", "score": 0.5, "text": "the CMDB_Rel_CI table stores rows"},
                     {"id": "scattered", "score": 0.5, "text": "the cmdb and rel and ci tables"},
                 ]
             return [{"id": "dense", "score": 0.9, "text": "dense"}]
