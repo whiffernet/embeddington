@@ -62,4 +62,4 @@ MAX_RESPONSE_TOKENS = int(os.environ.get("EMBEDDINGTON_MAX_RESPONSE_TOKENS", "12
 # quota during relevance-injected selection (spec §5 PR 3). enrich.py stays
 # config-free (like max_response_tokens) — this is wired at the server.py
 # call site, not imported by enrich.py itself.
-DIVERSITY_QUOTA_FRACTION = float(os.environ.get("EMBEDDINGTON_DIVERSITY_QUOTA", "0.25"))
+DIVERSITY_QUOTA_FRACTION = float(os.environ.get("EMBEDDINGTON_DIVERSITY_QUOTA", "0.40"))

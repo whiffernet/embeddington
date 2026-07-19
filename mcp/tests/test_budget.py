@@ -402,17 +402,29 @@ class TestSelectEdgesRelevance:
         assert "p2a" in ids  # survived via quota
         assert "p1a" in ids  # best edge overall also present
 
-    def test_default_quota_is_quarter_of_slots_min_one(self):
-        # slots=8 -> quota 2: with 3 predicates present, only the 2 best-ranked
-        # predicates get a guaranteed pick; the rest of the 8 fill by relevance.
+    def test_default_quota_is_fraction_of_slots_min_one(self):
+        # slots=8 -> quota = max(1, round(DIVERSITY_QUOTA_FRACTION * slots))
+        #          = max(1, round(0.40 * 8)) = max(1, round(3.2)) = 3.
+        # 4 predicates present (P1 x8 high-relevance, p2a/p3a/p4a descending):
+        # pass 1 (quota) walks all edges in relevance order and takes the
+        # first (highest-relevance) edge of each new predicate — P1's best
+        # edge, then p2a, then p3a — hitting the quota=3 cap before p4a is
+        # ever reached, so p4a never wins a quota slot.
+        # Pass 2 (fill) resumes in the same relevance order for the
+        # remaining 8-3=5 slots: the 7 still-unpicked P1 edges (relevance
+        # 0.9) all outrank p4a (relevance 0.1), so fill drains 5 of them
+        # before reaching p4a — p4a is excluded from the result entirely.
         edges = [_redge(f"p1{i}", "P1", 0.5) for i in range(8)]
-        edges += [_redge("p2a", "P2", 0.5), _redge("p3a", "P3", 0.5)]
+        edges += [_redge("p2a", "P2", 0.5), _redge("p3a", "P3", 0.5), _redge("p4a", "P4", 0.5)]
         rel = {e["id"]: 0.9 if e["predicate"] == "P1" else 0.1 for e in edges}
-        rel["p2a"] = 0.2  # p2 ranks above p3
+        rel["p2a"] = 0.3  # p2 ranks above p3 ranks above p4 (p4a stays at 0.1)
+        rel["p3a"] = 0.2
         kept = select_edges(edges, 8, relevance=rel)
         ids = {e["id"] for e in kept}
         assert "p2a" in ids  # second quota pick
-        assert "p3a" not in ids  # quota exhausted at 2; fill is all-P1 by relevance
+        assert "p3a" in ids  # third quota pick — quota now exhausted at 3
+        assert "p4a" not in ids  # never wins quota or fill (7 P1 edges rank above it)
+        assert sum(1 for i in ids if i.startswith("p1")) == 6  # 1 quota P1 + 5 fill P1
 
     def test_unscored_edges_eligible_not_sunk(self):
         # Unscored edge: no relevance entry. It must (a) win a quota slot for its

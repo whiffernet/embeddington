@@ -169,7 +169,7 @@ def coalesced_confidence(edge: dict) -> float:
     return 0.5 if c is None else float(c)
 
 
-DIVERSITY_QUOTA_FRACTION = 0.25  # tuned by the Task 5 mini-sweep (spec §5 PR 3)
+DIVERSITY_QUOTA_FRACTION = 0.40  # tuned by the Task 5 mini-sweep (spec §5 PR 3)
 
 
 def relevance_rank_key(edge: dict, relevance: dict[str, float]):

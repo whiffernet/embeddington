@@ -165,7 +165,7 @@ async def enrich(
     qdrant_client: _Qdrant,
     arango_client: _Arango,
     max_response_tokens: int = 12000,
-    diversity_quota_fraction: float = 0.25,
+    diversity_quota_fraction: float = 0.40,
 ) -> dict[str, Any]:
     """Budgeted parallel vector search + KG concept expansion (spec §3–5).
 
