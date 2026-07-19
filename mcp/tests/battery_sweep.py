@@ -14,7 +14,8 @@ For every battery query (``battery_queries.QUERIES``) it sweeps
 and records, per combo:
 
   - ``tokens``   — ``budget.estimate_tokens(result)`` (the response-ceiling basis)
-  - ``ms``       — wall-clock latency of the ``enrich`` call
+  - ``ms``       — median wall-clock latency of the ``enrich`` call across
+    ``SWEEP_REPS`` repetitions (``ms_median``/``ms_iqr`` are also kept)
   - ``returned`` — ``budget.returned`` (total KG edges in the response)
   - ``trunc``    — any match truncated OR the vector half pre-clipped
   - ``ret``      — retention (below)
@@ -47,15 +48,26 @@ Ground truth is computed ONCE per query (independent of edge_budget/top_k/dedup
 — those change only how the budget allocates, never which entities the query
 resolves to) and reused across all 30 combos.
 
-Writes ``battery_results/2026-07-17-sweep.md`` (a committed artifact) and prints
-the knee decision to stdout.
+Before the grid runs, the live stack is checked against the frozen gold
+binding (``gold_pools.stack_binding``/``assert_binding``) and hard-fails on
+drift — set ``SWEEP_SKIP_BINDING=1`` to bypass for unit/dev runs (never for a
+committed sweep). ``SWEEP_REPS`` (default 1) controls repeated timing samples
+per combo/query; ``SWEEP_TAG`` (default today's date) names the output files.
+
+Writes ``battery_results/<tag>-sweep.md`` (a committed artifact for the
+default tag), the machine-readable ``battery_results/<tag>-sweep.json``, and
+``battery_results/<tag>-worst-response.json`` (the single largest response by
+estimated tokens, for tokenizer calibration), and prints the knee decision to
+stdout.
 """
 
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import os
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -75,7 +87,9 @@ for _p in (str(_MCP), str(_TESTS)):
 
 import budget as _budget  # noqa: E402
 import config  # noqa: E402
+import gold_pools  # noqa: E402
 import server  # noqa: E402
+import sweep_io  # noqa: E402
 from battery_queries import QUERIES  # noqa: E402
 from embedding_client import EmbeddingClient  # noqa: E402
 from gold_pools import (  # noqa: E402
@@ -96,7 +110,12 @@ SHIPPED = (
     40,
     5,
 )  # (edge_budget, top_k) currently-committed defaults (re-swept on orphan-fixed data)
-RESULTS_PATH = _TESTS / "battery_results" / "2026-07-17-sweep.md"
+
+SWEEP_REPS = int(os.environ.get("SWEEP_REPS", "1"))
+SWEEP_TAG = os.environ.get("SWEEP_TAG") or time.strftime("%Y-%m-%d")
+RESULTS_PATH = _TESTS / "battery_results" / f"{SWEEP_TAG}-sweep.md"
+RESULTS_JSON = _TESTS / "battery_results" / f"{SWEEP_TAG}-sweep.json"
+WORST_JSON = _TESTS / "battery_results" / f"{SWEEP_TAG}-worst-response.json"
 
 # Short column labels for the (wide) per-query tables.
 SHORT = {
@@ -112,6 +131,37 @@ SHORT = {
     "control_predicate_filter": "ctl_pf",
     "control_multifacet_license": "ctl_ml",
 }
+
+CALL_COUNTS: dict[str, int] = {}
+
+
+def _wrap_counting(obj: object, method: str, key: str) -> None:
+    """Wrap a client method so each call increments CALL_COUNTS[key]."""
+    orig = getattr(obj, method)
+    if asyncio.iscoroutinefunction(orig):
+
+        async def aw(*a, **k):
+            CALL_COUNTS[key] = CALL_COUNTS.get(key, 0) + 1
+            return await orig(*a, **k)
+
+        setattr(obj, method, aw)  # type: ignore[method-assign]
+    else:
+
+        def sw(*a, **k):
+            CALL_COUNTS[key] = CALL_COUNTS.get(key, 0) + 1
+            return orig(*a, **k)
+
+        setattr(obj, method, sw)  # type: ignore[method-assign]
+
+
+def _install_counters() -> None:
+    """Instrument the wired server singletons (battery-only monkey wrap)."""
+    _wrap_counting(server._get_embed(), "embed", "embed")
+    _wrap_counting(server._get_qdrant(), "search", "qdrant_search")
+    ar = server._get_arango()
+    _wrap_counting(ar, "find_entities", "arango_find")
+    _wrap_counting(ar, "neighbors_stratified", "arango_stratified")
+    _wrap_counting(ar, "count_edges", "arango_count")
 
 
 async def _embed_texts(embed: EmbeddingClient, texts: list[str]) -> list[list[float]]:
@@ -424,6 +474,13 @@ async def main() -> None:
     )
     arango = server._get_arango()  # sync singleton — safe to reuse across the loop
 
+    if os.environ.get("SWEEP_SKIP_BINDING") != "1":
+        binding = gold_pools.stack_binding(config.QDRANT_URL, arango)
+        gold_pools.assert_binding(binding)  # hard-fail on drift (spec §3.2)
+    else:
+        binding = {"baseline": "UNVERIFIED", "points": 0, "entities": 0, "edges": 0}
+    _install_counters()
+
     print("Building ground truth (once per query)...", file=sys.stderr)
     gts: dict[str, dict] = {}
     for q in QUERIES:
@@ -435,6 +492,7 @@ async def main() -> None:
         )
 
     rows: list[dict] = []
+    worst: dict = {"tokens": -1}
     total = len(DEDUPS) * len(EDGE_BUDGETS) * len(TOP_KS)
     done = 0
     for dedup in DEDUPS:
@@ -446,9 +504,23 @@ async def main() -> None:
             for tk in TOP_KS:
                 combo: dict = {"edge_budget": eb, "top_k": tk, "dedup": dedup, "q": {}}
                 for q in QUERIES:
-                    t0 = time.perf_counter()
-                    res = await _run_enrich(q, eb, tk)
-                    ms = (time.perf_counter() - t0) * 1000.0
+                    ms_all: list[float] = []
+                    calls_before = dict(CALL_COUNTS)
+                    res: dict = {}
+                    for _ in range(SWEEP_REPS):
+                        t0 = time.perf_counter()
+                        res = await _run_enrich(q, eb, tk)
+                        ms_all.append((time.perf_counter() - t0) * 1000.0)
+                    calls = {
+                        k: (CALL_COUNTS.get(k, 0) - calls_before.get(k, 0)) // SWEEP_REPS
+                        for k in (
+                            "embed",
+                            "qdrant_search",
+                            "arango_find",
+                            "arango_stratified",
+                            "arango_count",
+                        )
+                    }
                     gt = gts[q["name"]]
                     kept = _kept_ids(res)
                     kept_preds = _kept_preds(res)
@@ -461,13 +533,23 @@ async def main() -> None:
                     )
                     combo["q"][q["name"]] = {
                         "tokens": _budget.estimate_tokens(res),
-                        "ms": ms,
+                        "ms_all": ms_all,
                         "returned": res["budget"]["returned"],
                         "trunc": _truncated(res),
                         "ret": ret,
                         "pp": pp,
                         "err": res["errors"],
+                        "kept_ids": sorted(kept),
+                        "calls": calls,
                     }
+                    tok = combo["q"][q["name"]]["tokens"]
+                    if tok > worst["tokens"]:
+                        worst = {
+                            "tokens": tok,
+                            "combo": {"eb": eb, "tk": tk, "dedup": dedup},
+                            "query": q["name"],
+                            "response": res,
+                        }
                     if res["errors"]:
                         print(
                             f"  ERROR {dedup} eb={eb} k={tk} {q['name']}: {res['errors']}",
@@ -479,9 +561,33 @@ async def main() -> None:
     os.environ.pop("BUDGET_DISABLE_DEDUP", None)
     await embed.close()
 
+    for c in rows:
+        for name, entry in c["q"].items():
+            entry.update(sweep_io.latency_summary(entry["ms_all"]))
+            entry["ms"] = entry["ms_median"]  # keep _agg/_render's existing key
+
     knee, plateau, threshold = _pick_knee(rows)
     RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)
     RESULTS_PATH.write_text(_render(rows, gts, knee, plateau, threshold), encoding="utf-8")
+
+    git_sha = subprocess.run(
+        ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, cwd=_MCP
+    ).stdout.strip()
+    doc = sweep_io.serialize_run(
+        rows=rows,
+        ground_truth=gts,
+        binding=binding,
+        meta={
+            "git_sha": git_sha,
+            "reps": SWEEP_REPS,
+            "tag": SWEEP_TAG,
+            "grid": {"edge_budgets": EDGE_BUDGETS, "top_ks": TOP_KS, "dedups": DEDUPS},
+        },
+    )
+    RESULTS_JSON.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
+    print(f"wrote {RESULTS_JSON}")
+    WORST_JSON.write_text(json.dumps(worst, indent=1) + "\n", encoding="utf-8")
+    print(f"wrote {WORST_JSON}")
 
     ka = _agg(knee)
     print("\n=== KNEE DECISION ===")
