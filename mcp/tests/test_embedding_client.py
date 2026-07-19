@@ -139,3 +139,125 @@ async def test_embed_batch_bad_dim_raises():
     with pytest.raises(EmbeddingError, match="dim"):
         await client.embed_batch(["a"])
     await client.close()
+
+
+@pytest.mark.asyncio
+async def test_embed_batch_second_call_hits_cache():
+    calls: dict = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        texts = json.loads(request.content)["texts"]
+        return httpx.Response(
+            200, json={"embeddings": [[float(i)] * 1024 for i in range(len(texts))]}
+        )
+
+    client = EmbeddingClient(url="http://test-embed/embed", transport=httpx.MockTransport(handler))
+    vecs1 = await client.embed_batch(["a", "b"])
+    vecs2 = await client.embed_batch(["a", "b"])
+    assert calls["n"] == 1  # handler invoked once
+    assert vecs2 == vecs1
+    await client.close()
+
+
+@pytest.mark.asyncio
+async def test_embed_batch_partial_hit_posts_only_misses():
+    captured: list = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        texts = json.loads(request.content)["texts"]
+        captured.append(texts)
+        return httpx.Response(200, json={"embeddings": [[float(ord(t[0]))] * 1024 for t in texts]})
+
+    client = EmbeddingClient(url="http://test-embed/embed", transport=httpx.MockTransport(handler))
+    await client.embed_batch(["a", "b"])
+    vecs = await client.embed_batch(["b", "c"])
+    assert captured[1] == ["c"]  # only the miss was posted
+    assert [v[0] for v in vecs] == [float(ord("b")), float(ord("c"))]
+    await client.close()
+
+
+@pytest.mark.asyncio
+async def test_embed_batch_cache_disabled_when_zero():
+    calls: dict = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        texts = json.loads(request.content)["texts"]
+        return httpx.Response(
+            200, json={"embeddings": [[float(i)] * 1024 for i in range(len(texts))]}
+        )
+
+    client = EmbeddingClient(
+        url="http://test-embed/embed", transport=httpx.MockTransport(handler), cache_size=0
+    )
+    await client.embed_batch(["a", "b"])
+    await client.embed_batch(["a", "b"])
+    assert calls["n"] == 2  # caching disabled -> two POSTs
+    await client.close()
+
+
+@pytest.mark.asyncio
+async def test_embed_batch_failed_call_not_cached():
+    calls: dict = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return httpx.Response(500, text="boom")
+        texts = json.loads(request.content)["texts"]
+        return httpx.Response(
+            200, json={"embeddings": [[float(i)] * 1024 for i in range(len(texts))]}
+        )
+
+    client = EmbeddingClient(url="http://test-embed/embed", transport=httpx.MockTransport(handler))
+    with pytest.raises(EmbeddingError):
+        await client.embed_batch(["a", "b"])
+    vecs = await client.embed_batch(["a", "b"])
+    assert calls["n"] == 2  # second call re-posted, not served from a poisoned cache
+    assert len(vecs) == 2
+    await client.close()
+
+
+@pytest.mark.asyncio
+async def test_embed_batch_lru_eviction():
+    calls: list = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        texts = json.loads(request.content)["texts"]
+        calls.append(texts)
+        return httpx.Response(200, json={"embeddings": [[float(ord(t[0]))] * 1024 for t in texts]})
+
+    client = EmbeddingClient(
+        url="http://test-embed/embed", transport=httpx.MockTransport(handler), cache_size=2
+    )
+    await client.embed_batch(["a", "b"])
+    await client.embed_batch(["c"])  # evicts "a" (LRU)
+    await client.embed_batch(["a"])  # must re-post
+    assert calls[-1] == ["a"]
+    await client.close()
+
+
+@pytest.mark.asyncio
+async def test_embed_batch_index_partitions_cache():
+    calls: dict = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        texts = json.loads(request.content)["texts"]
+        return httpx.Response(
+            200, json={"embeddings": [[float(i)] * 1024 for i in range(len(texts))]}
+        )
+
+    transport = httpx.MockTransport(handler)
+    client_x = EmbeddingClient(url="http://test-embed/embed", index="x", transport=transport)
+    client_none = EmbeddingClient(url="http://test-embed/embed", index=None, transport=transport)
+
+    await client_x.embed_batch(["shared"])
+    await client_x.embed_batch(["shared"])  # cache hit within client_x
+    await client_none.embed_batch(["shared"])  # different index -> miss
+    await client_none.embed_batch(["shared"])  # cache hit within client_none
+
+    assert calls["n"] == 2  # one POST per client/index
+    await client_x.close()
+    await client_none.close()
