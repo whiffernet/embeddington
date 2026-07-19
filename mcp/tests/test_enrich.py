@@ -1,9 +1,11 @@
 """Tests for the bundled enrich() tool (budgeted concept pipeline)."""
 
+import math
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from arango_client import ArangoError
+from embedding_client import EmbeddingError
 from enrich import _extract_entity_hints, _kg_fetch, _kg_select, _kg_side, enrich
 
 
@@ -45,6 +47,11 @@ def _mock_arango():
 def _mock_vector():
     embedding = AsyncMock()
     embedding.embed = AsyncMock(return_value=[0.1] * 1024)
+    # These fakes predate embed_batch (PR 3 task 4). They exercise pools whose
+    # edges carry source_quote, so relevance scoring WILL be attempted. Route
+    # them through the degradation path so their legacy confidence-order
+    # expectations keep holding.
+    embedding.embed_batch = AsyncMock(side_effect=EmbeddingError("no batch mock"))
     qdrant = AsyncMock()
     qdrant.search = AsyncMock(
         return_value=[
@@ -393,3 +400,224 @@ def test_extract_hints_snake_case_tables():
 def test_extract_hints_snake_case_alongside_capitalized():
     hints = _extract_entity_hints("How does Discovery populate cmdb_rel_ci?")
     assert "Discovery" in hints and "cmdb_rel_ci" in hints
+
+
+# --- Relevance scoring wired into enrich() (PR 3 task 4) -------------------
+
+
+class BatchEmbed:
+    """Fake embedder: query -> [1,0,...]; quotes score by prefab cosine."""
+
+    def __init__(self, quote_vecs=None, fail_batch=False, fail_single=False):
+        self.quote_vecs = quote_vecs or {}
+        self.fail_batch = fail_batch
+        self.fail_single = fail_single
+        self.batch_calls = 0
+
+    async def embed(self, text):
+        if self.fail_single:
+            raise EmbeddingError("down")
+        v = [0.0] * 1024
+        v[0] = 1.0
+        return v
+
+    async def embed_batch(self, texts):
+        self.batch_calls += 1
+        if self.fail_batch:
+            raise EmbeddingError("batch down")
+        out = []
+        for t in texts:
+            # Real cosine similarity, not just a scaled copy of the query axis:
+            # a vector collinear with the query (only dim 0 nonzero) always
+            # scores cosine == sign(value) regardless of magnitude, which
+            # can't differentiate quotes. Build a genuine unit vector whose
+            # angle to the query encodes `value` as its exact cosine:
+            # dim 0 = value (the "on-axis" component), dim 1 fills out the
+            # unit circle so |v| == 1 and cos(query, v) == value exactly.
+            value = self.quote_vecs.get(t, 0.0)
+            v = [0.0] * 1024
+            v[0] = value
+            v[1] = math.sqrt(max(0.0, 1.0 - value * value))
+            out.append(v)
+        return out
+
+
+class OkQdrant:
+    async def search(self, vector, limit):
+        return [{"id": "c1", "text": "chunk"}]
+
+
+class RelArango:
+    """Two edges, same predicate: e_rel has a relevant quote, e_conf high confidence."""
+
+    def find_entities(self, text, limit=3):
+        return [{"id": "entities_v2/a", "name": text, "type": "t", "degree": 2}]
+
+    def neighbors_stratified(self, eid, per_predicate, overall, predicates):
+        return {
+            "nodes": [{"id": "entities_v2/a"}, {"id": "entities_v2/b"}],
+            "edges": [
+                {
+                    "id": "e_conf",
+                    "source": "entities_v2/a",
+                    "target": "entities_v2/b",
+                    "predicate": "P1",
+                    "confidence": 0.99,
+                    "source_quote": "boring quote",
+                },
+                {
+                    "id": "e_rel",
+                    "source": "entities_v2/a",
+                    "target": "entities_v2/b",
+                    "predicate": "P1",
+                    "confidence": 0.10,
+                    "source_quote": "on-point quote",
+                },
+            ],
+            "fetched": 2,
+        }
+
+    def count_edges(self, eid, predicates=None):
+        return 2
+
+
+@pytest.mark.asyncio
+async def test_enrich_selection_follows_relevance():
+    embed = BatchEmbed(quote_vecs={"on-point quote": 0.9, "boring quote": 0.1})
+    res = await enrich(
+        query="q",
+        entity_hints=["A"],
+        top_k=1,
+        edge_budget=1,
+        embedding_client=embed,
+        qdrant_client=OkQdrant(),
+        arango_client=RelArango(),
+    )
+    kept = [e["id"] for m in res["kg_matches"] for e in m["edges"]]
+    assert kept == ["e_rel"]  # relevance beat confidence
+    assert embed.batch_calls == 1  # ONE batch call for all quotes
+
+
+@pytest.mark.asyncio
+async def test_enrich_degrades_to_confidence_when_batch_embed_fails():
+    embed = BatchEmbed(fail_batch=True)
+    res = await enrich(
+        query="q",
+        entity_hints=["A"],
+        top_k=1,
+        edge_budget=1,
+        embedding_client=embed,
+        qdrant_client=OkQdrant(),
+        arango_client=RelArango(),
+    )
+    kept = [e["id"] for m in res["kg_matches"] for e in m["edges"]]
+    assert kept == ["e_conf"]  # legacy confidence order
+    assert any("relevance scoring unavailable" in w for w in res["warnings"])
+    assert res["errors"] == {}  # degradation, not an error
+
+
+@pytest.mark.asyncio
+async def test_enrich_total_embed_failure_still_returns_kg():
+    embed = BatchEmbed(fail_batch=True, fail_single=True)
+    res = await enrich(
+        query="q",
+        entity_hints=["A"],
+        top_k=1,
+        edge_budget=1,
+        embedding_client=embed,
+        qdrant_client=OkQdrant(),
+        arango_client=RelArango(),
+    )
+    # Vector side reports its error; KG side still answers via legacy selection.
+    assert "qdrant" in res["errors"] or "embedding" in str(res["errors"])
+    kept = [e["id"] for m in res["kg_matches"] for e in m["edges"]]
+    assert kept == ["e_conf"]
+
+
+class QuotaPoolArango:
+    """One concept, predicate P1 (2 edges) + predicate P2 (1 edge) — quota-vs-fill
+    selection differs depending on diversity_quota_fraction."""
+
+    def find_entities(self, text, limit=3):
+        return [{"id": "entities_v2/a", "name": text, "type": "t", "degree": 3}]
+
+    def neighbors_stratified(self, eid, per_predicate, overall, predicates):
+        return {
+            "nodes": [
+                {"id": "entities_v2/a"},
+                {"id": "entities_v2/b"},
+                {"id": "entities_v2/c"},
+            ],
+            "edges": [
+                {
+                    "id": "e1",
+                    "source": "entities_v2/a",
+                    "target": "entities_v2/b",
+                    "predicate": "P1",
+                    "confidence": 0.5,
+                    "source_quote": "quote high",
+                },
+                {
+                    "id": "e2",
+                    "source": "entities_v2/a",
+                    "target": "entities_v2/b",
+                    "predicate": "P1",
+                    "confidence": 0.5,
+                    "source_quote": "quote med",
+                },
+                {
+                    "id": "e3",
+                    "source": "entities_v2/a",
+                    "target": "entities_v2/c",
+                    "predicate": "P2",
+                    "confidence": 0.5,
+                    "source_quote": "quote low",
+                },
+            ],
+            "fetched": 3,
+        }
+
+    def count_edges(self, eid, predicates=None):
+        return 3
+
+
+@pytest.mark.asyncio
+async def test_enrich_diversity_quota_fraction_plumbs_through_to_select_edges():
+    """Regression: nothing previously verified diversity_quota_fraction actually
+    flows enrich() -> _kg_select -> select_edges (prior reviewer flag, PR 3 task 4).
+
+    edge_budget=2 -> n_slots=2 for the single concept. quote_vecs give edges a
+    strict relevance ranking e1 > e2 > e3, with P2 (e3) always the worst quote.
+    A wide quota (fraction=1.0 -> quota=2) reserves a slot for P2's diversity
+    pick even though it ranks lowest; a narrow quota (fraction=0.1 -> quota=1,
+    the max(1, ...) floor) fills purely by relevance rank and drops P2.
+    """
+    quote_vecs = {"quote high": 0.9, "quote med": 0.5, "quote low": 0.1}
+
+    res_wide = await enrich(
+        query="q",
+        entity_hints=["A"],
+        top_k=1,
+        edge_budget=2,
+        embedding_client=BatchEmbed(quote_vecs=quote_vecs),
+        qdrant_client=OkQdrant(),
+        arango_client=QuotaPoolArango(),
+        diversity_quota_fraction=1.0,
+    )
+    kept_wide = {e["id"] for m in res_wide["kg_matches"] for e in m["edges"]}
+
+    res_narrow = await enrich(
+        query="q",
+        entity_hints=["A"],
+        top_k=1,
+        edge_budget=2,
+        embedding_client=BatchEmbed(quote_vecs=quote_vecs),
+        qdrant_client=OkQdrant(),
+        arango_client=QuotaPoolArango(),
+        diversity_quota_fraction=0.1,
+    )
+    kept_narrow = {e["id"] for m in res_narrow["kg_matches"] for e in m["edges"]}
+
+    assert kept_wide == {"e1", "e3"}  # full quota keeps the P2 edge despite low relevance
+    assert kept_narrow == {"e1", "e2"}  # minimal quota fills by relevance rank, drops P2
+    assert kept_wide != kept_narrow

@@ -57,3 +57,9 @@ ALLOWED_ARANGO_COLLECTIONS = {
 # Server-side config on purpose: the token cap is the CLIENT's property and
 # LLM callers must not be able to opt out of the guard (spec §4.1).
 MAX_RESPONSE_TOKENS = int(os.environ.get("EMBEDDINGTON_MAX_RESPONSE_TOKENS", "12000"))
+
+# Fraction of each concept's edge slots reserved for the predicate-diversity
+# quota during relevance-injected selection (spec §5 PR 3). enrich.py stays
+# config-free (like max_response_tokens) — this is wired at the server.py
+# call site, not imported by enrich.py itself.
+DIVERSITY_QUOTA_FRACTION = float(os.environ.get("EMBEDDINGTON_DIVERSITY_QUOTA", "0.25"))

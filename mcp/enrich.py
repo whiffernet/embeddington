@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 import re
 from typing import Any, Optional, Protocol
 
@@ -132,6 +133,8 @@ def _extract_entity_hints(query: str) -> list[str]:
 class _Embed(Protocol):
     async def embed(self, text: str) -> list[float]: ...
 
+    async def embed_batch(self, texts: list[str]) -> list[list[float]]: ...
+
 
 class _Qdrant(Protocol):
     async def search(self, vector: list[float], limit: int) -> list[dict]: ...
@@ -162,13 +165,19 @@ async def enrich(
     qdrant_client: _Qdrant,
     arango_client: _Arango,
     max_response_tokens: int = 12000,
+    diversity_quota_fraction: float = 0.25,
 ) -> dict[str, Any]:
-    """Budgeted parallel vector search + KG concept expansion (spec §3–4).
+    """Budgeted parallel vector search + KG concept expansion (spec §3–5).
 
     The KG half dedups matched entities into concepts, expands every variant,
     and selects edges under a response-level budget with predicate diversity.
-    A token-estimate ceiling (server config, not caller-set) trims the whole
-    response — vector chunks included — with per-concept floors.
+    Selection is relevance-injected: quotes from every fetched edge are
+    batch-embedded once and cosine-scored against the query vector, then
+    ranked ahead of raw confidence (spec §5 PR 3). Any embed failure degrades
+    loudly to the legacy confidence-order selection rather than failing the
+    whole call. A token-estimate ceiling (server config, not caller-set)
+    trims the whole response — vector chunks included — with per-concept
+    floors.
 
     Args:
         query: User's natural-language question.
@@ -177,11 +186,15 @@ async def enrich(
         top_k: Number of vector chunks to retrieve.
         edge_budget: Total KG edge slots to split across matched concepts.
         predicates: Optional predicate allowlist to scope KG expansion.
-        embedding_client: Client with async embed() method.
+        embedding_client: Client with async embed() and embed_batch() methods.
         qdrant_client: Client with async search() method.
         arango_client: Client with sync find_entities(), neighbors_stratified(),
             and count_edges() methods.
         max_response_tokens: Token-estimate ceiling for the whole response.
+        diversity_quota_fraction: Fraction of each concept's slots reserved
+            for the predicate-diversity quota when relevance scoring succeeds
+            (server config, wired in via server.py — keeps this module
+            config-free like max_response_tokens).
 
     Returns:
         {vector_chunks, kg_matches, errors, budget, warnings} — all keys
@@ -194,16 +207,47 @@ async def enrich(
 
     vector_task = asyncio.create_task(_vector_side(query, top_k, embedding_client, qdrant_client))
     kg_task = asyncio.create_task(
-        asyncio.to_thread(_kg_side, hints, arango_client, edge_budget, predicates)
+        asyncio.to_thread(_kg_fetch, hints, arango_client, edge_budget, predicates)
     )
-    vector_result, kg_result = await asyncio.gather(vector_task, kg_task)
+    vector_result, kg_fetched = await asyncio.gather(vector_task, kg_task)
 
     errors: dict[str, str] = {}
     if vector_result["error"]:
         errors["qdrant"] = vector_result["error"]
-    if kg_result["error"]:
-        errors["arango"] = kg_result["error"]
-    warnings.extend(kg_result["warnings"])
+    if kg_fetched["error"]:
+        errors["arango"] = kg_fetched["error"]
+    warnings.extend(kg_fetched["warnings"])
+
+    relevance: Optional[dict[str, float]] = None
+    quotes: list[str] = []
+    quote_to_edges: dict[str, list[str]] = {}
+    for item in kg_fetched["prepared"]:
+        for eid, ed in item["pool_edges"].items():
+            sq = ed.get("source_quote")
+            if sq:
+                if sq not in quote_to_edges:
+                    quotes.append(sq)
+                    quote_to_edges[sq] = []
+                quote_to_edges[sq].append(eid)
+    if quotes:
+        try:
+            q_vec = vector_result.get("vector")
+            if q_vec is None:
+                q_vec = await embedding_client.embed(query)
+            quote_vecs = await embedding_client.embed_batch(quotes)
+            relevance = {}
+            for sq, v in zip(quotes, quote_vecs):
+                score = _cosine(q_vec, v)
+                for eid in quote_to_edges[sq]:
+                    relevance[eid] = score
+        except Exception as exc:  # noqa: BLE001 — any embed failure degrades, never fails enrich
+            logger.warning("relevance scoring failed, degrading to confidence order: %s", exc)
+            relevance = None
+            warnings.append(
+                "relevance scoring unavailable — selection degraded to confidence order"
+            )
+
+    kg_result = _kg_select(kg_fetched, relevance, diversity_quota_fraction)
 
     chunks = vector_result["chunks"]
     # Vector half claims at most ~60% of the ceiling up front (spec §4.1).
@@ -264,18 +308,38 @@ async def _vector_side(
         qdrant: Qdrant search client.
 
     Returns:
-        dict with keys chunks (list) and error (str or None).
+        dict with keys chunks (list), error (str or None), and vector
+        (the query embedding, reused by relevance scoring in `enrich`; None
+        only when the embed call itself failed).
     """
     try:
         vector = await embed.embed(query)
         chunks = await qdrant.search(vector=vector, limit=top_k)
-        return {"chunks": chunks, "error": None}
+        return {"chunks": chunks, "error": None, "vector": vector}
     except QdrantError as exc:
         logger.warning("vector side failed: %s", exc)
-        return {"chunks": [], "error": str(exc)}
+        return {"chunks": [], "error": str(exc), "vector": vector}
     except Exception as exc:
         logger.warning("embedding failed: %s", exc)
-        return {"chunks": [], "error": f"embedding: {exc}"}
+        return {"chunks": [], "error": f"embedding: {exc}", "vector": None}
+
+
+def _cosine(a: list[float], b: list[float]) -> float:
+    """Cosine similarity of two equal-length vectors (pure python — no numpy
+    in the mcp runtime deps).
+
+    Args:
+        a: First vector.
+        b: Second vector, same length as `a`.
+
+    Returns:
+        Cosine similarity in [-1, 1]. Zero vectors are treated as norm 1 to
+        avoid a division by zero (yields a score of 0.0, not a crash).
+    """
+    dot = sum(x * y for x, y in zip(a, b))
+    na = math.sqrt(sum(x * x for x in a)) or 1.0
+    nb = math.sqrt(sum(x * x for x in b)) or 1.0
+    return dot / (na * nb)
 
 
 def _kg_fetch(
