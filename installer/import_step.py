@@ -13,7 +13,7 @@ import os
 import urllib.error
 from pathlib import Path
 
-from consumer import release_client, restore_ops, state_paths, updater, writers
+from consumer import lexical_index, release_client, restore_ops, state_paths, updater, writers
 from consumer.fetcher import HttpFetcher
 from embeddington.errors import ChecksumError, EmbeddingtonError
 from installer.errors import SetupError

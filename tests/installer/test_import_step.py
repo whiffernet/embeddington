@@ -90,7 +90,7 @@ def test_updater_exceptions_map_to_emb_codes(raised, expected_code):
     assert exc.value.code == expected_code
 
 
-def test_run_import_passes_ensure_index_to_updater(tmp_path):
+def test_run_import_passes_ensure_index_to_updater(tmp_path, monkeypatch):
     from installer import import_step
 
     captured = {}
@@ -123,6 +123,18 @@ def test_run_import_passes_ensure_index_to_updater(tmp_path):
         update_fn=fake_update,
     )
     assert callable(captured["ensure_index"])
+
+    # Invoke the captured lambda for real (no network): prove it resolves the
+    # `lexical_index` name and passes the production constants, rather than just
+    # being "some callable" that would NameError on first real use.
+    spy_calls = []
+
+    def spy(url, collection):
+        spy_calls.append((url, collection))
+
+    monkeypatch.setattr(import_step.lexical_index, "incremental_chunk_text_index", spy)
+    captured["ensure_index"]()
+    assert spy_calls == [(import_step.QDRANT_URL, import_step.COLLECTION)]
 
 
 def test_run_import_maps_unexpected_store_error_to_emb45(tmp_path):
