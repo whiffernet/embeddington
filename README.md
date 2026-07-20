@@ -247,12 +247,13 @@ so there's nothing to import by hand. This section is about **keeping it current
 Re-running the one-liner on a box that already has embeddington opens a short menu:
 
 - **Update** — the routine path. Pulls the latest, brings your local stack up to the
-  current config, applies data diffs, and keeps the keyword search index complete.
-  Everything it does is safe to run as often as you like; when nothing changed, it's a
-  quick no-op. Your data stays live throughout.
+  current config (re-syncing dependencies only if they changed), applies data diffs, and
+  keeps the keyword search index complete. Everything it does is safe to run as often as
+  you like; when nothing changed, it's a quick no-op. Your data stays live throughout.
 - **Repair** — the bigger hammer. Use it when search returns nothing or a container
-  won't start: it rebuilds the embedder image and re-verifies every step from scratch
-  (can take 10–20 minutes).
+  won't start: it re-verifies every step and rebuilds whatever's broken. If the embedder
+  image needs rebuilding that can take 10–20 minutes; if everything's actually healthy
+  it finishes fast.
 
 The first Update after a big upgrade may do a little one-time work — recreate the local
 database with a memory cap, or build the keyword index (a few minutes on a full graph).
