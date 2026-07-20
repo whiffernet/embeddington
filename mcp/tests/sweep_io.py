@@ -44,6 +44,45 @@ def latency_summary(ms_all: list[float]) -> dict[str, float]:
     return {"ms_median": float(median(ordered)), "ms_iqr": float(q3 - q1)}
 
 
+def render_title(tag: str) -> str:
+    """H1 line for the rendered sweep report, tagged by the run (spec §5, #44 M2).
+
+    Args:
+        tag: The run's ``SWEEP_TAG`` (never a hardcoded date — a stale
+            committed report should not read as a fresh run).
+
+    Returns:
+        The Markdown H1 line.
+    """
+    return f"# Budget tuning sweep — {tag}"
+
+
+def render_knee_verdict(knee_eb: int, knee_tk: int, shipped: tuple[int, int]) -> str:
+    """Knee-vs-shipped verdict paragraph, honest about what the sweep did (#44 M1).
+
+    The sweep only measures and reports — it never edits server.py, enrich.py,
+    or any docs. When the knee differs from the shipped defaults this must
+    read as a RECOMMENDATION ("suggests"), not a false action claim ("default
+    updated"): defaults stay whatever they were before this run.
+
+    Args:
+        knee_eb: The knee's chosen ``edge_budget``.
+        knee_tk: The knee's chosen ``top_k``.
+        shipped: The currently-committed ``(edge_budget, top_k)`` defaults.
+
+    Returns:
+        One Markdown paragraph.
+    """
+    if (knee_eb, knee_tk) == shipped:
+        return f"Matches the shipped defaults {shipped} — no change."
+    return (
+        f"**Differs from the shipped {shipped}** → this sweep suggests "
+        f"`edge_budget={knee_eb}` (top_k stays {knee_tk}); defaults unchanged "
+        f"by this run — apply via a config/docs commit (server.py, enrich.py, "
+        f"RESPONSE_SHAPES.md, CHANGELOG.md) if accepted."
+    )
+
+
 def serialize_run(
     rows: list[dict],
     ground_truth: dict[str, dict],

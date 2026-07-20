@@ -65,6 +65,28 @@ def test_serialize_run_is_json_and_carries_binding():
     assert parsed["ground_truth"]["case2_minimal"]["gt_ids"] == ["e9"]
 
 
+def test_render_title_contains_tag():
+    title = sweep_io.render_title("2026-07-20-pr6-final")
+    assert "2026-07-20-pr6-final" in title
+    assert "2026-07-17" not in title
+
+
+def test_render_title_is_h1():
+    assert sweep_io.render_title("2026-07-20-pr6-final").startswith("# ")
+
+
+def test_render_knee_verdict_differs_suggests_no_action_claim():
+    verdict = sweep_io.render_knee_verdict(20, 5, (40, 5))
+    assert "suggests" in verdict
+    assert "defaults unchanged by this run" in verdict
+    assert "default updated" not in verdict
+
+
+def test_render_knee_verdict_matches_shipped_no_change():
+    verdict = sweep_io.render_knee_verdict(40, 5, (40, 5))
+    assert "no change" in verdict
+
+
 def test_serialize_run_tolerates_already_normalized_entries():
     """entries with ms_median already present and no ms_all pass through unchanged."""
     combo = {
