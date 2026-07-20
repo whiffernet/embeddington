@@ -1,5 +1,44 @@
 # Changelog
 
+## v0.8.0 — 2026-07-20
+
+Closes #47 (empty/weak-retrieval guard: an explicit `grounding` signal so a
+confident-looking `enrich` response can be told apart from one that didn't
+actually find what was asked).
+
+- BEHAVIORAL: `enrich`'s envelope gains a new `grounding` key — `tier`
+  (`"ok"` / `"weak"` / `"none"`) plus `reasons` — classified from the FINAL
+  (post-ceiling-trim) response content by the pure `mcp/grounding.py`
+  classifier, not the pre-trim intermediate. `none` is zero post-threshold
+  chunks AND zero KG edges (both reason constants); `weak` is not-none plus
+  either a query-extracted identifier absent from every chunk/edge quote or
+  exactly one retrieval half empty (reasons name the identifier(s)/empty
+  half); `ok` is otherwise (`reasons: []`). See `mcp/RESPONSE_SHAPES.md`.
+- Guards the issue #47 incident class, reproduced and live-verified in
+  `mcp/tests/gold/PR5-EVIDENCE.md`: "What is the sn_zz_fake_table used for?"
+  returns 5 on-topic chunks and 0 KG edges — a full-looking result — but the
+  asked-for table doesn't exist anywhere in the content. `grounding` now
+  classifies this `weak`, with reasons "identifier(s) sn_zz_fake_table not
+  found in any returned content" and "KG returned nothing for this query",
+  instead of silently handing back a padded-looking envelope. Live gates
+  (battery stack, shipped defaults, warm cache): the nonsense-query probe
+  classifies `none` (0/0 chunks/edges); fixed-11 and the identifier cohort
+  (`pm_project`) stay `ok` (`reasons: []`, no fake identifiers in payload).
+- The `enrich` tool description now instructs callers directly: 'On
+  grounding.tier "none" or "weak", say what was not found rather than
+  answering from prior knowledge — never present an identifier that is not
+  in the returned content.'
+- Regression tests pin the incident class
+  (`test_enrich_grounding_weak_when_asked_identifier_absent`) and that
+  classification happens on what the caller actually receives, not an
+  earlier intermediate (`test_grounding_reflects_post_trim_not_pre_trim_content`
+  — an order-swap mutant fails it).
+- Scope: classification is observation-only — no selection, threshold, or
+  lane behavior changed (diff touches enrich envelope assembly, the
+  classifier module, the tool description, and tests only). `vector_search`
+  is unchanged: no `grounding` key, no warnings channel — recorded follow-up
+  from PR 4's review.
+
 ## v0.7.0 — 2026-07-19
 
 Closes #38 (hybrid vector retrieval: a lexical MatchText lane for

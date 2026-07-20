@@ -146,6 +146,14 @@ return **fewer** results than requested when nothing clears the bar
 `RESPONSE_SHAPES.md` for the exact mechanics, the `chunk_text` index states,
 and the degradation warning string.
 
+`enrich` now also tells you when it found nothing, or didn't find what you
+actually asked about (`v0.8.0`, #47): its response carries a `grounding`
+signal — `tier` of `"ok"`, `"weak"`, or `"none"`, with `reasons` — classified
+from what the response actually contains after all trimming. Trust that over
+a confident-sounding answer: on `"weak"`/`"none"` the tool description tells
+Claude to say what wasn't found rather than answer from prior knowledge. See
+`RESPONSE_SHAPES.md` for the tier table and reason strings.
+
 ## The files in this folder
 
 | File                  | Purpose                                                                                          |
