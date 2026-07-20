@@ -312,3 +312,45 @@ def test_ensure_propagates_materialize_failure(monkeypatch):
 
     with pytest.raises(lexical_index.LexicalIndexError):
         lexical_index.ensure_chunk_text_index("http://q", "technology")
+
+
+# --- incremental_chunk_text_index (orchestration) ---------------------------
+
+
+def test_incremental_materializes_only_empty_points_then_indexes(monkeypatch):
+    # Field already present (a prior baseline made it) but new diff points are missing it.
+    calls = {"scroll": 0, "set_payload": 0, "index_put": 0}
+    state = {"schema": {"chunk_text": {"data_type": "text"}}, "status": "green"}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/collections/technology":
+            return httpx.Response(200, json=_collection_info(state["schema"], state["status"]))
+        if path == "/collections/technology/points/scroll":
+            calls["scroll"] += 1
+            # One page with a single un-indexed point, then no more.
+            if calls["scroll"] == 1:
+                return httpx.Response(
+                    200,
+                    json={
+                        "result": {
+                            "points": [{"id": "p1", "payload": {"text": "hello world"}}],
+                            "next_page_offset": None,
+                        }
+                    },
+                )
+            return httpx.Response(200, json={"result": {"points": [], "next_page_offset": None}})
+        if path == "/collections/technology/points/payload":
+            calls["set_payload"] += 1
+            return httpx.Response(200, json={"result": {}})
+        if path == "/collections/technology/index":
+            calls["index_put"] += 1
+            return httpx.Response(200, json={"result": {}})
+        raise AssertionError(f"unexpected path {path}")
+
+    _mock(monkeypatch, handler)
+    status = lexical_index.incremental_chunk_text_index("http://q", "technology")
+    assert status == "ready"
+    assert calls["scroll"] >= 1
+    assert calls["set_payload"] == 1  # the one is_empty point got backfilled
+    assert calls["index_put"] == 1  # index (re)ensured; 200 or 409 both fine

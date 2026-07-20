@@ -244,3 +244,39 @@ def ensure_chunk_text_index(
             if attempt < 4:
                 time.sleep(0.5)
     return status
+
+
+def incremental_chunk_text_index(
+    url: str, collection: str, batch: int = 256, timeout: float = 30.0
+) -> str:
+    """Keep chunk_text complete after ANY update, not just a baseline restore.
+
+    Unlike ``ensure_chunk_text_index`` (absent-gated: it no-ops once the field
+    exists), this ALWAYS runs ``materialize_chunk_text`` -- whose ``is_empty``
+    filter touches only points still missing ``chunk_text`` -- so points added by
+    incremental diffs get indexed too. Steady-state cost is one empty scroll page.
+    Then it (re-)ensures the full-text index (create is 200/409-tolerant).
+
+    Args:
+        url: Qdrant base URL.
+        collection: Collection to keep indexed.
+        batch: Scroll page size passed to ``materialize_chunk_text``.
+        timeout: Request timeout in seconds.
+
+    Returns:
+        The final ``chunk_text_status()`` value.
+
+    Raises:
+        LexicalIndexError: On transport-level failure of materialize or index-create.
+    """
+    materialize_chunk_text(url, collection, batch=batch, timeout=timeout)
+    create_chunk_text_index(url, collection, timeout=timeout)
+    # Same post-create registration race ensure_chunk_text_index guards: the create
+    # PUT acks a beat before payload_schema reflects it.
+    status = chunk_text_status(url, collection, timeout=timeout)
+    for _ in range(5):
+        if status != "absent":
+            break
+        time.sleep(0.5)
+        status = chunk_text_status(url, collection, timeout=timeout)
+    return status

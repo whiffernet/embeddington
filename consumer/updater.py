@@ -187,6 +187,7 @@ def update(
     *,
     legacy_cursors=(),
     force_baseline=False,
+    ensure_index=None,
 ):
     """Bring the local stores current with the published manifest.
 
@@ -205,6 +206,9 @@ def update(
         force_baseline: Ignore the local cursor entirely and re-restore the baseline. This
             is the ONLY way to recover a corrupted store whose cursor is still intact, so it
             must short-circuit before the cursor is even read.
+        ensure_index: Optional zero-arg callable run once after the stores are brought
+            current (any mode except up_to_date), used to keep the chunk_text lexical
+            index complete. None (default) preserves the pre-existing behavior.
 
     Returns:
         dict {"mode", "applied", "cursor", "baseline", "adopted_from"}.
@@ -287,6 +291,11 @@ def update(
         apply_diff(bundle_mod.read_bundle(dest), qdrant, arango)
         write_cursor(cursor_path, diff["head_sha"])  # advance only after full apply
         applied += 1
+
+    # Keep the lexical index complete for the points we just brought in. up_to_date
+    # returned early above, so this runs only when the stores actually changed.
+    if ensure_index is not None:
+        ensure_index()
 
     return {
         "mode": plan.mode,
