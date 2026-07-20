@@ -18,7 +18,12 @@ sys.path.insert(0, str(_TESTS))
 import gold_metrics  # noqa: E402
 
 GOLD = Path(__file__).resolve().parent
-SHIPPED = {"edge_budget": 40, "top_k": 5, "dedup": "on"}
+SHIPPED = {
+    "edge_budget": 40,
+    "top_k": 5,
+    "dedup": "on",
+}  # historical row selector for the pre-#36 baseline sweep this script scores —
+# not the live default (PR 6/#44 shipped edge_budget=60; see gold/PR6-EVIDENCE.md)
 
 
 def main() -> None:

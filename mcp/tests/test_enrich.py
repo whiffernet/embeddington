@@ -93,6 +93,32 @@ async def test_enrich_envelope_keys_always_present():
 
 
 @pytest.mark.asyncio
+async def test_enrich_default_edge_budget_is_60():
+    """enrich()'s own edge_budget default must match the PR 6 (#44) re-tune.
+
+    Guards against `enrich()`'s module-level default silently drifting from
+    the value wired through `server.py`'s tool signature (see
+    test_tools.test_enrich_tool_defaults_match_tuned_values for the server
+    side of this pin, and mcp/tests/gold/PR6-EVIDENCE.md for the evidence).
+    Calling without edge_budget exercises the real default end-to-end: the
+    envelope's budget.edge_budget echoes whatever was actually used.
+    """
+    embedding, qdrant = _mock_vector()
+    arango = _mock_arango()
+    arango.find_entities = MagicMock(return_value=[_entity("itsm", "ITSM", "Module")])
+    arango.neighbors_stratified = MagicMock(return_value=_stratified([_edge("1", "itsm", "x")]))
+    result = await enrich(
+        query="what is ITSM",
+        entity_hints=["ITSM"],
+        top_k=5,
+        embedding_client=embedding,
+        qdrant_client=qdrant,
+        arango_client=arango,
+    )
+    assert result["budget"]["edge_budget"] == 60
+
+
+@pytest.mark.asyncio
 async def test_enrich_variant_facets_merge_into_one_concept():
     """feature__X + product__X expand as ONE match, edges from BOTH variants."""
     embedding, qdrant = _mock_vector()

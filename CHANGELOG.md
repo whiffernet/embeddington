@@ -1,5 +1,61 @@
 # Changelog
 
+## v0.9.0 — 2026-07-20
+
+Closes #44 (response-ceiling gate re-tune) and delivers issue #37's
+outstanding monotonicity criterion.
+
+- BEHAVIORAL: `enrich`'s `edge_budget` default is now **60** (was 40). Final
+  re-tune sweeps (`mcp/tests/battery_results/2026-07-20-pr6-final-sweep.{md,json}`
+  and the identifier-cohort counterpart, `SWEEP_REPS=5`, both cohorts,
+  v0.8.0 grounding-era envelope) measured mean gold-recall@budget (frozen
+  cross-family labels, `top_k=5`, `dedup=on`) by `edge_budget`: 20→0.186,
+  40→0.268, **60→0.281**, 80→0.248, 120→0.225. 60 is the best measured
+  point (+0.013 over the previous default of 40) and the smallest
+  `edge_budget` at the peak.
+- Issue #37 (`raising edge_budget never decreases mean gold-recall`) is
+  recorded **PARTIALLY MET**: monotone non-decreasing through
+  `edge_budget=60`, then decreasing past it. This is consistent with a
+  ceiling-mediated effect rather than a selection regression — the falloff
+  coincides with `edge_budget` values where the response-ceiling trim is
+  known to engage on essentially every query — but the committed data pins
+  the correlation, not a proven mechanism. See
+  `mcp/tests/gold/PR6-EVIDENCE.md` for the full monotonicity table.
+- Calibration finding (informs the headroom bar, does not change shipped
+  behavior): `budget.estimate_tokens`'s ÷3 heuristic was calibrated against
+  a real tokenizer (tiktoken `cl100k_base` proxy) over every committed
+  worst-case response dump. Result: the heuristic **overestimates** tokens
+  by 19–26% on all 17 dumps (never underestimates) — `e = 0`, calibrated
+  bar unchanged at 9000 estimated tokens. Separately, 0/15 `dedup=on` grid
+  combos land at or under that 9000-token headroom bar (across the full
+  grid, both cohorts, worst-case tokens range ~10,300–12,013; restricted
+  to `edge_budget ≥ 40` it tightens to ≥11,900, essentially the 12,000
+  ceiling) — the response-ceiling trim fills to just under the ceiling at
+  `edge_budget ≥ 40` regardless of `top_k`, so the ≥25%-headroom bar is
+  unmeetable there and cannot discriminate between grid points. This
+  restates PR 1's Finding-1 with calibrated numbers (maintainer-authorized
+  amendment, not a new deviation): headroom is a ceiling/chunk-size lever
+  (`EMBEDDINGTON_MAX_RESPONSE_TOKENS`, `source_quote`/text length), not an
+  `edge_budget` one — real payloads (~9.5–10k real tokens per the
+  calibration) sit comfortably under the nominal ceiling even though the
+  estimated-token headroom bar can't be met.
+- Sweep-template honesty fixes (carried from the PR 1 final review):
+  `battery_sweep.py`'s knee narration now recommends a default change
+  rather than claiming one was applied when the shipped defaults are
+  unchanged by a run (M1); the generated report title uses the run's
+  actual `SWEEP_TAG` instead of a hardcoded date (M2); `CALL_COUNTS` now
+  wraps `embed_batch` as well as `embed` (M3).
+- Docs: `enrich`'s tool docstring, `mcp/RESPONSE_SHAPES.md`, and
+  `mcp/server.py`'s `edge_budget` parameter description are rewritten with
+  the measured v0.9.0 behavior (productive up to ~60, reduces relevance
+  past it under the ceiling) in place of the pre-relevance-selection
+  0.282→0.200 dilution phrasing from PR 2, which described a different,
+  now-superseded selector.
+- Committed alongside: the final fixed-11 sweep
+  (`2026-07-20-pr6-final-sweep.{md,json}`), the final identifier-cohort
+  sweep (`2026-07-20-pr6-final-identifier-sweep.{md,json}`), and both
+  sweeps' worst-response calibration dumps.
+
 ## v0.8.0 — 2026-07-20
 
 Closes #47 (empty/weak-retrieval guard: an explicit `grounding` signal so a

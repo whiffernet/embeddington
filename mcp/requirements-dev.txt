@@ -3,3 +3,6 @@ pytest>=8.0
 # The suite marks async tests with @pytest.mark.asyncio; without this plugin they are
 # collected and then fail rather than run.
 pytest-asyncio>=1.4.0
+# Dev-only: real-tokenizer proxy for calibrating budget.estimate_tokens (#44). Not used
+# at runtime -- gold/calibrate_tokens.py only.
+tiktoken>=0.13.0

@@ -286,13 +286,16 @@ async def enrich(
             le=200,
             description="TOTAL KG edges across the whole response, allocated "
             "across matched concepts. Truncation is explicit — see each "
-            "match's truncation object and suggest hint. A larger budget "
-            "returns more edges up to the response ceiling and then plateaus "
-            "(the ceiling trim caps the total either way); the sweep default "
-            "of 40 already sits at that plateau, so raising it mainly adds "
-            "latency, not edges.",
+            "match's truncation object and suggest hint. Relevance-aware "
+            "selection makes a larger budget productive up to ~60 (measured "
+            "gold-recall 0.186->0.281 as edge_budget went 20->60); past that "
+            "point the response ceiling increasingly trims the larger "
+            "allocation, REDUCING relevance (0.281->0.225 by edge_budget=120). "
+            "The default of 60 already sits at that peak, so raising it adds "
+            "latency without adding relevant edges — prefer lowering top_k "
+            "for stronger KG grounding instead.",
         ),
-    ] = 40,
+    ] = 60,
     predicates: Annotated[
         Optional[list[str]],
         Field(
@@ -333,13 +336,15 @@ async def enrich(
     {truncated, available, returned}; when truncated, `suggest` gives the
     kg_neighbors/kg_path drill-down. A server-side token ceiling keeps the
     response within the client cap (or flags it loudly in `warnings` in the
-    rare case per-concept floors force a small overflow). Raising
-    edge_budget spreads the budget across more matched concepts, which can
-    DILUTE query relevance (measured: retention 0.282 -> 0.200 as
-    edge_budget went 40 -> 120 at top_k=3 — see
-    mcp/tests/battery_results/2026-07-17-sweep.md). Past ~40 it adds
-    latency without adding delivered edges. For stronger KG grounding
-    prefer LOWERING top_k rather than raising edge_budget.
+    rare case per-concept floors force a small overflow). Relevance-aware
+    selection (PR 3) makes a larger edge_budget productive up to ~60
+    (measured: mean gold-recall@budget 0.186 -> 0.268 -> 0.281 as
+    edge_budget went 20 -> 40 -> 60 at top_k=5) — the default. Past ~60 it
+    REDUCES relevance under the response ceiling (0.281 -> 0.248 -> 0.225 at
+    80 / 120) rather than merely plateauing: a larger allocation increasingly
+    competes with itself for the same token space (see
+    mcp/tests/gold/PR6-EVIDENCE.md). For stronger KG grounding prefer
+    LOWERING top_k rather than raising edge_budget past the default.
 
     The vector half (`vector_chunks`) is hybrid: a dense lane is filtered by
     the server-configured score threshold and, when the lexical chunk_text
@@ -355,7 +360,7 @@ async def enrich(
             count may be lower once the score threshold and dedup are
             applied.
         edge_budget: Total KG edge slots to split across matched concepts
-            (1-200, default 40).
+            (1-200, default 60).
         predicates: Optional relationship predicate filter. Unknown
             predicates (per kg_schema) are flagged in warnings, not rejected.
 

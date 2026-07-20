@@ -1,0 +1,111 @@
+{
+ "tokenizer": "cl100k_base",
+ "note": "cl100k_base is a documented PROXY for the LLM tokenizer actually in use (Claude's tokenizer is not public). Acceptable here because the calibrated bar cares about estimate_tokens's underestimation DIRECTION and magnitude relative to a real BPE tokenizer, not exact token-count parity.",
+ "rows": [
+  {
+   "file": "2026-07-18-baseline-pre36-worst-response.json",
+   "est": 12000,
+   "real": 9503,
+   "ratio": 1.2627591286962012
+  },
+  {
+   "file": "2026-07-19-pr3-final-worst-response.json",
+   "est": 12000,
+   "real": 9501,
+   "ratio": 1.2630249447426587
+  },
+  {
+   "file": "2026-07-19-pr4-final-identifier-worst-response.json",
+   "est": 11998,
+   "real": 10041,
+   "ratio": 1.1949009062842346
+  },
+  {
+   "file": "2026-07-19-pr4-final-worst-response.json",
+   "est": 12000,
+   "real": 9501,
+   "ratio": 1.2630249447426587
+  },
+  {
+   "file": "2026-07-20-pr6-final-identifier-worst-response.json",
+   "est": 12011,
+   "real": 10053,
+   "ratio": 1.1947677310255644
+  },
+  {
+   "file": "2026-07-20-pr6-final-worst-response.json",
+   "est": 12013,
+   "real": 9513,
+   "ratio": 1.2627982760433092
+  },
+  {
+   "file": "pr3-arm-0.20-worst-response.json",
+   "est": 12000,
+   "real": 9501,
+   "ratio": 1.2630249447426587
+  },
+  {
+   "file": "pr3-arm-0.25-worst-response.json",
+   "est": 12000,
+   "real": 9501,
+   "ratio": 1.2630249447426587
+  },
+  {
+   "file": "pr3-arm-0.30-worst-response.json",
+   "est": 12000,
+   "real": 9501,
+   "ratio": 1.2630249447426587
+  },
+  {
+   "file": "pr3-arm-0.40-worst-response.json",
+   "est": 12000,
+   "real": 9501,
+   "ratio": 1.2630249447426587
+  },
+  {
+   "file": "pr3-arm-0.50-worst-response.json",
+   "est": 12000,
+   "real": 9501,
+   "ratio": 1.2630249447426587
+  },
+  {
+   "file": "pr4-thr-0.0-identifier-worst-response.json",
+   "est": 11998,
+   "real": 10041,
+   "ratio": 1.1949009062842346
+  },
+  {
+   "file": "pr4-thr-0.0-worst-response.json",
+   "est": 12000,
+   "real": 9501,
+   "ratio": 1.2630249447426587
+  },
+  {
+   "file": "pr4-thr-0.50-identifier-worst-response.json",
+   "est": 11998,
+   "real": 10041,
+   "ratio": 1.1949009062842346
+  },
+  {
+   "file": "pr4-thr-0.50-worst-response.json",
+   "est": 12000,
+   "real": 9501,
+   "ratio": 1.2630249447426587
+  },
+  {
+   "file": "pr4-thr-0.55-identifier-worst-response.json",
+   "est": 11998,
+   "real": 10041,
+   "ratio": 1.1949009062842346
+  },
+  {
+   "file": "pr4-thr-0.55-worst-response.json",
+   "est": 12000,
+   "real": 9501,
+   "ratio": 1.2630249447426587
+  }
+ ],
+ "e": 0.0,
+ "nominal_bar": 9000,
+ "calibrated_bar": 9000
+}
