@@ -628,7 +628,9 @@ cd ..
 The battery (`mcp/tests/battery_sweep.py`) now records latency (median/IQR
 over repeats), per-call counts, and machine-readable JSON results;
 retrieval changes are gated on a frozen, cross-model-validated gold set
-(`mcp/tests/gold/`).
+(`mcp/tests/gold/`). The 2026-07 retrieval-quality chain (v0.5.0–v0.9.0) closed
+with a per-issue adversarial audit; the full record lives in
+`mcp/tests/battery_results/2026-07-20-closing-audit.md`.
 
 ---
 
