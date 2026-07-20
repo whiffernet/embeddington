@@ -149,6 +149,63 @@ def test_mid_chain_applies_only_remaining(tmp_path, fake_qdrant_client, fake_ara
     assert cursor_store.read_cursor(cursor_path) == "a7b8"
 
 
+def test_ensure_index_called_after_diffs(tmp_path, fake_qdrant_client, fake_arango_db):
+    rc, _ = _setup(tmp_path)
+    qw = writers.QdrantConsumerWriter(fake_qdrant_client, "technology")
+    aw = writers.ArangoConsumerWriter(fake_arango_db)
+    cursor_path = tmp_path / ".cursor"
+    cursor_store.write_cursor(cursor_path, "e5f6")  # one diff behind
+    calls = []
+
+    result = updater.update(
+        rc,
+        qw,
+        aw,
+        cursor_path,
+        work_dir=tmp_path / "w",
+        baseline_importer=lambda b: None,
+        ensure_index=lambda: calls.append("ran"),
+    )
+    assert result["mode"] == "diffs"
+    assert calls == ["ran"]
+
+
+def test_ensure_index_not_called_when_up_to_date(tmp_path, fake_qdrant_client, fake_arango_db):
+    rc, _ = _setup(tmp_path)
+    qw = writers.QdrantConsumerWriter(fake_qdrant_client, "technology")
+    aw = writers.ArangoConsumerWriter(fake_arango_db)
+    cursor_path = tmp_path / ".cursor"
+    cursor_store.write_cursor(cursor_path, "a7b8")  # already at head
+    calls = []
+
+    result = updater.update(
+        rc,
+        qw,
+        aw,
+        cursor_path,
+        work_dir=tmp_path / "w",
+        baseline_importer=lambda b: None,
+        ensure_index=lambda: calls.append("ran"),
+    )
+    assert result["mode"] == "up_to_date"
+    assert calls == []
+
+
+def test_ensure_index_default_none_is_backward_compatible(
+    tmp_path, fake_qdrant_client, fake_arango_db
+):
+    rc, _ = _setup(tmp_path)
+    qw = writers.QdrantConsumerWriter(fake_qdrant_client, "technology")
+    aw = writers.ArangoConsumerWriter(fake_arango_db)
+    cursor_path = tmp_path / ".cursor"
+    cursor_store.write_cursor(cursor_path, "e5f6")
+    # No ensure_index passed at all -> must not raise.
+    result = updater.update(
+        rc, qw, aw, cursor_path, work_dir=tmp_path / "w", baseline_importer=lambda b: None
+    )
+    assert result["mode"] == "diffs"
+
+
 def test_baseline_required_without_importer_raises(tmp_path, fake_qdrant_client, fake_arango_db):
     rc, _ = _setup(tmp_path)
     qw = writers.QdrantConsumerWriter(fake_qdrant_client, "technology")

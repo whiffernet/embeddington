@@ -162,3 +162,19 @@ def test_tempfile_is_cleaned_up_after_install():
         if c["cmd"][:1] == ["crontab"] and len(c["cmd"]) == 2 and c["cmd"][1] != "-l"
     ]
     assert write_calls and not os.path.exists(write_calls[0])
+
+
+def test_cron_line_present_detects_marker():
+    present = cron.cron_line_present(
+        lambda cmd: RunResult(0, "0 6 * * * cd /x && embeddington-consume update\n", "")
+    )
+    assert present is True
+
+    absent = cron.cron_line_present(lambda cmd: RunResult(0, "0 5 * * * some-other-job\n", ""))
+    assert absent is False
+
+    no_crontab = cron.cron_line_present(lambda cmd: RunResult(1, "", "no crontab for user"))
+    assert no_crontab is False
+
+    no_binary = cron.cron_line_present(lambda cmd: RunResult(127, "", "command not found: crontab"))
+    assert no_binary is False

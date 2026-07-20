@@ -126,3 +126,39 @@ def test_wait_for_services_embed_timeout_is_emb32():
             buffer_console(), http, sleep=sleep, clock=clock, store_timeout=30, embed_timeout=60
         )
     assert exc.value.code == "EMB-32"
+
+
+def test_adaptive_memory_cap_scales_and_clamps():
+    from installer import stack
+
+    GB = 2**30
+    assert stack.adaptive_memory_cap(2 * GB) == "1G"  # 50% of 2 = 1
+    assert stack.adaptive_memory_cap(8 * GB) == "4G"  # 50% of 8 = 4, at ceiling
+    assert stack.adaptive_memory_cap(128 * GB) == "4G"  # clamped to ceiling
+    assert stack.adaptive_memory_cap(1 * GB) == "1G"  # floor 1
+    assert stack.adaptive_memory_cap(0) == "4G"  # unknown -> documented default
+    assert stack.adaptive_memory_cap(None) == "4G"
+
+
+def test_merge_env_keys_adds_only_missing(tmp_path):
+    from installer import stack
+
+    env = tmp_path / ".env"
+    env.write_text("# header\nARANGO_ROOT_PASSWORD=secret\n")
+    added = stack.merge_env_keys(env, {"ARANGO_MEMORY_CAP": "2G", "ARANGO_ROOT_PASSWORD": "NEW"})
+    assert added == ["ARANGO_MEMORY_CAP"]  # existing key untouched
+    text = env.read_text()
+    assert "ARANGO_ROOT_PASSWORD=secret" in text  # user value preserved
+    assert "ARANGO_MEMORY_CAP=2G" in text
+    # Idempotent: a second merge adds nothing.
+    assert stack.merge_env_keys(env, {"ARANGO_MEMORY_CAP": "2G"}) == []
+
+
+def test_detect_total_ram_uses_sysctl_on_macos(monkeypatch):
+    from installer import stack
+    from installer.runner import RunResult
+
+    # Force the sysconf path to be unavailable so the sysctl fallback is exercised.
+    monkeypatch.setattr(stack.os, "sysconf", lambda name: (_ for _ in ()).throw(ValueError()))
+    ram = stack.detect_total_ram_bytes(lambda cmd, **k: RunResult(0, "17179869184\n", ""))
+    assert ram == 17179869184

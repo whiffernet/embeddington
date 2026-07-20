@@ -71,6 +71,25 @@ def cron_daemon_running(run):
     return False
 
 
+def cron_line_present(run):
+    """True iff the user's crontab already has an embeddington-consume line.
+
+    Used to decide whether the wizard should OFFER auto-updates (it shouldn't
+    re-nag a user who already enabled them). A missing crontab binary or an empty
+    crontab both read as "not present". Never raises.
+
+    Args:
+        run: runner.run-compatible callable.
+
+    Returns:
+        True only when a line containing CRON_MARKER is found.
+    """
+    res = run(["crontab", "-l"])
+    if res.rc != 0:
+        return False
+    return any(CRON_MARKER in line for line in res.out.splitlines())
+
+
 def install_cron(console, run, repo_root, *, assume_yes, input_fn=input):
     """Offer to install the daily-update cron job; return the outcome.
 

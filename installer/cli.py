@@ -6,10 +6,13 @@ stays import-free of the others.
 """
 
 import argparse
+import time
 from pathlib import Path
 
+from consumer import lexical_index
 from installer import (
     claude_step,
+    cron,
     docker_ladder,
     errors,
     import_step,
@@ -99,6 +102,30 @@ def _production_deps(repo_root, args):
             console, runner.run, repo_root, assume_yes=assume_yes, input_fn=input_fn
         ),
         "run_uninstall": run_uninstall_dep,
+        "git_head": lambda: runner.run(
+            ["git", "-C", str(repo_root), "rev-parse", "HEAD"]
+        ).out.strip(),
+        "git_changed_files": lambda pre_sha: (lambda r: r.out.split() if r.rc == 0 else [])(
+            runner.run(["git", "-C", str(repo_root), "diff", "--name-only", pre_sha, "HEAD"])
+        ),
+        "resync_venv": lambda _c: runner.run(
+            [str(repo_root / ".venv" / "bin" / "pip"), "install", "-e", ".[setup]"],
+            cwd=repo_root,
+            stream=True,
+        ),
+        "merge_env": lambda _c: stack.merge_env_keys(
+            repo_root / "consumer" / ".env",
+            {
+                "ARANGO_MEMORY_CAP": stack.adaptive_memory_cap(
+                    stack.detect_total_ram_bytes(runner.run)
+                )
+            },
+        ),
+        "index_absent": lambda: (
+            lexical_index.chunk_text_status(import_step.QDRANT_URL, import_step.COLLECTION)
+            == "absent"
+        ),
+        "cron_present": lambda: cron.cron_line_present(runner.run),
     }
 
 
@@ -131,6 +158,176 @@ def _cron_receipt(outcome, repo_root):
         "  Auto-updates: not set up. To enable later, add this crontab line:\n"
         f"    {cron_line(repo_root)}"
     )
+
+
+def _update_receipt(did, points, entities, mcp_changed, cron_outcome, repo_root):
+    """Render a two-shape Update receipt: light when nothing structural changed,
+    heavy (enumerated) when one-time upgrades landed.
+
+    Args:
+        did: dict of what happened — keys "data_mode", "applied", "deps", "env".
+        points, entities: proof-of-life counts.
+        mcp_changed: True if mcp/ changed in this pull (drives the restart hint).
+        cron_outcome: install_cron's return, or None if not offered.
+        repo_root: the clone root (unused today; kept for symmetry with _cron_receipt).
+
+    Returns:
+        A ready-to-print receipt string.
+    """
+    mode, applied = did.get("data_mode"), did.get("applied", 0)
+    if mode == "diffs" and applied:
+        data = (
+            f"  Data:     applied {applied} update(s) — {points:,} vectors · {entities:,} entities"
+        )
+    elif mode == "baseline":
+        data = f"  Data:     restored baseline — {points:,} vectors · {entities:,} entities"
+    else:
+        data = f"  Data:     already current — {points:,} vectors · {entities:,} entities"
+
+    heavy = []
+    if did.get("deps"):
+        heavy.append("  Deps:     re-synced (dependencies changed in this update)")
+    if did.get("env"):
+        heavy.append("  Config:   added new settings to consumer/.env")
+    if mcp_changed:
+        heavy.append(
+            "  Code:     Claude search tools updated — your data works now; reopen "
+            "Claude Desktop (Claude Code auto-loads) to use the new code"
+        )
+    if cron_outcome in ("installed", "installed-cron-down"):
+        heavy.append("  Auto-updates: enabled (daily 06:00)")
+
+    lines = [data]
+    if heavy:
+        lines.append("  One-time upgrades applied:")
+        lines.extend(heavy)
+    else:
+        lines.append("  Stack, index, and settings already current.")
+    return "\n".join(lines)
+
+
+def _import_with_readiness_retry(console, deps, args, password, *, sleep=None):
+    """Run the import + proof-of-life; retry ONCE if the stores are momentarily not ready.
+
+    A `docker compose up -d --build` that recreates arango (e.g. to apply the memory cap)
+    leaves arangod replaying its WAL for a few seconds; the first read fails as EMB-44
+    (proof-of-life) and the first diff-apply write fails as EMB-45 (run_import maps any
+    unexpected store error to EMB-45 — see import_step Step 8). Both are transient here, so
+    wait briefly and retry once before surfacing the error. A genuinely broken store
+    re-raises the same code on the second try. Auth-free; reuses the verified EMB-44/EMB-45
+    signals (no availability probe — see the Task 3 WAL-readiness note for why that was
+    rejected).
+
+    Args:
+        console: rich Console.
+        deps: the step-function bundle (needs "run_import" and "proof_of_life").
+        args: parsed CLI args (needs .repo and .force_baseline).
+        password: the ArangoDB root password.
+        sleep: time.sleep override (injected for testing).
+
+    Returns:
+        (result, points, entities) on success.
+
+    Raises:
+        errors.SetupError: any non-readiness error, or a second consecutive failure.
+    """
+    sleep = time.sleep if sleep is None else sleep
+    for attempt in range(2):
+        try:
+            result = deps["run_import"](
+                console, _repo_root(), password, repo=args.repo, force_baseline=args.force_baseline
+            )
+            points, entities = deps["proof_of_life"](console)
+            return result, points, entities
+        except errors.SetupError as exc:
+            if exc.code in ("EMB-44", "EMB-45") and attempt == 0:
+                console.print(
+                    "[yellow]Stores still settling (database recovery?) — retrying "
+                    "in a moment...[/yellow]"
+                )
+                sleep(5)
+                continue
+            raise
+
+
+def _update_flow(console, deps, args, input_fn):
+    """Fast, idempotent Update: apply every cheap delta (data, container config, .env,
+    conditional venv), then a two-shape receipt. Each step no-ops when already current.
+
+    A failed venv re-sync (non-zero `resync_venv` rc) is non-fatal: it prints a warning
+    and leaves `did["deps"]` False so the receipt doesn't claim a re-sync that didn't
+    happen, but the rest of the update (which is more valuable) still runs. A `merge_env`
+    write failure (e.g. `OSError` from a read-only fs or full disk) is mapped to
+    `SetupError` EMB-33 so it renders through the normal error path instead of a raw
+    traceback.
+
+    Args:
+        console: rich Console.
+        deps: the step-function bundle (see `_production_deps`).
+        args: parsed CLI args.
+        input_fn: callable() -> str used for interactive prompts.
+
+    Returns:
+        0 on success (this flow only raises via the steps it calls, or via the
+        `merge_env` OSError wrap below; a SetupError propagates to `main`'s handler).
+    """
+    pre = deps["git_head"]()
+    pull = deps["git_pull"](console)
+    if pull.rc != 0:
+        console.print("[yellow]git pull failed (local changes?) — updating what I can.[/yellow]")
+    changed = deps["git_changed_files"](pre)  # [] when the pull failed or moved nothing
+
+    did = {}
+    # Venv re-sync ONLY when packaging changed — avoids a multi-second re-resolve (and
+    # silently pulling breaking dep majors) on unrelated data updates.
+    if any(
+        f == "pyproject.toml" or f.endswith("requirements.txt") or f.startswith("requirements")
+        for f in changed
+    ):
+        resync_result = deps["resync_venv"](console)
+        if resync_result.rc != 0:
+            console.print(
+                "[yellow]Dependency re-sync failed — data update continues; re-run the "
+                "installer if the wizard misbehaves.[/yellow]"
+            )
+            did["deps"] = False
+        else:
+            did["deps"] = True
+
+    try:
+        did["env"] = bool(deps["merge_env"](console))
+    except OSError as exc:
+        raise errors.SetupError(
+            "EMB-33",
+            f"Couldn't update consumer/.env with the memory cap: {exc}",
+            "Check permissions/space on consumer/.env and re-run.",
+        )
+
+    ui.rule(console, "Local stack")
+    deps["compose_up"](console)  # up -d --build: cache-cheap no-op when unchanged,
+    deps["wait_for_services"](console)  # and the only thing that lands embed code changes
+
+    ui.rule(console, "Knowledge graph")
+    # ETA banner ONLY when a real materialize will run (chunk_text absent = never built
+    # here yet). A no-op run stays quiet; honors "lead with an ETA only when work happens".
+    if deps["index_absent"]():
+        console.print(
+            "[cyan]First run will build the keyword search index (~3–4 min on a full "
+            "graph, one time only — safe to leave running).[/cyan]"
+        )
+    password = deps["read_password"](console)
+    result, points, entities = _import_with_readiness_retry(console, deps, args, password)
+    did["data_mode"], did["applied"] = result.get("mode"), result.get("applied", 0)
+
+    mcp_changed = any(f.startswith("mcp/") for f in changed)
+    cron_outcome = None
+    if not deps["cron_present"]():
+        ui.rule(console, "Auto-updates")
+        cron_outcome = deps["install_cron"](console, args.yes, input_fn)
+
+    ui.rule(console, "Receipt")
+    console.print(_update_receipt(did, points, entities, mcp_changed, cron_outcome, _repo_root()))
+    return 0
 
 
 def _doctor(console, deps):
@@ -235,8 +432,8 @@ def _menu(console, deps, st, args, input_fn):
         console,
         "This box already has embeddington. What'll it be?",
         [
-            ("u", "Update — pull the latest diffs"),
-            ("r", "Repair — re-verify every step, fix what's broken"),
+            ("u", "Update — get the latest (data, config, small fixes). Start here."),
+            ("r", "Repair — search broken or a container won't start? Full rebuild + re-verify."),
             ("x", "Uninstall — remove embeddington (interactive, per-item)"),
             ("q", "Quit"),
         ],
@@ -250,18 +447,8 @@ def _menu(console, deps, st, args, input_fn):
         return deps["run_uninstall"](console, args.yes, args.really_delete_data, input_fn)
     if choice == "r":
         return _install_flow(console, deps, st, args, input_fn)
-    # Update: refresh the clone first (spec §6: Update = git pull + updater.update) —
-    # best-effort, because a dirty tree must not block a data update.
-    pull = deps["git_pull"](console)
-    if pull.rc != 0:
-        console.print("[yellow]git pull failed (local changes?) — updating data anyway.[/yellow]")
-    password = deps["read_password"](console)
-    deps["run_import"](
-        console, _repo_root(), password, repo=args.repo, force_baseline=args.force_baseline
-    )
-    points, entities = deps["proof_of_life"](console)
-    console.print(f"[green]✓[/green] Up to date — {points:,} vectors · {entities:,} entities.")
-    return 0
+    # Update: the fast idempotent pass (data + container config + .env + conditional venv).
+    return _update_flow(console, deps, args, input_fn)
 
 
 def _build_parser():

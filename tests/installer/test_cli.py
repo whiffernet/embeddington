@@ -33,6 +33,11 @@ class Recorder:
 
         return _step
 
+    def _record(self, name):
+        """Log a call and return None (for deps whose return value the test overrides)."""
+        self.order.append(name)
+        return None
+
 
 def make_deps(rec):
     """The dependency bundle main() threads through the flow."""
@@ -61,6 +66,12 @@ def make_deps(rec):
         "claude_wiring": rec.step("claude", "skipped"),
         "install_cron": rec.step("install_cron", "skipped-unattended"),
         "run_uninstall": rec.step("uninstall", 0),
+        "git_head": rec.step("git_head", "OLDSHA"),
+        "git_changed_files": lambda _pre: rec._record("git_changed_files") or [],
+        "resync_venv": rec.step("resync_venv", RunResult(0, "", "")),
+        "merge_env": rec.step("merge_env", []),
+        "index_absent": lambda: rec._record("index_absent") or False,
+        "cron_present": lambda: rec._record("cron_present") or False,
     }
 
 
@@ -106,9 +117,28 @@ def test_doctor_mode_mutates_nothing_and_exit_reflects_state():
 def test_existing_install_with_yes_defaults_to_update():
     rec = Recorder(state=ALL_GOOD)
     assert run_main(["--yes"], rec) == 0
-    # Update path: refresh the clone, then import — no env/compose mutations.
+    # Update now applies container/config drift too (idempotent), not just data.
     assert "git_pull" in rec.order
-    assert "import" in rec.order and "compose" not in rec.order
+    assert "import" in rec.order and "compose" in rec.order
+
+
+def test_update_flow_runs_full_sequence_in_order():
+    from rich.console import Console
+
+    con = Console(record=True, width=200)
+    rec = Recorder(state=ALL_GOOD)
+    deps = make_deps(rec)
+    # A pull that changed mcp/ and pyproject so venv-resync fires and the mcp hint shows.
+    deps["git_changed_files"] = lambda _pre: ["pyproject.toml", "mcp/server.py"]
+    assert cli.main([], console=con, deps=deps, input_fn=lambda: "u") == 0
+    # compose + wait now run on Update (the whole point), and after git_pull.
+    assert rec.order.index("git_pull") < rec.order.index("compose")
+    assert rec.order.index("compose") < rec.order.index("wait")
+    assert rec.order.index("wait") < rec.order.index("import")
+    assert "resync_venv" in rec.order  # pyproject changed
+    assert "merge_env" in rec.order
+    # mcp/ changed -> the receipt must carry the restart hint (end-to-end, not just the renderer).
+    assert "reopen Claude Desktop" in con.export_text()
 
 
 def test_failing_disk_preflight_aborts_before_any_mutation():
@@ -217,3 +247,133 @@ def test_force_baseline_reaches_run_import():
         == 0
     )
     assert captured.get("force_baseline") is True
+
+
+def test_update_skips_venv_resync_when_no_packaging_change():
+    rec = Recorder(state=ALL_GOOD)
+    deps = make_deps(rec)
+    deps["git_changed_files"] = lambda _pre: ["consumer/updater.py"]  # code, not packaging
+    assert cli.main(["--yes"], console=console(), deps=deps, input_fn=lambda: "") == 0
+    assert "resync_venv" not in rec.order
+    assert "compose" in rec.order  # everything else still runs
+
+
+def test_update_skips_cron_offer_when_already_present():
+    rec = Recorder(state=ALL_GOOD)
+    deps = make_deps(rec)
+    deps["git_changed_files"] = lambda _pre: []
+    deps["cron_present"] = lambda: True
+    called = []
+    deps["install_cron"] = lambda *a, **k: called.append(1) or "installed"
+    assert cli.main(["--yes"], console=console(), deps=deps, input_fn=lambda: "") == 0
+    assert called == []  # never offered when a line already exists
+
+
+def test_update_retries_import_once_when_stores_recovering(monkeypatch):
+    from installer import errors
+
+    monkeypatch.setattr(cli.time, "sleep", lambda _s: None)  # no real wait
+    rec = Recorder(state=ALL_GOOD)
+    deps = make_deps(rec)
+    deps["git_changed_files"] = lambda _pre: []
+    attempts = {"n": 0}
+
+    def flaky_import(*a, **k):
+        attempts["n"] += 1
+        if attempts["n"] == 1:
+            raise errors.SetupError("EMB-45", "stores recovering", "wait and re-run")
+        rec.order.append("import")
+        return {
+            "mode": "diffs",
+            "applied": 1,
+            "cursor": "x",
+            "baseline": None,
+            "adopted_from": None,
+        }
+
+    deps["run_import"] = flaky_import
+    assert cli.main(["--yes"], console=console(), deps=deps, input_fn=lambda: "") == 0
+    assert attempts["n"] == 2  # failed once (WAL), retried, succeeded
+
+
+def test_update_does_not_retry_on_non_readiness_error(monkeypatch):
+    from installer import errors
+
+    monkeypatch.setattr(cli.time, "sleep", lambda _s: None)
+    rec = Recorder(state=ALL_GOOD)
+    deps = make_deps(rec)
+    deps["git_changed_files"] = lambda _pre: []
+    attempts = {"n": 0}
+
+    def bad_import(*a, **k):
+        attempts["n"] += 1
+        raise errors.SetupError("EMB-42", "checksum", "re-run")  # not a readiness code
+
+    deps["run_import"] = bad_import
+    assert cli.main(["--yes"], console=console(), deps=deps, input_fn=lambda: "") == 1
+    assert attempts["n"] == 1  # surfaced immediately, no retry
+
+
+def test_update_receipt_light_shape():
+    line = cli._update_receipt(
+        {"data_mode": "up_to_date", "applied": 0}, 152194, 41000, False, None, "/opt/emb"
+    )
+    assert "already current" in line
+    assert "One-time upgrades" not in line
+
+
+def test_update_receipt_heavy_shape_enumerates():
+    line = cli._update_receipt(
+        {"data_mode": "diffs", "applied": 41, "deps": True, "env": True},
+        152194,
+        41000,
+        True,
+        "installed",
+        "/opt/emb",
+    )
+    assert "One-time upgrades applied" in line
+    assert "Claude search tools updated" in line
+    assert "consumer/.env" in line
+    assert "Auto-updates: enabled" in line
+
+
+def test_update_flow_wraps_merge_env_oserror_as_setup_error():
+    # merge_env ultimately does a bare `open(env_file, "a")`; a read-only fs or full
+    # disk raises OSError. Every other _update_flow step maps failure to a SetupError
+    # that main()'s `except errors.SetupError` renders -- merge_env must not be the
+    # one step that raw-tracebacks instead.
+    rec = Recorder(state=ALL_GOOD)
+    deps = make_deps(rec)
+
+    def boom(_console):
+        raise OSError("Read-only file system")
+
+    deps["merge_env"] = boom
+    assert cli.main(["--yes"], console=console(), deps=deps, input_fn=lambda: "") == 1
+
+
+def test_update_flow_surfaces_resync_venv_failure_without_claiming_resynced():
+    from installer.runner import RunResult
+
+    con = Console(record=True, width=200)
+    rec = Recorder(state=ALL_GOOD)
+    deps = make_deps(rec)
+    deps["git_changed_files"] = lambda _pre: ["pyproject.toml"]
+    deps["resync_venv"] = lambda _c: RunResult(1, "", "boom")
+    assert cli.main([], console=con, deps=deps, input_fn=lambda: "u") == 0
+    out = con.export_text()
+    assert "re-sync" in out.lower() and "fail" in out.lower()
+    assert "re-synced" not in out
+
+
+def test_production_merge_env_writes_memory_cap(tmp_path):
+    import types
+
+    (tmp_path / "consumer").mkdir()
+    (tmp_path / "consumer" / ".env").write_text("ARANGO_ROOT_PASSWORD=secret\n")
+    deps = cli._production_deps(tmp_path, types.SimpleNamespace())
+    added = deps["merge_env"](None)
+    assert added == ["ARANGO_MEMORY_CAP"]
+    text = (tmp_path / "consumer" / ".env").read_text()
+    assert "ARANGO_MEMORY_CAP=" in text  # real value written to the real path
+    assert "ARANGO_ROOT_PASSWORD=secret" in text  # user value untouched

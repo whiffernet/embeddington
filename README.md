@@ -242,19 +242,36 @@ embeddington-consume --help
 > _"New information has come to light, man."_
 
 Your graph already landed during install — the wizard restored the baseline and verified it,
-so there's nothing to import by hand. This section is about **keeping it current** afterward:
-pulling newer diffs as they're published. (Re-running the one-liner does this too — on an
-installed box it offers **Update** — but under the hood it's the one command below, which is
-also what you'd drop in a cron job.)
+so there's nothing to import by hand. This section is about **keeping it current** afterward.
+
+Re-running the one-liner on a box that already has embeddington opens a short menu:
+
+- **Update** — the routine path. Pulls the latest, brings your local stack up to the
+  current config (re-syncing dependencies only if they changed), applies data diffs, and
+  keeps the keyword search index complete. Everything it does is safe to run as often as
+  you like; when nothing changed, it's a quick no-op. Your data stays live throughout.
+- **Repair** — the bigger hammer. Use it when search returns nothing or a container
+  won't start: it re-verifies every step and rebuilds whatever's broken. If the embedder
+  image needs rebuilding that can take 10–20 minutes; if everything's actually healthy
+  it finishes fast.
+
+The first Update after a big upgrade may do a little one-time work — recreate the local
+database with a memory cap, or build the keyword index (a few minutes on a full graph).
+The receipt tells you exactly what happened. After a code update, your data works
+immediately; to load new Claude search-tool code, reopen Claude Desktop (Claude Code
+picks it up automatically on its next run).
 
 **The installer offers to set this up for you.** During install (and on **Repair**), the
 wizard asks _"Set up daily auto-updates at 06:00?"_ — say yes and it adds the crontab entry
 below automatically (idempotently; `embeddington-setup --uninstall` removes it). If you
 declined, ran unattended (`EMBEDDINGTON_YES=1`), or want a different schedule, add it by hand:
 
-That command is `embeddington-consume update`. It needs `ARANGO_ROOT_PASSWORD` in its
-environment — the same value in `consumer/.env` from install. The first line below loads it.
-That relative path (`consumer/.env`) is why this block wants the repo root:
+The crontab line runs `embeddington-consume update` directly — the data-only piece: it
+applies diffs (or restores a baseline) and keeps the keyword search index complete, but
+doesn't touch container config, `.env`, or the venv (that's the wizard's **Update**, above).
+It needs `ARANGO_ROOT_PASSWORD` in its environment — the same value in `consumer/.env` from
+install. The first line below loads it. That relative path (`consumer/.env`) is why this
+block wants the repo root:
 
 ```bash
 # run from: repo root
@@ -306,6 +323,12 @@ just works. Each platform has a wrinkle worth knowing:
   need `systemd=true` in `/etc/wsl.conf` **and** something keeping the distro alive (e.g.
   a Windows Task Scheduler job that runs `wsl.exe`). Without that, prefer running
   `embeddington-setup` (Update) by hand when you want fresh data.
+
+**Arango memory:** the local database sizes its caches from a memory cap (default 4 GB,
+or half your RAM on smaller machines — the installer picks a safe value automatically and
+writes it to `consumer/.env` as `ARANGO_MEMORY_CAP`). On a very small host you can lower
+it by hand (e.g. `ARANGO_MEMORY_CAP=1G`) and re-run Update. If the database won't stay up
+after an update on a low-RAM box, that's the first knob to turn.
 
 </details>
 

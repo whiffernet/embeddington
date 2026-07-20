@@ -127,6 +127,9 @@ def _cmd_update(args):
             baseline_importer,
             legacy_cursors=args.legacy_cursors,
             force_baseline=args.force_baseline,
+            ensure_index=lambda: lexical_index.incremental_chunk_text_index(
+                args.qdrant_url, args.collection
+            ),
         )
     except updater.BaselineRequired as exc:
         print(f"{exc}", file=sys.stderr)
