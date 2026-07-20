@@ -408,6 +408,10 @@ dropped rather than padded in, so `vector_search` and `enrich` can honestly retu
 results than you asked for when nothing clears the relevance floor — see `mcp/README.md`
 and `mcp/RESPONSE_SHAPES.md` for the details.
 
+`enrich` also tells you when it didn't actually find what you asked about: a `grounding`
+signal on the response distinguishes a solid answer from one that's thin or empty, so
+Claude can say what wasn't found instead of guessing — see `mcp/RESPONSE_SHAPES.md`.
+
 ---
 
 ## Take 'er for a spin (example prompts)

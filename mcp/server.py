@@ -308,8 +308,18 @@ async def enrich(
     the shared ServiceNow KG for its entity half.
 
     Returns structured JSON ({vector_chunks, kg_matches, errors, budget,
-    warnings}) — no synthesis. Claude does all reasoning over the returned
-    data.
+    warnings, grounding}) — no synthesis. Claude does all reasoning over the
+    returned data.
+
+    `grounding` labels what the response actually contains, classified after
+    all trimming: `tier` is "ok" (retrieval landed and, when the query named
+    an identifier, that identifier appears in the returned content), "weak"
+    (something came back but is thin — e.g. the asked-for identifier is
+    missing from every chunk and edge quote), or "none" (nothing came back
+    at all); `reasons` explains why whenever `tier` is not "ok". On
+    grounding.tier "none" or "weak", say what was not found rather than
+    answering from prior knowledge — never present an identifier that is
+    not in the returned content.
 
     Grounding: each `kg_matches[].variants[0]` carries `source_documents` +
     `releases` (+ `degree`); each `kg_matches[].edges[]` carries
@@ -350,7 +360,8 @@ async def enrich(
             predicates (per kg_schema) are flagged in warnings, not rejected.
 
     Returns:
-        dict with keys vector_chunks, kg_matches, errors, budget, warnings.
+        dict with keys vector_chunks, kg_matches, errors, budget, warnings,
+        grounding.
     """
     if _lexical_status != "ready":
         await _maybe_reensure()

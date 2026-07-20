@@ -5,7 +5,7 @@ consume embeddington (as a registered MCP, by importing the modules, or by
 hand-rolling clients against the same data), diff your assumptions against this
 file. It is versioned with the code, so `git pull` keeps it current.
 
-- **Current as of:** `v0.7.0` (embeddington repo line — see `CHANGELOG.md` at
+- **Current as of:** `v0.8.0` (embeddington repo line — see `CHANGELOG.md` at
   the repo root, which is now the git-tag-synced authority going forward).
 - Version tags sprinkled through this doc's body (`upstream v0.3.4`,
   `upstream v0.3.5`, `upstream v0.3.7`) predate embeddington's own version
@@ -57,17 +57,36 @@ guard for missing keys).
 
 ---
 
+> ### ⚠️ Behavioral change (v0.8.0)
+>
+> `enrich`'s envelope gains a new `grounding: {tier, reasons}` key (issue
+> #47), classified from the FINAL post-ceiling-trim response content by the
+> pure `mcp/grounding.py` classifier — `tier` is `"ok"`, `"weak"`, or
+> `"none"`; `reasons` explains why whenever `tier` is not `"ok"`. This
+> guards the issue #47 incident class: an on-topic query for a nonexistent
+> identifier (`sn_zz_fake_table`) came back with 5 real-looking chunks and
+> no matching content — previously indistinguishable from a solid answer.
+> The tool description now instructs callers directly: on `tier` `"none"`
+> or `"weak"`, say what was not found rather than answering from prior
+> knowledge — never present an identifier that is not in the returned
+> content. Classification is observation-only — no selection, threshold, or
+> lane behavior changed. `vector_search` is unchanged: no `grounding` key,
+> no warnings channel — recorded follow-up from PR 4's review. See
+> "`enrich`'s `grounding` object" below for the full tier contract.
+
+---
+
 ## Tools → top-level envelopes
 
-| Tool                                                                 | Success envelope                                                                                                      |
-| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `enrich(query, entity_hints?, top_k=5, edge_budget=40, predicates?)` | `{vector_chunks: [chunk], kg_matches: [match], errors: {}, budget: {edge_budget, returned, truncated}, warnings: []}` |
-| `vector_search(query, collection?, limit=10)`                        | `{results: [chunk], count, collection}`                                                                               |
-| `kg_find_entities(text, limit=10)`                                   | `{entities: [entity], count}`                                                                                         |
-| `kg_get_entity(entity_id)`                                           | `{entity: <full doc> \| null}`                                                                                        |
-| `kg_neighbors(entity_id, depth=1, types?, limit=100)`                | `{nodes: [node], edges: [edge], truncation: {truncated, available, returned}}`                                        |
-| `kg_path(from_id, to_id, max_hops=4)`                                | `{nodes: [node], edges: [path_edge]}`                                                                                 |
-| `kg_schema()`                                                        | `{entity_types: [str], predicates: [str]}`                                                                            |
+| Tool                                                                 | Success envelope                                                                                                                                      |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enrich(query, entity_hints?, top_k=5, edge_budget=40, predicates?)` | `{vector_chunks: [chunk], kg_matches: [match], errors: {}, budget: {edge_budget, returned, truncated}, warnings: [], grounding: {tier, reasons: []}}` |
+| `vector_search(query, collection?, limit=10)`                        | `{results: [chunk], count, collection}`                                                                                                               |
+| `kg_find_entities(text, limit=10)`                                   | `{entities: [entity], count}`                                                                                                                         |
+| `kg_get_entity(entity_id)`                                           | `{entity: <full doc> \| null}`                                                                                                                        |
+| `kg_neighbors(entity_id, depth=1, types?, limit=100)`                | `{nodes: [node], edges: [edge], truncation: {truncated, available, returned}}`                                                                        |
+| `kg_path(from_id, to_id, max_hops=4)`                                | `{nodes: [node], edges: [path_edge]}`                                                                                                                 |
+| `kg_schema()`                                                        | `{entity_types: [str], predicates: [str]}`                                                                                                            |
 
 `enrich`'s `predicates` param (v0.3.0) is an optional relationship-predicate
 allowlist scoping KG expansion — omit it unless you've already called
@@ -95,6 +114,54 @@ predicates (call kg_schema): [...]"`, `"response ceiling: vector chunks
 trimmed"`, `"response exceeds ceiling even at floors — narrow with
 predicates"`. Treat it as an advisory surface, not an error signal —
 `warnings` can be non-empty even when `errors` is `{}`.
+
+### `enrich`'s `grounding` object (v0.8.0, #47)
+
+`grounding: {tier, reasons}` labels what the response **actually
+contains**, classified from the FINAL post-ceiling-trim content by the
+pure `mcp/grounding.py` classifier — not the pre-trim intermediate (a
+regression test, `test_grounding_reflects_post_trim_not_pre_trim_content`,
+pins this ordering; an order-swap mutant fails it):
+
+| tier   | condition                                                                                                                                 | reasons                                                                                        |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `none` | zero post-threshold chunks AND zero KG edges                                                                                              | both constants (`"no vector chunks cleared the score threshold"`, `"no KG concepts resolved"`) |
+| `weak` | not none, AND (an extracted identifier appears literally in NO returned chunk text or edge quote, OR exactly one retrieval half is empty) | names the missing identifier(s) and/or the empty half                                          |
+| `ok`   | otherwise                                                                                                                                 | `[]`                                                                                           |
+
+`reasons` is `[]` exactly when `tier` is `"ok"`. The reason strings are a
+fixed set of constants — `REASON_NO_CHUNKS = "no vector chunks cleared the
+score threshold"`, `REASON_NO_KG = "no KG concepts resolved"`,
+`REASON_KG_EMPTY = "KG returned nothing for this query"` — plus a
+dynamically-built `"identifier(s) <x>, <y> not found in any returned
+content"` string when a query-extracted identifier token (the same
+tokenizer the hybrid lexical lane uses) is absent from every chunk `text`
+and edge `source_quote`.
+
+This guards the issue #47 incident class, reproduced and live-verified in
+`mcp/tests/gold/PR5-EVIDENCE.md`: "What is the sn_zz_fake_table used for?"
+comes back with 5 on-topic chunks and 0 KG edges — a full-looking result —
+but the asked-for table doesn't exist anywhere in the content. `grounding`
+classifies this `weak`, with reasons `"identifier(s) sn_zz_fake_table not
+found in any returned content"` and `"KG returned nothing for this
+query"`, instead of silently handing back a padded-looking envelope. A
+nonsense-query probe ("purple elephant quantum bicycle recipes") classifies
+`none` (0 chunks / 0 edges); the fixed-11 and identifier-cohort probes
+classify `ok` (`reasons: []`) — see the evidence file for the full live
+gate table.
+
+**Caller guidance (from the tool description, verbatim):** On
+grounding.tier "none" or "weak", say what was not found rather than
+answering from prior knowledge — never present an identifier that is not
+in the returned content.
+
+Classification is observation-only: no selection, threshold, or lane
+behavior changed in this PR (the diff touches enrich envelope assembly,
+the classifier module, the tool description, and tests only) — `grounding`
+labels what `vector_chunks`/`kg_matches` already contain, it doesn't change
+what they contain. `vector_search` is unchanged: no `grounding` key, no
+warnings channel — giving it an equivalent signal is a recorded follow-up
+from PR 4's review.
 
 **Error / edge cases (keys stay stable, `error` added):**
 

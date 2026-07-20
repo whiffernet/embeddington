@@ -3,6 +3,7 @@
 import math
 from unittest.mock import AsyncMock, MagicMock
 
+import budget
 import enrich as enrich_mod
 import pytest
 from arango_client import ArangoError
@@ -76,7 +77,14 @@ async def test_enrich_envelope_keys_always_present():
         qdrant_client=qdrant,
         arango_client=arango,
     )
-    assert set(result) == {"vector_chunks", "kg_matches", "errors", "budget", "warnings"}
+    assert set(result) == {
+        "vector_chunks",
+        "kg_matches",
+        "errors",
+        "budget",
+        "warnings",
+        "grounding",
+    }
     m = result["kg_matches"][0]
     assert set(m) == {"concept", "variants", "nodes", "edges", "truncation", "suggest", "error"}
     assert m["variants"][0]["name"] == "ITSM"
@@ -817,3 +825,222 @@ async def test_enrich_warns_when_lexical_degraded():
         lexical_ready=False,
     )
     assert "lexical lane degraded — chunk_text index not ready" in res["warnings"]
+
+
+# --- Grounding tier attached to the enrich envelope (spec §5 PR 5, issue #47) ---
+
+
+@pytest.mark.asyncio
+async def test_enrich_grounding_none_on_empty_retrieval():
+    class EmptyQdrant:
+        async def search(self, vector, limit, match_text=None):
+            return []
+
+    class EmptyArango:
+        def find_entities(self, text, limit=3):
+            return []
+
+    res = await enrich_mod.enrich(
+        query="purple elephant quantum recipes",
+        entity_hints=None,
+        top_k=5,
+        edge_budget=40,
+        embedding_client=BatchEmbed(),
+        qdrant_client=EmptyQdrant(),
+        arango_client=EmptyArango(),
+    )
+    assert res["grounding"]["tier"] == "none"
+    assert res["vector_chunks"] == [] and res["kg_matches"] == []
+    # Issue #47 acceptance: no invented identifiers on empty retrieval — the
+    # envelope carries NO entity/table-like content at all.
+    assert "sn_" not in str(res["vector_chunks"]) + str(res["kg_matches"])
+
+
+@pytest.mark.asyncio
+async def test_enrich_grounding_weak_when_asked_identifier_absent():
+    # THE incident-class regression (spec §5 PR 5): on-topic content, asked-for
+    # identifier missing from every returned chunk and edge quote.
+    class OnTopicQdrant:
+        async def search(self, vector, limit, match_text=None):
+            if match_text:  # lexical lane finds nothing for the fake id
+                return []
+            return [{"id": "c1", "score": 0.8, "text": "hardware assets are tracked in tables"}]
+
+    res = await enrich_mod.enrich(
+        query="What is the sn_zz_fake_table used for?",
+        entity_hints=["hardware"],
+        top_k=5,
+        edge_budget=40,
+        embedding_client=BatchEmbed(),
+        qdrant_client=OnTopicQdrant(),
+        arango_client=RelArango(),
+        lexical_ready=True,
+    )
+    assert res["grounding"]["tier"] == "weak"
+    assert any("sn_zz_fake_table" in r for r in res["grounding"]["reasons"])
+    # The fake identifier appears nowhere in returned content:
+    payload = str(res["vector_chunks"]) + str(res["kg_matches"])
+    assert "sn_zz_fake_table" not in payload
+
+
+@pytest.mark.asyncio
+async def test_enrich_grounding_ok_on_normal_retrieval():
+    embed = BatchEmbed(quote_vecs={"on-point quote": 0.9, "boring quote": 0.1})
+    res = await enrich_mod.enrich(
+        query="q",
+        entity_hints=["A"],
+        top_k=1,
+        edge_budget=1,
+        embedding_client=embed,
+        qdrant_client=OkQdrant(),
+        arango_client=RelArango(),
+    )
+    assert res["grounding"] == {"tier": "ok", "reasons": []}
+
+
+@pytest.mark.asyncio
+async def test_grounding_classified_after_ceiling_trim(monkeypatch):
+    # If the trim empties a half, grounding must reflect the FINAL envelope.
+    #
+    # Branch this fixture actually exercises (verified by direct run): with
+    # top_k=1/edge_budget=1, trim_to_ceiling's kg-edge loop only pops edges
+    # from matches holding MORE than `floor` (3) edges — this match has just
+    # 1 — and the vector-chunk loop never drops below 1 chunk. So even at
+    # max_response_tokens=1 the envelope keeps its single non-empty chunk and
+    # single edge (just flags "exceeds ceiling even at floors" in warnings)
+    # rather than emptying either half. Grounding is computed from that
+    # still-non-empty final content, so tier is "ok".
+    embed = BatchEmbed()
+    res = await enrich_mod.enrich(
+        query="q",
+        entity_hints=["A"],
+        top_k=1,
+        edge_budget=1,
+        embedding_client=embed,
+        qdrant_client=OkQdrant(),
+        arango_client=RelArango(),
+        max_response_tokens=1,  # brutal ceiling: trim floors everything it can
+    )
+    g = res["grounding"]
+    n_edges = sum(len(m["edges"]) for m in res["kg_matches"])
+    if not res["vector_chunks"] and n_edges == 0:
+        assert g["tier"] == "none"
+    else:
+        assert (g["tier"] == "ok") == (bool(res["vector_chunks"]) and n_edges > 0)
+
+
+class SixEdgeArango:
+    """One concept, 6 edges on 6 distinct predicates. The asked-for
+    identifier lives ONLY in the lowest-relevance edge's quote ("e_tail").
+    With distinct predicates, select_edges' quota-then-fill selection
+    collapses to plain relevance order (pass 1 takes the top `quota` by rank
+    since each is trivially its predicate's "best" edge; pass 2 continues
+    the same rank-ordered walk for the rest) — so e_tail is last in the
+    selected `edges` list, and trim_to_ceiling's victim rule pops from the
+    tail first.
+    """
+
+    def find_entities(self, text, limit=3):
+        return [{"id": "entities_v2/a", "name": text, "type": "t", "degree": 6}]
+
+    def neighbors_stratified(self, eid, per_predicate, overall, predicates):
+        edges = [
+            {
+                "id": f"e{i}",
+                "source": "entities_v2/a",
+                "target": "entities_v2/b",
+                "predicate": f"P{i}",
+                "confidence": 0.5,
+                "source_quote": f"quote {i}",
+            }
+            for i in range(1, 6)
+        ]
+        edges.append(
+            {
+                "id": "e_tail",
+                "source": "entities_v2/a",
+                "target": "entities_v2/b",
+                "predicate": "P6",
+                "confidence": 0.5,
+                "source_quote": "sn_ci_relationship governs this link",
+            }
+        )
+        return {
+            "nodes": [{"id": "entities_v2/a"}, {"id": "entities_v2/b"}],
+            "edges": edges,
+            "fetched": 6,
+        }
+
+    def count_edges(self, eid, predicates=None):
+        return 6
+
+
+class OneChunkQdrant:
+    async def search(self, vector, limit, match_text=None):
+        return [{"id": "c1", "score": 0.8, "text": "unrelated background prose"}]
+
+
+@pytest.mark.asyncio
+async def test_grounding_reflects_post_trim_not_pre_trim_content():
+    """Order-discriminating regression (review fix, issue #47): a
+    classify-before-trim bug is invisible to the brief's other fixtures
+    because none of them make pre- and post-trim content diverge. Here the
+    queried identifier lives ONLY in the tail (lowest-relevance) KG edge's
+    quote — SixEdgeArango's distinct-predicate pool puts it last in the
+    selected edges (see class docstring), so a ceiling tuned to force
+    exactly one edge eviction removes precisely that edge. A
+    classify-before-trim bug would still see the quote pre-trim and report
+    "ok"; the required post-trim order must report "weak" with the
+    identifier named as missing.
+
+    The ceiling is derived programmatically, not a magic number: an
+    uncapped run establishes the full pre-trim envelope's token estimate
+    (`full_size`); trim_to_ceiling only acts while strictly `over()`, so
+    `max_response_tokens = full_size - 1` forces exactly one over-budget
+    iteration. One evicted edge is far more than 1 token's worth of JSON, so
+    that single pop already clears the ceiling and the loop stops — see the
+    assertion below that only `e_tail` (and nothing else) is gone.
+    """
+    quote_vecs = {f"quote {i}": 1.0 - i * 0.1 for i in range(1, 6)}  # 0.9 .. 0.5
+    quote_vecs["sn_ci_relationship governs this link"] = -0.9  # worst relevance -> tail
+    query = "What is sn_ci_relationship used for?"
+
+    full = await enrich_mod.enrich(
+        query=query,
+        entity_hints=["A"],
+        top_k=1,
+        edge_budget=6,
+        embedding_client=BatchEmbed(quote_vecs=quote_vecs),
+        qdrant_client=OneChunkQdrant(),
+        arango_client=SixEdgeArango(),
+        max_response_tokens=10**6,
+    )
+    # Sanity: uncapped, the identifier IS present pre-trim (fetched, selected,
+    # not yet evicted) — confirms the fixture actually exercises the tail
+    # edge the ordering claim depends on.
+    assert full["grounding"]["tier"] == "ok"
+    full_edge_ids = [e["id"] for e in full["kg_matches"][0]["edges"]]
+    assert full_edge_ids[-1] == "e_tail"
+    # trim_to_ceiling's `over()` check runs BEFORE `grounding` is attached
+    # (enrich() adds it after trim returns) — size against the same envelope
+    # shape trim actually sees, or the derived ceiling undershoots.
+    full_pre_grounding = {k: v for k, v in full.items() if k != "grounding"}
+    full_size = budget.estimate_tokens(full_pre_grounding)
+
+    res = await enrich_mod.enrich(
+        query=query,
+        entity_hints=["A"],
+        top_k=1,
+        edge_budget=6,
+        embedding_client=BatchEmbed(quote_vecs=quote_vecs),
+        qdrant_client=OneChunkQdrant(),
+        arango_client=SixEdgeArango(),
+        max_response_tokens=full_size - 1,
+    )
+    edges = res["kg_matches"][0]["edges"]
+    assert [e["id"] for e in edges] == [f"e{i}" for i in range(1, 6)]  # only e_tail evicted
+    assert len(edges) >= 3  # never trimmed below the per-concept floor
+    assert res["grounding"]["tier"] == "weak"
+    assert any("sn_ci_relationship" in r for r in res["grounding"]["reasons"])
+    payload = str(res["vector_chunks"]) + str(res["kg_matches"])
+    assert "sn_ci_relationship" not in payload
