@@ -80,7 +80,12 @@ def main() -> None:
             delta_str = f"{delta:+.3f}"
             verdict = "OK" if non_decreasing else "DECREASE"
             if non_decreasing:
-                met_through = eb
+                # Only advance while still unbroken — a later OK after an
+                # earlier DECREASE must not resurrect met_through past the
+                # break (that would misreport a curve with a dip as
+                # non-decreasing "through" a point beyond the dip).
+                if fully_met:
+                    met_through = eb
             else:
                 fully_met = False
         print(f"| {eb} | {mean:.3f} | {delta_str} | {verdict} |")

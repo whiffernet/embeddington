@@ -377,31 +377,18 @@ def _render(
     lines.append("")
     lines.append("| edge_budget | mean_ret | mean_returned | mean_pp | worst_tokens |")
     lines.append("|---|---|---|---|---|")
+    curve: list[tuple[int, dict]] = []
     for eb in EDGE_BUDGETS:
         c = next(c for c in on if c["edge_budget"] == eb and c["top_k"] == SHIPPED[1])
         a = _agg(c)
+        curve.append((eb, a))
         mark = " ⭐" if c is knee else ""
         lines.append(
             f"| {eb}{mark} | {a['mean_ret']:.3f} | {a['mean_returned']:.1f} | "
             f"{a['mean_pp']:.3f} | {a['worst_tokens']} |"
         )
     lines.append("")
-    lines.append(
-        "**Finding 2 — edge delivery plateaus past ~40 (orphan-node trim fix, "
-        "#28).** Edges actually delivered rise from edge_budget=20 to ~40 and "
-        "then *plateau* (~28 mean) as the budget grows; predicate recall stays "
-        "~1.0 across edge_budget 40–120. A larger budget no longer returns "
-        "fewer edges. **Before** this fix the ceiling trim popped edges but left "
-        "their now-orphan nodes in the response, which held it over the ceiling "
-        "and floored concepts to the 3-edge floor — so delivery *inverted*, "
-        "collapsing to ~8.6 mean edges (predicate recall ~0.55) at "
-        "edge_budget=120 while sitting 1600–2300 tokens UNDER the ceiling. "
-        "Pruning orphan nodes on trim reclaims those tokens for edges, so "
-        "delivery now plateaus instead of inverting (see the KG-edges table: "
-        "eb=120/k=5 went from ~8.6 to ~28 mean). Retention still peaks at "
-        "edge_budget=40 and eases off mildly at larger budgets, so the smallest "
-        "budget at the plateau stays the knee."
-    )
+    lines.append(sweep_io.render_finding_2(curve, SHIPPED[1], EDGE_BUDGETS))
     lines.append("")
     lines.append(
         f"**Chosen defaults: `edge_budget={knee['edge_budget']}`, "

@@ -103,6 +103,55 @@ async def test_wrap_counting_embed_batch_increments_call_counts():
     assert sweep_io.CALL_COUNTS["embed_batch"] == 1
 
 
+def test_render_finding_2_reports_measured_peak_not_hardcoded_40():
+    """#44 final-review B2: a curve peaking at edge_budget=80 (like the real
+    PR 6 sweep) must not be described as peaking at 40, and none of the old
+    hardcoded PR1/#28-era constants may survive into the rendered text.
+    """
+    curve = [
+        (20, {"mean_ret": 0.373, "mean_returned": 19.2, "mean_pp": 0.823}),
+        (40, {"mean_ret": 0.745, "mean_returned": 25.2, "mean_pp": 0.977}),
+        (60, {"mean_ret": 0.900, "mean_returned": 25.1, "mean_pp": 0.985}),
+        (80, {"mean_ret": 0.918, "mean_returned": 24.9, "mean_pp": 0.985}),
+        (120, {"mean_ret": 0.882, "mean_returned": 24.3, "mean_pp": 0.985}),
+    ]
+    text = sweep_io.render_finding_2(curve, top_k=5, edge_budgets=[20, 40, 60, 80, 120])
+
+    assert "edge_budget=80" in text  # the actual peak in this (real) curve
+    assert "Retention still peaks at edge_budget=40" not in text
+    assert "~28 mean" not in text
+    assert "~8.6 mean edges" not in text
+    assert "predicate recall stays" not in text
+    assert "orphan-node trim fix" not in text
+    assert "delivery *inverted*" not in text
+
+
+def test_render_finding_2_reflects_never_rising_curve():
+    """The identifier cohort's real curve never plateaus within the grid
+    (strictly increasing 20->120) -- the peak must be reported at the top of
+    the grid, not misattributed to an interior point.
+    """
+    curve = [
+        (20, {"mean_ret": 0.050, "mean_returned": 10.0, "mean_pp": 0.500}),
+        (40, {"mean_ret": 0.150, "mean_returned": 11.2, "mean_pp": 0.500}),
+        (60, {"mean_ret": 0.225, "mean_returned": 11.2, "mean_pp": 0.500}),
+        (80, {"mean_ret": 0.350, "mean_returned": 11.2, "mean_pp": 0.500}),
+        (120, {"mean_ret": 0.425, "mean_returned": 11.5, "mean_pp": 0.500}),
+    ]
+    text = sweep_io.render_finding_2(curve, top_k=5, edge_budgets=[20, 40, 60, 80, 120])
+    assert "edge_budget=120" in text
+
+
+def test_render_finding_2_range_reflects_min_and_max():
+    curve = [
+        (20, {"mean_ret": 0.1, "mean_returned": 5.0, "mean_pp": 0.400}),
+        (120, {"mean_ret": 0.9, "mean_returned": 30.0, "mean_pp": 0.950}),
+    ]
+    text = sweep_io.render_finding_2(curve, top_k=5, edge_budgets=[20, 120])
+    assert "5.0" in text and "30.0" in text
+    assert "0.400" in text and "0.950" in text
+
+
 def test_serialize_run_tolerates_already_normalized_entries():
     """entries with ms_median already present and no ms_all pass through unchanged."""
     combo = {

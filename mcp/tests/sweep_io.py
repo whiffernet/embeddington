@@ -116,6 +116,45 @@ def render_knee_verdict(knee_eb: int, knee_tk: int, shipped: tuple[int, int]) ->
     )
 
 
+def render_finding_2(
+    curve: list[tuple[int, dict[str, float]]], top_k: int, edge_budgets: list[int]
+) -> str:
+    """Data-derived 'Finding 2' paragraph: edge delivery + retention by edge_budget.
+
+    Reports what a sweep run actually measured rather than asserting a fixed
+    historical peak/plateau value. A prior version of this paragraph hardcoded
+    a specific PR 1 (#28) finding ("retention still peaks at edge_budget=40",
+    "~28 mean" edges, "predicate recall stays ~1.0") that a later run's
+    relevance-aware selection (PR 3) falsified — retention no longer
+    necessarily peaks where edge delivery plateaus (#44 final-review finding
+    B2). Lives here (not in ``battery_sweep.py``) so it's unit-testable
+    without importing ``battery_sweep``, which pulls in ``numpy``.
+
+    Args:
+        curve: ``(edge_budget, agg)`` pairs in sweep order, where ``agg`` has
+            ``mean_ret``, ``mean_returned``, and ``mean_pp`` keys (as produced
+            by the sweep's per-combo aggregation).
+        top_k: The top_k value the curve was measured at (for the caption).
+        edge_budgets: The edge_budget values swept (for the caption).
+
+    Returns:
+        The Markdown paragraph text (no leading/trailing blank lines).
+    """
+    peak_eb, peak_agg = max(curve, key=lambda item: item[1]["mean_ret"])
+    returned_values = [a["mean_returned"] for _, a in curve]
+    pp_values = [a["mean_pp"] for _, a in curve]
+    return (
+        f"**Finding 2 — edge delivery and retention by `edge_budget` "
+        f"(top_k={top_k}, dedup=on), this run's own numbers.** Mean edges "
+        f"delivered range {min(returned_values):.1f}–{max(returned_values):.1f} "
+        f"and mean predicate recall ranges {min(pp_values):.3f}–{max(pp_values):.3f} "
+        f"across edge_budget {edge_budgets}; mean retention peaks at "
+        f"edge_budget={peak_eb} ({peak_agg['mean_ret']:.3f}). See the curve "
+        f"table above for the full per-`edge_budget` breakdown, including "
+        f"whether delivery/retention plateau, keep rising, or fall past a peak."
+    )
+
+
 def serialize_run(
     rows: list[dict],
     ground_truth: dict[str, dict],

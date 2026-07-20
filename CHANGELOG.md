@@ -15,24 +15,26 @@ outstanding monotonicity criterion.
   `edge_budget` at the peak.
 - Issue #37 (`raising edge_budget never decreases mean gold-recall`) is
   recorded **PARTIALLY MET**: monotone non-decreasing through
-  `edge_budget=60`, then decreasing past it. Root cause is the
-  response-ceiling trim, not a selection regression — a larger allocation
-  increasingly competes with itself for the same fixed token space, so a
-  bigger budget stops helping and starts hurting relevance. See
+  `edge_budget=60`, then decreasing past it. This is consistent with a
+  ceiling-mediated effect rather than a selection regression — the falloff
+  coincides with `edge_budget` values where the response-ceiling trim is
+  known to engage on essentially every query — but the committed data pins
+  the correlation, not a proven mechanism. See
   `mcp/tests/gold/PR6-EVIDENCE.md` for the full monotonicity table.
 - Calibration finding (informs the headroom bar, does not change shipped
   behavior): `budget.estimate_tokens`'s ÷3 heuristic was calibrated against
   a real tokenizer (tiktoken `cl100k_base` proxy) over every committed
   worst-case response dump. Result: the heuristic **overestimates** tokens
-  by 19–26% on all 15 dumps (never underestimates) — `e = 0`, calibrated
+  by 19–26% on all 17 dumps (never underestimates) — `e = 0`, calibrated
   bar unchanged at 9000 estimated tokens. Separately, 0/15 `dedup=on` grid
-  combos land at or under that 9000-token headroom bar (every combo's
-  worst-case query sits at ~11,900–12,013, essentially the 12,000 ceiling)
-  — the response-ceiling trim fills to just under the ceiling regardless of
-  `edge_budget`/`top_k`, so the ≥25%-headroom bar is unmeetable at any grid
-  point and cannot discriminate between them. This restates PR 1's
-  Finding-1 with calibrated numbers (maintainer-authorized amendment,
-  not a new deviation): headroom is a ceiling/chunk-size lever
+  combos land at or under that 9000-token headroom bar (across the full
+  grid, both cohorts, worst-case tokens range ~10,300–12,013; restricted
+  to `edge_budget ≥ 40` it tightens to ≥11,900, essentially the 12,000
+  ceiling) — the response-ceiling trim fills to just under the ceiling at
+  `edge_budget ≥ 40` regardless of `top_k`, so the ≥25%-headroom bar is
+  unmeetable there and cannot discriminate between grid points. This
+  restates PR 1's Finding-1 with calibrated numbers (maintainer-authorized
+  amendment, not a new deviation): headroom is a ceiling/chunk-size lever
   (`EMBEDDINGTON_MAX_RESPONSE_TOKENS`, `source_quote`/text length), not an
   `edge_budget` one — real payloads (~9.5–10k real tokens per the
   calibration) sit comfortably under the nominal ceiling even though the

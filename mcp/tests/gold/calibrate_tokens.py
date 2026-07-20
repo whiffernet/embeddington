@@ -56,6 +56,18 @@ NOMINAL_BAR = 9000
 
 
 def main() -> None:
+    """Calibrate estimate_tokens against cl100k_base over every committed dump.
+
+    Globs ``*worst-response.json`` under ``mcp/tests/battery_results/``,
+    computes each file's ``{est, real, ratio}`` row (see module docstring
+    for the serialization contract), derives ``e`` and ``calibrated_bar``,
+    writes ``token_calibration.json`` next to this script, and prints the
+    per-file table plus the summary.
+
+    Raises:
+        SystemExit: If no ``*worst-response.json`` files are found under
+            ``BATTERY_RESULTS`` (fixed corpus is required, not optional).
+    """
     files = sorted(BATTERY_RESULTS.glob("*worst-response.json"))
     if not files:
         raise SystemExit(f"no *worst-response.json files found under {BATTERY_RESULTS}")
