@@ -87,6 +87,22 @@ def test_render_knee_verdict_matches_shipped_no_change():
     assert "no change" in verdict
 
 
+class _FakeEmbedClient:
+    async def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        return [[0.0] for _ in texts]
+
+
+@pytest.mark.asyncio
+async def test_wrap_counting_embed_batch_increments_call_counts():
+    sweep_io.CALL_COUNTS.clear()
+    fake = _FakeEmbedClient()
+    sweep_io.wrap_counting(fake, "embed_batch", "embed_batch")
+
+    await fake.embed_batch(["a", "b"])
+
+    assert sweep_io.CALL_COUNTS["embed_batch"] == 1
+
+
 def test_serialize_run_tolerates_already_normalized_entries():
     """entries with ms_median already present and no ms_all pass through unchanged."""
     combo = {

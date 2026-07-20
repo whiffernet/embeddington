@@ -146,26 +146,11 @@ SHORT = {
     "id_sc_cat_item": "id_cat",
 }
 
-CALL_COUNTS: dict[str, int] = {}
-
-
-def _wrap_counting(obj: object, method: str, key: str) -> None:
-    """Wrap a client method so each call increments CALL_COUNTS[key]."""
-    orig = getattr(obj, method)
-    if asyncio.iscoroutinefunction(orig):
-
-        async def aw(*a, **k):
-            CALL_COUNTS[key] = CALL_COUNTS.get(key, 0) + 1
-            return await orig(*a, **k)
-
-        setattr(obj, method, aw)  # type: ignore[method-assign]
-    else:
-
-        def sw(*a, **k):
-            CALL_COUNTS[key] = CALL_COUNTS.get(key, 0) + 1
-            return orig(*a, **k)
-
-        setattr(obj, method, sw)  # type: ignore[method-assign]
+# CALL_COUNTS/_wrap_counting live in sweep_io.py (the pure, numpy-free layer)
+# so they're unit-testable without importing this module — battery_sweep
+# needs numpy for the live sweep; the unit-test job must not.
+CALL_COUNTS = sweep_io.CALL_COUNTS
+_wrap_counting = sweep_io.wrap_counting
 
 
 def _install_counters() -> None:

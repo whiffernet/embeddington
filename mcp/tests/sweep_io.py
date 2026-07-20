@@ -6,6 +6,7 @@ against is unit-tested (the sweep script itself needs the live stack).
 
 from __future__ import annotations
 
+import asyncio
 from statistics import median
 from typing import Any
 
@@ -13,6 +14,38 @@ from battery_queries import IDENTIFIER_QUERIES
 from battery_queries import QUERIES as _FIXED_QUERIES
 
 _COHORTS: dict[str, list[dict]] = {"fixed": _FIXED_QUERIES, "identifier": IDENTIFIER_QUERIES}
+
+CALL_COUNTS: dict[str, int] = {}
+
+
+def wrap_counting(obj: object, method: str, key: str) -> None:
+    """Wrap a client method in place so each call increments ``CALL_COUNTS[key]``.
+
+    Lives here (not in ``battery_sweep.py``) so it — and ``CALL_COUNTS`` — can
+    be unit-tested against a fake client without importing ``battery_sweep``,
+    which pulls in ``numpy`` (a live-battery-only dependency not installed
+    for the unit-test job).
+
+    Args:
+        obj: The object whose method is wrapped, mutated in place.
+        method: Name of the (sync or async) method to wrap.
+        key: ``CALL_COUNTS`` key incremented on each call.
+    """
+    orig = getattr(obj, method)
+    if asyncio.iscoroutinefunction(orig):
+
+        async def aw(*a, **k):
+            CALL_COUNTS[key] = CALL_COUNTS.get(key, 0) + 1
+            return await orig(*a, **k)
+
+        setattr(obj, method, aw)  # type: ignore[method-assign]
+    else:
+
+        def sw(*a, **k):
+            CALL_COUNTS[key] = CALL_COUNTS.get(key, 0) + 1
+            return orig(*a, **k)
+
+        setattr(obj, method, sw)  # type: ignore[method-assign]
 
 
 def select_cohort(name: str) -> list[dict]:
