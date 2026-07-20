@@ -1,0 +1,823 @@
+{
+ "tokens": 12011,
+ "combo": {
+  "eb": 120,
+  "tk": 5,
+  "dedup": "on"
+ },
+ "query": "id_sc_cat_item",
+ "response": {
+  "vector_chunks": [
+   {
+    "id": "350048f5-23a7-4e5a-85ac-e9eaaf5b542f",
+    "score": 0.7050986,
+    "text": "# Service Catalog and CSDM tables\n\nService Catalog manages and uses CSDM tables. Several ServiceNow products benefit from and add value to Service Catalog.\n\n## CSDM tables managed by the Service Catalog\n\nThe Service Catalog primarily manages business services in the Sell/Consume domain. Technical Services are also viewed from the Operate domain of Event Management.\n\nThe Service Catalog manages the Catalog Item table \\[sc\\_cat\\_item\\]. The Catalog Item table creates requests in Request Management. The requests usually have an automated, semi-automated, or business workflow for fulfilling the request, which can consist of approvals and tasks. When part of Service Portfolio Management, the CIs are associated with service offerings. When you link a catalog item, you can track request activity for all catalog items associated with a service offering. An offering can have multiple catalog items.\n\nThe CIs can include:\n\n-   PC Hardware Item \\(pc\\_hardware\\_cat\\_item\\): Submits hardware asset requests included in Asset Management workflows.\n-   PC Software Item \\(pc\\_software\\_cat\\_item\\): Submits software asset requests included in Asset Management workflows.\n-   Record Producer \\(sc\\_cat\\_item\\_producer\\): Submits requests or generates records other than Request Management tables for services that aren't serviced by Request Management \\(for example, HR Cases, Facilities Requests, or Legal Requests\\).\n\n![CSDM tables managed by Request Catalog.](../image/csdm-v5-tables-managed-by-req-cat.png \"CSDM tables managed by the Service Catalog\")\n\n## CSDM tables used by the Service Catalog\n\n1.  Configuration Item tables \\[cmdb\\_ci\\*\\]\n2.  Service Offering table \\[sc\\_cat\\_item\\_subscribe\\]\n3.  Application Service table \\[cmdb\\_ci\\_service\\_discovered\\]\n4.  Product Model tables \\[cmdb\\_model\\]\n\n    **Note:** The following legacy CMDB relationships that once provided access to catalog items are no longer supported. To provide access, use the new relationships listed in the table.\n\n    |CMDB table|Catalog item relationship table|New relationship to use instead|\n    |----------|-------------------------------|-------------------------------|\n    |User \\(sys\\_user\\)|sc\\_cat\\_item\\_user\\_mtom, sc\\_cat\\_item\\_user\\_no\\_mtom|User criteria|\n    |Group \\(sys\\_user\\_group\\)|sc\\_cat\\_item\\_group\\_mtom, sc\\_cat\\_item\\_group\\_no\\_mtom|User criteria|\n    |Department \\(cmn\\_department\\)|sc\\_cat\\_item\\_dept\\_mtom, sc\\_cat\\_item\\_dept\\_no\\_mtom|User criteria|\n    |Location \\(smn\\_location\\)|sc\\_cat\\_item\\_location\\_mtom, sc\\_cat\\_item\\_location\\_no\\_mtom|User criteria|\n    |Company \\(core\\_company\\)|sc\\_cat\\_item\\_company\\_mtom, sc\\_cat\\_item\\_company\\_no\\_mtom|User criteria|\n\n\n![CSDM tables used by Request Catalog.](../image/csdm-v5-tables-used-by-req-cat.png \"CSDM tables used by the Service Catalog\")\n\n## Products that benefit from the Service Catalog\n\n-   **Service Portfolio Management \\(Service Portfolio Management\\)**\n\n    Ties catalog items to service offerings. Lets service owners create and maintain catalog items more easily, and gives more visibility into the service offerings.\n\n-   **Hardware Asset Management and Software Asset Management**\n\n    Self-service catalog lets you order an asset and track service delivery.\n\n-   **Human Resources \\(HR\\)**\n\n    Exposes the creator \\(Record Producer\\) of HR cases and displays the Record Producer in the relevant self-service catalogs \\(for example, Portal, Mobile, and Virtual Agent\\).\n\n-   **Customer Service Management \\(CSM\\)**\n\n    Exposes the creator \\(Record Producer\\) of customer service cases and displays the Record Producer in the relevant self-service catalogs \\(for example, Self-service Portal, Mobile, and Virtual Agent\\).\n\n\n**Parent Topic:**[Service Catalog and CSDM](../concept/request-cat-use-case-product-view.md)",
+    "source": "github-sync",
+    "metadata": {
+     "filename": "markdown/servicenow-platform/service-catalog/request-cat-use-case.md",
+     "file_path": "/app/data/documents/temp_technology_1779919066.512653/markdown/servicenow-platform/service-catalog/request-cat-use-case.md",
+     "file_name": "markdown/servicenow-platform/service-catalog/request-cat-use-case.md",
+     "file_type": "text/markdown",
+     "file_size": 3809,
+     "creation_date": "2026-05-27",
+     "last_modified_date": "2026-05-27",
+     "ingested_at": "2026-05-27T21:57:46.513191",
+     "file_hash": "46d87d748787858bfee37c410845321158a456545a18dc1450c16a704e956d01",
+     "source": "github-sync",
+     "source_type": "github-md",
+     "source_uri": "https://github.com/ServiceNow/ServiceNowDocs/blob/australia/markdown/servicenow-platform/service-catalog/request-cat-use-case.md",
+     "canonical_url": null,
+     "title": "Service Catalog and CSDM tables",
+     "product": "Service Catalog",
+     "product_area": "Service Catalog",
+     "last_update": "2026-03-12",
+     "release": "australia",
+     "_node_type": "TextNode",
+     "document_id": "7582a396-9b90-4c1c-becf-4a20dd23fa73",
+     "doc_id": "7582a396-9b90-4c1c-becf-4a20dd23fa73",
+     "ref_doc_id": "7582a396-9b90-4c1c-becf-4a20dd23fa73"
+    }
+   },
+   {
+    "id": "ca023ad4-a6a4-41d1-86e6-af5e7b9d9d56",
+    "score": 0.6524968,
+    "text": "<table id=\"table_wdk_tkn_vz\" class=\"parameters\"><thead><tr><th>\n\nName\n\n</th><th>\n\nType\n\n</th><th>\n\nDescription\n\n</th></tr></thead><tbody><tr><td>\n\naction\n\n</td><td>\n\nString\n\n</td><td>\n\nAction to perform.-   `add`: Adds the user criteria to the **Not Available For** list.\n-   `delete`: Deletes the user criteria from the **Not Available For** list.\n\n</td></tr></tbody>\n</table>|Type|Description|\n|----|-----------|\n|void|\u00a0|\n\nThis example shows how to add the specified **Not Available For** user criteria.\n\n```\nvar item = new sn_sc.CatItem(\"31bea3d53790200044e0bfc8bcbe5dec\");\nitem. notAvailableForUserCriteria(\"add\", [\"0c441abbc6112275000025157c651c89\"]);\n```\n\n## CatItem - read\\(Object columns, Boolean standardUpdate\\)\n\nReturns a mapping of catalog item attribute values.\n\n<table id=\"table_hsf_kgn_ms\" class=\"parameters\"><thead><tr><th>\n\nName\n\n</th><th>\n\nType\n\n</th><th>\n\nDescription\n\n</th></tr></thead><tbody><tr><td>\n\ncolumns\n\n</td><td>\n\nObject\n\n</td><td>\n\nName-value pairs of columns for which to return values.\n\n</td></tr><tr><td>\n\nstandardUpdate\n\n</td><td>\n\nBoolean\n\n</td><td>\n\nFlag that indicates whether to enable the running of engines and workflow.Valid values:\n\n-   true: Enable the running of engines and workflow.\n-   false: Do not enable the running of engines and workflow.\n\n</td></tr></tbody>\n</table>|Type|Description|\n|----|-----------|\n|Object|Mapping of column names to values.|\n\nThis example reads the name and price fields of a catalog item.\n\n```\nvar catItem = new sn_sc.CatItem(\"a96277509f300200b407b89a442e704e\");\nvar values = catItem.read({\"name\" : \"\", \"price\" : \"\"}, true);\ngs.info(\"Catalog item name: \" + values.name);\ngs.info(\"Catalog item price: \" + values.price);\n```\n\nOutput:\n\n```\nCatalog item name: Standard Laptop\nCatalog item price: 1100\n```\n\n## CatItem - setAttributes\\(Object attributes\\)\n\nSets attributes for a catalog item.\n\n|Name|Type|Description|\n|----|----|-----------|\n|attributes|Object|Name-value pairs of the columns for which to set.|\n\n|Type|Description|\n|----|-----------|\n|void|\u00a0|\n\nThis example sets attributes for a new catalog item.\n\n```\ncreateCatalogItem('Name of your Catalog Item', 'Short Description of your Catalog Item', 'e0d08b13c3330100c8b837659bba8fb4', '109f0438c6112276003ae8ac13e7009d'); \n\nfunction createCatalogItem(name, short_desc, catalogId, categoryId) {\n    var catalogItem = new sn_sc.CatItem();\n    // catalog item column values\n    var attributes ={\n        \"name\": name,\n        \"short_description\": short_desc,\n\t \"description\": \"<p>This is a test catalog item.</p>\",\n\t \"workflow\":\"0287f2c64a36232700820846b1f8bdce\" // sys_id of workflow\n    };\n    catalogItem.setAttributes(attributes); // set catalog item attributes\n    catalogItem.setCatalogs(catalogId); // set catalog\n    catalogItem.setCategories(categoryId); // set category\n\n    var catItemSysId = catalogItem.create(); // create new catalog item\n    gs.info('Catalog item created in table sc_cat_item with sys_id ' + catItemSysId);\n}\n```\n\nOutput:\n\n```\nCatalog item created in table sc_cat_item with sys_id 706948a287e370103a730f2d0ebb351e\n```\n\n## CatItem - setCatalogs\\(String catalogs\\)\n\nDefines the catalogs that this catalog item is associated with.\n\n|Name|Type|Description|\n|----|----|-----------|\n|catalogs|String|Comma-separated list of sys\\_ids of the catalogs to associate with the item the item.|\n\n|Type|Description|\n|----|-----------|\n|void|\u00a0|\n\nThis example associates a catalog item with two catalogs.\n\n```\nvar short_desc = 'This is a short description of my catalog item.';\nvar catalogItem = new sn_sc.CatItem();\ncatalogItem.setAttributes({\n    \"name\": 'My Catalog Item',\n    \"short_description\": short_desc\n});\ncatalogItem.setCatalogs('e0d08b13c3330100c8b837659bba8fb4,742ce428d7211100f2d224837e61036d'); // set Service Catalog and Technical Catalog\n\nvar catItemSysId = catalogItem.create(); // create new catalog item\ngs.info('Catalog item created in table sc_cat_item with sys_id ' + catItemSysId);\n```\n\nOutput:\n\n```\nCatalog item created in table sc_cat_item with sys_id d0c5dcaa872770103a730f2d0ebb35cb\n```\n\n## CatItem - setCategories\\(String categories\\)\n\nDefines the categories that this catalog item is associated with.\n\n|Name|Type|Description|\n|----|----|-----------|\n|categories|String|Comma-separated list of sys\\_ids of the categories to associate with the item the item.|\n\n|Type|Description|\n|----|-----------|\n|void|\u00a0|\n\nThis example shows how to associate two categories to an item.",
+    "source": "github-sync",
+    "metadata": {
+     "filename": "markdown/api-reference/server-api-reference/c_CatItem.md",
+     "file_path": "/app/data/documents/temp_technology_1781965252.572001/markdown/api-reference/server-api-reference/c_CatItem.md",
+     "file_name": "markdown/api-reference/server-api-reference/c_CatItem.md",
+     "file_type": "text/markdown",
+     "file_size": 23643,
+     "creation_date": "2026-06-20",
+     "last_modified_date": "2026-06-20",
+     "ingested_at": "2026-06-20T14:20:52.573768",
+     "file_hash": "0cb0af4c27fed0a071394e91355aecc325be03d5d73231acdd152cb39fa586b8",
+     "source": "github-sync",
+     "source_type": "github-md",
+     "source_uri": "https://github.com/ServiceNow/ServiceNowDocs/blob/australia/markdown/api-reference/server-api-reference/c_CatItem.md",
+     "canonical_url": "https://www.servicenow.com/docs/r/api-reference/server-api-reference/c\\_CatItem.html",
+     "title": "CatItem - Scoped",
+     "product": "Server API Reference",
+     "product_area": "Server API Reference",
+     "last_update": "2026-03-12",
+     "release": "australia",
+     "_node_type": "TextNode",
+     "document_id": "cad0a759-49a1-4077-9a18-9c88e1cf995b",
+     "doc_id": "cad0a759-49a1-4077-9a18-9c88e1cf995b",
+     "ref_doc_id": "cad0a759-49a1-4077-9a18-9c88e1cf995b"
+    }
+   },
+   {
+    "id": "0d9aa2ba-081a-47d5-b415-9edfd2d21eba",
+    "score": 0.6724199,
+    "text": "# Service catalog integration with the Customer and Consumer Service Portals\n\nUsers with the customer administrator role \\(sn\\_customerservice.customer\\_admin\\) can associate a portal with a service catalog.\n\nThe following catalog pages and widgets are provided as part of the Customer Service with Request Management integration.\n\nFor more information, see [Associate a portal with a catalog](https://raw.githubusercontent.com/ServiceNow/ServiceNowDocs/australia/markdown/platform-user-interface/service-portal/associate-portal-catalog.md).\n\n## CSM Catalog page\n\nThe CSM Catalog page is the display page for catalog items on the Customer and Consumer Service Portals. This page serves as the landing page for any service catalog item exposed on a CSM portal. All request items exposed on the CSM portals are either service catalog items or service catalog record producers. Navigate to **Service Portal** &gt; **Pages** to view this page.\n\n-   Page ID: csm\\_sc\\_cat\\_item\n-   Update name: sp\\_page\\_7ea80b123bb31300bfe04d72f3efc4b7\n-   Available to roles: snc\\_internal, snc\\_external\n\n## CSM Catalog Item widget\n\nThis widget handles the redirection logic on submission of the catalog item and embeds the default catalog item widget. This widget listens to event **$sp.sc\\_cat\\_item.submitted**. On submission of a catalog item, it handles the portal redirection logic based on the page\\_id and the catalog portal URL. When there\u2019s no parent set in the Requests \\(sc\\_request\\) table, the URL is redirected to the default service portal ticket page. If a record producer has a redirect URL, this widget uses the redirect URL from the record producer instead of redirecting to the ticket page.\n\n-   Widget ID: csm-sc-cat-item\n-   Update name: sp\\_widget\\_ec837c713bbb1300bfe04d72f3efc4d1\n-   Available to roles: snc\\_internal, snc\\_external\n\n## Page route map\n\nIt\u2019s important to set up a page route map for any new Service Portals to handle the redirection to the Case ticket page. The redirection is based on the logic described in the CSM Catalog Item widget.\n\n-   CSM Catalog item page route map: For the Customer Service Portal, this page route map routes the URL redirect from the sc\\_cat\\_item page to the csm\\_sc\\_cat\\_item page.\n-   CSP Catalog item page route map: For the Consumer Service Portal, this page route map routes the URL redirect from the sc\\_cat\\_item page to the csm\\_sc\\_cat\\_item page.\n\n## Portal settings for catalog items\n\nOnce the catalog items are defined, visibility of the **Submit**/**Add to Cart** button can be controlled by navigating to **Service Catalog** &gt; **Catalog Definitions** &gt; **Maintain Items**, selecting the desired item, and enabling or disabling the fields in the Portal Settings form section.\n\n<table id=\"table_lz1_yhm_cmb\"><thead><tr><th>\n\nField\n\n</th><th>\n\nDescription\n\n</th></tr></thead><tbody><tr><td>\n\nRequest method\n\n</td><td>\n\nSelect Order, Request, or Submit as the type of catalog item.\n\n</td></tr><tr><td>\n\nHide \u2018Add to Cart'\n\n</td><td>\n\nEnable if the **Add to Cart** button should be disabled for the catalog item. **Note:** The **Add to Cart** button isn\u2019t currently supported on the Customer Service Portal or the Consumer Service Portal.\n\n</td></tr><tr><td>\n\nHide Quantity\n\n</td><td>\n\nEnable if the **Quantity** of the catalog item should be hidden.\n\n</td></tr><tr><td>\n\nHide Delivery Time\n\n</td><td>\n\nEnable if the **Delivery Time** of the catalog item should be hidden.\n\n</td></tr><tr><td>\n\nHide \u2018Add to Wish List\u2019\n\n</td><td>\n\nEnable if the **Add to Wish List** button for the catalog item should be hidden.\n\n</td></tr><tr><td>\n\nHide Attachment\n\n</td><td>\n\nEnable if the attachment of the catalog item should be hidden.\n\n</td></tr></tbody>\n</table>",
+    "source": "github-sync",
+    "metadata": {
+     "filename": "markdown/customer-service-management/service-catalog-request-integration.md",
+     "file_path": "/app/data/documents/temp_technology_1779912467.946773/markdown/customer-service-management/service-catalog-request-integration.md",
+     "file_name": "markdown/customer-service-management/service-catalog-request-integration.md",
+     "file_type": "text/markdown",
+     "file_size": 3732,
+     "creation_date": "2026-05-27",
+     "last_modified_date": "2026-05-27",
+     "ingested_at": "2026-05-27T20:07:47.947436",
+     "file_hash": "b816cf2f01f23d1a3a0408edfd9c70408bf293d0ba5f547fab437081c82dfb05",
+     "source": "github-sync",
+     "source_type": "github-md",
+     "source_uri": "https://github.com/ServiceNow/ServiceNowDocs/blob/australia/markdown/customer-service-management/service-catalog-request-integration.md",
+     "canonical_url": null,
+     "title": "Service catalog integration with the Customer and Consumer Service Portals",
+     "product": null,
+     "product_area": null,
+     "last_update": "2026-03-12",
+     "release": "australia",
+     "_node_type": "TextNode",
+     "document_id": "da1072d0-8138-4eb8-ae1f-0c3d9151be1a",
+     "doc_id": "da1072d0-8138-4eb8-ae1f-0c3d9151be1a",
+     "ref_doc_id": "da1072d0-8138-4eb8-ae1f-0c3d9151be1a"
+    }
+   },
+   {
+    "id": "05b9c72d-7a60-4bc1-ad0a-58c2240e275b",
+    "score": 0.66979086,
+    "text": "# Request a catalog item from Employee Center\n\nUse the SC Catalog Item widget in Employee Center to request a catalog item.\n\n## Before you begin\n\nRole required: requester\n\n## Procedure\n\n1.  Navigate to **All** &gt; **Employee Center** &gt; **IT**.\n\n2.  Select a topic to view the catalog items and then select catalog item or record producer from the Catalog.\n\n3.  Enter the required information in the catalog item form.\n\n4.  Enter the number of items in the **Quantity** field.\n\n5.  If required, perform any of these actions.\n\n<table id=\"choicetable_sly_jsd_5bb\"><tbody><tr><td id=\"d212688e96\">\n\n**Add attachments**\n\n</td><td>\n\nTo add one or more attachments to the catalog item, select the choose a file link to browse and choose the files or directly drag the files in the **Add attachments** window.\n\n</td></tr><tr><td id=\"d212688e108\">\n\n**Add to Cart**\n\n</td><td>\n\nTo add the catalog item to the shopping cart, click **Add to Cart**.\n\n</td></tr><tr><td id=\"d212688e120\">\n\n**Add to Wish List**\n\n</td><td>\n\nTo add the catalog item to the wish list, click the Add to Wish List icon \\(\\[Omitted image \"SPWishList.png\"\\] Alt text: Icon to add to the wish list\\).\n\n</td></tr></tbody>\n</table>6.  Click **Order Now**.\n\n    The Order Confirmation window is displayed.\n\n7.  From the **Request for** list, select the user for whom you are requesting.\n\n    **Note:** By default, the user who is logged in is selected in this list.\n\n8.  If required, specify the **Delivery Information** and **Special instructions**.\n\n9.  Click **Checkout**.\n\n    The corresponding request is displayed in the My Requests page with the request number, estimated delivery date for the order, price, and the order status.\n\n\n**Parent Topic:**[Service Catalog in Employee Center portal](https://raw.githubusercontent.com/ServiceNow/ServiceNowDocs/australia/markdown/servicenow-platform/service-catalog/service-catalog-in-ec.md)",
+    "source": "github-sync",
+    "metadata": {
+     "filename": "markdown/servicenow-platform/service-catalog/request-cat-item-ec.md",
+     "file_path": "/app/data/documents/temp_technology_1781974589.77859/markdown/servicenow-platform/service-catalog/request-cat-item-ec.md",
+     "file_name": "markdown/servicenow-platform/service-catalog/request-cat-item-ec.md",
+     "file_type": "text/markdown",
+     "file_size": 1902,
+     "creation_date": "2026-06-20",
+     "last_modified_date": "2026-06-20",
+     "ingested_at": "2026-06-20T16:56:29.779515",
+     "file_hash": "225162ea44f374d99a69434477769994d78eb4e5b99067710b26eb30f87538a4",
+     "source": "github-sync",
+     "source_type": "github-md",
+     "source_uri": "https://github.com/ServiceNow/ServiceNowDocs/blob/australia/markdown/servicenow-platform/service-catalog/request-cat-item-ec.md",
+     "canonical_url": "https://www.servicenow.com/docs/r/servicenow-platform/service-catalog/request-cat-item-ec.html",
+     "title": "Request a catalog item from Employee Center",
+     "product": "Service Catalog",
+     "product_area": "Service Catalog",
+     "last_update": "2026-03-12",
+     "release": "australia",
+     "_node_type": "TextNode",
+     "document_id": "974914d2-2135-49fa-8b43-a4d8a74503b3",
+     "doc_id": "974914d2-2135-49fa-8b43-a4d8a74503b3",
+     "ref_doc_id": "974914d2-2135-49fa-8b43-a4d8a74503b3"
+    }
+   }
+  ],
+  "kg_matches": [
+   {
+    "concept": "sc cat item",
+    "variants": [
+     {
+      "id": "entities_v2/table__sc_cat_item",
+      "name": "sc_cat_item",
+      "type": "Table",
+      "source_documents": [
+       "markdown/customer-service-management/customer-self-service-and-omnichannel-engagement/csm-configurable-portal-widget.md",
+       "markdown/customer-service-management/customer-self-service-and-omnichannel-engagement/portal-catalog-widget.md",
+       "markdown/servicenow-platform/service-catalog/c_CascadeTheOrderGuideVariables.md",
+       "markdown/employee-service-management/now-assist-for-hrsd/employee-issue-resolver-na.md",
+       "markdown/servicenow-platform/service-catalog/t_ContrlAccessByCDGUOrLoc.md"
+      ],
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-07-09T07:47:58.068646+00:00",
+      "degree": 436
+     }
+    ],
+    "nodes": [
+     {
+      "id": "entities_v2/product__localization_workspace",
+      "name": "Localization Workspace",
+      "type": "Product",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-06-27T14:00:23.773222+00:00"
+     },
+     {
+      "id": "entities_v2/feature__catalog_item",
+      "name": "Catalog Item",
+      "type": "Feature",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-26T04:38:15.701033+00:00"
+     },
+     {
+      "id": "entities_v2/feature__schedule",
+      "name": "Schedule",
+      "type": "Feature",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-26T04:37:15.302551+00:00"
+     },
+     {
+      "id": "entities_v2/technicalcomponent__catalog_item",
+      "name": "Catalog Item",
+      "type": "TechnicalComponent",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-06-26T04:37:51.038039+00:00"
+     },
+     {
+      "id": "entities_v2/feature__service_catalog_content_type",
+      "name": "Service catalog content type",
+      "type": "Feature",
+      "releases": [],
+      "updated_at": "2026-05-29T16:32:51.147992+00:00"
+     },
+     {
+      "id": "entities_v2/table__sn_client_sf_dist_cat_item",
+      "name": "sn_client_sf_dist_cat_item",
+      "type": "Table",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-07-09T07:43:54.010201+00:00"
+     },
+     {
+      "id": "entities_v2/feature__url_navigation",
+      "name": "URL navigation",
+      "type": "Feature",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-24T11:34:54.810508+00:00"
+     }
+    ],
+    "edges": [
+     {
+      "id": "43612344",
+      "source": "entities_v2/feature__service_catalog_content_type",
+      "target": "entities_v2/table__sc_cat_item",
+      "predicate": "USES_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": null,
+      "source_document": "servicenow-australia-platform-user-interface-enus.pdf",
+      "source_quote": "A service catalog content type that references the [sc_cat_item table].",
+      "updated_at": null
+     },
+     {
+      "id": "2472186188",
+      "source": "entities_v2/technicalcomponent__catalog_item",
+      "target": "entities_v2/table__sc_cat_item",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/application-development/servicenow-studio-classic/servicenow-studio-file-navigator-taxonomy.md",
+      "source_quote": "sc_cat_item",
+      "updated_at": "2026-06-26T04:37:51.042712+00:00"
+     },
+     {
+      "id": "43740805",
+      "source": "entities_v2/table__sn_client_sf_dist_cat_item",
+      "target": "entities_v2/table__sc_cat_item",
+      "predicate": "EXTENDS_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": null,
+      "source_document": "servicenow-australia-servicenow-platform-enus.pdf",
+      "source_quote": "This table extends the Catalog Item [sc_cat_item] table.",
+      "updated_at": null
+     },
+     {
+      "id": "44052732",
+      "source": "entities_v2/feature__catalog_item",
+      "target": "entities_v2/table__sc_cat_item",
+      "predicate": "USES_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "servicenow-australia-application-development-enus.pdf",
+      "source_quote": "Catalog Item                    | sc_cat_item",
+      "updated_at": "2026-06-26T04:37:15.203466+00:00"
+     },
+     {
+      "id": "2470834778",
+      "source": "entities_v2/feature__schedule",
+      "target": "entities_v2/table__sc_cat_item",
+      "predicate": "USES_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/application-development/servicenow-studio-classic/servicenow-studio-file-navigator-taxonomy.md",
+      "source_quote": "sc_cat_item",
+      "updated_at": "2026-06-26T04:37:15.308055+00:00"
+     },
+     {
+      "id": "2466770681",
+      "source": "entities_v2/product__localization_workspace",
+      "target": "entities_v2/table__sc_cat_item",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [],
+      "source_document": "markdown/platform-administration/localization-workspace/lw-localizable-content.md",
+      "source_quote": "\"sc_cat_item\"",
+      "updated_at": null
+     },
+     {
+      "id": "2467294973",
+      "source": "entities_v2/feature__catalog_item",
+      "target": "entities_v2/table__sc_cat_item",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/application-development/servicenow-studio-classic/servicenow-studio-file-navigator-taxonomy.md",
+      "source_quote": "\"sc_cat_item\"",
+      "updated_at": "2026-06-26T04:38:15.703227+00:00"
+     },
+     {
+      "id": "5089458",
+      "source": "entities_v2/feature__url_navigation",
+      "target": "entities_v2/table__sc_cat_item",
+      "predicate": "USES_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "source_document": "servicenow-zurich-conversational-interfaces-enus.pdf",
+      "source_quote": "catalog items from the Catalog Item [sc_cat_item] table",
+      "updated_at": "2026-06-24T11:34:54.806265+00:00"
+     }
+    ],
+    "truncation": {
+     "truncated": true,
+     "available": 436,
+     "returned": 8
+    },
+    "suggest": {
+     "kg_neighbors": {
+      "entity_id": "entities_v2/table__sc_cat_item",
+      "types": [
+       "USES_TABLE",
+       "CONTAINS",
+       "EXTENDS_TABLE"
+      ],
+      "limit": 100
+     },
+     "multi_hop": "for dependency chains use kg_path(from_id, to_id)"
+    },
+    "error": null
+   },
+   {
+    "concept": "sc cat item producer",
+    "variants": [
+     {
+      "id": "entities_v2/table__sc_cat_item_producer",
+      "name": "sc_cat_item_producer",
+      "type": "Table",
+      "source_documents": [
+       "markdown/application-development/app-engine-studio/supported-features-metadata-custom-templates.md",
+       "markdown/servicenow-platform/service-catalog/service-catalog-wizard-forms-field.md",
+       "servicenow-australia-application-development-enus.pdf",
+       "markdown/servicenow-platform/service-catalog/r_ServiceCatalogProperties.md",
+       "markdown/api-reference/server-api-reference/c_CatItem.md"
+      ],
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-26T04:58:22.743108+00:00",
+      "degree": 55
+     }
+    ],
+    "nodes": [
+     {
+      "id": "entities_v2/api__service_catalog_api",
+      "name": "Service Catalog API",
+      "type": "API",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-26T05:14:38.916748+00:00"
+     },
+     {
+      "id": "entities_v2/feature__app_generation",
+      "name": "App generation",
+      "type": "Feature",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-06-26T12:51:13.784510+00:00"
+     },
+     {
+      "id": "entities_v2/table__remote_record_producer",
+      "name": "Remote record producer",
+      "type": "Table",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-06-22T02:15:18.619184+00:00"
+     },
+     {
+      "id": "entities_v2/feature__record_producer",
+      "name": "record producer",
+      "type": "Feature",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-27T14:35:21.530832+00:00"
+     },
+     {
+      "id": "entities_v2/module__record_producer",
+      "name": "Record Producer",
+      "type": "Module",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-06-26T04:38:29.749077+00:00"
+     },
+     {
+      "id": "entities_v2/api__apisn_scservicecatalogitems",
+      "name": "/api/sn_sc/servicecatalog/items",
+      "type": "API",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-06-26T05:10:06.845068+00:00"
+     },
+     {
+      "id": "entities_v2/api__apisn_scservicecatalogitemssys_id",
+      "name": "/api/sn_sc/servicecatalog/items/{sys_id}",
+      "type": "API",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-06-26T05:10:11.489185+00:00"
+     },
+     {
+      "id": "entities_v2/table__sc_cat_item_producer",
+      "name": "sc_cat_item_producer",
+      "type": "Table",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-26T04:58:22.743108+00:00"
+     },
+     {
+      "id": "entities_v2/feature__service_catalog_api",
+      "name": "Service Catalog API",
+      "type": "Feature",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-26T05:11:14.437722+00:00"
+     }
+    ],
+    "edges": [
+     {
+      "id": "1952711860",
+      "source": "entities_v2/api__service_catalog_api",
+      "target": "entities_v2/table__sc_cat_item_producer",
+      "predicate": "USES_TABLE",
+      "confidence": 0.96,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/application-development/index.md",
+      "source_quote": "The Service Catalog API defines catalog items [sc_cat_item], record producers [sc_cat_item_producer], and related aspects of service catalogs.",
+      "updated_at": "2026-06-26T03:51:54.098377+00:00"
+     },
+     {
+      "id": "2472108736",
+      "source": "entities_v2/feature__service_catalog_api",
+      "target": "entities_v2/table__sc_cat_item_producer",
+      "predicate": "CONTAINS",
+      "confidence": 0.96,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/application-development/index.md",
+      "source_quote": "The Service Catalog API defines catalog items [sc_cat_item], record producers [sc_cat_item_producer], and related aspects of service catalogs.",
+      "updated_at": "2026-06-26T03:52:09.872397+00:00"
+     },
+     {
+      "id": "2466133995",
+      "source": "entities_v2/table__remote_record_producer",
+      "target": "entities_v2/table__sc_cat_item_producer",
+      "predicate": "EXTENDS_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [],
+      "source_document": "markdown/service-exchange/service-bridge-v2-remote-record.md",
+      "source_quote": "is an extension of the sc_cat_item_producer table",
+      "updated_at": null
+     },
+     {
+      "id": "2471164210",
+      "source": "entities_v2/api__apisn_scservicecatalogitems",
+      "target": "entities_v2/table__sc_cat_item_producer",
+      "predicate": "USES_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/api-reference/rest-apis/c_ServiceCatalogAPI.md",
+      "source_quote": "Table to which the record belongs, such as sc_cat_item_producer.",
+      "updated_at": "2026-06-23T17:11:16.227822+00:00"
+     },
+     {
+      "id": "2471164228",
+      "source": "entities_v2/api__apisn_scservicecatalogitemssys_id",
+      "target": "entities_v2/table__sc_cat_item_producer",
+      "predicate": "USES_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/api-reference/rest-apis/c_ServiceCatalogAPI.md",
+      "source_quote": "Table to which the record belongs, such as sc_cat_item_producer.",
+      "updated_at": "2026-06-23T17:11:16.249600+00:00"
+     },
+     {
+      "id": "2465959682",
+      "source": "entities_v2/feature__app_generation",
+      "target": "entities_v2/table__sc_cat_item_producer",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [],
+      "source_document": "markdown/application-development/now-assist-for-creator/sns-app-gen-supported-metadata.md",
+      "source_quote": "sc_cat_item_producer",
+      "updated_at": null
+     },
+     {
+      "id": "2467295097",
+      "source": "entities_v2/module__record_producer",
+      "target": "entities_v2/table__sc_cat_item_producer",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/application-development/servicenow-studio-classic/servicenow-studio-file-navigator-taxonomy.md",
+      "source_quote": "sc_cat_item_producer",
+      "updated_at": "2026-06-26T04:38:29.753719+00:00"
+     },
+     {
+      "id": "2467295033",
+      "source": "entities_v2/feature__record_producer",
+      "target": "entities_v2/table__sc_cat_item_producer",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/application-development/servicenow-studio-classic/servicenow-studio-file-navigator-taxonomy.md",
+      "source_quote": "\"sc_cat_item_producer\"",
+      "updated_at": "2026-06-26T04:38:15.777333+00:00"
+     }
+    ],
+    "truncation": {
+     "truncated": true,
+     "available": 55,
+     "returned": 8
+    },
+    "suggest": {
+     "kg_neighbors": {
+      "entity_id": "entities_v2/table__sc_cat_item_producer",
+      "types": [
+       "USES_TABLE",
+       "CONTAINS",
+       "EXTENDS_TABLE"
+      ],
+      "limit": 100
+     },
+     "multi_hop": "for dependency chains use kg_path(from_id, to_id)"
+    },
+    "error": null
+   },
+   {
+    "concept": "sc cat item delivery task",
+    "variants": [
+     {
+      "id": "entities_v2/table__sc_cat_item_delivery_task",
+      "name": "sc_cat_item_delivery_task",
+      "type": "Table",
+      "source_documents": [
+       "markdown/api-reference/scripts/useful-server-side-scripts.md",
+       "markdown/api-reference/rest-apis/case-api.md",
+       "servicenow-australia-application-development-enus.pdf",
+       "markdown/financial-services-operations/fso-int_guide-table_defs.md",
+       "markdown/api-reference/scripts/r_UsefulApprovalAssignmentScripts.md"
+      ],
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-26T05:07:35.787994+00:00",
+      "degree": 32
+     }
+    ],
+    "nodes": [
+     {
+      "id": "entities_v2/dataentity__case",
+      "name": "Case",
+      "type": "DataEntity",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-26T08:02:37.623431+00:00"
+     },
+     {
+      "id": "entities_v2/api__case_api",
+      "name": "Case API",
+      "type": "API",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-24T19:03:38.940421+00:00"
+     },
+     {
+      "id": "entities_v2/table__change_request",
+      "name": "change_request",
+      "type": "Table",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-07-09T02:40:30.081157+00:00"
+     },
+     {
+      "id": "entities_v2/table__loan_service_case",
+      "name": "Loan Service Case",
+      "type": "Table",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-26T05:41:12.773467+00:00"
+     },
+     {
+      "id": "entities_v2/table__sn_customerservice_case",
+      "name": "sn_customerservice_case",
+      "type": "Table",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-27T17:05:45.338777+00:00"
+     },
+     {
+      "id": "entities_v2/dataentity__contact",
+      "name": "contact",
+      "type": "DataEntity",
+      "releases": [
+       "zurich",
+       "australia"
+      ],
+      "updated_at": "2026-06-26T09:04:02.093674+00:00"
+     },
+     {
+      "id": "entities_v2/feature__atf_tests_failure_resolution",
+      "name": "ATF tests failure resolution",
+      "type": "Feature",
+      "releases": [
+       "australia"
+      ],
+      "updated_at": "2026-06-23T15:52:31.072802+00:00"
+     },
+     {
+      "id": "entities_v2/feature__case",
+      "name": "case",
+      "type": "Feature",
+      "releases": [
+       "australia",
+       "zurich"
+      ],
+      "updated_at": "2026-06-24T03:37:34.301086+00:00"
+     }
+    ],
+    "edges": [
+     {
+      "id": "2470973692",
+      "source": "entities_v2/feature__atf_tests_failure_resolution",
+      "target": "entities_v2/table__sc_cat_item_delivery_task",
+      "predicate": "CONTAINS",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/application-development/automated-test-framework-atf/atf-metadata-exception-triage.md",
+      "source_quote": "-   sc_cat_item_delivery_task",
+      "updated_at": "2026-06-23T15:52:31.065592+00:00"
+     },
+     {
+      "id": "1838635565",
+      "source": "entities_v2/dataentity__case",
+      "target": "entities_v2/table__sc_cat_item_delivery_task",
+      "predicate": "USES_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/api-reference/rest-apis/case-api.md",
+      "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+      "updated_at": null
+     },
+     {
+      "id": "1838635850",
+      "source": "entities_v2/api__case_api",
+      "target": "entities_v2/table__sc_cat_item_delivery_task",
+      "predicate": "USES_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/api-reference/rest-apis/case-api.md",
+      "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+      "updated_at": null
+     },
+     {
+      "id": "1839478238",
+      "source": "entities_v2/table__change_request",
+      "target": "entities_v2/table__sc_cat_item_delivery_task",
+      "predicate": "USES_TABLE",
+      "confidence": 0.9,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/api-reference/rest-apis/change-management-api.md",
+      "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+      "updated_at": "2026-06-26T05:07:35.790718+00:00"
+     },
+     {
+      "id": "2467309946",
+      "source": "entities_v2/table__loan_service_case",
+      "target": "entities_v2/table__sc_cat_item_delivery_task",
+      "predicate": "USES_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [],
+      "source_document": "markdown/financial-services-operations/fso-int_guide-table_defs.md",
+      "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+      "updated_at": null
+     },
+     {
+      "id": "2470943682",
+      "source": "entities_v2/table__sn_customerservice_case",
+      "target": "entities_v2/table__sc_cat_item_delivery_task",
+      "predicate": "USES_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/api-reference/rest-apis/integrations-api.md",
+      "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+      "updated_at": "2026-06-23T15:36:52.064143+00:00"
+     },
+     {
+      "id": "2470968759",
+      "source": "entities_v2/dataentity__contact",
+      "target": "entities_v2/table__sc_cat_item_delivery_task",
+      "predicate": "USES_TABLE",
+      "confidence": 0.95,
+      "extraction_type": "explicit",
+      "releases": [
+       "australia"
+      ],
+      "source_document": "markdown/api-reference/rest-apis/case-api.md",
+      "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+      "updated_at": "2026-06-23T15:57:46.199097+00:00"
+     },
+     {
+      "id": "43599665",
+      "source": "entities_v2/feature__case",
+      "target": "entities_v2/table__sc_cat_item_delivery_task",
+      "predicate": "USES_TABLE",
+      "confidence": 0.75,
+      "extraction_type": "inferred",
+      "releases": null,
+      "source_document": "servicenow-australia-financial-services-operations-enus.pdf",
+      "source_quote": "Table: Execution Plan Task [sc_cat_item_delivery_task]",
+      "updated_at": null
+     }
+    ],
+    "truncation": {
+     "truncated": true,
+     "available": 32,
+     "returned": 8
+    },
+    "suggest": null,
+    "error": null
+   }
+  ],
+  "errors": {},
+  "budget": {
+   "edge_budget": 120,
+   "returned": 24,
+   "truncated": true
+  },
+  "warnings": [
+   "response ceiling: vector chunks trimmed"
+  ],
+  "grounding": {
+   "tier": "ok",
+   "reasons": []
+  }
+ }
+}

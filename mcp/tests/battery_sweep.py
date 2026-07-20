@@ -108,9 +108,9 @@ CEILING = config.MAX_RESPONSE_TOKENS  # 12000 est-tokens
 HEADROOM_TOKENS = int(CEILING * 0.75)  # ≤ this leaves ≥25% ceiling headroom
 PLATEAU_TOLERANCE = 0.05  # "within 5% of the plateau" (relative)
 SHIPPED = (
-    40,
+    60,
     5,
-)  # (edge_budget, top_k) currently-committed defaults (re-swept on orphan-fixed data)
+)  # (edge_budget, top_k) currently-committed defaults (PR 6 re-tune, #44)
 
 # SWEEP_COHORT (spec §3.4): "fixed" (default) runs the frozen 11-query
 # battery; "identifier" runs the identifier cohort into its own tagged

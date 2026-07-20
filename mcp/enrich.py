@@ -164,7 +164,7 @@ async def enrich(
     entity_hints: Optional[list[str]],
     top_k: int,
     *,
-    edge_budget: int = 40,
+    edge_budget: int = 60,
     predicates: Optional[list[str]] = None,
     embedding_client: _Embed,
     qdrant_client: _Qdrant,

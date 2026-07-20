@@ -34,7 +34,12 @@ sys.path.insert(0, str(_TESTS))
 import gold_metrics  # noqa: E402
 
 GOLD = Path(__file__).resolve().parent
-SHIPPED = {"edge_budget": 40, "top_k": 5, "dedup": "on"}
+SHIPPED = {
+    "edge_budget": 40,
+    "top_k": 5,
+    "dedup": "on",
+}  # historical row selector for THIS evaluator's frozen PR3 baseline comparison —
+# not the live default (PR 6/#44 shipped edge_budget=60; see gold/PR6-EVIDENCE.md)
 FLOOR_MEAN = 0.280
 GATING_HUBS = ["hub_process_mining", "hub_incident"]
 DEFERRED_HUBS = ["hub_discovery", "hub_cmdb"]  # amended 2026-07-19: cosine-bound, see README.md

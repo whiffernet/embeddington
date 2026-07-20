@@ -5,7 +5,7 @@ consume embeddington (as a registered MCP, by importing the modules, or by
 hand-rolling clients against the same data), diff your assumptions against this
 file. It is versioned with the code, so `git pull` keeps it current.
 
-- **Current as of:** `v0.8.0` (embeddington repo line — see `CHANGELOG.md` at
+- **Current as of:** `v0.9.0` (embeddington repo line — see `CHANGELOG.md` at
   the repo root, which is now the git-tag-synced authority going forward).
 - Version tags sprinkled through this doc's body (`upstream v0.3.4`,
   `upstream v0.3.5`, `upstream v0.3.7`) predate embeddington's own version
@@ -76,11 +76,33 @@ guard for missing keys).
 
 ---
 
+> ### ⚠️ Behavioral change (v0.9.0)
+>
+> `enrich`'s `edge_budget` default is now **60** (was 40) — the PR 6 (#44)
+> re-tune measured mean gold-recall@budget (frozen cross-family labels,
+> `top_k=5`, `dedup=on`) rising 0.186 → 0.268 → **0.281** across
+> `edge_budget` 20 → 40 → 60, then falling to 0.248 (80) and 0.225 (120) as
+> the response-ceiling trim starts competing KG edges against a larger
+> allocation for the same token space. This closes issue #37's
+> monotonicity criterion as **partially met**: non-decreasing through
+> `edge_budget=60`, then decreasing beyond it — a ceiling-mediated effect,
+> not a selection regression (see `mcp/tests/gold/PR6-EVIDENCE.md`). The
+> response-token ceiling itself is unchanged
+> (`EMBEDDINGTON_MAX_RESPONSE_TOKENS=12000`): calibrating the ÷3 estimator
+> against a real tokenizer (tiktoken `cl100k_base` proxy) found it
+> _overestimates_ tokens by 19–26% on every committed worst-case response,
+> so real payloads sit comfortably under the nominal ceiling even though
+> the sweep's own headroom bar (≤9000 estimated tokens) is unmeetable at
+> any grid point — that bar is a ceiling/chunk-size lever, not an
+> `edge_budget` one.
+
+---
+
 ## Tools → top-level envelopes
 
 | Tool                                                                 | Success envelope                                                                                                                                      |
 | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `enrich(query, entity_hints?, top_k=5, edge_budget=40, predicates?)` | `{vector_chunks: [chunk], kg_matches: [match], errors: {}, budget: {edge_budget, returned, truncated}, warnings: [], grounding: {tier, reasons: []}}` |
+| `enrich(query, entity_hints?, top_k=5, edge_budget=60, predicates?)` | `{vector_chunks: [chunk], kg_matches: [match], errors: {}, budget: {edge_budget, returned, truncated}, warnings: [], grounding: {tier, reasons: []}}` |
 | `vector_search(query, collection?, limit=10)`                        | `{results: [chunk], count, collection}`                                                                                                               |
 | `kg_find_entities(text, limit=10)`                                   | `{entities: [entity], count}`                                                                                                                         |
 | `kg_get_entity(entity_id)`                                           | `{entity: <full doc> \| null}`                                                                                                                        |
@@ -348,7 +370,7 @@ embeddington bounds responses by:
 
 - `source_quote` truncated to 240 chars, `source_documents` capped to the first 5.
 - `kg_neighbors`/`kg_path` row counts capped by `limit` (default 100 / max 500 for neighbors). Don't raise `limit` on dense hub entities without `types` filtering.
-- `enrich`, since v0.3.0, caps `top_k` (vector chunks, 1–50, default **5**, was 10) and `edge_budget` (KG edges **total across the whole response**, 1–200, default **40**, was ~100 _per matched entity_ uncapped in aggregate). The budget is allocated across matched concepts with relevance weighting and a per-concept floor; see the behavioral-change callout at the top of this doc. The default of 40 is the sweep knee (`mcp/tests/battery_results/2026-07-17-sweep.md`): under the response ceiling, edge delivery rises with `edge_budget` and then **plateaus** at `edge_budget≈40` (~28 edges delivered whether you ask for 40 or 120 — the ceiling trim caps the total, dropping the lowest-value edges and their now-orphan nodes explicitly). Raising `edge_budget` past ~40 mainly adds latency, not edges — and measurably dilutes query relevance (retention 0.282→0.200 as edge_budget went 40→120 at top_k=3); for maximal KG grounding prefer lowering `top_k` (to 3), which cedes more of the shared ceiling to KG edges.
+- `enrich`, since v0.3.0, caps `top_k` (vector chunks, 1–50, default **5**, was 10) and `edge_budget` (KG edges **total across the whole response**, 1–200, default **60** as of v0.9.0 — was 40, and originally ~100 _per matched entity_ uncapped in aggregate pre-v0.3.0). The budget is allocated across matched concepts with relevance weighting and a per-concept floor; see the behavioral-change callouts at the top of this doc. The default of 60 is the PR 6 (#44) re-tune knee (`mcp/tests/battery_results/2026-07-20-pr6-final-sweep.md`, `mcp/tests/gold/PR6-EVIDENCE.md`): mean gold-recall@budget (frozen cross-family labels) rises 0.186→0.268→0.281 across `edge_budget` 20→40→60, then falls to 0.248 (80) and 0.225 (120) — relevance-aware selection (PR 3) makes a larger budget genuinely more relevant up to ~60; past that point the response-ceiling trim increasingly competes KG edges against the larger allocation, **reducing** relevance rather than merely plateauing. For stronger KG grounding prefer lowering `top_k` (to 3) rather than raising `edge_budget` past the default, which cedes more of the shared ceiling to KG edges.
 - A server-side response-token ceiling (`EMBEDDINGTON_MAX_RESPONSE_TOKENS`, default `12000` estimated tokens at ~3 chars/token — deliberately pessimistic) trims the _whole_ `enrich` response deterministically (KG edges from the largest match first, then vector chunks, always respecting per-concept floors) if it's still too large after budgeting. This is server config, not a tool parameter — callers cannot raise `edge_budget` past what the ceiling allows.
 
 ---
