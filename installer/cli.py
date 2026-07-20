@@ -254,6 +254,13 @@ def _update_flow(console, deps, args, input_fn):
     """Fast, idempotent Update: apply every cheap delta (data, container config, .env,
     conditional venv), then a two-shape receipt. Each step no-ops when already current.
 
+    A failed venv re-sync (non-zero `resync_venv` rc) is non-fatal: it prints a warning
+    and leaves `did["deps"]` False so the receipt doesn't claim a re-sync that didn't
+    happen, but the rest of the update (which is more valuable) still runs. A `merge_env`
+    write failure (e.g. `OSError` from a read-only fs or full disk) is mapped to
+    `SetupError` EMB-33 so it renders through the normal error path instead of a raw
+    traceback.
+
     Args:
         console: rich Console.
         deps: the step-function bundle (see `_production_deps`).
@@ -261,8 +268,8 @@ def _update_flow(console, deps, args, input_fn):
         input_fn: callable() -> str used for interactive prompts.
 
     Returns:
-        0 on success (this flow only raises via the steps it calls; a SetupError
-        propagates to `main`'s handler).
+        0 on success (this flow only raises via the steps it calls, or via the
+        `merge_env` OSError wrap below; a SetupError propagates to `main`'s handler).
     """
     pre = deps["git_head"]()
     pull = deps["git_pull"](console)
@@ -277,10 +284,24 @@ def _update_flow(console, deps, args, input_fn):
         f == "pyproject.toml" or f.endswith("requirements.txt") or f.startswith("requirements")
         for f in changed
     ):
-        deps["resync_venv"](console)
-        did["deps"] = True
+        resync_result = deps["resync_venv"](console)
+        if resync_result.rc != 0:
+            console.print(
+                "[yellow]Dependency re-sync failed — data update continues; re-run the "
+                "installer if the wizard misbehaves.[/yellow]"
+            )
+            did["deps"] = False
+        else:
+            did["deps"] = True
 
-    did["env"] = bool(deps["merge_env"](console))
+    try:
+        did["env"] = bool(deps["merge_env"](console))
+    except OSError as exc:
+        raise errors.SetupError(
+            "EMB-33",
+            f"Couldn't update consumer/.env with the memory cap: {exc}",
+            "Check permissions/space on consumer/.env and re-run.",
+        )
 
     ui.rule(console, "Local stack")
     deps["compose_up"](console)  # up -d --build: cache-cheap no-op when unchanged,

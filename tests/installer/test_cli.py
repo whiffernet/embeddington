@@ -68,7 +68,7 @@ def make_deps(rec):
         "run_uninstall": rec.step("uninstall", 0),
         "git_head": rec.step("git_head", "OLDSHA"),
         "git_changed_files": lambda _pre: rec._record("git_changed_files") or [],
-        "resync_venv": rec.step("resync_venv"),
+        "resync_venv": rec.step("resync_venv", RunResult(0, "", "")),
         "merge_env": rec.step("merge_env", []),
         "index_absent": lambda: rec._record("index_absent") or False,
         "cron_present": lambda: rec._record("cron_present") or False,
@@ -335,6 +335,35 @@ def test_update_receipt_heavy_shape_enumerates():
     assert "Claude search tools updated" in line
     assert "consumer/.env" in line
     assert "Auto-updates: enabled" in line
+
+
+def test_update_flow_wraps_merge_env_oserror_as_setup_error():
+    # merge_env ultimately does a bare `open(env_file, "a")`; a read-only fs or full
+    # disk raises OSError. Every other _update_flow step maps failure to a SetupError
+    # that main()'s `except errors.SetupError` renders -- merge_env must not be the
+    # one step that raw-tracebacks instead.
+    rec = Recorder(state=ALL_GOOD)
+    deps = make_deps(rec)
+
+    def boom(_console):
+        raise OSError("Read-only file system")
+
+    deps["merge_env"] = boom
+    assert cli.main(["--yes"], console=console(), deps=deps, input_fn=lambda: "") == 1
+
+
+def test_update_flow_surfaces_resync_venv_failure_without_claiming_resynced():
+    from installer.runner import RunResult
+
+    con = Console(record=True, width=200)
+    rec = Recorder(state=ALL_GOOD)
+    deps = make_deps(rec)
+    deps["git_changed_files"] = lambda _pre: ["pyproject.toml"]
+    deps["resync_venv"] = lambda _c: RunResult(1, "", "boom")
+    assert cli.main([], console=con, deps=deps, input_fn=lambda: "u") == 0
+    out = con.export_text()
+    assert "re-sync" in out.lower() and "fail" in out.lower()
+    assert "re-synced" not in out
 
 
 def test_production_merge_env_writes_memory_cap(tmp_path):
