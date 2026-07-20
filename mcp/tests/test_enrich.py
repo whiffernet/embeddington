@@ -76,7 +76,14 @@ async def test_enrich_envelope_keys_always_present():
         qdrant_client=qdrant,
         arango_client=arango,
     )
-    assert set(result) == {"vector_chunks", "kg_matches", "errors", "budget", "warnings"}
+    assert set(result) == {
+        "vector_chunks",
+        "kg_matches",
+        "errors",
+        "budget",
+        "warnings",
+        "grounding",
+    }
     m = result["kg_matches"][0]
     assert set(m) == {"concept", "variants", "nodes", "edges", "truncation", "suggest", "error"}
     assert m["variants"][0]["name"] == "ITSM"
@@ -817,3 +824,105 @@ async def test_enrich_warns_when_lexical_degraded():
         lexical_ready=False,
     )
     assert "lexical lane degraded — chunk_text index not ready" in res["warnings"]
+
+
+# --- Grounding tier attached to the enrich envelope (spec §5 PR 5, issue #47) ---
+
+
+@pytest.mark.asyncio
+async def test_enrich_grounding_none_on_empty_retrieval():
+    class EmptyQdrant:
+        async def search(self, vector, limit, match_text=None):
+            return []
+
+    class EmptyArango:
+        def find_entities(self, text, limit=3):
+            return []
+
+    res = await enrich_mod.enrich(
+        query="purple elephant quantum recipes",
+        entity_hints=None,
+        top_k=5,
+        edge_budget=40,
+        embedding_client=BatchEmbed(),
+        qdrant_client=EmptyQdrant(),
+        arango_client=EmptyArango(),
+    )
+    assert res["grounding"]["tier"] == "none"
+    assert res["vector_chunks"] == [] and res["kg_matches"] == []
+    # Issue #47 acceptance: no invented identifiers on empty retrieval — the
+    # envelope carries NO entity/table-like content at all.
+    assert "sn_" not in str(res["vector_chunks"]) + str(res["kg_matches"])
+
+
+@pytest.mark.asyncio
+async def test_enrich_grounding_weak_when_asked_identifier_absent():
+    # THE incident-class regression (spec §5 PR 5): on-topic content, asked-for
+    # identifier missing from every returned chunk and edge quote.
+    class OnTopicQdrant:
+        async def search(self, vector, limit, match_text=None):
+            if match_text:  # lexical lane finds nothing for the fake id
+                return []
+            return [{"id": "c1", "score": 0.8, "text": "hardware assets are tracked in tables"}]
+
+    res = await enrich_mod.enrich(
+        query="What is the sn_zz_fake_table used for?",
+        entity_hints=["hardware"],
+        top_k=5,
+        edge_budget=40,
+        embedding_client=BatchEmbed(),
+        qdrant_client=OnTopicQdrant(),
+        arango_client=RelArango(),
+        lexical_ready=True,
+    )
+    assert res["grounding"]["tier"] == "weak"
+    assert any("sn_zz_fake_table" in r for r in res["grounding"]["reasons"])
+    # The fake identifier appears nowhere in returned content:
+    payload = str(res["vector_chunks"]) + str(res["kg_matches"])
+    assert "sn_zz_fake_table" not in payload
+
+
+@pytest.mark.asyncio
+async def test_enrich_grounding_ok_on_normal_retrieval():
+    embed = BatchEmbed(quote_vecs={"on-point quote": 0.9, "boring quote": 0.1})
+    res = await enrich_mod.enrich(
+        query="q",
+        entity_hints=["A"],
+        top_k=1,
+        edge_budget=1,
+        embedding_client=embed,
+        qdrant_client=OkQdrant(),
+        arango_client=RelArango(),
+    )
+    assert res["grounding"] == {"tier": "ok", "reasons": []}
+
+
+@pytest.mark.asyncio
+async def test_grounding_classified_after_ceiling_trim(monkeypatch):
+    # If the trim empties a half, grounding must reflect the FINAL envelope.
+    #
+    # Branch this fixture actually exercises (verified by direct run): with
+    # top_k=1/edge_budget=1, trim_to_ceiling's kg-edge loop only pops edges
+    # from matches holding MORE than `floor` (3) edges — this match has just
+    # 1 — and the vector-chunk loop never drops below 1 chunk. So even at
+    # max_response_tokens=1 the envelope keeps its single non-empty chunk and
+    # single edge (just flags "exceeds ceiling even at floors" in warnings)
+    # rather than emptying either half. Grounding is computed from that
+    # still-non-empty final content, so tier is "ok".
+    embed = BatchEmbed()
+    res = await enrich_mod.enrich(
+        query="q",
+        entity_hints=["A"],
+        top_k=1,
+        edge_budget=1,
+        embedding_client=embed,
+        qdrant_client=OkQdrant(),
+        arango_client=RelArango(),
+        max_response_tokens=1,  # brutal ceiling: trim floors everything it can
+    )
+    g = res["grounding"]
+    n_edges = sum(len(m["edges"]) for m in res["kg_matches"])
+    if not res["vector_chunks"] and n_edges == 0:
+        assert g["tier"] == "none"
+    else:
+        assert (g["tier"] == "ok") == (bool(res["vector_chunks"]) and n_edges > 0)

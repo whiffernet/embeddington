@@ -25,9 +25,10 @@ except ImportError:
 
 try:
     from . import budget as _budget
-    from . import hybrid
+    from . import grounding, hybrid
 except ImportError:
     import budget as _budget  # type: ignore[no-redef]
+    import grounding  # type: ignore[no-redef]
     import hybrid  # type: ignore[no-redef]
 
 logger = logging.getLogger("embeddington.enrich")
@@ -217,8 +218,10 @@ async def enrich(
             config, wired in via server.py from its chunk_text index status).
 
     Returns:
-        {vector_chunks, kg_matches, errors, budget, warnings} — all keys
-        always present; see RESPONSE_SHAPES.md.
+        {vector_chunks, kg_matches, errors, budget, warnings, grounding} —
+        all keys always present; see RESPONSE_SHAPES.md. `grounding` is
+        classified AFTER the response-ceiling trim, from the content the
+        caller actually receives (see `grounding.classify`).
     """
     warnings: list[str] = []
     hints = entity_hints if entity_hints is not None else _extract_entity_hints(query)
@@ -305,7 +308,14 @@ async def enrich(
         },
         "warnings": warnings,
     }
-    return _budget.trim_to_ceiling(result, max_tokens=max_response_tokens)
+    result = _budget.trim_to_ceiling(result, max_tokens=max_response_tokens)
+    # Classified AFTER the ceiling trim (order load-bearing, spec §5 PR 5,
+    # issue #47) — the trim can empty a half, and grounding must label what
+    # the caller actually receives, not the pre-trim intermediate.
+    result["grounding"] = grounding.classify(
+        result["vector_chunks"], result["kg_matches"], lexical["tokens"]
+    )
+    return result
 
 
 def _build_suggest(variants: list[dict], pool: list[dict]) -> dict[str, Any]:
