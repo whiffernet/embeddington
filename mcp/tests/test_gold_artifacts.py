@@ -33,6 +33,11 @@ def labels_identifier():
     return json.loads((GOLD / "labels-identifier.json").read_text())
 
 
+@pytest.fixture(scope="module")
+def token_calibration():
+    return json.loads((GOLD / "token_calibration.json").read_text())
+
+
 def test_gold_binding_is_the_frozen_baseline(pools):
     assert pools["binding"]["baseline"] == "baseline-2026-07b"
     assert pools["binding"]["points"] == 152194
@@ -67,6 +72,26 @@ def test_pr3_floor_is_pinned():
     text = (GOLD / "README.md").read_text()
     assert "PR 3 (#36) acceptance floor" in text
     assert "[M" not in text, "floor still has unfilled placeholders"
+
+
+class TestTokenCalibration:
+    """estimate_tokens vs cl100k_base proxy calibration (#44)."""
+
+    def test_has_rows(self, token_calibration):
+        assert len(token_calibration["rows"]) > 0
+
+    def test_rows_well_formed(self, token_calibration):
+        for row in token_calibration["rows"]:
+            assert row["est"] > 0
+            assert row["real"] > 0
+
+    def test_e_in_sane_range(self, token_calibration):
+        e = token_calibration["e"]
+        assert 0 <= e < 0.5, f"e={e} outside sanity range [0, 0.5)"
+
+    def test_calibrated_bar_matches_formula(self, token_calibration):
+        e = token_calibration["e"]
+        assert token_calibration["calibrated_bar"] == int(9000 * (1 - e))
 
 
 # Identifier cohort (2026-07-19) — four NL-phrased queries with controller-verified corpus presence.
