@@ -295,6 +295,37 @@ def test_baseline_refused_exits_3_and_prints_the_reason(monkeypatch, capsys):
     assert "152,194 points" in capsys.readouterr().err
 
 
+def test_cmd_update_passes_ensure_index(monkeypatch, tmp_path):
+    """`update` must wire the shared chunk_text index hook using this surface's own URLs."""
+    captured = {}
+
+    def _spy_update(*a, **k):
+        captured["kwargs"] = k
+        return {
+            "mode": "diffs",
+            "applied": 1,
+            "cursor": "x",
+            "baseline": None,
+            "adopted_from": None,
+        }
+
+    _stub_heavy_deps(
+        monkeypatch
+    )  # patches _preflight, HttpFetcher, release_client, writers, restore_ops
+    monkeypatch.setattr(
+        cli,
+        "updater",
+        types.SimpleNamespace(
+            update=_spy_update,
+            BaselineRequired=type("BaselineRequired", (Exception,), {}),
+            BaselineRefused=type("BaselineRefused", (Exception,), {}),
+        ),
+    )
+
+    assert cli.main(["update"]) == 0
+    assert callable(captured["kwargs"].get("ensure_index"))
+
+
 def test_adoption_is_reported_to_the_user(tmp_path):
     """A silent migration is a migration nobody can debug."""
     out = cli._format_update(

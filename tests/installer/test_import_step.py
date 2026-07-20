@@ -90,6 +90,68 @@ def test_updater_exceptions_map_to_emb_codes(raised, expected_code):
     assert exc.value.code == expected_code
 
 
+def test_run_import_passes_ensure_index_to_updater(tmp_path):
+    from installer import import_step
+
+    captured = {}
+
+    def fake_update(*args, **kwargs):
+        captured["ensure_index"] = kwargs.get("ensure_index")
+        return {
+            "mode": "diffs",
+            "applied": 1,
+            "cursor": "abcd",
+            "baseline": None,
+            "adopted_from": None,
+        }
+
+    class _Console:
+        def status(self, *_a, **_k):
+            import contextlib
+
+            return contextlib.nullcontext()
+
+    def wiring(repo_root, password, repo):
+        return object(), object(), object(), (lambda b: None)
+
+    import_step.run_import(
+        _Console(),
+        tmp_path,
+        "pw",
+        repo="whiffernet/embeddington",
+        wiring_fn=wiring,
+        update_fn=fake_update,
+    )
+    assert callable(captured["ensure_index"])
+
+
+def test_run_import_maps_unexpected_store_error_to_emb45(tmp_path):
+    from installer import import_step
+    from installer.errors import SetupError
+
+    class _Console:
+        def status(self, *_a, **_k):
+            import contextlib
+
+            return contextlib.nullcontext()
+
+    def wiring(repo_root, password, repo):
+        return object(), object(), object(), (lambda b: None)
+
+    def boom_update(*a, **k):
+        raise RuntimeError(
+            "arango 503: still recovering from WAL"
+        )  # not an EmbeddingtonError/OSError
+
+    try:
+        import_step.run_import(_Console(), tmp_path, "pw", wiring_fn=wiring, update_fn=boom_update)
+    except SetupError as exc:
+        assert exc.code == "EMB-45"
+        assert "recovering" in str(exc)
+    else:
+        raise AssertionError("expected a SetupError")
+
+
 def test_emb43_carries_the_guards_own_message():
     def update_fn(*a, **k):
         raise updater.BaselineRefused("Qdrant already has 152,194 points ...")

@@ -104,6 +104,9 @@ def run_import(
                 importer,
                 legacy_cursors=legacy,
                 force_baseline=force_baseline,
+                ensure_index=lambda: lexical_index.incremental_chunk_text_index(
+                    QDRANT_URL, COLLECTION
+                ),
             )
     except updater.BaselineRefused as exc:
         raise SetupError(
@@ -130,6 +133,14 @@ def run_import(
             "EMB-41",
             f"A download failed: {exc}",
             "Check your connection and re-run — downloads resume/retry cleanly.",
+        )
+    except Exception as exc:
+        raise SetupError(
+            "EMB-45",
+            f"The updater could not complete: {exc}",
+            "Re-run the installer (imports are idempotent) — if the stores were mid-recovery "
+            "after a restart this clears on a second try. If it repeats, run "
+            "`embeddington-consume update` directly for the full error.",
         )
 
 
