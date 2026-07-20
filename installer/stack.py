@@ -95,8 +95,80 @@ def compose_up(run, consumer_dir):
             "EMB-31",
             "docker compose up failed — the error is in the output just above.",
             "Fix what compose complained about (ports, disk, daemon), then re-run the "
-            "installer; it picks up where it left off.",
+            "installer; it picks up where it left off — your existing data is untouched and, "
+            "if the containers were already running, still queryable. If this box has under "
+            "~5 GB RAM and arango won't stay up, lower ARANGO_MEMORY_CAP in consumer/.env "
+            "(e.g. 1G) and re-run.",
         )
+
+
+def adaptive_memory_cap(total_ram_bytes, *, ceiling_gb=4):
+    """Pick an ARANGO_MEMORY_CAP that never exceeds what the host can honor.
+
+    The compose default (4 GB) tells arangod to size caches for 4 GB even on a 2 GB
+    box, which can OOM-kill a stack that worked before the cap landed. Cap at half
+    the host's RAM, clamped to [1, ceiling] GB. Unknown RAM keeps the documented
+    default rather than guessing low.
+
+    Args:
+        total_ram_bytes: Detected physical RAM in bytes, or None/0 if unknown.
+        ceiling_gb: Never exceed this many GB (default 4, matching compose).
+
+    Returns:
+        A string like "2G", suitable for both docker mem_limit and
+        ARANGODB_OVERRIDE_DETECTED_TOTAL_MEMORY (go-units parsing is case-insensitive).
+    """
+    if not total_ram_bytes or total_ram_bytes <= 0:
+        return f"{ceiling_gb}G"
+    half_gb = int((total_ram_bytes / 2**30) * 0.5)
+    return f"{max(1, min(ceiling_gb, half_gb))}G"
+
+
+def detect_total_ram_bytes(run):
+    """Best-effort total physical RAM in bytes; None when indeterminable. Never raises.
+
+    Args:
+        run: runner.run-compatible callable (used for the macOS sysctl fallback).
+
+    Returns:
+        Total RAM in bytes, or None.
+    """
+    try:
+        pages = os.sysconf("SC_PHYS_PAGES")
+        page_size = os.sysconf("SC_PAGE_SIZE")
+        if pages > 0 and page_size > 0:
+            return pages * page_size
+    except (ValueError, OSError, AttributeError):
+        pass  # not Linux, or sysconf lacks these names -> try sysctl
+    res = run(["sysctl", "-n", "hw.memsize"])
+    if res.rc == 0 and res.out.strip().isdigit():
+        return int(res.out.strip())
+    return None
+
+
+def merge_env_keys(env_file, additions):
+    """Append missing KEY=value lines to an existing .env; never touch existing keys.
+
+    Args:
+        env_file: Path to the .env file (may or may not exist).
+        additions: Mapping of key -> value to add if the key is absent.
+
+    Returns:
+        The list of keys actually appended (empty if all were already present).
+    """
+    text = env_file.read_text() if env_file.exists() else ""
+    present = {
+        line.split("=", 1)[0].strip()
+        for line in text.splitlines()
+        if "=" in line and not line.lstrip().startswith("#")
+    }
+    to_add = [(k, v) for k, v in additions.items() if k not in present]
+    if not to_add:
+        return []
+    prefix = "" if text == "" or text.endswith("\n") else "\n"
+    with open(env_file, "a") as handle:
+        handle.write(prefix + "".join(f"{k}={v}\n" for k, v in to_add))
+    return [k for k, _ in to_add]
 
 
 def _up(http_get, url, accept):
