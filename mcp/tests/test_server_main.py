@@ -15,6 +15,26 @@ import pytest
 import server as srv
 
 
+@pytest.fixture
+def fake_asyncio_run(monkeypatch):
+    """Stub srv.asyncio.run to close the coroutine instead of running it.
+
+    Lets main() proceed past `asyncio.run(_isolation_sanity_check())` without
+    an event loop, and without the "coroutine was never awaited" warning.
+    """
+
+    def _fake(coro):
+        coro.close()
+
+    monkeypatch.setattr(srv.asyncio, "run", _fake)
+
+
+@pytest.fixture
+def fake_mcp_run(monkeypatch):
+    """Stub srv.mcp.run so main() returns instead of blocking on stdio."""
+    monkeypatch.setattr(srv.mcp, "run", lambda: None)
+
+
 def test_main_resets_singletons_after_sanity_check(monkeypatch):
     # Pretend the sanity check ran and populated the client registries.
     monkeypatch.setattr(srv, "_embed_clients", {"technology": MagicMock()})
@@ -47,6 +67,35 @@ def test_main_aborts_when_arango_password_missing(monkeypatch):
 
     with pytest.raises(SystemExit, match="ARANGO_PASSWORD"):
         srv.main()
+
+
+# --- Remote-root refusal ----------------------------------------------------
+
+
+def test_main_refuses_remote_root(monkeypatch):
+    monkeypatch.setattr(srv.config, "ARANGO_PASSWORD", "pw")
+    monkeypatch.setattr(srv.config, "ARANGO_USER", "root")
+    monkeypatch.setattr(srv.config, "ARANGO_URL", "http://spark-a4ad.local:8529")
+    monkeypatch.delenv("EMBEDDINGTON_ALLOW_REMOTE_ROOT", raising=False)
+    with pytest.raises(SystemExit, match="kg_servicenow_ro"):
+        srv.main()
+
+
+def test_main_allows_remote_root_with_explicit_override(
+    monkeypatch, fake_asyncio_run, fake_mcp_run
+):
+    monkeypatch.setattr(srv.config, "ARANGO_PASSWORD", "pw")
+    monkeypatch.setattr(srv.config, "ARANGO_USER", "root")
+    monkeypatch.setattr(srv.config, "ARANGO_URL", "http://spark-a4ad.local:8529")
+    monkeypatch.setenv("EMBEDDINGTON_ALLOW_REMOTE_ROOT", "1")
+    srv.main()  # proceeds to the (stubbed) run stage
+
+
+def test_main_allows_local_root(monkeypatch, fake_asyncio_run, fake_mcp_run):
+    monkeypatch.setattr(srv.config, "ARANGO_PASSWORD", "pw")
+    monkeypatch.setattr(srv.config, "ARANGO_USER", "root")
+    monkeypatch.setattr(srv.config, "ARANGO_URL", "http://localhost:8529")
+    srv.main()
 
 
 @pytest.mark.asyncio
@@ -83,6 +132,105 @@ async def test_isolation_check_survives_chunk_text_status_failure(monkeypatch):
     await srv._isolation_sanity_check()  # must not raise
 
     assert srv._lexical_status == "unavailable"
+
+
+# --- Arango / embed startup probes (warn-only) ------------------------------
+
+
+@pytest.mark.asyncio
+async def test_isolation_check_warns_on_arango_probe_failure(monkeypatch, caplog):
+    """A failing Arango probe (wrong ARANGO_DATABASE, missing grant, etc.)
+    must log a warning naming db+user and let startup complete — never
+    raise. This is what turns a misconfigured BYO-prod store into a loud
+    boot-time signal instead of silent empty KG results."""
+    fake_qdrant = AsyncMock()
+    fake_qdrant.can_read_collection = AsyncMock(return_value=True)
+    fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
+    monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
+
+    fake_arango = MagicMock()
+    fake_arango.probe_read = MagicMock(side_effect=RuntimeError("no grant"))
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
+
+    fake_embed = AsyncMock()
+    fake_embed.embed = AsyncMock(return_value=[0.0] * 1024)
+    monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
+
+    with caplog.at_level("WARNING"):
+        await srv._isolation_sanity_check()  # must not raise
+
+    assert any("Arango probe FAILED" in r.message for r in caplog.records)
+    assert any(
+        srv.config.ARANGO_DATABASE in r.message for r in caplog.records if "Arango" in r.message
+    )
+
+
+@pytest.mark.asyncio
+async def test_isolation_check_logs_arango_probe_pass(monkeypatch, caplog):
+    """Happy path: a working Arango probe logs a pass, not a warning."""
+    fake_qdrant = AsyncMock()
+    fake_qdrant.can_read_collection = AsyncMock(return_value=True)
+    fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
+    monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
+
+    fake_arango = MagicMock()
+    fake_arango.probe_read = MagicMock(return_value=None)
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
+
+    fake_embed = AsyncMock()
+    fake_embed.embed = AsyncMock(return_value=[0.0] * 1024)
+    monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
+
+    with caplog.at_level("INFO"):
+        await srv._isolation_sanity_check()
+
+    assert any("Arango probe passed" in r.message for r in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_isolation_check_warns_on_embed_probe_failure(monkeypatch, caplog):
+    """A failing embed probe (unreachable EMBED_URL or wrong dims — the
+    client raises on both, no separate dim branch) must log a warning and
+    let startup complete — never raise."""
+    fake_qdrant = AsyncMock()
+    fake_qdrant.can_read_collection = AsyncMock(return_value=True)
+    fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
+    monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
+
+    fake_arango = MagicMock()
+    fake_arango.probe_read = MagicMock(return_value=None)
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
+
+    fake_embed = AsyncMock()
+    fake_embed.embed = AsyncMock(side_effect=RuntimeError("unreachable"))
+    monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
+
+    with caplog.at_level("WARNING"):
+        await srv._isolation_sanity_check()  # must not raise
+
+    assert any("Embed probe FAILED" in r.message for r in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_isolation_check_logs_embed_probe_pass(monkeypatch, caplog):
+    """Happy path: a working embed probe logs a pass, not a warning."""
+    fake_qdrant = AsyncMock()
+    fake_qdrant.can_read_collection = AsyncMock(return_value=True)
+    fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
+    monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
+
+    fake_arango = MagicMock()
+    fake_arango.probe_read = MagicMock(return_value=None)
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
+
+    fake_embed = AsyncMock()
+    fake_embed.embed = AsyncMock(return_value=[0.0] * 1024)
+    monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
+
+    with caplog.at_level("INFO"):
+        await srv._isolation_sanity_check()
+
+    assert any("Embed probe passed" in r.message for r in caplog.records)
 
 
 @pytest.mark.asyncio

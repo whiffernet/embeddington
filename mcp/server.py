@@ -15,10 +15,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import sys
 import time
 from pathlib import Path
 from typing import Annotated, Any, Optional
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 from fastmcp import FastMCP
@@ -198,6 +200,14 @@ async def _isolation_sanity_check() -> None:
     install/update flow, never by this server. A failed probe is logged and
     leaves the status "unavailable" — it must never block startup, since the
     lexical lane is an enhancement, not a dependency of the dense lane.
+
+    Also runs two warn-only probes so a misconfigured BYO-prod store fails
+    LOUD instead of booting clean and silently returning empty/degraded
+    results: an Arango probe (one cheap allowlisted read — catches a wrong
+    ARANGO_DATABASE or a missing grant) and an embed probe (one embed call —
+    the client already raises on both unreachable and wrong-dims, so the
+    exception path alone is the signal). Neither ever raises out of this
+    function; both only log.
     """
     global _lexical_status
 
@@ -234,6 +244,29 @@ async def _isolation_sanity_check() -> None:
     except Exception as exc:  # noqa: BLE001 — status probe must never block startup
         logger.warning("chunk_text status probe failed at startup: %s", exc)
         _lexical_status = "unavailable"
+
+    try:
+        _get_arango().probe_read()
+        logger.info(
+            "Arango probe passed (db=%s user=%s)", config.ARANGO_DATABASE, config.ARANGO_USER
+        )
+    except Exception as exc:  # noqa: BLE001 — probe must never block startup
+        logger.warning(
+            "Arango probe FAILED (db=%s user=%s): %s — KG tools will return empty "
+            "results until fixed (check ARANGO_DATABASE / ARANGO_USER grants)",
+            config.ARANGO_DATABASE,
+            config.ARANGO_USER,
+            exc,
+        )
+
+    try:
+        await _get_embed().embed("startup probe")  # raises on unreachable OR wrong dims
+        logger.info("Embed probe passed")
+    except Exception as exc:  # noqa: BLE001 — probe must never block startup
+        logger.warning(
+            "Embed probe FAILED: %s — vector search will fail until EMBED_URL is reachable/correct",
+            exc,
+        )
 
 
 async def _maybe_reprobe() -> None:
@@ -664,17 +697,51 @@ async def kg_schema() -> dict[str, Any]:
 # --- Entry point ----------------------------------------------------------
 
 
+def _is_loopback_host(url: str) -> bool:
+    """True iff the URL's host is a loopback literal.
+
+    Used to gate the remote-root refusal below: a bare hostname check, not a
+    security boundary — it cannot see through an SSH tunnel (a tunnel
+    presents as loopback on the client side even though Arango is remote).
+    That residual is accepted; the gate exists to catch the common
+    misconfiguration (BYO-prod Arango + default root creds), not to defeat a
+    deliberately tunneled setup.
+
+    Args:
+        url: The Arango endpoint URL (e.g. "http://localhost:8529").
+
+    Returns:
+        True if the URL's hostname is a loopback literal.
+    """
+    host = urlparse(url).hostname or ""
+    return host in ("localhost", "127.0.0.1", "::1")
+
+
 def main() -> None:
     """Start the embeddington MCP server after running isolation sanity checks.
 
     Raises:
-        SystemExit: If ARANGO_PASSWORD is missing or isolation check fails.
+        SystemExit: If ARANGO_PASSWORD is missing, ARANGO_USER=root is used
+            against a non-loopback ARANGO_URL without an explicit opt-in, or
+            the isolation check fails.
     """
     if not config.ARANGO_PASSWORD:
         raise SystemExit(
             "Missing required env var: ARANGO_PASSWORD must be set "
             "(via claude_desktop_config.json or .env). "
             "See README.md for setup instructions."
+        )
+
+    if (
+        config.ARANGO_USER == "root"
+        and not _is_loopback_host(config.ARANGO_URL)
+        and os.environ.get("EMBEDDINGTON_ALLOW_REMOTE_ROOT") != "1"
+    ):
+        raise SystemExit(
+            "Refusing to start: ARANGO_USER=root against a remote Arango "
+            f"({config.ARANGO_URL}). Use the scoped read-only user (kg_servicenow_ro) "
+            "for remote/production stores. To deliberately accept the risk, set "
+            "EMBEDDINGTON_ALLOW_REMOTE_ROOT=1."
         )
 
     # Sanity check before exposing tools
