@@ -295,6 +295,27 @@ def test_baseline_refused_exits_3_and_prints_the_reason(monkeypatch, capsys):
     assert "152,194 points" in capsys.readouterr().err
 
 
+def test_cmd_update_schema_version_error_is_clean(monkeypatch, capsys):
+    from embeddington import SchemaVersionError
+
+    _stub_heavy_deps(monkeypatch)
+    monkeypatch.setattr(
+        cli,
+        "updater",
+        types.SimpleNamespace(
+            update=lambda *a, **k: (_ for _ in ()).throw(SchemaVersionError("major 2 > 1")),
+            BaselineRequired=type("BR", (Exception,), {}),
+            BaselineRefused=type("BF", (Exception,), {}),
+        ),
+    )
+
+    rc = cli.main(["update"])
+    err = capsys.readouterr().err
+
+    assert rc == 4
+    assert "out of date" in err and "one-liner" in err and "Traceback" not in err
+
+
 def test_cmd_update_passes_ensure_index(monkeypatch, tmp_path):
     """`update` must wire the shared chunk_text index hook using this surface's own URLs."""
     captured = {}

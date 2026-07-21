@@ -15,7 +15,7 @@ from pathlib import Path
 
 from consumer import lexical_index, release_client, restore_ops, state_paths, updater, writers
 from consumer.fetcher import HttpFetcher
-from embeddington.errors import ChecksumError, EmbeddingtonError
+from embeddington.errors import ChecksumError, EmbeddingtonError, SchemaVersionError
 from installer.errors import SetupError
 
 QDRANT_URL = "http://localhost:6333"
@@ -120,6 +120,13 @@ def run_import(
             "EMB-42",
             f"A downloaded asset failed checksum verification: {exc}",
             "Re-run — a corrupted download re-fetches cleanly. If it repeats, open an issue.",
+        )
+    except SchemaVersionError as exc:
+        raise SetupError(
+            "EMB-45",
+            f"The published data format is newer than this install understands: {exc}",
+            "Run Update from this wizard (or re-run the install one-liner) — it pulls "
+            "new code first, then the data update resumes.",
         )
     except (updater.BaselineRequired, EmbeddingtonError) as exc:
         raise SetupError(

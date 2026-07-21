@@ -90,6 +90,19 @@ def test_updater_exceptions_map_to_emb_codes(raised, expected_code):
     assert exc.value.code == expected_code
 
 
+def test_run_import_schema_error_gets_upgrade_text():
+    from embeddington import SchemaVersionError
+    from installer.errors import SetupError
+
+    def boom(*a, **k):
+        raise SchemaVersionError("manifest schema major 2 exceeds supported 1")
+
+    with pytest.raises(SetupError) as exc_info:
+        run_with(boom)
+    assert exc_info.value.code == "EMB-45"
+    assert "pulls new code" in exc_info.value.fix
+
+
 def test_run_import_passes_ensure_index_to_updater(tmp_path, monkeypatch):
     from installer import import_step
 

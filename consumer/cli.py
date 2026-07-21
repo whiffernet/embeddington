@@ -17,6 +17,7 @@ from pathlib import Path
 
 from consumer import lexical_index, release_client, restore_ops, state_paths, updater, writers
 from consumer.fetcher import HttpFetcher
+from embeddington import SchemaVersionError
 
 
 def _preflight(args):
@@ -131,6 +132,15 @@ def _cmd_update(args):
                 args.qdrant_url, args.collection
             ),
         )
+    except SchemaVersionError:
+        print(
+            "error: this embeddington install is out of date — the published data "
+            "format is newer than this code understands.\n"
+            "  Fix: re-run the install one-liner (or `embeddington-setup` and choose "
+            "Update) — it pulls new code first; updates then resume automatically.",
+            file=sys.stderr,
+        )
+        return 4
     except updater.BaselineRequired as exc:
         print(f"{exc}", file=sys.stderr)
         return 2
