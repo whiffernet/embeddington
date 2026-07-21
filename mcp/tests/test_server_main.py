@@ -111,6 +111,14 @@ async def test_isolation_check_sets_lexical_status_via_chunk_text_status(monkeyp
     fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
     monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
 
+    fake_arango = MagicMock()
+    fake_arango.probe_read = MagicMock(return_value=None)
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
+
+    fake_embed = AsyncMock()
+    fake_embed.embed = AsyncMock(return_value=[0.0] * 1024)
+    monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
+
     await srv._isolation_sanity_check()
 
     fake_qdrant.chunk_text_status.assert_awaited_once()
@@ -128,6 +136,14 @@ async def test_isolation_check_survives_chunk_text_status_failure(monkeypatch):
     fake_qdrant.can_read_collection = AsyncMock(return_value=True)
     fake_qdrant.chunk_text_status = AsyncMock(side_effect=RuntimeError("boom"))
     monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
+
+    fake_arango = MagicMock()
+    fake_arango.probe_read = MagicMock(return_value=None)
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
+
+    fake_embed = AsyncMock()
+    fake_embed.embed = AsyncMock(return_value=[0.0] * 1024)
+    monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
 
     await srv._isolation_sanity_check()  # must not raise
 
