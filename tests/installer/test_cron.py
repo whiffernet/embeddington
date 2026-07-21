@@ -13,8 +13,23 @@ from tests.installer.conftest import FakeRun
 def test_cron_line_built_from_repo_root():
     line = cron.cron_line("/opt/emb")
     assert line.startswith("0 6 * * * cd /opt/emb &&")
-    assert ".venv/bin/embeddington-consume update" in line
+    assert ".venv/bin/embeddington-setup --yes" in line
     assert "$HOME/embeddington-update.log" in line
+
+
+def test_cron_line_is_full_unattended_update():
+    line = cron.cron_line("/opt/emb")
+    assert ".venv/bin/embeddington-setup --yes" in line
+    assert "embeddington-consume" not in line
+    assert line.startswith("0 6 * * * cd /opt/emb")
+
+
+def test_markers_match_old_and_new_lines():
+    old = "0 6 * * * cd /x && .venv/bin/embeddington-consume update >> log 2>&1"
+    new = cron.cron_line("/x")
+    assert cron.cron_line_present(lambda c: RunResult(0, old + "\n", "")) is True
+    assert cron.cron_line_present(lambda c: RunResult(0, new + "\n", "")) is True
+    assert cron.strip_cron_lines(old + "\nkeep me\n" + new + "\n") == "keep me\n"
 
 
 def test_strip_removes_only_embeddington_lines():
@@ -99,7 +114,7 @@ def test_accepted_installs_exactly_one_line_daemon_up():
     )
     out = cron.install_cron(console(), run, "/opt/emb", assume_yes=False, input_fn=lambda: "y")
     assert out == "installed"
-    assert run.written.count("embeddington-consume") == 1
+    assert run.written.count(cron.cron_line("/opt/emb")) == 1
     assert run.written == cron.cron_line("/opt/emb") + "\n"  # exact body, no leading blank
 
 
@@ -178,3 +193,54 @@ def test_cron_line_present_detects_marker():
 
     no_binary = cron.cron_line_present(lambda cmd: RunResult(127, "", "command not found: crontab"))
     assert no_binary is False
+
+
+def test_refresh_replaces_old_line_without_prompt(tmp_path):
+    from pathlib import Path
+
+    old = (
+        "0 6 * * * cd /x && set -a && . consumer/.env && set +a && "
+        ".venv/bin/embeddington-consume update >> $HOME/embeddington-update.log 2>&1"
+    )
+    written = {}
+
+    def run(cmd, **kw):
+        if cmd == ["crontab", "-l"]:
+            return RunResult(0, old + "\n", "")
+        if cmd[0] == "crontab":
+            written["tab"] = Path(cmd[1]).read_text()
+            return RunResult(0, "", "")
+        return RunResult(0, "", "")
+
+    assert cron.refresh_cron_line(run, "/x") == "refreshed"
+    assert "embeddington-setup --yes" in written["tab"]
+    assert "embeddington-consume update" not in written["tab"]
+
+
+def test_refresh_unchanged_writes_nothing():
+    current = cron.cron_line("/x")
+    calls = []
+
+    def run(cmd, **kw):
+        calls.append(cmd)
+        return RunResult(0, current + "\n", "")
+
+    assert cron.refresh_cron_line(run, "/x") == "unchanged"
+    assert calls == [["crontab", "-l"]]
+
+
+def test_refresh_absent_when_no_embeddington_line():
+    calls = []
+
+    def run(cmd, **kw):
+        calls.append(cmd)
+        return RunResult(0, "0 5 * * * some-other-job\n", "")
+
+    assert cron.refresh_cron_line(run, "/x") == "absent"
+    assert calls == [["crontab", "-l"]]
+
+
+def test_refresh_absent_when_no_crontab_binary():
+    assert cron.refresh_cron_line(lambda cmd, **kw: RunResult(127, "", "no crontab"), "/x") == (
+        "absent"
+    )

@@ -16,7 +16,7 @@ from pathlib import Path
 
 from consumer import state_paths
 from installer import ui
-from installer.cron import CRON_MARKER, strip_cron_lines
+from installer.cron import CRON_MARKERS, strip_cron_lines
 from installer.errors import SetupError
 
 KNOWN_QDRANT_COLLECTIONS = {"technology"}
@@ -103,7 +103,7 @@ def build_manifest(repo_root, run, *, env=None, home=None, crontab_text=None):
             return "?"
 
     items = []
-    if crontab_text and CRON_MARKER in crontab_text:
+    if crontab_text and any(m in crontab_text for m in CRON_MARKERS):
         items.append(ManifestItem("cron", "daily-update crontab line", "1 line", "safe"))
     items.append(
         ManifestItem(

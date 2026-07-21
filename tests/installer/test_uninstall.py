@@ -16,6 +16,7 @@ import tempfile
 from rich.console import Console
 
 from installer import uninstall
+from installer.cron import cron_line
 from installer.runner import RunResult
 from tests.installer.conftest import FakeHttp
 
@@ -266,6 +267,18 @@ def test_with_cron_line_the_cron_prompt_comes_first(tmp_path):
     # Pins prompt POSITION: the cron offer must consume the first answer, or every
     # later gate shifts by one on real boxes that carry the cron line.
     cron = "0 6 * * * cd $HOME/embeddington && .venv/bin/embeddington-consume update\n"
+    run = MapRun()
+    drive(tmp_path, ["y", "n", "n", "n", "n", "n"], crontab=cron, run=run)
+    assert any(c["cmd"][0] == "crontab" and len(c["cmd"]) == 2 for c in run.calls)
+    assert not any("compose down" in c for c in joined(run))  # its answer was the 2nd "n"
+
+
+def test_with_new_form_cron_line_the_cron_prompt_is_still_offered(tmp_path):
+    # Dual-marker gap (critique): the manifest gate used to check only the legacy
+    # substring, so a crontab holding ONLY the new self-upgrading line was never even
+    # offered for removal. Mirrors test_with_cron_line_the_cron_prompt_comes_first but
+    # with the new-form line as the ONLY embeddington line present.
+    cron = cron_line(str(tmp_path / "embeddington")) + "\n"
     run = MapRun()
     drive(tmp_path, ["y", "n", "n", "n", "n", "n"], crontab=cron, run=run)
     assert any(c["cmd"][0] == "crontab" and len(c["cmd"]) == 2 for c in run.calls)
