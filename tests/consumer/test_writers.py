@@ -132,6 +132,26 @@ def test_entity_count_propagates_a_real_arango_failure(
     assert exc.value.http_code == status_code
 
 
+def test_create_collection_maps_config(fake_qdrant_client):
+    w = writers.QdrantConsumerWriter(fake_qdrant_client, "technology")
+    fake_qdrant_client.exists = False
+    w.create_collection(size=1024, distance="Cosine", hnsw_m=16, hnsw_ef_construct=100)
+    assert fake_qdrant_client.created == {
+        "size": 1024,
+        "distance": "Cosine",
+        "m": 16,
+        "ef_construct": 100,
+    }
+    fake_qdrant_client.exists = True
+    w.create_collection(size=1024)  # no-op second call
+
+
+def test_upsert_points_batches(fake_qdrant_client):
+    w = writers.QdrantConsumerWriter(fake_qdrant_client, "technology")
+    w.upsert_points(((f"p{i}", [0.1], {"k": i}) for i in range(600)), batch=256)
+    assert [len(b) for b in fake_qdrant_client.upsert_batches] == [256, 256, 88]
+
+
 def test_entity_count_propagates_a_failure_raised_by_the_count_itself(fake_arango_db):
     """The second call site: has_collection() succeeds, then count() 500s.
 

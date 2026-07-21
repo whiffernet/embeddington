@@ -44,9 +44,19 @@ class FakeQdrantClient:
     def __init__(self):
         self.points = {}  # id -> {"vector","payload"}
         self.exists = True  # flip to False to simulate a missing collection
+        self.created = None  # captures the config passed to create_collection
+        self.upsert_batches = []  # each upsert() call's points list, in call order
 
     def collection_exists(self, collection_name):
         return self.exists
+
+    def create_collection(self, collection_name, vectors_config, hnsw_config):
+        self.created = {
+            "size": vectors_config.size,
+            "distance": str(vectors_config.distance),
+            "m": hnsw_config.m,
+            "ef_construct": hnsw_config.ef_construct,
+        }
 
     def count(self, collection_name, exact=True):
         if not self.exists:
@@ -56,6 +66,7 @@ class FakeQdrantClient:
         return types.SimpleNamespace(count=len(self.points))
 
     def upsert(self, collection_name, points):
+        self.upsert_batches.append(list(points))
         for p in points:
             self.points[p.id] = {"vector": p.vector, "payload": p.payload}
 
