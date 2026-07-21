@@ -891,6 +891,17 @@ def test_a_broken_arango_propagates_instead_of_looking_like_an_empty_store(
     assert imported == []  # nothing was downloaded over the live store
 
 
+def test_updater_default_supported_major_tracks_constant():
+    import inspect
+
+    from embeddington.apply.cursor import SUPPORTED_SCHEMA_MAJOR
+
+    assert (
+        inspect.signature(updater.update).parameters["supported_major"].default
+        == SUPPORTED_SCHEMA_MAJOR
+    )
+
+
 def test_force_baseline_restores_even_when_the_cursor_says_up_to_date(
     tmp_path, fake_qdrant_client, fake_arango_db
 ):

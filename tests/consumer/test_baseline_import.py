@@ -56,10 +56,13 @@ def test_import_baseline_orchestrates_in_order(tmp_path):
     assert result["head_sha"] == "c3d4"  # still seeds the cursor
     assert result["chunk_text_status"] == "ready"  # the ensure's status lands in the result
     kinds = [c[0] for c in calls]
-    # both assets downloaded (checksum-verified), both decompressed, both restored, graph created
+    # both assets downloaded (checksum-verified); only the Arango asset is decompressed
+    # here -- the Qdrant leg is format-dependent and owns its own decompress, so
+    # restore_qdrant receives the still-compressed asset (see baseline_import docstring).
     assert kinds.count("download") == 2
-    assert kinds.count("decompress") == 2
+    assert kinds.count("decompress") == 1
     assert "restore_qdrant" in kinds and "restore_arango" in kinds
+    assert ("restore_qdrant", str(tmp_path / "technology.snapshot.zst")) in calls
     # the named graph is created LAST, then the lexical index is warmed AFTER it
     assert kinds[-2:] == ["ensure_graph", "ensure_lexical_index"]
     # checksums were passed through to the downloader

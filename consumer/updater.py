@@ -26,6 +26,7 @@ from pathlib import Path
 
 from consumer.cursor_store import read_cursor, write_cursor
 from embeddington import apply_diff, plan_update
+from embeddington.apply.cursor import SUPPORTED_SCHEMA_MAJOR
 from embeddington.errors import EmbeddingtonError
 from embeddington.format import bundle as bundle_mod
 
@@ -182,7 +183,7 @@ def update(
     cursor_path,
     work_dir,
     baseline_importer=None,
-    supported_major=1,
+    supported_major=SUPPORTED_SCHEMA_MAJOR,
     diffs_tag="diffs",
     *,
     legacy_cursors=(),

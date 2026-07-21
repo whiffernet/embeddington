@@ -28,6 +28,16 @@ def validate_manifest(m):
         for key in ("tag", "head_sha", "assets", "sha256"):
             if key not in baseline:
                 raise ManifestError(f"baseline entry missing key: {key!r}")
+        fmt = baseline.get("format", "snapshot")
+        if fmt not in ("snapshot", "bundle"):
+            raise ManifestError(f"baseline format must be 'snapshot' or 'bundle', got {fmt!r}")
+        if fmt == "bundle":
+            cfg = baseline.get("qdrant_collection")
+            if not isinstance(cfg, dict):
+                raise ManifestError("bundle baseline missing qdrant_collection config")
+            for key in ("size", "distance", "hnsw_m", "hnsw_ef_construct"):
+                if key not in cfg:
+                    raise ManifestError(f"qdrant_collection missing key: {key!r}")
     for diff in m["diffs"]:
         for key in ("prev_sha", "head_sha", "asset", "sha256"):
             if key not in diff:

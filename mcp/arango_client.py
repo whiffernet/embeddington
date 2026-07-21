@@ -461,6 +461,21 @@ class ArangoKGClient:
             raise ArangoError(f"schema failed: {exc}") from exc
         return {"entity_types": sorted(entity_types), "predicates": sorted(predicates)}
 
+    def probe_read(self) -> None:
+        """Cheap allowlisted read used as a startup probe.
+
+        Exercises real read access against entities_v2 (LIMIT 1) so a wrong
+        ARANGO_DATABASE or a missing/insufficient grant on the configured
+        user surfaces as a boot-time signal, instead of as silent empty
+        results the first time a tool queries the KG.
+
+        Raises:
+            Exception: Any failure from the underlying AQL execution (bad
+                database, missing grant, connectivity). The caller treats
+                this as a warn-only startup signal, never a hard failure.
+        """
+        self._db.aql.execute(f"FOR e IN {ENTITIES} LIMIT 1 RETURN 1")
+
     def can_read_collection(self, collection_name: str) -> bool:
         """Probe whether this client's user can read the given collection.
 

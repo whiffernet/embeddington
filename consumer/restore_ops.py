@@ -21,8 +21,9 @@ from pathlib import Path
 
 import zstandard
 
-from consumer import lexical_index
+from consumer import lexical_index, writers
 from consumer.baseline_import import GRAPH_NAME, import_baseline
+from embeddington.format import bundle
 
 # Arango image used for the one-shot arangorestore — pin to the consumer stack's version.
 ARANGO_IMAGE = "arangodb/arangodb:3.12.4"
@@ -83,6 +84,31 @@ def restore_qdrant_snapshot(qdrant_url, collection, snapshot_path):
         ],
         check=True,
         capture_output=True,
+    )
+
+
+def restore_qdrant_bundle(qdrant_url, collection, bundle_path, coll_cfg):
+    """Restore a full-export (schema-2) baseline: create the collection from the
+    manifest's config, then stream-upsert every point record. Never buffers the
+    bundle; skips the header and non-point records defensively.
+
+    Args:
+        qdrant_url: Base URL of the local Qdrant (e.g. http://localhost:6333).
+        collection: Target collection name.
+        bundle_path: Path to the (still-compressed) ``.jsonl.zst`` export bundle.
+        coll_cfg: The manifest's ``qdrant_collection`` dict (size/distance/hnsw_*).
+    """
+    writer = writers.QdrantConsumerWriter.connect(qdrant_url, collection)
+    writer.create_collection(
+        size=coll_cfg["size"],
+        distance=coll_cfg["distance"],
+        hnsw_m=coll_cfg["hnsw_m"],
+        hnsw_ef_construct=coll_cfg["hnsw_ef_construct"],
+    )
+    writer.upsert_points(
+        (r["id"], r["vector"], r["payload"])
+        for r in bundle.read_bundle(bundle_path)
+        if r.get("kind") == "point" and r.get("op") == "upsert"
     )
 
 
@@ -169,6 +195,19 @@ def make_baseline_importer(
     """
 
     def _import(baseline_entry):
+        # Per-format Qdrant restore (Task 5's manifest `format` field): a snapshot-format
+        # entry decompresses then uploads via the snapshot API (transition-window default,
+        # collection created implicitly); a bundle-format entry streams the compressed
+        # export directly, creating the collection explicitly from its manifest config.
+        if baseline_entry.get("format") == "bundle":
+            restore_q = lambda p: restore_qdrant_bundle(  # noqa: E731
+                qdrant_url, collection, p, baseline_entry["qdrant_collection"]
+            )
+        else:
+            restore_q = lambda p: restore_qdrant_snapshot(  # noqa: E731
+                qdrant_url, collection, decompress(p)
+            )
+
         result = import_baseline(
             baseline_entry,
             work_dir,
@@ -176,7 +215,7 @@ def make_baseline_importer(
                 tag, asset, dest, sha
             ),
             decompress=decompress,
-            restore_qdrant=lambda snap: restore_qdrant_snapshot(qdrant_url, collection, snap),
+            restore_qdrant=restore_q,
             restore_arango=lambda dump: restore_arango_dump(
                 arango_url, db, username, password, dump
             ),

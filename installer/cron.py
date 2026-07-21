@@ -11,16 +11,19 @@ import tempfile
 from installer import ui
 from installer.errors import SetupError
 
-CRON_MARKER = "embeddington-consume"
+CRON_MARKER = "embeddington-consume"  # legacy name kept for back-compat imports
+CRON_MARKERS = ("embeddington-setup", "embeddington-consume")
 
 
 def cron_line(repo_root):
-    """The nightly-update crontab line for THIS install location.
+    """The nightly full-update crontab line (self-upgrading — spec Component 4).
 
     [CRITIC] Built from the actual repo_root, never hardcoded to $HOME/embeddington —
     the installer honors EMBEDDINGTON_INSTALL_DIR and an interactive location prompt,
     and a receipt that prints a cron line for the wrong directory fails silently every
-    night.
+    night. Runs the FULL unattended update (`embeddington-setup --yes`) rather than the
+    data-only `embeddington-consume update` — git pull + gated venv resync + idempotent
+    compose + data, all non-blocking under --yes.
 
     Args:
         repo_root: the clone root the cron job cd's into.
@@ -30,23 +33,26 @@ def cron_line(repo_root):
     """
     return (
         f"0 6 * * * cd {repo_root} && set -a && . consumer/.env && set +a && "
-        f".venv/bin/embeddington-consume update >> $HOME/embeddington-update.log 2>&1"
+        f".venv/bin/embeddington-setup --yes >> $HOME/embeddington-update.log 2>&1"
     )
 
 
 def strip_cron_lines(crontab_text):
-    """Return the crontab minus every line mentioning embeddington-consume.
+    """Return the crontab minus every line mentioning an embeddington marker.
+
+    Matches BOTH the current (`embeddington-setup`) and legacy (`embeddington-consume`)
+    line forms, so a machine that's still on the old form gets it cleanly replaced or
+    removed rather than accumulating a duplicate.
 
     Args:
         crontab_text: the full crontab body.
 
     Returns:
-        The body with every embeddington-consume line removed (trailing newline
-        preserved iff the input had one).
+        The body with every embeddington line removed (trailing newline preserved iff
+        the input had one).
     """
-    return "\n".join(line for line in crontab_text.splitlines() if CRON_MARKER not in line) + (
-        "\n" if crontab_text.endswith("\n") else ""
-    )
+    kept = [line for line in crontab_text.splitlines() if not any(m in line for m in CRON_MARKERS)]
+    return "\n".join(kept) + ("\n" if crontab_text.endswith("\n") else "")
 
 
 def cron_daemon_running(run):
@@ -72,7 +78,7 @@ def cron_daemon_running(run):
 
 
 def cron_line_present(run):
-    """True iff the user's crontab already has an embeddington-consume line.
+    """True iff the user's crontab already has an embeddington line (old or new form).
 
     Used to decide whether the wizard should OFFER auto-updates (it shouldn't
     re-nag a user who already enabled them). A missing crontab binary or an empty
@@ -82,12 +88,46 @@ def cron_line_present(run):
         run: runner.run-compatible callable.
 
     Returns:
-        True only when a line containing CRON_MARKER is found.
+        True only when a line containing any CRON_MARKERS entry is found.
     """
     res = run(["crontab", "-l"])
     if res.rc != 0:
         return False
-    return any(CRON_MARKER in line for line in res.out.splitlines())
+    return any(m in line for line in res.out.splitlines() for m in CRON_MARKERS)
+
+
+def _write_crontab(run, new_tab):
+    """Write ``new_tab`` as the user's crontab via a tempfile; return success.
+
+    Write to a temp file, install it, and always clean the temp file up (a per-run
+    crontab tempfile left in /tmp is untidy). mkstemp + finally, not NamedTemporaryFile
+    (delete=False), so nothing lingers. Never raises — an mkstemp/write/run failure just
+    returns False.
+
+    Args:
+        run: runner.run-compatible callable.
+        new_tab: the full crontab body to install (trailing newline included).
+
+    Returns:
+        True iff the crontab was successfully replaced.
+    """
+    try:
+        fd, path = tempfile.mkstemp(suffix=".cron", prefix="embeddington-")
+    except OSError:
+        return False
+
+    try:
+        try:
+            with os.fdopen(fd, "w") as handle:
+                handle.write(new_tab)
+            return run(["crontab", path]).rc == 0
+        except OSError:
+            return False
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
 
 
 def install_cron(console, run, repo_root, *, assume_yes, input_fn=input):
@@ -122,12 +162,7 @@ def install_cron(console, run, repo_root, *, assume_yes, input_fn=input):
     body = strip_cron_lines(existing).rstrip("\n")
     new_tab = (body + "\n" if body else "") + cron_line(repo_root) + "\n"
 
-    # Write to a temp file, install it, and always clean the temp file up (a per-run
-    # crontab tempfile left in /tmp is untidy). mkstemp + finally, not NamedTemporaryFile
-    # (delete=False), so nothing lingers.
-    try:
-        fd, path = tempfile.mkstemp(suffix=".cron", prefix="embeddington-")
-    except OSError:
+    if not _write_crontab(run, new_tab):
         ui.show_error(
             console,
             SetupError(
@@ -140,29 +175,29 @@ def install_cron(console, run, repo_root, *, assume_yes, input_fn=input):
         )
         return "declined"
 
-    try:
-        try:
-            with os.fdopen(fd, "w") as handle:
-                handle.write(new_tab)
-            wrote = run(["crontab", path]).rc == 0
-        except OSError:
-            wrote = False
-        if not wrote:
-            ui.show_error(
-                console,
-                SetupError(
-                    "EMB-62",
-                    "Couldn't write the crontab, so auto-updates weren't enabled.",
-                    "Add the line yourself with `crontab -e` — the receipt prints it. On "
-                    "macOS a write failure usually means the Terminal app needs Full Disk "
-                    "Access (System Settings → Privacy & Security).",
-                ),
-            )
-            return "declined"
-    finally:
-        try:
-            os.unlink(path)
-        except OSError:
-            pass
-
     return "installed" if cron_daemon_running(run) else "installed-cron-down"
+
+
+def refresh_cron_line(run, repo_root):
+    """Silently rewrite an existing embeddington cron line to the current form.
+
+    Prompt-free by contract (the wizard calls this only when a line already exists —
+    see cron_line_present). Never raises.
+
+    Args:
+        run: runner.run-compatible callable.
+        repo_root: the clone root the cron job cd's into.
+
+    Returns:
+        "refreshed" | "unchanged" | "absent" | "failed".
+    """
+    res = run(["crontab", "-l"])
+    if res.rc != 0:
+        return "absent"
+    if not any(m in line for line in res.out.splitlines() for m in CRON_MARKERS):
+        return "absent"
+    body = strip_cron_lines(res.out).rstrip("\n")
+    new_tab = (body + "\n" if body else "") + cron_line(repo_root) + "\n"
+    if new_tab == (res.out if res.out.endswith("\n") else res.out + "\n"):
+        return "unchanged"
+    return "refreshed" if _write_crontab(run, new_tab) else "failed"

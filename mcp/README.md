@@ -82,6 +82,16 @@ information is welcome to come to light here:
 Use LAN hostnames instead of `localhost` if Claude runs on a different machine
 than the data services.
 
+**Remote root is refused by default.** If `ARANGO_USER` is `root` (the
+default) and `ARANGO_URL` is a non-loopback host — including a LAN
+hostname, per the note above — the server refuses to start:
+`SystemExit` naming the scoped read-only user (`kg_servicenow_ro`) it
+expects instead. This exists to stop a misconfigured BYO-prod Arango from
+booting clean under full-admin creds. For local root against a loopback
+`ARANGO_URL` (the common dev setup), the gate doesn't apply. To
+deliberately run `root` against a remote store anyway, set
+`EMBEDDINGTON_ALLOW_REMOTE_ROOT=1`.
+
 ## The tools
 
 Seven of them. Maude would approve of the precise ones.

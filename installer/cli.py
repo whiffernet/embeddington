@@ -22,7 +22,7 @@ from installer import (
     state,
     ui,
 )
-from installer.cron import cron_line, install_cron
+from installer.cron import cron_line, install_cron, refresh_cron_line
 
 
 def _repo_root():
@@ -101,6 +101,7 @@ def _production_deps(repo_root, args):
         "install_cron": lambda console, assume_yes, input_fn: install_cron(
             console, runner.run, repo_root, assume_yes=assume_yes, input_fn=input_fn
         ),
+        "refresh_cron": lambda _c: refresh_cron_line(runner.run, repo_root),
         "run_uninstall": run_uninstall_dep,
         "git_head": lambda: runner.run(
             ["git", "-C", str(repo_root), "rev-parse", "HEAD"]
@@ -168,7 +169,8 @@ def _update_receipt(did, points, entities, mcp_changed, cron_outcome, repo_root)
         did: dict of what happened — keys "data_mode", "applied", "deps", "env".
         points, entities: proof-of-life counts.
         mcp_changed: True if mcp/ changed in this pull (drives the restart hint).
-        cron_outcome: install_cron's return, or None if not offered.
+        cron_outcome: install_cron's or refresh_cron_line's return, or None if not
+            offered.
         repo_root: the clone root (unused today; kept for symmetry with _cron_receipt).
 
     Returns:
@@ -196,6 +198,8 @@ def _update_receipt(did, points, entities, mcp_changed, cron_outcome, repo_root)
         )
     if cron_outcome in ("installed", "installed-cron-down"):
         heavy.append("  Auto-updates: enabled (daily 06:00)")
+    if cron_outcome == "refreshed":
+        heavy.append("  Auto-updates: cron refreshed to the current self-upgrading form")
 
     lines = [data]
     if heavy:
@@ -321,7 +325,9 @@ def _update_flow(console, deps, args, input_fn):
 
     mcp_changed = any(f.startswith("mcp/") for f in changed)
     cron_outcome = None
-    if not deps["cron_present"]():
+    if deps["cron_present"]():
+        cron_outcome = deps["refresh_cron"](console)  # silent; never prompts
+    else:
         ui.rule(console, "Auto-updates")
         cron_outcome = deps["install_cron"](console, args.yes, input_fn)
 

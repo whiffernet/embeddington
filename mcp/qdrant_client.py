@@ -5,15 +5,14 @@ time and never accepted from external input. No JWT in v1 (Qdrant has no
 auth enabled — see spec §5 for the deferral rationale and the future
 JWT-enabled version).
 
-Also exposes a consumer-local ``chunk_text`` payload surface (status probe,
-one-off materialization, full-text index) used for lexical search — this
-write surface touches only the consumer's own collection and is never part
-of the published baseline/diff snapshots.
+Also exposes a read-only ``chunk_text_status`` probe used by the lexical
+search lane. The ``chunk_text`` payload field and its full-text index are
+built by the consumer install/update flow (`consumer/lexical_index.py`),
+never by this client — this module issues no Qdrant writes.
 """
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from typing import Any, Optional
@@ -100,7 +99,7 @@ class QdrantSearchClient:
             limit: Max number of results.
             match_text: When given, restricts results to chunks whose
                 ``chunk_text`` payload field contains this text (the lexical
-                lane). Requires `ensure_chunk_text` to have reached "ready".
+                lane). Requires `chunk_text_status` to report "ready".
 
         Returns:
             List of `{id, score, text, source, metadata}` dicts.
@@ -196,122 +195,6 @@ class QdrantSearchClient:
         if "chunk_text" not in schema:
             return "absent"
         return "ready" if result.get("status") == "green" else "building"
-
-    async def materialize_chunk_text(self, batch: int = 256, max_points: int | None = None) -> int:
-        """Copy chunk prose into a first-class chunk_text payload field.
-
-        The shared collection stores prose inside the stringified
-        ``_node_content`` blob (top-level ``text`` is empty), which a full-text
-        index cannot usefully target — so the prose is materialized once,
-        batch by batch, into ``chunk_text`` on the consumer's own collection.
-        Points with no recoverable text (see `_extract_payload_text`) are
-        skipped and not counted.
-
-        Args:
-            batch: Scroll page size.
-            max_points: Optional cap on the number of points written; the
-                scroll stops once this many have been written.
-
-        Returns:
-            Number of points written.
-
-        Raises:
-            QdrantError: On any non-200 response from scroll or set_payload.
-        """
-        client = await self._http()
-        written = 0
-        offset: Any = None
-        while True:
-            body: dict[str, Any] = {
-                "limit": batch,
-                "with_payload": ["text", "_node_content"],
-                "filter": {"must": [{"is_empty": {"key": "chunk_text"}}]},
-            }
-            if offset is not None:
-                body["offset"] = offset
-            resp = await client.post(
-                f"{self.url}/collections/{self.collection}/points/scroll", json=body
-            )
-            if resp.status_code != 200:
-                raise QdrantError(f"scroll failed: {resp.status_code}: {resp.text[:200]}")
-            result = resp.json().get("result", {}) or {}
-            points = result.get("points", []) or []
-            by_text: dict[str, list] = {}
-            for p in points:
-                text = _extract_payload_text(p.get("payload", {}) or {})
-                if text:
-                    by_text.setdefault(text, []).append(p.get("id"))
-            for text, ids in by_text.items():
-                presp = await client.post(
-                    f"{self.url}/collections/{self.collection}/points/payload",
-                    json={"payload": {"chunk_text": text}, "points": ids},
-                )
-                if presp.status_code != 200:
-                    raise QdrantError(
-                        f"set_payload failed: {presp.status_code}: {presp.text[:200]}"
-                    )
-                written += len(ids)
-            offset = result.get("next_page_offset")
-            if offset is None or (max_points is not None and written >= max_points):
-                return written
-
-    async def create_chunk_text_index(self) -> None:
-        """Create the full-text index on chunk_text (idempotent-tolerant).
-
-        Raises:
-            QdrantError: On any response other than 200 (created) or 409
-                (already exists).
-        """
-        client = await self._http()
-        resp = await client.put(
-            f"{self.url}/collections/{self.collection}/index",
-            json={
-                "field_name": "chunk_text",
-                "field_schema": {"type": "text", "tokenizer": "word", "lowercase": True},
-            },
-        )
-        if resp.status_code not in (200, 409):
-            raise QdrantError(f"index create failed: {resp.status_code}: {resp.text[:200]}")
-
-    async def ensure_chunk_text(self, materialize_batch: int = 256) -> str:
-        """Ensure chunk_text exists + is indexed; return the final status.
-
-        Runs on every server start and lazily (baseline restores recreate the
-        collection and silently drop both field and index). Degraded states
-        ("building"/"unavailable") are returned, not raised — the caller
-        skips the lexical lane and says so in the envelope.
-
-        Qdrant's index-create PUT acks in milliseconds but its
-        payload_schema registration lands a beat later — an immediate
-        re-probe right after a successful create can still read "absent"
-        even though the create genuinely succeeded. To avoid reporting that
-        false negative (and the wasteful re-materialize it would trigger on
-        the next `ensure_chunk_text` call), the post-create probe is
-        retried briefly until the status moves off "absent".
-
-        Args:
-            materialize_batch: Scroll page size passed to
-                `materialize_chunk_text` when materialization is needed.
-
-        Returns:
-            The final `chunk_text_status()` value after ensuring.
-
-        Raises:
-            QdrantError: On transport-level failure of the materialize or
-                index-create steps themselves.
-        """
-        status = await self.chunk_text_status()
-        if status == "absent":
-            n = await self.materialize_chunk_text(batch=materialize_batch)
-            logger.info("chunk_text materialized on %s points", n)
-            await self.create_chunk_text_index()
-            for attempt in range(5):
-                status = await self.chunk_text_status()
-                if status != "absent":
-                    break
-                if attempt < 4:
-                    await asyncio.sleep(0.5)
-        return status
 
     async def close(self) -> None:
         """Close the underlying HTTP client."""

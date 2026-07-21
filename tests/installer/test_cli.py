@@ -65,6 +65,7 @@ def make_deps(rec):
         "proof_of_life": rec.step("proof", (152_194, 41_000)),
         "claude_wiring": rec.step("claude", "skipped"),
         "install_cron": rec.step("install_cron", "skipped-unattended"),
+        "refresh_cron": rec.step("refresh_cron", "unchanged"),
         "run_uninstall": rec.step("uninstall", 0),
         "git_head": rec.step("git_head", "OLDSHA"),
         "git_changed_files": lambda _pre: rec._record("git_changed_files") or [],
@@ -267,6 +268,48 @@ def test_update_skips_cron_offer_when_already_present():
     deps["install_cron"] = lambda *a, **k: called.append(1) or "installed"
     assert cli.main(["--yes"], console=console(), deps=deps, input_fn=lambda: "") == 0
     assert called == []  # never offered when a line already exists
+
+
+def test_update_with_cron_present_silently_refreshes_never_installs():
+    # Present -> refresh_cron only, prompt-free: input_fn raises if ever called, which
+    # would only happen if the flow fell through to install_cron's confirm prompt.
+    def explode():
+        raise AssertionError("update with cron present must never prompt")
+
+    rec = Recorder(state=ALL_GOOD)
+    deps = make_deps(rec)
+    deps["git_changed_files"] = lambda _pre: []
+    deps["cron_present"] = lambda: True
+    assert cli.main(["--yes"], console=console(), deps=deps, input_fn=explode) == 0
+    assert "refresh_cron" in rec.order
+    assert "install_cron" not in rec.order
+
+
+def test_update_with_cron_absent_offers_install_as_before():
+    rec = Recorder(state=ALL_GOOD)
+    deps = make_deps(rec)
+    deps["git_changed_files"] = lambda _pre: []
+    deps["cron_present"] = lambda: False
+    installed = []
+    deps["install_cron"] = lambda *a, **k: installed.append(1) or "installed"
+    refreshed = []
+    deps["refresh_cron"] = lambda _c: refreshed.append(1) or "refreshed"
+    assert cli.main(["--yes"], console=console(), deps=deps, input_fn=lambda: "") == 0
+    assert installed == [1]
+    assert refreshed == []
+
+
+def test_update_receipt_refreshed_line_only_on_refreshed():
+    line = cli._update_receipt(
+        {"data_mode": "up_to_date", "applied": 0}, 152194, 41000, False, "refreshed", "/opt/emb"
+    )
+    assert "cron refreshed" in line
+
+    unchanged_line = cli._update_receipt(
+        {"data_mode": "up_to_date", "applied": 0}, 152194, 41000, False, "unchanged", "/opt/emb"
+    )
+    assert "cron refreshed" not in unchanged_line
+    assert "One-time upgrades" not in unchanged_line
 
 
 def test_update_retries_import_once_when_stores_recovering(monkeypatch):

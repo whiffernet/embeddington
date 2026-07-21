@@ -266,41 +266,38 @@ wizard asks _"Set up daily auto-updates at 06:00?"_ — say yes and it adds the 
 below automatically (idempotently; `embeddington-setup --uninstall` removes it). If you
 declined, ran unattended (`EMBEDDINGTON_YES=1`), or want a different schedule, add it by hand:
 
-The crontab line runs `embeddington-consume update` directly — the data-only piece: it
-applies diffs (or restores a baseline) and keeps the keyword search index complete, but
-doesn't touch container config, `.env`, or the venv (that's the wizard's **Update**, above).
-It needs `ARANGO_ROOT_PASSWORD` in its environment — the same value in `consumer/.env` from
-install. The first line below loads it. That relative path (`consumer/.env`) is why this
-block wants the repo root:
-
-```bash
-# run from: repo root
-set -a; . consumer/.env; set +a       # loads ARANGO_ROOT_PASSWORD into this shell
-embeddington-consume update
-```
-
-Running it from somewhere else? Point at the `.env` absolutely — the command itself no longer
-cares where you are, because its cursor lives in the state directory, not the current one:
-
-```bash
-# run from: anywhere
-set -a; . ~/embeddington/consumer/.env; set +a
-embeddington-consume update
-```
-
-You only need the `set -a` line once per shell. For a cron job, keep both lines together —
-cron starts a fresh shell with none of your environment, so you still need to source
-`.env` there. Leading with a `cd` into the clone costs nothing and is a second, independent
-guarantee that a first-time migration finds that clone's old cursor to adopt:
+The crontab line runs `embeddington-setup --yes` — the same **Update** the wizard runs by
+hand, unattended: code pull, gated dependency resync, container config, and data, all in one
+idempotent shot. It also brings a stopped stack back up, so a box that got rebooted or had
+Docker die overnight self-heals at 06:00 instead of just sitting there stale. It needs
+`ARANGO_ROOT_PASSWORD` in its environment — the same value in `consumer/.env` from install.
+The line below loads it, then `cd`s into the clone first so the relative `consumer/.env`
+resolves and, on a first-time migration, the old cursor in that clone gets found and adopted:
 
 ```bash
 # crontab -e   — update daily at 06:00
-0 6 * * * cd $HOME/embeddington && set -a && . consumer/.env && set +a && .venv/bin/embeddington-consume update >> $HOME/embeddington-update.log 2>&1
+0 6 * * * cd $HOME/embeddington && set -a && . consumer/.env && set +a && .venv/bin/embeddington-setup --yes >> $HOME/embeddington-update.log 2>&1
 ```
 
 That example line assumes `~/embeddington`; if you installed somewhere else, the wizard's
 receipt prints the crontab line for your actual install location — copy it from there
 instead of hand-editing the path above.
+
+**Already have the old, data-only cron line?** You don't have to touch it by hand. The next
+time you run the wizard's **Update** (by hand or via an already-scheduled cron job that still
+has the old line), it silently rewrites the crontab entry to the new self-upgrading form —
+no prompt, no action needed from you. If you want it upgraded right now instead of waiting
+for the next 06:00 run, just run the install one-liner again.
+
+If you'd rather run the data-only piece by hand for some reason — diffs and the keyword
+index, no container/config/venv changes — `embeddington-consume update` is still there; see
+**Configuration** below for its flags.
+
+**Transition note.** If a nightly run (or a manual `embeddington-consume update`) prints
+`error: this embeddington install is out of date`, that means a published baseline moved to
+a data format this install's code predates it. Re-run the install one-liner — it pulls the
+new code first, and updates resume automatically from there. Nothing about your data is
+wrong; the code just needs to catch up once.
 
 <details><summary>Auto-updates on macOS and WSL2 (platform notes)</summary>
 
@@ -333,9 +330,11 @@ after an update on a low-RAM box, that's the first knob to turn.
 </details>
 
 Most runs are tiny — just the newer diffs. The exception is a **re-baseline**: after the
-publisher compacts history, the next update re-restores the whole snapshot in one step (a
-few hundred MB, a few minutes). That's expected, not an error. Run it on whatever schedule
-you like — a daily cron, say — to stay current.
+publisher compacts history, the next update does a full restore — it rebuilds the Qdrant
+collection from the baseline's manifest config and streams every point back in, then
+restores the Arango dump on top (several minutes; the same few-hundred-MB download as any
+other baseline). That's expected, not an error. Run it on whatever schedule you like — a
+daily cron, say — to stay current.
 
 What it prints. **First run** (or the first run after a new baseline is cut) restores the
 whole graph:
@@ -347,7 +346,7 @@ Embeddington update complete.
   Version: fd852b53bb07998ddc8e385971c25b94028fdf62
   Diffs:   0 applied on top of the baseline
   Note:    a one-time full re-download is expected after a compaction — existing
-           installs re-restore the latest snapshot in a single step.
+           installs re-restore the latest baseline in a single step.
 ```
 
 **Later runs** apply only what changed, and say so when there's nothing to do:
@@ -364,7 +363,7 @@ Embeddington update complete.
   Version: 9f2a1c7e0b4d8a6f3e5c1b9d7a2f4e6c8b0d3a5f
 ```
 
-A baseline restore reporting `Diffs: 0` is a **success**, not a no-op — it means the snapshot
+A baseline restore reporting `Diffs: 0` is a **success**, not a no-op — it means the baseline
 it just loaded was already current. Nothing more to fetch, man.
 
 ---
@@ -409,6 +408,14 @@ fill in `ARANGO_PASSWORD`) — `server.py` reads it at startup.
 > **your own** ArangoDB container — the one `consumer/docker-compose.yml` started, with the
 > password you chose in `consumer/.env`. No shared credential ships with this repo, and
 > nothing here reaches a database you don't own.
+
+**Pointing the server at your own remote Arango instead?** `root` is fine against the local
+consumer stack above — it's your container, on loopback. Point `ARANGO_URL` at a non-loopback
+host with `ARANGO_USER` still `root`, though, and the server refuses to start: use the scoped
+read-only user (`kg_servicenow_ro`) for a remote or production store instead. That refusal
+exists to stop a BYO-prod Arango from booting under full-admin creds by accident; if you've
+deliberately decided to accept the risk, set `EMBEDDINGTON_ALLOW_REMOTE_ROOT=1`. See
+**`mcp/README.md`** for the full variable table and the exact `SystemExit` text.
 
 ```bash
 # run from: repo root — installs the MCP server's deps into your active venv
@@ -619,8 +626,10 @@ Two more upgrade housekeeping notes:
 
 > _"This is what happens when you float your version tags."_
 >
-> The `docker-compose.yml` pins Qdrant to the exact version that produced the snapshot —
-> Qdrant snapshot restore is version-sensitive. Don't float it to `:latest`.
+> The `docker-compose.yml` pins Qdrant to the exact version the baseline was built and
+> tested against — collection config (HNSW params, distance metric) and restore behavior
+> are still version-sensitive even for an export-format baseline. Don't float it to
+> `:latest`.
 
 ## Run the tests
 
@@ -854,8 +863,9 @@ building a business on it.
 
 Nothing here ships you a database. `consumer/docker-compose.yml` names two images; your
 Docker pulls them from their vendors, and you accept their terms directly from them. What
-embeddington distributes is **data** — a Qdrant snapshot, an ArangoDB dump, and daily diffs.
-No engine source, no binaries, no images.
+embeddington distributes is **data** — a Qdrant export bundle (vectors + payloads + the
+collection config to rebuild it), an ArangoDB dump, and daily diffs. No engine source, no
+binaries, no images.
 
 | Component           | Pinned version     | License      | The short of it                                                            |
 | ------------------- | ------------------ | ------------ | -------------------------------------------------------------------------- |

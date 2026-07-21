@@ -17,6 +17,7 @@ from pathlib import Path
 
 from consumer import lexical_index, release_client, restore_ops, state_paths, updater, writers
 from consumer.fetcher import HttpFetcher
+from embeddington import SchemaVersionError
 
 
 def _preflight(args):
@@ -131,6 +132,15 @@ def _cmd_update(args):
                 args.qdrant_url, args.collection
             ),
         )
+    except SchemaVersionError:
+        print(
+            "error: this embeddington install is out of date — the published data "
+            "format is newer than this code understands.\n"
+            "  Fix: re-run the install one-liner (or `embeddington-setup` and choose "
+            "Update) — it pulls new code first; updates then resume automatically.",
+            file=sys.stderr,
+        )
+        return 4
     except updater.BaselineRequired as exc:
         print(f"{exc}", file=sys.stderr)
         return 2
@@ -185,7 +195,7 @@ def _format_update(result):
         lines.append(f"  Diffs:    {result['applied']} applied on top of the baseline")
         lines.append(
             "  Note:     a one-time full re-download is expected after a compaction — "
-            "existing installs re-restore the latest snapshot in a single step."
+            "existing installs re-restore the latest baseline in a single step."
         )
     elif mode == "diffs":
         lines.append(f"  Action:   applied {result['applied']} incremental update(s)")

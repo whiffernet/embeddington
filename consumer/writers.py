@@ -37,6 +37,8 @@ def _is_absence(exc: ArangoServerError) -> bool:
 class QdrantConsumerWriter:
     """Implements embeddington.apply.protocols.QdrantWriter against a qdrant client."""
 
+    _DISTANCES = {"cosine": "Cosine", "dot": "Dot", "euclid": "Euclid"}
+
     def __init__(self, client, collection):
         self._client = client
         self._collection = collection
@@ -74,6 +76,52 @@ class QdrantConsumerWriter:
         if not self._client.collection_exists(self._collection):
             return 0
         return self._client.count(self._collection, exact=True).count
+
+    def create_collection(self, size, distance="Cosine", hnsw_m=16, hnsw_ef_construct=100):
+        """Create the collection with the manifest's vector config; no-op if it exists.
+
+        The native-snapshot restore created the collection implicitly; the bundle
+        restore must do it explicitly and faithfully (spec Component 2b).
+
+        Args:
+            size: Vector dimensionality.
+            distance: Distance metric name from the manifest ("Cosine"/"Dot"/"Euclid",
+                case-insensitive).
+            hnsw_m: HNSW graph degree (m) parameter.
+            hnsw_ef_construct: HNSW ef_construct parameter.
+
+        Raises:
+            ValueError: If ``distance`` is not a recognized metric.
+        """
+        if self._client.collection_exists(self._collection):
+            return
+        dist = self._DISTANCES.get(str(distance).lower())
+        if dist is None:
+            raise ValueError(f"unknown distance {distance!r}")
+        self._client.create_collection(
+            self._collection,
+            vectors_config=qmodels.VectorParams(size=size, distance=qmodels.Distance(dist)),
+            hnsw_config=qmodels.HnswConfigDiff(m=hnsw_m, ef_construct=hnsw_ef_construct),
+        )
+
+    def upsert_points(self, points, batch=256):
+        """Batched upsert of (id, vector, payload) tuples from any iterable.
+
+        upsert_point stays for diffs; a 150k-point full restore needs batching
+        to finish in minutes, not hours.
+
+        Args:
+            points: Iterable of (point_id, vector, payload) tuples.
+            batch: Maximum number of points per upsert call.
+        """
+        buf: list = []
+        for point_id, vector, payload in points:
+            buf.append(qmodels.PointStruct(id=point_id, vector=vector, payload=payload))
+            if len(buf) >= batch:
+                self._client.upsert(self._collection, points=buf)
+                buf = []
+        if buf:
+            self._client.upsert(self._collection, points=buf)
 
     def upsert_point(self, point_id: str, vector: list[float], payload: dict) -> None:
         """Upsert a single point into the collection.
