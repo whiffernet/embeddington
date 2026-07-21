@@ -397,6 +397,10 @@ async def enrich(
         lexical_ready=(_lexical_status == "ready"),
     )
     result["warnings"] = server_warnings + result["warnings"]
+    if _lexical_status != "ready" and not any(
+        "lexical lane degraded" in w for w in result["warnings"]
+    ):
+        result["warnings"].append("lexical lane degraded — chunk_text index not ready")
     return result
 
 
@@ -433,19 +437,30 @@ async def vector_search(
             may be lower once the score threshold and dedup are applied.
 
     Returns:
-        dict with keys results, count, collection, and optional error.
+        dict with keys results, count, collection, warnings, and optional
+        error. `warnings` carries the exact string "lexical lane degraded —
+        chunk_text index not ready" whenever the chunk_text index isn't
+        ready, on every return path (success, error, and unknown
+        collection); empty list otherwise.
     """
     collection = collection or config.DEFAULT_QDRANT_COLLECTION
     if collection not in config.ALLOWED_QDRANT_COLLECTIONS:
+        server_warnings: list[str] = []
+        if _lexical_status != "ready":
+            server_warnings.append("lexical lane degraded — chunk_text index not ready")
         return {
             "results": [],
             "count": 0,
             "collection": collection,
             "error": f"unknown collection '{collection}'; allowed: "
             f"{sorted(config.ALLOWED_QDRANT_COLLECTIONS)}",
+            "warnings": server_warnings,
         }
     if _lexical_status != "ready":
         await _maybe_reprobe()
+    server_warnings = []
+    if _lexical_status != "ready":
+        server_warnings.append("lexical lane degraded — chunk_text index not ready")
     index = config.ALLOWED_QDRANT_COLLECTIONS[collection]
     result = await _hybrid_vector_side(
         query,
@@ -456,8 +471,19 @@ async def vector_search(
         lexical_ready=(_lexical_status == "ready"),
     )
     if result["error"]:
-        return {"results": [], "count": 0, "collection": collection, "error": result["error"]}
-    return {"results": result["chunks"], "count": len(result["chunks"]), "collection": collection}
+        return {
+            "results": [],
+            "count": 0,
+            "collection": collection,
+            "error": result["error"],
+            "warnings": server_warnings,
+        }
+    return {
+        "results": result["chunks"],
+        "count": len(result["chunks"]),
+        "collection": collection,
+        "warnings": server_warnings,
+    }
 
 
 @mcp.tool

@@ -16,6 +16,13 @@ import pytest
 import server as srv
 
 
+async def _async_noop(*a, **k):
+    """No-op async stub for monkeypatching `srv._maybe_reprobe`.
+
+    Prevents the reprobe from overwriting a test's forced `_lexical_status`.
+    """
+
+
 @pytest.fixture(autouse=True)
 def _mock_clients(monkeypatch):
     """Replace the lazy-init client getters with mocks for every test."""
@@ -457,3 +464,33 @@ async def test_kg_neighbors_count_edges_failure_keeps_payload(monkeypatch):
     assert result["nodes"] == [{"id": "entities_v2/y", "name": "Y", "type": "Module"}]
     assert result["truncation"]["available"] is None
     assert "error" not in result
+
+
+@pytest.mark.asyncio
+async def test_vector_search_warns_when_lexical_degraded(monkeypatch):
+    monkeypatch.setattr(srv, "_lexical_status", "absent")
+    monkeypatch.setattr(srv, "_maybe_reprobe", _async_noop)
+    out = await srv.vector_search(query="q")
+    assert out["warnings"] == ["lexical lane degraded — chunk_text index not ready"]
+
+
+@pytest.mark.asyncio
+async def test_vector_search_no_warnings_when_ready(monkeypatch):
+    monkeypatch.setattr(srv, "_lexical_status", "ready")
+    out = await srv.vector_search(query="q")
+    assert out["warnings"] == []
+
+
+@pytest.mark.asyncio
+async def test_vector_search_error_and_unknown_collection_paths_carry_warnings(monkeypatch):
+    monkeypatch.setattr(srv, "_lexical_status", "ready")
+    out = await srv.vector_search(query="q", collection="nope")
+    assert out["warnings"] == [] and "error" in out
+
+
+@pytest.mark.asyncio
+async def test_enrich_carries_degraded_note_even_without_identifier_tokens(monkeypatch):
+    monkeypatch.setattr(srv, "_lexical_status", "absent")
+    monkeypatch.setattr(srv, "_maybe_reprobe", _async_noop)
+    out = await srv.enrich(query="plain prose question")
+    assert any("lexical lane degraded" in w for w in out["warnings"])

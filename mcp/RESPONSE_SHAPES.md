@@ -5,7 +5,7 @@ consume embeddington (as a registered MCP, by importing the modules, or by
 hand-rolling clients against the same data), diff your assumptions against this
 file. It is versioned with the code, so `git pull` keeps it current.
 
-- **Current as of:** `v0.9.0` (embeddington repo line — see `CHANGELOG.md` at
+- **Current as of:** `v0.10.0` (embeddington repo line — see `CHANGELOG.md` at
   the repo root, which is now the git-tag-synced authority going forward).
 - Version tags sprinkled through this doc's body (`upstream v0.3.4`,
   `upstream v0.3.5`, `upstream v0.3.7`) predate embeddington's own version
@@ -70,8 +70,9 @@ guard for missing keys).
 > or `"weak"`, say what was not found rather than answering from prior
 > knowledge — never present an identifier that is not in the returned
 > content. Classification is observation-only — no selection, threshold, or
-> lane behavior changed. `vector_search` is unchanged: no `grounding` key,
-> no warnings channel — recorded follow-up from PR 4's review. See
+> lane behavior changed. `vector_search` still has no `grounding` key (as of
+> this version it had no `warnings` channel either — see the v0.10.0 note
+> below, which closed that follow-up from PR 4's review). See
 > "`enrich`'s `grounding` object" below for the full tier contract.
 
 ---
@@ -98,12 +99,34 @@ guard for missing keys).
 
 ---
 
+> ### ⚠️ Behavioral change (v0.10.0)
+>
+> `vector_search`'s envelope gains a `warnings` key (previously only
+> `enrich` had one) — **additive only**: `results`/`count`/`collection`/
+> `error` are unchanged in shape and meaning. It carries the exact string
+> `"lexical lane degraded — chunk_text index not ready"` whenever the
+> `chunk_text` lexical index is not `"ready"`, on **every** return path
+> (success, the Qdrant/embed error return, and the unknown-collection early
+> return) — `[]` otherwise. This closes the PR 4 follow-up noted in v0.8.0
+> and v0.7.0 above: the degradation used to be implicit only (a
+> dense-lane-only, possibly shorter `results` list), which MCP stderr logs
+> don't surface in Claude Desktop — the envelope is the only signal a
+> caller actually sees. `enrich` gains a matching fix: its degraded note
+> previously only appeared when the query itself contained identifier-like
+> tokens (there being nothing for the lexical lane to have contributed
+> otherwise); it's now appended unconditionally whenever the index isn't
+> `"ready"`, so a token-free query no longer degrades silently. Both tools
+> use the identical canonical string — no second "(dense-only results)"
+> variant exists anywhere in the response surface.
+
+---
+
 ## Tools → top-level envelopes
 
 | Tool                                                                 | Success envelope                                                                                                                                      |
 | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `enrich(query, entity_hints?, top_k=5, edge_budget=60, predicates?)` | `{vector_chunks: [chunk], kg_matches: [match], errors: {}, budget: {edge_budget, returned, truncated}, warnings: [], grounding: {tier, reasons: []}}` |
-| `vector_search(query, collection?, limit=10)`                        | `{results: [chunk], count, collection}`                                                                                                               |
+| `vector_search(query, collection?, limit=10)`                        | `{results: [chunk], count, collection, warnings: []}`                                                                                                 |
 | `kg_find_entities(text, limit=10)`                                   | `{entities: [entity], count}`                                                                                                                         |
 | `kg_get_entity(entity_id)`                                           | `{entity: <full doc> \| null}`                                                                                                                        |
 | `kg_neighbors(entity_id, depth=1, types?, limit=100)`                | `{nodes: [node], edges: [edge], truncation: {truncated, available, returned}}`                                                                        |
@@ -181,13 +204,14 @@ Classification is observation-only: no selection, threshold, or lane
 behavior changed in this PR (the diff touches enrich envelope assembly,
 the classifier module, the tool description, and tests only) — `grounding`
 labels what `vector_chunks`/`kg_matches` already contain, it doesn't change
-what they contain. `vector_search` is unchanged: no `grounding` key, no
-warnings channel — giving it an equivalent signal is a recorded follow-up
-from PR 4's review.
+what they contain. `vector_search` still has no `grounding` key — it does
+now carry a `warnings` channel (added in v0.10.0, giving it the equivalent
+lexical-degradation signal that was this section's recorded follow-up from
+PR 4's review).
 
 **Error / edge cases (keys stay stable, `error` added):**
 
-- `vector_search` unknown collection → `{results: [], count: 0, collection, error: "unknown collection '<x>'; allowed: [...]"}` (no client is constructed — the allowlist is the only Qdrant scope guard).
+- `vector_search` unknown collection → `{results: [], count: 0, collection, error: "unknown collection '<x>'; allowed: [...]", warnings: []}` (no client is constructed — the allowlist is the only Qdrant scope guard; `warnings` still reflects lexical-lane status even on this early return).
 - `enrich` `errors` is a **dict keyed by side** (`qdrant` / `arango`), `{}` on full success. The two sides run in parallel and fail independently — you can get `vector_chunks` with an `arango` error present. Total-KG-failure (e.g. `find_entities` itself unreachable) sets `errors.arango`; a single concept's expansion failing does not — see the `match.error` field instead, which scopes to that concept only.
 - `kg_get_entity` not found → `{entity: null, error: "entity not found"}`.
 - `kg_path` no path → `{nodes: [], edges: [], no_path: true}` (distinct from `error`).
@@ -419,20 +443,23 @@ on `enrich`/`vector_search` calls — this self-heals after a baseline
 restore, which recreates the collection and always drops both the field and
 the index. States that matter to a caller:
 
-- **`"ready"`** — the lexical lane runs normally.
+- **`"ready"`** — the lexical lane runs normally; `warnings` carries no
+  lexical-degradation entry (from either tool).
 - **`"building"` / `"absent"`** (materialized-but-indexing, or missing
   entirely) — the lexical lane is skipped for that call (dense-lane-only
-  result). **`enrich` only:** if the query itself contained identifier
-  tokens, its `warnings` gets the exact string
-  `"lexical lane degraded — chunk_text index not ready"`; a query with no
-  identifier tokens degrades silently — there was nothing for the lexical
-  lane to have contributed either way. `vector_search` has no `warnings`
-  channel (its envelope is `{results, count, collection}` — see above) and
-  signals this same degradation only implicitly, via a dense-lane-only
-  (and possibly shorter) `results` list — there is no explicit flag.
+  result), and **both tools** append the exact string
+  `"lexical lane degraded — chunk_text index not ready"` to `warnings`
+  (v0.10.0) — unconditionally, regardless of whether the query itself
+  contained identifier-like tokens. (Prior to v0.10.0, `enrich` only added
+  this note when the query had identifier tokens — since there was nothing
+  for the lexical lane to have contributed on a token-free query — and
+  `vector_search` had no `warnings` channel at all, signaling the
+  degradation only implicitly via a dense-lane-only, possibly shorter
+  `results` list. Both gaps are closed: the note is now unconditional and
+  explicit on every call, on every return path, for both tools.)
 - **`"unavailable"`** — the startup ensure itself failed (e.g. Qdrant
-  unreachable); same degraded (skip + `enrich`-only conditional warning)
-  behavior as above.
+  unreachable); same degraded (skip + unconditional `warnings` note on both
+  tools) behavior as above.
 
 A first-ever `ensure` on a fresh restore materializes the whole corpus
 (measured: 152,191/152,194 points in ~3m30s on the reference stack — 3
