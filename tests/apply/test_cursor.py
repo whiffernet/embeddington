@@ -68,7 +68,17 @@ def test_unreachable_cursor_falls_back_to_baseline():
 
 def test_schema_major_bump_is_gated():
     with pytest.raises(errors.SchemaVersionError):
-        cursor.plan_update("e5f6", _manifest(schema_version="2.0"))
+        cursor.plan_update("e5f6", _manifest(schema_version="3.0"))
+
+
+def test_supported_major_is_2_and_major2_passes():
+    assert cursor.SUPPORTED_SCHEMA_MAJOR == 2
+    cursor.plan_update(None, _manifest(schema_version="2.0"))
+
+
+def test_major3_still_refused():
+    with pytest.raises(errors.SchemaVersionError):
+        cursor.plan_update(None, _manifest(schema_version="3.0"))
 
 
 def test_chain_gap_raises():

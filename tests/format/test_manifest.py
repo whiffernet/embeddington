@@ -69,3 +69,26 @@ def test_sha256_file_and_verify(tmp_path):
     manifest.verify_asset(f, digest)  # no raise
     with pytest.raises(errors.ChecksumError):
         manifest.verify_asset(f, "0" * 64)
+
+
+def test_bundle_baseline_requires_qdrant_collection_config():
+    m = _good_manifest()
+    m["baselines"][-1]["format"] = "bundle"
+    with pytest.raises(errors.ManifestError, match="qdrant_collection"):
+        manifest.validate_manifest(m)
+
+
+def test_snapshot_baselines_unchanged_and_default():
+    manifest.validate_manifest(_good_manifest())  # no format key -> still valid
+
+
+def test_bundle_baseline_with_full_config_passes():
+    m = _good_manifest()
+    m["baselines"][-1]["format"] = "bundle"
+    m["baselines"][-1]["qdrant_collection"] = {
+        "size": 1024,
+        "distance": "Cosine",
+        "hnsw_m": 16,
+        "hnsw_ef_construct": 100,
+    }
+    manifest.validate_manifest(m)
