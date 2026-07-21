@@ -15,6 +15,7 @@ permissions:
 jobs:
   unit:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
@@ -26,6 +27,7 @@ jobs:
   # see the comment in mcp/pytest.ini. The root `unit` job never collected these.
   unit-mcp:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
@@ -37,6 +39,7 @@ jobs:
 
   secret-scan:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
@@ -51,12 +54,14 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/ruff-action@v3
 
   format:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/ruff-action@v3
@@ -64,6 +69,7 @@ jobs:
 
   typecheck:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
@@ -73,14 +79,17 @@ jobs:
 
   semgrep:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with: { python-version: "3.12" }
       - run: pip install semgrep
       - run: semgrep scan --config p/python --config p/secrets --error --metrics off .
+
   shellcheck:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - run: shellcheck install.sh
@@ -92,6 +101,7 @@ jobs:
   # missing docker binary would traceback before EMB-20 ever printed.
   installer-smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     container: python:3.12-bookworm
     steps:
       - uses: actions/checkout@v7
