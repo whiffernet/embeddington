@@ -195,7 +195,7 @@ def _format_update(result):
         lines.append(f"  Diffs:    {result['applied']} applied on top of the baseline")
         lines.append(
             "  Note:     a one-time full re-download is expected after a compaction — "
-            "existing installs re-restore the latest snapshot in a single step."
+            "existing installs re-restore the latest baseline in a single step."
         )
     elif mode == "diffs":
         lines.append(f"  Action:   applied {result['applied']} incremental update(s)")

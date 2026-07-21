@@ -346,7 +346,7 @@ Embeddington update complete.
   Version: fd852b53bb07998ddc8e385971c25b94028fdf62
   Diffs:   0 applied on top of the baseline
   Note:    a one-time full re-download is expected after a compaction — existing
-           installs re-restore the latest snapshot in a single step.
+           installs re-restore the latest baseline in a single step.
 ```
 
 **Later runs** apply only what changed, and say so when there's nothing to do:
