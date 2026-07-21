@@ -68,9 +68,10 @@ _arango: ArangoKGClient | None = None
 # --- Lexical (chunk_text) index status --------------------------------------
 # Set at every server start by _isolation_sanity_check(); "ready" is the only
 # state that permits the lexical MatchText lane (spec §5 PR 4, issue #38).
-# Baseline restores recreate the Qdrant collection and silently drop both the
-# field and the index, so a lazy re-ensure (_maybe_reensure, below) self-heals
-# without re-probing on every tool call.
+# The chunk_text field and its index are built exclusively by the consumer
+# install/update flow (never this server — this server issues zero Qdrant
+# writes); a lazy re-probe (_maybe_reprobe, below) notices when that flow
+# has since brought the lane to "ready", without a server restart.
 _lexical_status: str = "absent"
 _LEXICAL_REENSURE_INTERVAL = 60.0
 # -inf, not 0.0: time.monotonic()'s reference point is unspecified (often
@@ -78,12 +79,13 @@ _LEXICAL_REENSURE_INTERVAL = 60.0
 # 60s behind the first real `now`, which would make the throttle guard below
 # wrongly treat that first call as still-within-window and skip it too.
 _lexical_last_reensure: float = float("-inf")
-# True while a re-ensure is in flight. materialize_chunk_text can take
-# minutes (~3m30s for the full corpus) — longer than the 60s throttle
-# window above — so the timestamp guard alone doesn't stop a second tool
-# call from firing a second, concurrent materialize once the window elapses
-# mid-materialize. This flag is checked-and-set before the first `await`
-# in _maybe_reensure, so no asyncio.Lock is needed for that atomicity.
+# True while a re-probe is in flight. A read-only status probe is sub-second,
+# so overlap is not the correctness concern it was for the old write-based
+# self-heal (a multi-minute materialize) — this flag is kept for
+# call-coalescing symmetry with that prior shape, so concurrent tool calls
+# within the same window share one probe instead of each firing their own.
+# It is checked-and-set before the first `await` in _maybe_reprobe, so no
+# asyncio.Lock is needed for that atomicity.
 _lexical_reensure_in_flight: bool = False
 
 
@@ -190,11 +192,12 @@ async def _isolation_sanity_check() -> None:
     No Qdrant deny check in v1: there's no credential enforcement at the
     Qdrant layer (see spec §5). The future JWT-enabled version adds that.
 
-    Also ensures the lexical (chunk_text) index and records its status in
-    the module-level `_lexical_status` (spec §5 PR 4, issue #38). A failed
-    ensure is logged and leaves the status "unavailable" — it must never
-    block startup, since the lexical lane is an enhancement, not a
-    dependency of the dense lane.
+    Also probes the lexical (chunk_text) index status and records it in the
+    module-level `_lexical_status` (spec §5 PR 4, issue #38). This is a
+    read-only probe — the index itself is built by the consumer
+    install/update flow, never by this server. A failed probe is logged and
+    leaves the status "unavailable" — it must never block startup, since the
+    lexical lane is an enhancement, not a dependency of the dense lane.
     """
     global _lexical_status
 
@@ -220,31 +223,28 @@ async def _isolation_sanity_check() -> None:
     )
 
     try:
-        _lexical_status = await qdrant.ensure_chunk_text()
+        _lexical_status = await qdrant.chunk_text_status()
         logger.info("Lexical (chunk_text) index status: %s", _lexical_status)
-    except Exception as exc:  # noqa: BLE001 — lexical index ensure must never block startup
-        logger.warning("chunk_text ensure failed at startup: %s", exc)
+        if _lexical_status != "ready":
+            logger.warning(
+                "lexical lane degraded (chunk_text %s) — the index is built by the "
+                "install/update flow, never by this server; dense search is unaffected",
+                _lexical_status,
+            )
+    except Exception as exc:  # noqa: BLE001 — status probe must never block startup
+        logger.warning("chunk_text status probe failed at startup: %s", exc)
         _lexical_status = "unavailable"
 
 
-async def _maybe_reensure() -> None:
-    """Lazily retry the chunk_text ensure, at most once per process per 60s.
+async def _maybe_reprobe() -> None:
+    """Refresh the lexical status READ-ONLY, at most once per 60s.
 
-    Baseline restores can recreate the Qdrant collection and silently drop
-    the chunk_text field/index outside of a server restart; this lets the
-    lexical lane self-heal without re-probing Qdrant on every tool call.
-
-    A second guard, ``_lexical_reensure_in_flight``, stops overlapping
-    materializes: a full-corpus materialize can take minutes — longer than
-    the 60s throttle window — so a tool call arriving mid-materialize would
-    otherwise see the window as elapsed and kick off a second, concurrent
-    ``ensure_chunk_text()`` (double-scrolling the whole collection). The
-    flag is set before the only `await` in this function, so the
-    check-and-set is atomic under asyncio's cooperative scheduling — no
-    asyncio.Lock needed.
+    The install/update flow (never this server) builds the index; a server that
+    started degraded must notice — without a restart — once the flow builds it.
+    Replaces the retired write-path self-heal: probes ``chunk_text_status`` and
+    mutates nothing.
     """
     global _lexical_status, _lexical_last_reensure, _lexical_reensure_in_flight
-
     if _lexical_reensure_in_flight:
         return
     now = time.monotonic()
@@ -253,9 +253,9 @@ async def _maybe_reensure() -> None:
     _lexical_last_reensure = now
     _lexical_reensure_in_flight = True
     try:
-        _lexical_status = await _get_qdrant().ensure_chunk_text()
-    except Exception as exc:  # noqa: BLE001 — a failed re-ensure must not fail the tool call
-        logger.warning("lazy chunk_text re-ensure failed: %s", exc)
+        _lexical_status = await _get_qdrant().chunk_text_status()
+    except Exception as exc:  # noqa: BLE001 — a failed probe must not fail the tool call
+        logger.warning("lexical status re-probe failed: %s", exc)
     finally:
         _lexical_reensure_in_flight = False
 
@@ -369,7 +369,7 @@ async def enrich(
         grounding.
     """
     if _lexical_status != "ready":
-        await _maybe_reensure()
+        await _maybe_reprobe()
 
     server_warnings: list[str] = []
     norm_predicates: Optional[list[str]] = None
@@ -445,7 +445,7 @@ async def vector_search(
             f"{sorted(config.ALLOWED_QDRANT_COLLECTIONS)}",
         }
     if _lexical_status != "ready":
-        await _maybe_reensure()
+        await _maybe_reprobe()
     index = config.ALLOWED_QDRANT_COLLECTIONS[collection]
     result = await _hybrid_vector_side(
         query,
