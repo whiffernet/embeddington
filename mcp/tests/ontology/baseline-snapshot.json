@@ -1,0 +1,85 @@
+{
+  "fragmentation": {
+    "cross_type_concept_count": 49910,
+    "entities_in_cross_type_groups": 121813,
+    "fragmentation_rate": 0.3924843087471485,
+    "generic_entities": 46987,
+    "generic_groups": 17747,
+    "specific_entities": 74826,
+    "specific_groups": 32163,
+    "total_entities": 310364
+  },
+  "frozen": {
+    "baseline": "baseline-2026-07b",
+    "frozen_on": "2026-07-21",
+    "hub_degree_threshold": 1000,
+    "min_name_chars": 4,
+    "pair_set_size": 500,
+    "pair_types": [
+      "Product",
+      "Module",
+      "Feature"
+    ]
+  },
+  "noise": {
+    "by_category": {
+      "dotted_alias": 17936,
+      "generic": 128,
+      "generic_word": 12659,
+      "junk_pattern": 298,
+      "too_short": 816
+    },
+    "noise_entities": 31837,
+    "noise_rate": 0.1025795517521362,
+    "total_entities": 310364
+  },
+  "non_independent_metrics": [
+    "noise.noise_rate",
+    "fragmentation.fragmentation_rate",
+    "fragmentation.cross_type_concept_count"
+  ],
+  "paths": {
+    "hub_pass_through": 436,
+    "hub_pass_through_rate": 0.872,
+    "no_path": 6,
+    "no_path_rate": 0.012,
+    "pairs": 500,
+    "paths_found": 494
+  },
+  "release_purity": {
+    "known_release_entities": 147,
+    "release_entities": 1215,
+    "release_purity": 0.12098765432098765,
+    "unknown_samples": [
+      "pre\u2011Tokyo",
+      "08.60.005",
+      "May Store 2023",
+      "DORA",
+      "Now Assist in AI Search 11 release",
+      "Access Analyzer V4",
+      "3.2.4",
+      "3.11.0",
+      "Andorra",
+      "Release 1.0.9",
+      "Release 2.0",
+      "v4.3.2",
+      "accl-guided-setup-use.md",
+      "v4.2.4",
+      "current release",
+      "Tenable 5.2.1 Version",
+      "25.0.17",
+      "Employee Center v23.0.5",
+      "June 2023 release of Discovery and Service Mapping Patterns 1.6.0",
+      "7.1.0"
+    ]
+  },
+  "topology": {
+    "hub_concentration": 0.1303954795648657,
+    "hub_count": 32,
+    "hub_incident_edges": 89145,
+    "leaf_entities": 163836,
+    "leaf_fraction": 0.5278833885373304,
+    "total_edges": 683651,
+    "total_entities": 310364
+  }
+}
