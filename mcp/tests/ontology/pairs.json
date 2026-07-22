@@ -1,0 +1,4011 @@
+{
+  "binding": {
+    "baseline": "baseline-2026-07b",
+    "entities": 310364,
+    "edges": 683651
+  },
+  "size": 500,
+  "fingerprint": "sha256:62fff74bd25fe09cbdda2b7a1ec512f878a72fcaf6cfb5a9f8c7c6bef45cb074",
+  "pairs": [
+    {
+      "from_id": "entities_v2/product__acc-f",
+      "to_id": "entities_v2/module__360_relationship_visualization",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "ACC-F",
+      "to_name": "360\u00b0 Relationship Visualization"
+    },
+    {
+      "from_id": "entities_v2/module__360_relationship_visualization",
+      "to_id": "entities_v2/feature__15-minute_forecasting",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "360\u00b0 Relationship Visualization",
+      "to_name": "15-minute forecasting"
+    },
+    {
+      "from_id": "entities_v2/feature__15-minute_forecasting",
+      "to_id": "entities_v2/product__acc-f",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "15-minute forecasting",
+      "to_name": "ACC-F"
+    },
+    {
+      "from_id": "entities_v2/product__accelerator_and_initiative_list",
+      "to_id": "entities_v2/module__360_view_configurations",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Accelerator and Initiative List",
+      "to_name": "360\u00b0 View Configurations"
+    },
+    {
+      "from_id": "entities_v2/module__360_view_configurations",
+      "to_id": "entities_v2/feature__2011_sla_engine",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "360\u00b0 View Configurations",
+      "to_name": "2011 SLA Engine"
+    },
+    {
+      "from_id": "entities_v2/feature__2011_sla_engine",
+      "to_id": "entities_v2/product__accelerator_and_initiative_list",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "2011 SLA Engine",
+      "to_name": "Accelerator and Initiative List"
+    },
+    {
+      "from_id": "entities_v2/product__access_analyzer",
+      "to_id": "entities_v2/module__acc_data_inputs",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Access Analyzer",
+      "to_name": "ACC Data Inputs"
+    },
+    {
+      "from_id": "entities_v2/module__acc_data_inputs",
+      "to_id": "entities_v2/feature__360_relationship_view",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "ACC Data Inputs",
+      "to_name": "360\u00b0 relationship view"
+    },
+    {
+      "from_id": "entities_v2/feature__360_relationship_view",
+      "to_id": "entities_v2/product__access_analyzer",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "360\u00b0 relationship view",
+      "to_name": "Access Analyzer"
+    },
+    {
+      "from_id": "entities_v2/product__access_control",
+      "to_id": "entities_v2/module__acc_log_analytics",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Access Control",
+      "to_name": "ACC Log Analytics"
+    },
+    {
+      "from_id": "entities_v2/module__acc_log_analytics",
+      "to_id": "entities_v2/feature__360_relationship_visualization",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "ACC Log Analytics",
+      "to_name": "360\u00b0 Relationship Visualization"
+    },
+    {
+      "from_id": "entities_v2/feature__360_relationship_visualization",
+      "to_id": "entities_v2/product__access_control",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "360\u00b0 Relationship Visualization",
+      "to_name": "Access Control"
+    },
+    {
+      "from_id": "entities_v2/product__access_management",
+      "to_id": "entities_v2/module__acc_log_policies",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Access Management",
+      "to_name": "ACC Log Policies"
+    },
+    {
+      "from_id": "entities_v2/module__acc_log_policies",
+      "to_id": "entities_v2/feature__360_view",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "ACC Log Policies",
+      "to_name": "360 View"
+    },
+    {
+      "from_id": "entities_v2/feature__360_view",
+      "to_id": "entities_v2/product__access_management",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "360 View",
+      "to_name": "Access Management"
+    },
+    {
+      "from_id": "entities_v2/product__access_management_automation",
+      "to_id": "entities_v2/module__acc-f",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Access Management Automation",
+      "to_name": "ACC-F"
+    },
+    {
+      "from_id": "entities_v2/module__acc-f",
+      "to_id": "entities_v2/feature__360_view_configurations",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "ACC-F",
+      "to_name": "360\u00b0 View Configurations"
+    },
+    {
+      "from_id": "entities_v2/feature__360_view_configurations",
+      "to_id": "entities_v2/product__access_management_automation",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "360\u00b0 View Configurations",
+      "to_name": "Access Management Automation"
+    },
+    {
+      "from_id": "entities_v2/product__account_lifecycle",
+      "to_id": "entities_v2/module__acc-l",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Account Lifecycle",
+      "to_name": "ACC-L"
+    },
+    {
+      "from_id": "entities_v2/module__acc-l",
+      "to_id": "entities_v2/feature__360-degree_view",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "ACC-L",
+      "to_name": "360-degree view"
+    },
+    {
+      "from_id": "entities_v2/feature__360-degree_view",
+      "to_id": "entities_v2/product__account_lifecycle",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "360-degree view",
+      "to_name": "Account Lifecycle"
+    },
+    {
+      "from_id": "entities_v2/product__accounts_payable_invoice_processing",
+      "to_id": "entities_v2/module__acc-m",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Accounts Payable Invoice Processing",
+      "to_name": "ACC-M"
+    },
+    {
+      "from_id": "entities_v2/module__acc-m",
+      "to_id": "entities_v2/feature__360-degree_view_of_a_patient",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "ACC-M",
+      "to_name": "360-degree view of a patient"
+    },
+    {
+      "from_id": "entities_v2/feature__360-degree_view_of_a_patient",
+      "to_id": "entities_v2/product__accounts_payable_invoice_processing",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "360-degree view of a patient",
+      "to_name": "Accounts Payable Invoice Processing"
+    },
+    {
+      "from_id": "entities_v2/product__accounts_payable_operations_integration_with_document_intelligence",
+      "to_id": "entities_v2/module__acc-vc",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Accounts Payable Operations integration with Document Intelligence",
+      "to_name": "ACC-VC"
+    },
+    {
+      "from_id": "entities_v2/module__acc-vc",
+      "to_id": "entities_v2/feature__3e_integration",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "ACC-VC",
+      "to_name": "3E integration"
+    },
+    {
+      "from_id": "entities_v2/feature__3e_integration",
+      "to_id": "entities_v2/product__accounts_payable_operations_integration_with_document_intelligence",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "3E integration",
+      "to_name": "Accounts Payable Operations integration with Document Intelligence"
+    },
+    {
+      "from_id": "entities_v2/product__accounts_payable_operations_with_document_intelligence",
+      "to_id": "entities_v2/module__accelerate_metrics_dashboard",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Accounts Payable Operations with Document Intelligence",
+      "to_name": "Accelerate metrics dashboard"
+    },
+    {
+      "from_id": "entities_v2/module__accelerate_metrics_dashboard",
+      "to_id": "entities_v2/feature__3e_protect",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Accelerate metrics dashboard",
+      "to_name": "3E Protect"
+    },
+    {
+      "from_id": "entities_v2/feature__3e_protect",
+      "to_id": "entities_v2/product__accounts_payable_operations_with_document_intelligence",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "3E Protect",
+      "to_name": "Accounts Payable Operations with Document Intelligence"
+    },
+    {
+      "from_id": "entities_v2/product__active_directory",
+      "to_id": "entities_v2/module__access_analyzer",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Active Directory",
+      "to_name": "Access Analyzer"
+    },
+    {
+      "from_id": "entities_v2/module__access_analyzer",
+      "to_id": "entities_v2/feature__3e_regulatory_intelligence",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Access Analyzer",
+      "to_name": "3E Regulatory Intelligence"
+    },
+    {
+      "from_id": "entities_v2/feature__3e_regulatory_intelligence",
+      "to_id": "entities_v2/product__active_directory",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "3E Regulatory Intelligence",
+      "to_name": "Active Directory"
+    },
+    {
+      "from_id": "entities_v2/product__active_directory_application_mode_adam",
+      "to_id": "entities_v2/module__access_analyzer_queries",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Active Directory Application Mode (ADAM)",
+      "to_name": "Access Analyzer Queries"
+    },
+    {
+      "from_id": "entities_v2/module__access_analyzer_queries",
+      "to_id": "entities_v2/feature__3e_service_provider_integration",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Access Analyzer Queries",
+      "to_name": "3E service provider integration"
+    },
+    {
+      "from_id": "entities_v2/feature__3e_service_provider_integration",
+      "to_id": "entities_v2/product__active_directory_application_mode_adam",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "3E service provider integration",
+      "to_name": "Active Directory Application Mode (ADAM)"
+    },
+    {
+      "from_id": "entities_v2/product__activity_management",
+      "to_id": "entities_v2/module__access_control",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Activity Management",
+      "to_name": "Access control"
+    },
+    {
+      "from_id": "entities_v2/module__access_control",
+      "to_id": "entities_v2/feature__3gpp_pack_tables",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Access control",
+      "to_name": "3GPP Pack Tables"
+    },
+    {
+      "from_id": "entities_v2/feature__3gpp_pack_tables",
+      "to_id": "entities_v2/product__activity_management",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "3GPP Pack Tables",
+      "to_name": "Activity Management"
+    },
+    {
+      "from_id": "entities_v2/product__adaptive_authentication",
+      "to_id": "entities_v2/module__access_hours_management",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Adaptive Authentication",
+      "to_name": "Access Hours Management"
+    },
+    {
+      "from_id": "entities_v2/module__access_hours_management",
+      "to_id": "entities_v2/feature__4-eyes_policy",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Access Hours Management",
+      "to_name": "4-eyes policy"
+    },
+    {
+      "from_id": "entities_v2/feature__4-eyes_policy",
+      "to_id": "entities_v2/product__adaptive_authentication",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "4-eyes policy",
+      "to_name": "Adaptive Authentication"
+    },
+    {
+      "from_id": "entities_v2/product__admin_center",
+      "to_id": "entities_v2/module__access_management",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Admin Center",
+      "to_name": "Access Management"
+    },
+    {
+      "from_id": "entities_v2/module__access_management",
+      "to_id": "entities_v2/feature__a10_load_balancer",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Access Management",
+      "to_name": "A10 Load Balancer"
+    },
+    {
+      "from_id": "entities_v2/feature__a10_load_balancer",
+      "to_id": "entities_v2/product__admin_center",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "A10 Load Balancer",
+      "to_name": "Admin Center"
+    },
+    {
+      "from_id": "entities_v2/product__adobe",
+      "to_id": "entities_v2/module__access_management_automation",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Adobe",
+      "to_name": "Access Management Automation"
+    },
+    {
+      "from_id": "entities_v2/module__access_management_automation",
+      "to_id": "entities_v2/feature__a2-talent_acquisitio",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Access Management Automation",
+      "to_name": "A2-Talent Acquisitio"
+    },
+    {
+      "from_id": "entities_v2/feature__a2-talent_acquisitio",
+      "to_id": "entities_v2/product__adobe",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "A2-Talent Acquisitio",
+      "to_name": "Adobe"
+    },
+    {
+      "from_id": "entities_v2/product__adobe_cloud_manager",
+      "to_id": "entities_v2/module__access_types",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Adobe Cloud Manager",
+      "to_name": "Access Types"
+    },
+    {
+      "from_id": "entities_v2/module__access_types",
+      "to_id": "entities_v2/feature__a6-2_retiremen_planning_a_processin",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Access Types",
+      "to_name": "A6-2 Retiremen Planning a Processin"
+    },
+    {
+      "from_id": "entities_v2/feature__a6-2_retiremen_planning_a_processin",
+      "to_id": "entities_v2/product__adobe_cloud_manager",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "A6-2 Retiremen Planning a Processin",
+      "to_name": "Adobe Cloud Manager"
+    },
+    {
+      "from_id": "entities_v2/product__adobe_experience_manager",
+      "to_id": "entities_v2/module__accessibility_features_in_mobile",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Adobe Experience Manager",
+      "to_name": "Accessibility features in mobile"
+    },
+    {
+      "from_id": "entities_v2/module__accessibility_features_in_mobile",
+      "to_id": "entities_v2/feature__ability_to_submit_a_third-party_document_for_review",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Accessibility features in mobile",
+      "to_name": "Ability to submit a third-party document for review"
+    },
+    {
+      "from_id": "entities_v2/feature__ability_to_submit_a_third-party_document_for_review",
+      "to_id": "entities_v2/product__adobe_experience_manager",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Ability to submit a third-party document for review",
+      "to_name": "Adobe Experience Manager"
+    },
+    {
+      "from_id": "entities_v2/product__adobe_sign_spoke",
+      "to_id": "entities_v2/module__account",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Adobe Sign Spoke",
+      "to_name": "Account"
+    },
+    {
+      "from_id": "entities_v2/module__account",
+      "to_id": "entities_v2/feature__ability_to_upload_multiple_contract_and_supporting_documents_for_review",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Account",
+      "to_name": "Ability to upload multiple contract and supporting documents for review"
+    },
+    {
+      "from_id": "entities_v2/feature__ability_to_upload_multiple_contract_and_supporting_documents_for_review",
+      "to_id": "entities_v2/product__adobe_sign_spoke",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Ability to upload multiple contract and supporting documents for review",
+      "to_name": "Adobe Sign Spoke"
+    },
+    {
+      "from_id": "entities_v2/product__adoption_services",
+      "to_id": "entities_v2/module__account_addresses",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Adoption Services",
+      "to_name": "Account Addresses"
+    },
+    {
+      "from_id": "entities_v2/module__account_addresses",
+      "to_id": "entities_v2/feature__abstracttimelineschedulepage",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Account Addresses",
+      "to_name": "AbstractTimelineSchedulePage"
+    },
+    {
+      "from_id": "entities_v2/feature__abstracttimelineschedulepage",
+      "to_id": "entities_v2/product__adoption_services",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "AbstractTimelineSchedulePage",
+      "to_name": "Adoption Services"
+    },
+    {
+      "from_id": "entities_v2/product__advanced",
+      "to_id": "entities_v2/module__account_hierarchy",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Advanced",
+      "to_name": "Account hierarchy"
+    },
+    {
+      "from_id": "entities_v2/module__account_hierarchy",
+      "to_id": "entities_v2/feature__abuse_reporting",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Account hierarchy",
+      "to_name": "Abuse Reporting"
+    },
+    {
+      "from_id": "entities_v2/feature__abuse_reporting",
+      "to_id": "entities_v2/product__advanced",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Abuse Reporting",
+      "to_name": "Advanced"
+    },
+    {
+      "from_id": "entities_v2/product__advanced_ai_search_management_tools",
+      "to_id": "entities_v2/module__account_lifecycle",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Advanced AI Search Management Tools",
+      "to_name": "Account Lifecycle"
+    },
+    {
+      "from_id": "entities_v2/module__account_lifecycle",
+      "to_id": "entities_v2/feature__acc_diagnostic_workflow",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Account Lifecycle",
+      "to_name": "ACC Diagnostic Workflow"
+    },
+    {
+      "from_id": "entities_v2/feature__acc_diagnostic_workflow",
+      "to_id": "entities_v2/product__advanced_ai_search_management_tools",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACC Diagnostic Workflow",
+      "to_name": "Advanced AI Search Management Tools"
+    },
+    {
+      "from_id": "entities_v2/product__advanced_approval_management",
+      "to_id": "entities_v2/module__account_lifecycle_onboarding_process",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Advanced Approval Management",
+      "to_name": "Account lifecycle onboarding process"
+    },
+    {
+      "from_id": "entities_v2/module__account_lifecycle_onboarding_process",
+      "to_id": "entities_v2/feature__acc_health_instance_scan_suite",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Account lifecycle onboarding process",
+      "to_name": "ACC health instance scan suite"
+    },
+    {
+      "from_id": "entities_v2/feature__acc_health_instance_scan_suite",
+      "to_id": "entities_v2/product__advanced_approval_management",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACC health instance scan suite",
+      "to_name": "Advanced Approval Management"
+    },
+    {
+      "from_id": "entities_v2/product__advanced_audit",
+      "to_id": "entities_v2/module__account_onboarding",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Advanced Audit",
+      "to_name": "Account Onboarding"
+    },
+    {
+      "from_id": "entities_v2/module__account_onboarding",
+      "to_id": "entities_v2/feature__acc_installation",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Account Onboarding",
+      "to_name": "ACC installation"
+    },
+    {
+      "from_id": "entities_v2/feature__acc_installation",
+      "to_id": "entities_v2/product__advanced_audit",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACC installation",
+      "to_name": "Advanced Audit"
+    },
+    {
+      "from_id": "entities_v2/product__advanced_ot_change_model",
+      "to_id": "entities_v2/module__account_onboarding_cases",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Advanced OT Change Model",
+      "to_name": "Account Onboarding Cases"
+    },
+    {
+      "from_id": "entities_v2/module__account_onboarding_cases",
+      "to_id": "entities_v2/feature__acc_log_analytics_acc-l",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Account Onboarding Cases",
+      "to_name": "ACC Log Analytics (ACC-L)"
+    },
+    {
+      "from_id": "entities_v2/feature__acc_log_analytics_acc-l",
+      "to_id": "entities_v2/product__advanced_ot_change_model",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACC Log Analytics (ACC-L)",
+      "to_name": "Advanced OT Change Model"
+    },
+    {
+      "from_id": "entities_v2/product__advanced_package",
+      "to_id": "entities_v2/module__account_onboarding_playbook",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Advanced package",
+      "to_name": "Account Onboarding Playbook"
+    },
+    {
+      "from_id": "entities_v2/module__account_onboarding_playbook",
+      "to_id": "entities_v2/feature__acc_proxy_configuration",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Account Onboarding Playbook",
+      "to_name": "ACC Proxy Configuration"
+    },
+    {
+      "from_id": "entities_v2/feature__acc_proxy_configuration",
+      "to_id": "entities_v2/product__advanced_package",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACC Proxy Configuration",
+      "to_name": "Advanced package"
+    },
+    {
+      "from_id": "entities_v2/product__advanced_risk",
+      "to_id": "entities_v2/module__account_relationship_records",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Advanced Risk",
+      "to_name": "Account relationship records"
+    },
+    {
+      "from_id": "entities_v2/module__account_relationship_records",
+      "to_id": "entities_v2/feature__accagentsapi",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Account relationship records",
+      "to_name": "AccAgentsAPI"
+    },
+    {
+      "from_id": "entities_v2/feature__accagentsapi",
+      "to_id": "entities_v2/product__advanced_risk",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "AccAgentsAPI",
+      "to_name": "Advanced Risk"
+    },
+    {
+      "from_id": "entities_v2/product__advanced_risk_application",
+      "to_id": "entities_v2/module__account_relationship_types",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Advanced Risk application",
+      "to_name": "Account relationship types"
+    },
+    {
+      "from_id": "entities_v2/module__account_relationship_types",
+      "to_id": "entities_v2/feature__acccheckdefsapi",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Account relationship types",
+      "to_name": "AccCheckDefsAPI"
+    },
+    {
+      "from_id": "entities_v2/feature__acccheckdefsapi",
+      "to_id": "entities_v2/product__advanced_risk_application",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "AccCheckDefsAPI",
+      "to_name": "Advanced Risk application"
+    },
+    {
+      "from_id": "entities_v2/product__advanced_work_assignment",
+      "to_id": "entities_v2/module__account_relationships",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Advanced Work Assignment",
+      "to_name": "Account Relationships"
+    },
+    {
+      "from_id": "entities_v2/module__account_relationships",
+      "to_id": "entities_v2/feature__accelerate_complaint_case_handling",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Account Relationships",
+      "to_name": "Accelerate complaint case handling"
+    },
+    {
+      "from_id": "entities_v2/feature__accelerate_complaint_case_handling",
+      "to_id": "entities_v2/product__advanced_work_assignment",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accelerate complaint case handling",
+      "to_name": "Advanced Work Assignment"
+    },
+    {
+      "from_id": "entities_v2/product__advanced_work_assignment_awa",
+      "to_id": "entities_v2/module__account_team_members",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Advanced Work Assignment (AWA)",
+      "to_name": "Account Team Members"
+    },
+    {
+      "from_id": "entities_v2/module__account_team_members",
+      "to_id": "entities_v2/feature__accelerate_complaint_case_handling_agentic_workflow",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Account Team Members",
+      "to_name": "Accelerate complaint case handling agentic workflow"
+    },
+    {
+      "from_id": "entities_v2/feature__accelerate_complaint_case_handling_agentic_workflow",
+      "to_id": "entities_v2/product__advanced_work_assignment_awa",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accelerate complaint case handling agentic workflow",
+      "to_name": "Advanced Work Assignment (AWA)"
+    },
+    {
+      "from_id": "entities_v2/product__aemc",
+      "to_id": "entities_v2/module__account_to_owner_mappings",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AEMC",
+      "to_name": "Account to owner mappings"
+    },
+    {
+      "from_id": "entities_v2/module__account_to_owner_mappings",
+      "to_id": "entities_v2/feature__accelerate_complaint_case_handling_collection",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Account to owner mappings",
+      "to_name": "Accelerate complaint case handling collection"
+    },
+    {
+      "from_id": "entities_v2/feature__accelerate_complaint_case_handling_collection",
+      "to_id": "entities_v2/product__aemc",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accelerate complaint case handling collection",
+      "to_name": "AEMC"
+    },
+    {
+      "from_id": "entities_v2/product__agent_chat",
+      "to_id": "entities_v2/module__accounts",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agent Chat",
+      "to_name": "Accounts"
+    },
+    {
+      "from_id": "entities_v2/module__accounts",
+      "to_id": "entities_v2/feature__accelerate_metrics",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Accounts",
+      "to_name": "Accelerate metrics"
+    },
+    {
+      "from_id": "entities_v2/feature__accelerate_metrics",
+      "to_id": "entities_v2/product__agent_chat",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accelerate metrics",
+      "to_name": "Agent Chat"
+    },
+    {
+      "from_id": "entities_v2/product__agent_client_collector_for_visibility_-_content",
+      "to_id": "entities_v2/module__accounts_payable_invoice_processing",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agent Client Collector for Visibility - Content",
+      "to_name": "Accounts payable invoice processing"
+    },
+    {
+      "from_id": "entities_v2/module__accounts_payable_invoice_processing",
+      "to_id": "entities_v2/feature__accelerate_your_devops_change_process",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Accounts payable invoice processing",
+      "to_name": "Accelerate your DevOps change process"
+    },
+    {
+      "from_id": "entities_v2/feature__accelerate_your_devops_change_process",
+      "to_id": "entities_v2/product__agent_client_collector_for_visibility_-_content",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accelerate your DevOps change process",
+      "to_name": "Agent Client Collector for Visibility - Content"
+    },
+    {
+      "from_id": "entities_v2/product__agent_client_collector_for_visibility_-_content_acc-vc",
+      "to_id": "entities_v2/module__accounts_payable_operations",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agent Client Collector for Visibility - Content (ACC-VC)",
+      "to_name": "Accounts Payable Operations"
+    },
+    {
+      "from_id": "entities_v2/module__accounts_payable_operations",
+      "to_id": "entities_v2/feature__accelerator",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Accounts Payable Operations",
+      "to_name": "Accelerator"
+    },
+    {
+      "from_id": "entities_v2/feature__accelerator",
+      "to_id": "entities_v2/product__agent_client_collector_for_visibility_-_content_acc-vc",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accelerator",
+      "to_name": "Agent Client Collector for Visibility - Content (ACC-VC)"
+    },
+    {
+      "from_id": "entities_v2/product__agent_client_collector_framework",
+      "to_id": "entities_v2/module__accounts_payable_operations_integration",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agent Client Collector Framework",
+      "to_name": "Accounts Payable Operations Integration"
+    },
+    {
+      "from_id": "entities_v2/module__accounts_payable_operations_integration",
+      "to_id": "entities_v2/feature__accelerator_catalog",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Accounts Payable Operations Integration",
+      "to_name": "Accelerator catalog"
+    },
+    {
+      "from_id": "entities_v2/feature__accelerator_catalog",
+      "to_id": "entities_v2/product__agent_client_collector_framework",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accelerator catalog",
+      "to_name": "Agent Client Collector Framework"
+    },
+    {
+      "from_id": "entities_v2/product__agent_client_collector_log_analytics",
+      "to_id": "entities_v2/module__accounts_payable_operations_integration_with_coupa",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agent Client Collector Log Analytics",
+      "to_name": "Accounts Payable Operations Integration with Coupa"
+    },
+    {
+      "from_id": "entities_v2/module__accounts_payable_operations_integration_with_coupa",
+      "to_id": "entities_v2/feature__accelerators",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Accounts Payable Operations Integration with Coupa",
+      "to_name": "Accelerators"
+    },
+    {
+      "from_id": "entities_v2/feature__accelerators",
+      "to_id": "entities_v2/product__agent_client_collector_log_analytics",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accelerators",
+      "to_name": "Agent Client Collector Log Analytics"
+    },
+    {
+      "from_id": "entities_v2/product__agent_client_collector_monitoring",
+      "to_id": "entities_v2/module__accounts_payable_operations_integration_with_document_intelligence",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agent Client Collector Monitoring",
+      "to_name": "Accounts Payable Operations Integration with Document Intelligence"
+    },
+    {
+      "from_id": "entities_v2/module__accounts_payable_operations_integration_with_document_intelligence",
+      "to_id": "entities_v2/feature__accept",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Accounts Payable Operations Integration with Document Intelligence",
+      "to_name": "Accept"
+    },
+    {
+      "from_id": "entities_v2/feature__accept",
+      "to_id": "entities_v2/product__agent_client_collector_monitoring",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accept",
+      "to_name": "Agent Client Collector Monitoring"
+    },
+    {
+      "from_id": "entities_v2/product__agent_client_collector_spoke",
+      "to_id": "entities_v2/module__accounts_payable_operations_integration_with_oracle_ebs",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agent Client Collector Spoke",
+      "to_name": "Accounts Payable Operations Integration with Oracle EBS"
+    },
+    {
+      "from_id": "entities_v2/module__accounts_payable_operations_integration_with_oracle_ebs",
+      "to_id": "entities_v2/feature__accept_a_live_chat_from_a_requester",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Accounts Payable Operations Integration with Oracle EBS",
+      "to_name": "Accept a live chat from a requester"
+    },
+    {
+      "from_id": "entities_v2/feature__accept_a_live_chat_from_a_requester",
+      "to_id": "entities_v2/product__agent_client_collector_spoke",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accept a live chat from a requester",
+      "to_name": "Agent Client Collector Spoke"
+    },
+    {
+      "from_id": "entities_v2/product__agent_experience_for_csm",
+      "to_id": "entities_v2/module__accounts_payable_operations_integration_with_sap",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agent experience for CSM",
+      "to_name": "Accounts Payable Operations Integration with SAP"
+    },
+    {
+      "from_id": "entities_v2/module__accounts_payable_operations_integration_with_sap",
+      "to_id": "entities_v2/feature__accept_a_task",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Accounts Payable Operations Integration with SAP",
+      "to_name": "Accept a task"
+    },
+    {
+      "from_id": "entities_v2/feature__accept_a_task",
+      "to_id": "entities_v2/product__agent_experience_for_csm",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accept a task",
+      "to_name": "Agent experience for CSM"
+    },
+    {
+      "from_id": "entities_v2/product__agent_workspace_for_hr_case_management",
+      "to_id": "entities_v2/module__accounts_payable_operations_integration_with_sap_ariba",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agent Workspace for HR Case Management",
+      "to_name": "Accounts Payable Operations Integration with SAP Ariba"
+    },
+    {
+      "from_id": "entities_v2/module__accounts_payable_operations_integration_with_sap_ariba",
+      "to_id": "entities_v2/feature__accept_an_incoming_chat_request",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Accounts Payable Operations Integration with SAP Ariba",
+      "to_name": "Accept an incoming chat request"
+    },
+    {
+      "from_id": "entities_v2/feature__accept_an_incoming_chat_request",
+      "to_id": "entities_v2/product__agent_workspace_for_hr_case_management",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accept an incoming chat request",
+      "to_name": "Agent Workspace for HR Case Management"
+    },
+    {
+      "from_id": "entities_v2/product__agent-initiated_messaging_interface",
+      "to_id": "entities_v2/module__accounts_payable_workspace",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agent-Initiated Messaging Interface",
+      "to_name": "Accounts Payable Workspace"
+    },
+    {
+      "from_id": "entities_v2/module__accounts_payable_workspace",
+      "to_id": "entities_v2/feature__accept_evidence",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Accounts Payable Workspace",
+      "to_name": "Accept evidence"
+    },
+    {
+      "from_id": "entities_v2/feature__accept_evidence",
+      "to_id": "entities_v2/product__agent-initiated_messaging_interface",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accept evidence",
+      "to_name": "Agent-Initiated Messaging Interface"
+    },
+    {
+      "from_id": "entities_v2/product__agentic_contact_center_for_banking",
+      "to_id": "entities_v2/module__achievements_and_credentials",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agentic Contact Center for Banking",
+      "to_name": "Achievements and Credentials"
+    },
+    {
+      "from_id": "entities_v2/module__achievements_and_credentials",
+      "to_id": "entities_v2/feature__accept_or_reject_part_requests",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Achievements and Credentials",
+      "to_name": "Accept or reject part requests"
+    },
+    {
+      "from_id": "entities_v2/feature__accept_or_reject_part_requests",
+      "to_id": "entities_v2/product__agentic_contact_center_for_banking",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accept or reject part requests",
+      "to_name": "Agentic Contact Center for Banking"
+    },
+    {
+      "from_id": "entities_v2/product__agentic_contact_center_for_insurance",
+      "to_id": "entities_v2/module__acl_assessment_for_reports",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agentic Contact Center for Insurance",
+      "to_name": "ACL Assessment for Reports"
+    },
+    {
+      "from_id": "entities_v2/module__acl_assessment_for_reports",
+      "to_id": "entities_v2/feature__accept_solution",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "ACL Assessment for Reports",
+      "to_name": "Accept Solution"
+    },
+    {
+      "from_id": "entities_v2/feature__accept_solution",
+      "to_id": "entities_v2/product__agentic_contact_center_for_insurance",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accept Solution",
+      "to_name": "Agentic Contact Center for Insurance"
+    },
+    {
+      "from_id": "entities_v2/product__agile_development",
+      "to_id": "entities_v2/module__action",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agile Development",
+      "to_name": "Action"
+    },
+    {
+      "from_id": "entities_v2/module__action",
+      "to_id": "entities_v2/feature__accept_work",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Action",
+      "to_name": "Accept work"
+    },
+    {
+      "from_id": "entities_v2/feature__accept_work",
+      "to_id": "entities_v2/product__agile_development",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accept work",
+      "to_name": "Agile Development"
+    },
+    {
+      "from_id": "entities_v2/product__agile_development__unified_backlog",
+      "to_id": "entities_v2/module__action_designer",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agile Development \u2014 Unified Backlog",
+      "to_name": "Action Designer"
+    },
+    {
+      "from_id": "entities_v2/module__action_designer",
+      "to_id": "entities_v2/feature__acceptance_criteria_generation",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Action Designer",
+      "to_name": "Acceptance criteria generation"
+    },
+    {
+      "from_id": "entities_v2/feature__acceptance_criteria_generation",
+      "to_id": "entities_v2/product__agile_development__unified_backlog",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Acceptance criteria generation",
+      "to_name": "Agile Development \u2014 Unified Backlog"
+    },
+    {
+      "from_id": "entities_v2/product__agile_development_v2",
+      "to_id": "entities_v2/module__action_framework",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Agile Development v2",
+      "to_name": "Action framework"
+    },
+    {
+      "from_id": "entities_v2/module__action_framework",
+      "to_id": "entities_v2/feature__acceptance_criteria_generation_skill",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Action framework",
+      "to_name": "Acceptance criteria generation skill"
+    },
+    {
+      "from_id": "entities_v2/feature__acceptance_criteria_generation_skill",
+      "to_id": "entities_v2/product__agile_development_v2",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Acceptance criteria generation skill",
+      "to_name": "Agile Development v2"
+    },
+    {
+      "from_id": "entities_v2/product__aha_spoke",
+      "to_id": "entities_v2/module__action_groups",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Aha! Spoke",
+      "to_name": "Action Groups"
+    },
+    {
+      "from_id": "entities_v2/module__action_groups",
+      "to_id": "entities_v2/feature__access",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Action Groups",
+      "to_name": "Access"
+    },
+    {
+      "from_id": "entities_v2/feature__access",
+      "to_id": "entities_v2/product__aha_spoke",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access",
+      "to_name": "Aha! Spoke"
+    },
+    {
+      "from_id": "entities_v2/product__ai_agent_advisor",
+      "to_id": "entities_v2/module__action_management",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Agent Advisor",
+      "to_name": "Action Management"
+    },
+    {
+      "from_id": "entities_v2/module__action_management",
+      "to_id": "entities_v2/feature__access_analytics_overlay",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Action Management",
+      "to_name": "Access analytics overlay"
+    },
+    {
+      "from_id": "entities_v2/feature__access_analytics_overlay",
+      "to_id": "entities_v2/product__ai_agent_advisor",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access analytics overlay",
+      "to_name": "AI Agent Advisor"
+    },
+    {
+      "from_id": "entities_v2/product__ai_agent_studio",
+      "to_id": "entities_v2/module__action_plan",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Agent Studio",
+      "to_name": "Action Plan"
+    },
+    {
+      "from_id": "entities_v2/module__action_plan",
+      "to_id": "entities_v2/feature__access_analyzer",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Action Plan",
+      "to_name": "Access Analyzer"
+    },
+    {
+      "from_id": "entities_v2/feature__access_analyzer",
+      "to_id": "entities_v2/product__ai_agent_studio",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Analyzer",
+      "to_name": "AI Agent Studio"
+    },
+    {
+      "from_id": "entities_v2/product__ai_agent_topology_mapping",
+      "to_id": "entities_v2/module__actions",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Agent Topology Mapping",
+      "to_name": "Actions"
+    },
+    {
+      "from_id": "entities_v2/module__actions",
+      "to_id": "entities_v2/feature__access_analyzer_debug_logs",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Actions",
+      "to_name": "Access Analyzer Debug logs"
+    },
+    {
+      "from_id": "entities_v2/feature__access_analyzer_debug_logs",
+      "to_id": "entities_v2/product__ai_agent_topology_mapping",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Analyzer Debug logs",
+      "to_name": "AI Agent Topology Mapping"
+    },
+    {
+      "from_id": "entities_v2/product__ai_case_management",
+      "to_id": "entities_v2/module__actions_ui",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Case Management",
+      "to_name": "Actions (UI)"
+    },
+    {
+      "from_id": "entities_v2/module__actions_ui",
+      "to_id": "entities_v2/feature__access_control",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Actions (UI)",
+      "to_name": "Access Control"
+    },
+    {
+      "from_id": "entities_v2/feature__access_control",
+      "to_id": "entities_v2/product__ai_case_management",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Control",
+      "to_name": "AI Case Management"
+    },
+    {
+      "from_id": "entities_v2/product__ai_data_explorer",
+      "to_id": "entities_v2/module__active_directory",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Data Explorer",
+      "to_name": "Active Directory"
+    },
+    {
+      "from_id": "entities_v2/module__active_directory",
+      "to_id": "entities_v2/feature__access_control_acl",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Active Directory",
+      "to_name": "Access Control (ACL)"
+    },
+    {
+      "from_id": "entities_v2/feature__access_control_acl",
+      "to_id": "entities_v2/product__ai_data_explorer",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Control (ACL)",
+      "to_name": "AI Data Explorer"
+    },
+    {
+      "from_id": "entities_v2/product__ai_desktop_actions",
+      "to_id": "entities_v2/module__active_directory_activities",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Desktop Actions",
+      "to_name": "Active Directory activities"
+    },
+    {
+      "from_id": "entities_v2/module__active_directory_activities",
+      "to_id": "entities_v2/feature__access_control_list",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Active Directory activities",
+      "to_name": "Access Control List"
+    },
+    {
+      "from_id": "entities_v2/feature__access_control_list",
+      "to_id": "entities_v2/product__ai_desktop_actions",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Control List",
+      "to_name": "AI Desktop Actions"
+    },
+    {
+      "from_id": "entities_v2/product__ai_gateway",
+      "to_id": "entities_v2/module__active_directory_activity_pack",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Gateway",
+      "to_name": "Active Directory activity pack"
+    },
+    {
+      "from_id": "entities_v2/module__active_directory_activity_pack",
+      "to_id": "entities_v2/feature__access_control_list_acl",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Active Directory activity pack",
+      "to_name": "Access Control List (ACL)"
+    },
+    {
+      "from_id": "entities_v2/feature__access_control_list_acl",
+      "to_id": "entities_v2/product__ai_gateway",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Control List (ACL)",
+      "to_name": "AI Gateway"
+    },
+    {
+      "from_id": "entities_v2/product__ai_platform_security_incident_response",
+      "to_id": "entities_v2/module__active_directory_ad_activities",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Platform Security Incident Response",
+      "to_name": "Active Directory (AD) activities"
+    },
+    {
+      "from_id": "entities_v2/module__active_directory_ad_activities",
+      "to_id": "entities_v2/feature__access_control_list_api",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Active Directory (AD) activities",
+      "to_name": "Access Control List API"
+    },
+    {
+      "from_id": "entities_v2/feature__access_control_list_api",
+      "to_id": "entities_v2/product__ai_platform_security_incident_response",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Control List API",
+      "to_name": "AI Platform Security Incident Response"
+    },
+    {
+      "from_id": "entities_v2/product__ai_platform_security_operations",
+      "to_id": "entities_v2/module__active_manual_test_runners",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Platform Security Operations",
+      "to_name": "Active Manual Test Runners"
+    },
+    {
+      "from_id": "entities_v2/module__active_manual_test_runners",
+      "to_id": "entities_v2/feature__access_control_list_rules",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Active Manual Test Runners",
+      "to_name": "Access Control List Rules"
+    },
+    {
+      "from_id": "entities_v2/feature__access_control_list_rules",
+      "to_id": "entities_v2/product__ai_platform_security_operations",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Control List Rules",
+      "to_name": "AI Platform Security Operations"
+    },
+    {
+      "from_id": "entities_v2/product__ai_risk_and_compliance",
+      "to_id": "entities_v2/module__active_scheduled_test_runners",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Risk and Compliance",
+      "to_name": "Active scheduled test runners"
+    },
+    {
+      "from_id": "entities_v2/module__active_scheduled_test_runners",
+      "to_id": "entities_v2/feature__access_control_lists",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Active scheduled test runners",
+      "to_name": "Access Control Lists"
+    },
+    {
+      "from_id": "entities_v2/feature__access_control_lists",
+      "to_id": "entities_v2/product__ai_risk_and_compliance",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Control Lists",
+      "to_name": "AI Risk and Compliance"
+    },
+    {
+      "from_id": "entities_v2/product__ai_risk_and_compliance_content",
+      "to_id": "entities_v2/module__active_transactions",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Risk and Compliance Content",
+      "to_name": "Active Transactions"
+    },
+    {
+      "from_id": "entities_v2/module__active_transactions",
+      "to_id": "entities_v2/feature__access_control_lists_acls",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Active Transactions",
+      "to_name": "Access Control Lists (ACLs)"
+    },
+    {
+      "from_id": "entities_v2/feature__access_control_lists_acls",
+      "to_id": "entities_v2/product__ai_risk_and_compliance_content",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Control Lists (ACLs)",
+      "to_name": "AI Risk and Compliance Content"
+    },
+    {
+      "from_id": "entities_v2/product__ai_risk_and_compliance_content_pack",
+      "to_id": "entities_v2/module__active_worker_downloads",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Risk and Compliance Content Pack",
+      "to_name": "Active Worker Downloads"
+    },
+    {
+      "from_id": "entities_v2/module__active_worker_downloads",
+      "to_id": "entities_v2/feature__access_control_rules",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Active Worker Downloads",
+      "to_name": "Access control rules"
+    },
+    {
+      "from_id": "entities_v2/feature__access_control_rules",
+      "to_id": "entities_v2/product__ai_risk_and_compliance_content_pack",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access control rules",
+      "to_name": "AI Risk and Compliance Content Pack"
+    },
+    {
+      "from_id": "entities_v2/product__ai_risk_and_compliance_workspace",
+      "to_id": "entities_v2/module__activities",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Risk and Compliance Workspace",
+      "to_name": "Activities"
+    },
+    {
+      "from_id": "entities_v2/module__activities",
+      "to_id": "entities_v2/feature__access_controls",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Activities",
+      "to_name": "Access Controls"
+    },
+    {
+      "from_id": "entities_v2/feature__access_controls",
+      "to_id": "entities_v2/product__ai_risk_and_compliance_workspace",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Controls",
+      "to_name": "AI Risk and Compliance Workspace"
+    },
+    {
+      "from_id": "entities_v2/product__ai_search_application",
+      "to_id": "entities_v2/module__activity_configuration",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Search application",
+      "to_name": "Activity Configuration"
+    },
+    {
+      "from_id": "entities_v2/module__activity_configuration",
+      "to_id": "entities_v2/feature__access_controls_auditor_checks",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Activity Configuration",
+      "to_name": "Access Controls Auditor checks"
+    },
+    {
+      "from_id": "entities_v2/feature__access_controls_auditor_checks",
+      "to_id": "entities_v2/product__ai_search_application",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Controls Auditor checks",
+      "to_name": "AI Search application"
+    },
+    {
+      "from_id": "entities_v2/product__ai_search_for_next_experience",
+      "to_id": "entities_v2/module__activity_configurations",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Search for Next Experience",
+      "to_name": "Activity Configurations"
+    },
+    {
+      "from_id": "entities_v2/module__activity_configurations",
+      "to_id": "entities_v2/feature__access_controls_auditor_suite",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Activity Configurations",
+      "to_name": "Access Controls Auditor Suite"
+    },
+    {
+      "from_id": "entities_v2/feature__access_controls_auditor_suite",
+      "to_id": "entities_v2/product__ai_search_for_next_experience",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Controls Auditor Suite",
+      "to_name": "AI Search for Next Experience"
+    },
+    {
+      "from_id": "entities_v2/product__ai_security_exposure_management",
+      "to_id": "entities_v2/module__activity_management",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Security Exposure Management",
+      "to_name": "Activity Management"
+    },
+    {
+      "from_id": "entities_v2/module__activity_management",
+      "to_id": "entities_v2/feature__access_controls_for_a_case",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Activity Management",
+      "to_name": "Access controls for a case"
+    },
+    {
+      "from_id": "entities_v2/feature__access_controls_for_a_case",
+      "to_id": "entities_v2/product__ai_security_exposure_management",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access controls for a case",
+      "to_name": "AI Security Exposure Management"
+    },
+    {
+      "from_id": "entities_v2/product__ai_service_graph_connector_for_microsoft",
+      "to_id": "entities_v2/module__activity_stream",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Service Graph Connector for Microsoft",
+      "to_name": "Activity stream"
+    },
+    {
+      "from_id": "entities_v2/module__activity_stream",
+      "to_id": "entities_v2/feature__access_demands",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Activity stream",
+      "to_name": "Access demands"
+    },
+    {
+      "from_id": "entities_v2/feature__access_demands",
+      "to_id": "entities_v2/product__ai_service_graph_connector_for_microsoft",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access demands",
+      "to_name": "AI Service Graph Connector for Microsoft"
+    },
+    {
+      "from_id": "entities_v2/product__ai_service_graph_connector_for_salesforce",
+      "to_id": "entities_v2/module__activity_subscription",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AI Service Graph Connector for Salesforce",
+      "to_name": "Activity Subscription"
+    },
+    {
+      "from_id": "entities_v2/module__activity_subscription",
+      "to_id": "entities_v2/feature__access_findings",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Activity Subscription",
+      "to_name": "Access findings"
+    },
+    {
+      "from_id": "entities_v2/feature__access_findings",
+      "to_id": "entities_v2/product__ai_service_graph_connector_for_salesforce",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access findings",
+      "to_name": "AI Service Graph Connector for Salesforce"
+    },
+    {
+      "from_id": "entities_v2/product__aiops_experience",
+      "to_id": "entities_v2/module__activity_subscriptions",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AIOps Experience",
+      "to_name": "Activity Subscriptions"
+    },
+    {
+      "from_id": "entities_v2/module__activity_subscriptions",
+      "to_id": "entities_v2/feature__access_hours",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Activity Subscriptions",
+      "to_name": "Access hours"
+    },
+    {
+      "from_id": "entities_v2/feature__access_hours",
+      "to_id": "entities_v2/product__aiops_experience",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access hours",
+      "to_name": "AIOps Experience"
+    },
+    {
+      "from_id": "entities_v2/product__aiops_leap",
+      "to_id": "entities_v2/module__adaptive_authentication",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AIOps LEAP",
+      "to_name": "Adaptive Authentication"
+    },
+    {
+      "from_id": "entities_v2/module__adaptive_authentication",
+      "to_id": "entities_v2/feature__access_hours_management",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Adaptive Authentication",
+      "to_name": "Access Hours Management"
+    },
+    {
+      "from_id": "entities_v2/feature__access_hours_management",
+      "to_id": "entities_v2/product__aiops_leap",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Hours Management",
+      "to_name": "AIOps LEAP"
+    },
+    {
+      "from_id": "entities_v2/product__alumni_center",
+      "to_id": "entities_v2/module__add_an_ad-hoc_task",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Alumni Center",
+      "to_name": "Add an ad-hoc task"
+    },
+    {
+      "from_id": "entities_v2/module__add_an_ad-hoc_task",
+      "to_id": "entities_v2/feature__access_insights",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Add an ad-hoc task",
+      "to_name": "Access Insights"
+    },
+    {
+      "from_id": "entities_v2/feature__access_insights",
+      "to_id": "entities_v2/product__alumni_center",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Insights",
+      "to_name": "Alumni Center"
+    },
+    {
+      "from_id": "entities_v2/product__amazon_connect",
+      "to_id": "entities_v2/module__add_automation",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Amazon Connect",
+      "to_name": "Add automation"
+    },
+    {
+      "from_id": "entities_v2/module__add_automation",
+      "to_id": "entities_v2/feature__access_knowledge_articles",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Add automation",
+      "to_name": "Access knowledge articles"
+    },
+    {
+      "from_id": "entities_v2/feature__access_knowledge_articles",
+      "to_id": "entities_v2/product__amazon_connect",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access knowledge articles",
+      "to_name": "Amazon Connect"
+    },
+    {
+      "from_id": "entities_v2/product__amazon_connect_spoke",
+      "to_id": "entities_v2/module__add_hq_case_details_to_the_hq_communication_plan",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Amazon Connect Spoke",
+      "to_name": "Add HQ case details to the HQ communication plan"
+    },
+    {
+      "from_id": "entities_v2/module__add_hq_case_details_to_the_hq_communication_plan",
+      "to_id": "entities_v2/feature__access_management",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Add HQ case details to the HQ communication plan",
+      "to_name": "Access Management"
+    },
+    {
+      "from_id": "entities_v2/feature__access_management",
+      "to_id": "entities_v2/product__amazon_connect_spoke",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Management",
+      "to_name": "Amazon Connect Spoke"
+    },
+    {
+      "from_id": "entities_v2/product__amazon_rds_spoke",
+      "to_id": "entities_v2/module__add_system_properties",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Amazon RDS spoke",
+      "to_name": "Add system properties"
+    },
+    {
+      "from_id": "entities_v2/module__add_system_properties",
+      "to_id": "entities_v2/feature__access_management_console",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Add system properties",
+      "to_name": "Access Management Console"
+    },
+    {
+      "from_id": "entities_v2/feature__access_management_console",
+      "to_id": "entities_v2/product__amazon_rds_spoke",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Management Console",
+      "to_name": "Amazon RDS spoke"
+    },
+    {
+      "from_id": "entities_v2/product__analytics_and_reporting_for_cloud_resources",
+      "to_id": "entities_v2/module__add-ons",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Analytics and Reporting for Cloud Resources",
+      "to_name": "Add-ons"
+    },
+    {
+      "from_id": "entities_v2/module__add-ons",
+      "to_id": "entities_v2/feature__access_map",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Add-ons",
+      "to_name": "Access map"
+    },
+    {
+      "from_id": "entities_v2/feature__access_map",
+      "to_id": "entities_v2/product__analytics_and_reporting_for_cloud_resources",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access map",
+      "to_name": "Analytics and Reporting for Cloud Resources"
+    },
+    {
+      "from_id": "entities_v2/product__anglepoints_ibm_licensing_for_software_asset_management_application",
+      "to_id": "entities_v2/module__additional_managers",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Anglepoint's IBM Licensing for Software Asset Management application",
+      "to_name": "Additional Managers"
+    },
+    {
+      "from_id": "entities_v2/module__additional_managers",
+      "to_id": "entities_v2/feature__access_observer",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Additional Managers",
+      "to_name": "Access Observer"
+    },
+    {
+      "from_id": "entities_v2/feature__access_observer",
+      "to_id": "entities_v2/product__anglepoints_ibm_licensing_for_software_asset_management_application",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Observer",
+      "to_name": "Anglepoint's IBM Licensing for Software Asset Management application"
+    },
+    {
+      "from_id": "entities_v2/product__apache_kafka",
+      "to_id": "entities_v2/module__address_change_workflow",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Apache Kafka",
+      "to_name": "Address change workflow"
+    },
+    {
+      "from_id": "entities_v2/module__address_change_workflow",
+      "to_id": "entities_v2/feature__access_observer_configuration",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Address change workflow",
+      "to_name": "Access observer configuration"
+    },
+    {
+      "from_id": "entities_v2/feature__access_observer_configuration",
+      "to_id": "entities_v2/product__apache_kafka",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access observer configuration",
+      "to_name": "Apache Kafka"
+    },
+    {
+      "from_id": "entities_v2/product__api_insights",
+      "to_id": "entities_v2/module__admin",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "API Insights",
+      "to_name": "Admin"
+    },
+    {
+      "from_id": "entities_v2/module__admin",
+      "to_id": "entities_v2/feature__access_observer_configuration_agentic_workflow",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Admin",
+      "to_name": "Access Observer configuration agentic workflow"
+    },
+    {
+      "from_id": "entities_v2/feature__access_observer_configuration_agentic_workflow",
+      "to_id": "entities_v2/product__api_insights",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Observer configuration agentic workflow",
+      "to_name": "API Insights"
+    },
+    {
+      "from_id": "entities_v2/product__api_insights_application_sn_api_insights_ws",
+      "to_id": "entities_v2/module__admin_center",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "API Insights application (sn_api_insights_ws)",
+      "to_name": "Admin center"
+    },
+    {
+      "from_id": "entities_v2/module__admin_center",
+      "to_id": "entities_v2/feature__access_on-call_escalation_path",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Admin center",
+      "to_name": "Access on-call escalation path"
+    },
+    {
+      "from_id": "entities_v2/feature__access_on-call_escalation_path",
+      "to_id": "entities_v2/product__api_insights_application_sn_api_insights_ws",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access on-call escalation path",
+      "to_name": "API Insights application (sn_api_insights_ws)"
+    },
+    {
+      "from_id": "entities_v2/product__api_service_graph_connector_for_kong_gateway",
+      "to_id": "entities_v2/module__admin_configurations",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "API Service Graph Connector for Kong Gateway",
+      "to_name": "Admin configurations"
+    },
+    {
+      "from_id": "entities_v2/module__admin_configurations",
+      "to_id": "entities_v2/feature__access_page",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Admin configurations",
+      "to_name": "Access page"
+    },
+    {
+      "from_id": "entities_v2/feature__access_page",
+      "to_id": "entities_v2/product__api_service_graph_connector_for_kong_gateway",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access page",
+      "to_name": "API Service Graph Connector for Kong Gateway"
+    },
+    {
+      "from_id": "entities_v2/product__apm",
+      "to_id": "entities_v2/module__admin_console",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "APM",
+      "to_name": "Admin Console"
+    },
+    {
+      "from_id": "entities_v2/module__admin_console",
+      "to_id": "entities_v2/feature__access_simulator",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Admin Console",
+      "to_name": "Access Simulator"
+    },
+    {
+      "from_id": "entities_v2/feature__access_simulator",
+      "to_id": "entities_v2/product__apm",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access Simulator",
+      "to_name": "APM"
+    },
+    {
+      "from_id": "entities_v2/product__app",
+      "to_id": "entities_v2/module__admin_home",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "App",
+      "to_name": "Admin Home"
+    },
+    {
+      "from_id": "entities_v2/module__admin_home",
+      "to_id": "entities_v2/feature__access_to_expertise_initiative",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Admin Home",
+      "to_name": "Access to Expertise Initiative"
+    },
+    {
+      "from_id": "entities_v2/feature__access_to_expertise_initiative",
+      "to_id": "entities_v2/product__app",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access to Expertise Initiative",
+      "to_name": "App"
+    },
+    {
+      "from_id": "entities_v2/product__app_development_and_low-code",
+      "to_id": "entities_v2/module__admin_module",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "App development and low-code",
+      "to_name": "Admin module"
+    },
+    {
+      "from_id": "entities_v2/module__admin_module",
+      "to_id": "entities_v2/feature__access_to_experts_accelerator",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Admin module",
+      "to_name": "Access to Experts Accelerator"
+    },
+    {
+      "from_id": "entities_v2/feature__access_to_experts_accelerator",
+      "to_id": "entities_v2/product__app_development_and_low-code",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access to Experts Accelerator",
+      "to_name": "App development and low-code"
+    },
+    {
+      "from_id": "entities_v2/product__app_engine_management_center",
+      "to_id": "entities_v2/module__administer",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "App Engine Management Center",
+      "to_name": "Administer"
+    },
+    {
+      "from_id": "entities_v2/module__administer",
+      "to_id": "entities_v2/feature__access_to_fsm_work_orders_and_tasks",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Administer",
+      "to_name": "Access to FSM work orders and tasks"
+    },
+    {
+      "from_id": "entities_v2/feature__access_to_fsm_work_orders_and_tasks",
+      "to_id": "entities_v2/product__app_engine_management_center",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Access to FSM work orders and tasks",
+      "to_name": "App Engine Management Center"
+    },
+    {
+      "from_id": "entities_v2/product__app_engine_management_center_aemc",
+      "to_id": "entities_v2/module__administering_applications",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "App Engine Management Center (AEMC)",
+      "to_name": "Administering applications"
+    },
+    {
+      "from_id": "entities_v2/module__administering_applications",
+      "to_id": "entities_v2/feature__accesscsv",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Administering applications",
+      "to_name": "Accesscsv"
+    },
+    {
+      "from_id": "entities_v2/feature__accesscsv",
+      "to_id": "entities_v2/product__app_engine_management_center_aemc",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accesscsv",
+      "to_name": "App Engine Management Center (AEMC)"
+    },
+    {
+      "from_id": "entities_v2/product__app_engine_studio_aes",
+      "to_id": "entities_v2/module__administering_creator_studio",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "App Engine Studio (AES)",
+      "to_name": "Administering Creator Studio"
+    },
+    {
+      "from_id": "entities_v2/module__administering_creator_studio",
+      "to_id": "entities_v2/feature__accesshtml",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Administering Creator Studio",
+      "to_name": "Accesshtml"
+    },
+    {
+      "from_id": "entities_v2/feature__accesshtml",
+      "to_id": "entities_v2/product__app_engine_studio_aes",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accesshtml",
+      "to_name": "App Engine Studio (AES)"
+    },
+    {
+      "from_id": "entities_v2/product__appdynamics",
+      "to_id": "entities_v2/module__administering_templates_and_forms_for_creator_studio",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AppDynamics",
+      "to_name": "Administering templates and forms for Creator Studio"
+    },
+    {
+      "from_id": "entities_v2/module__administering_templates_and_forms_for_creator_studio",
+      "to_id": "entities_v2/feature__accessibility",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Administering templates and forms for Creator Studio",
+      "to_name": "Accessibility"
+    },
+    {
+      "from_id": "entities_v2/feature__accessibility",
+      "to_id": "entities_v2/product__appdynamics",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accessibility",
+      "to_name": "AppDynamics"
+    },
+    {
+      "from_id": "entities_v2/product__applicant_center",
+      "to_id": "entities_v2/module__administration_for_security_exposure_management",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Applicant Center",
+      "to_name": "Administration for Security Exposure Management"
+    },
+    {
+      "from_id": "entities_v2/module__administration_for_security_exposure_management",
+      "to_id": "entities_v2/feature__accessibility_checker",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Administration for Security Exposure Management",
+      "to_name": "Accessibility checker"
+    },
+    {
+      "from_id": "entities_v2/feature__accessibility_checker",
+      "to_id": "entities_v2/product__applicant_center",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accessibility checker",
+      "to_name": "Applicant Center"
+    },
+    {
+      "from_id": "entities_v2/product__application",
+      "to_id": "entities_v2/module__administration_module",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Application",
+      "to_name": "Administration module"
+    },
+    {
+      "from_id": "entities_v2/module__administration_module",
+      "to_id": "entities_v2/feature__accessibility_enabled",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Administration module",
+      "to_name": "Accessibility enabled"
+    },
+    {
+      "from_id": "entities_v2/feature__accessibility_enabled",
+      "to_id": "entities_v2/product__application",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accessibility enabled",
+      "to_name": "Application"
+    },
+    {
+      "from_id": "entities_v2/product__application_development",
+      "to_id": "entities_v2/module__adobe_publisher_pack",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Application Development",
+      "to_name": "Adobe Publisher Pack"
+    },
+    {
+      "from_id": "entities_v2/module__adobe_publisher_pack",
+      "to_id": "entities_v2/feature__accessibility_features",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Adobe Publisher Pack",
+      "to_name": "Accessibility features"
+    },
+    {
+      "from_id": "entities_v2/feature__accessibility_features",
+      "to_id": "entities_v2/product__application_development",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accessibility features",
+      "to_name": "Application Development"
+    },
+    {
+      "from_id": "entities_v2/product__application_engine_management_center",
+      "to_id": "entities_v2/module__adobe_sign",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Application Engine Management Center",
+      "to_name": "Adobe Sign"
+    },
+    {
+      "from_id": "entities_v2/module__adobe_sign",
+      "to_id": "entities_v2/feature__accessibility_improvements",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Adobe Sign",
+      "to_name": "Accessibility improvements"
+    },
+    {
+      "from_id": "entities_v2/feature__accessibility_improvements",
+      "to_id": "entities_v2/product__application_engine_management_center",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accessibility improvements",
+      "to_name": "Application Engine Management Center"
+    },
+    {
+      "from_id": "entities_v2/product__application_insights",
+      "to_id": "entities_v2/module__adobe_sign_spoke",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Application Insights",
+      "to_name": "Adobe Sign Spoke"
+    },
+    {
+      "from_id": "entities_v2/module__adobe_sign_spoke",
+      "to_id": "entities_v2/feature__accessibility_inspector",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Adobe Sign Spoke",
+      "to_name": "Accessibility inspector"
+    },
+    {
+      "from_id": "entities_v2/feature__accessibility_inspector",
+      "to_id": "entities_v2/product__application_insights",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accessibility inspector",
+      "to_name": "Application Insights"
+    },
+    {
+      "from_id": "entities_v2/product__application_manager",
+      "to_id": "entities_v2/module__adoption_services",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Application Manager",
+      "to_name": "Adoption services"
+    },
+    {
+      "from_id": "entities_v2/module__adoption_services",
+      "to_id": "entities_v2/feature__accessibility_mode",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Adoption services",
+      "to_name": "Accessibility mode"
+    },
+    {
+      "from_id": "entities_v2/feature__accessibility_mode",
+      "to_id": "entities_v2/product__application_manager",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accessibility mode",
+      "to_name": "Application Manager"
+    },
+    {
+      "from_id": "entities_v2/product__application_repository",
+      "to_id": "entities_v2/module__advanced_ai_search_management_tools",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Application Repository",
+      "to_name": "Advanced AI Search Management Tools"
+    },
+    {
+      "from_id": "entities_v2/module__advanced_ai_search_management_tools",
+      "to_id": "entities_v2/feature__accessibility_preferences",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Advanced AI Search Management Tools",
+      "to_name": "Accessibility preferences"
+    },
+    {
+      "from_id": "entities_v2/feature__accessibility_preferences",
+      "to_id": "entities_v2/product__application_repository",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accessibility preferences",
+      "to_name": "Application Repository"
+    },
+    {
+      "from_id": "entities_v2/product__application_service",
+      "to_id": "entities_v2/module__advanced_approval_management",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Application Service",
+      "to_name": "Advanced Approval Management"
+    },
+    {
+      "from_id": "entities_v2/module__advanced_approval_management",
+      "to_id": "entities_v2/feature__accessible_form_tooltips",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Advanced Approval Management",
+      "to_name": "Accessible form tooltips"
+    },
+    {
+      "from_id": "entities_v2/feature__accessible_form_tooltips",
+      "to_id": "entities_v2/product__application_service",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accessible form tooltips",
+      "to_name": "Application Service"
+    },
+    {
+      "from_id": "entities_v2/product__appointment_booking",
+      "to_id": "entities_v2/module__advanced_approvals",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Appointment Booking",
+      "to_name": "Advanced Approvals"
+    },
+    {
+      "from_id": "entities_v2/module__advanced_approvals",
+      "to_id": "entities_v2/feature__accessing_email_object_variables",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Advanced Approvals",
+      "to_name": "Accessing email object variables"
+    },
+    {
+      "from_id": "entities_v2/feature__accessing_email_object_variables",
+      "to_id": "entities_v2/product__appointment_booking",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accessing email object variables",
+      "to_name": "Appointment Booking"
+    },
+    {
+      "from_id": "entities_v2/product__architecture_accelerator",
+      "to_id": "entities_v2/module__advanced_core_ui_reporting_topics",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Architecture Accelerator",
+      "to_name": "Advanced Core UI reporting topics"
+    },
+    {
+      "from_id": "entities_v2/module__advanced_core_ui_reporting_topics",
+      "to_id": "entities_v2/feature__accessing_templates_in_the_assessment_workspace",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Advanced Core UI reporting topics",
+      "to_name": "Accessing templates in the Assessment Workspace"
+    },
+    {
+      "from_id": "entities_v2/feature__accessing_templates_in_the_assessment_workspace",
+      "to_id": "entities_v2/product__architecture_accelerator",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accessing templates in the Assessment Workspace",
+      "to_name": "Architecture Accelerator"
+    },
+    {
+      "from_id": "entities_v2/product__arcsight_esm",
+      "to_id": "entities_v2/module__advanced_form_configuration",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "ArcSight ESM",
+      "to_name": "Advanced form configuration"
+    },
+    {
+      "from_id": "entities_v2/module__advanced_form_configuration",
+      "to_id": "entities_v2/feature__accordion",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Advanced form configuration",
+      "to_name": "Accordion"
+    },
+    {
+      "from_id": "entities_v2/feature__accordion",
+      "to_id": "entities_v2/product__arcsight_esm",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accordion",
+      "to_name": "ArcSight ESM"
+    },
+    {
+      "from_id": "entities_v2/product__argo_cd",
+      "to_id": "entities_v2/module__advanced_promotion_engine",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Argo CD",
+      "to_name": "Advanced Promotion Engine"
+    },
+    {
+      "from_id": "entities_v2/module__advanced_promotion_engine",
+      "to_id": "entities_v2/feature__accordion_item",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Advanced Promotion Engine",
+      "to_name": "Accordion item"
+    },
+    {
+      "from_id": "entities_v2/feature__accordion_item",
+      "to_id": "entities_v2/product__argo_cd",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accordion item",
+      "to_name": "Argo CD"
+    },
+    {
+      "from_id": "entities_v2/product__artificial_intelligence_readiness_assessment",
+      "to_id": "entities_v2/module__advanced_risk",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Artificial Intelligence Readiness Assessment",
+      "to_name": "Advanced Risk"
+    },
+    {
+      "from_id": "entities_v2/module__advanced_risk",
+      "to_id": "entities_v2/feature__account_address_access_for_contacts",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Advanced Risk",
+      "to_name": "Account address access for contacts"
+    },
+    {
+      "from_id": "entities_v2/feature__account_address_access_for_contacts",
+      "to_id": "entities_v2/product__artificial_intelligence_readiness_assessment",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account address access for contacts",
+      "to_name": "Artificial Intelligence Readiness Assessment"
+    },
+    {
+      "from_id": "entities_v2/product__assessments",
+      "to_id": "entities_v2/module__advanced_risk_application",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Assessments",
+      "to_name": "Advanced Risk application"
+    },
+    {
+      "from_id": "entities_v2/module__advanced_risk_application",
+      "to_id": "entities_v2/feature__account_and_contact_lookup_components",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Advanced Risk application",
+      "to_name": "Account and contact lookup components"
+    },
+    {
+      "from_id": "entities_v2/feature__account_and_contact_lookup_components",
+      "to_id": "entities_v2/product__assessments",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account and contact lookup components",
+      "to_name": "Assessments"
+    },
+    {
+      "from_id": "entities_v2/product__assessments_and_surveys",
+      "to_id": "entities_v2/module__advanced_risk_assessment",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Assessments and Surveys",
+      "to_name": "Advanced Risk Assessment"
+    },
+    {
+      "from_id": "entities_v2/module__advanced_risk_assessment",
+      "to_id": "entities_v2/feature__account_api",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Advanced Risk Assessment",
+      "to_name": "Account API"
+    },
+    {
+      "from_id": "entities_v2/feature__account_api",
+      "to_id": "entities_v2/product__assessments_and_surveys",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account API",
+      "to_name": "Assessments and Surveys"
+    },
+    {
+      "from_id": "entities_v2/product__assessments_application",
+      "to_id": "entities_v2/module__advanced_settings",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Assessments application",
+      "to_name": "Advanced Settings"
+    },
+    {
+      "from_id": "entities_v2/module__advanced_settings",
+      "to_id": "entities_v2/feature__account_certification",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Advanced Settings",
+      "to_name": "Account certification"
+    },
+    {
+      "from_id": "entities_v2/feature__account_certification",
+      "to_id": "entities_v2/product__assessments_application",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account certification",
+      "to_name": "Assessments application"
+    },
+    {
+      "from_id": "entities_v2/product__asset",
+      "to_id": "entities_v2/module__advanced_work_assignment",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Asset",
+      "to_name": "Advanced Work Assignment"
+    },
+    {
+      "from_id": "entities_v2/module__advanced_work_assignment",
+      "to_id": "entities_v2/feature__account_details_form",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Advanced Work Assignment",
+      "to_name": "Account Details form"
+    },
+    {
+      "from_id": "entities_v2/feature__account_details_form",
+      "to_id": "entities_v2/product__asset",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account Details form",
+      "to_name": "Asset"
+    },
+    {
+      "from_id": "entities_v2/product__asset_audit_response",
+      "to_id": "entities_v2/module__advanced_work_assignment_for_legal_service_delivery",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Asset Audit Response",
+      "to_name": "Advanced Work Assignment for Legal Service Delivery"
+    },
+    {
+      "from_id": "entities_v2/module__advanced_work_assignment_for_legal_service_delivery",
+      "to_id": "entities_v2/feature__account_hierarchy",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Advanced Work Assignment for Legal Service Delivery",
+      "to_name": "Account hierarchy"
+    },
+    {
+      "from_id": "entities_v2/feature__account_hierarchy",
+      "to_id": "entities_v2/product__asset_audit_response",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account hierarchy",
+      "to_name": "Asset Audit Response"
+    },
+    {
+      "from_id": "entities_v2/product__asset_management",
+      "to_id": "entities_v2/module__advanced_work_assignment_for_source-to-pay_operations",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Asset Management",
+      "to_name": "Advanced Work Assignment for Source-to-Pay Operations"
+    },
+    {
+      "from_id": "entities_v2/module__advanced_work_assignment_for_source-to-pay_operations",
+      "to_id": "entities_v2/feature__account_manager_responsibility_access_configuration",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Advanced Work Assignment for Source-to-Pay Operations",
+      "to_name": "Account Manager Responsibility Access Configuration"
+    },
+    {
+      "from_id": "entities_v2/feature__account_manager_responsibility_access_configuration",
+      "to_id": "entities_v2/product__asset_management",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account Manager Responsibility Access Configuration",
+      "to_name": "Asset Management"
+    },
+    {
+      "from_id": "entities_v2/product__asset_management_-_procurement_integration",
+      "to_id": "entities_v2/module__advanced_work_assignment_for_supplier_lifecycle_operations",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Asset Management - Procurement Integration",
+      "to_name": "Advanced Work Assignment for Supplier Lifecycle Operations"
+    },
+    {
+      "from_id": "entities_v2/module__advanced_work_assignment_for_supplier_lifecycle_operations",
+      "to_id": "entities_v2/feature__account_onboarding",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Advanced Work Assignment for Supplier Lifecycle Operations",
+      "to_name": "Account onboarding"
+    },
+    {
+      "from_id": "entities_v2/feature__account_onboarding",
+      "to_id": "entities_v2/product__asset_management_-_procurement_integration",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account onboarding",
+      "to_name": "Asset Management - Procurement Integration"
+    },
+    {
+      "from_id": "entities_v2/product__assistant_designer",
+      "to_id": "entities_v2/module__age_chart_configuration",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Assistant Designer",
+      "to_name": "Age Chart Configuration"
+    },
+    {
+      "from_id": "entities_v2/module__age_chart_configuration",
+      "to_id": "entities_v2/feature__account_onboarding_case_summarization",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Age Chart Configuration",
+      "to_name": "Account onboarding case summarization"
+    },
+    {
+      "from_id": "entities_v2/feature__account_onboarding_case_summarization",
+      "to_id": "entities_v2/product__assistant_designer",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account onboarding case summarization",
+      "to_name": "Assistant Designer"
+    },
+    {
+      "from_id": "entities_v2/product__atf_test_generator_and_cloud_runner",
+      "to_id": "entities_v2/module__agent",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "ATF Test Generator and Cloud Runner",
+      "to_name": "Agent"
+    },
+    {
+      "from_id": "entities_v2/module__agent",
+      "to_id": "entities_v2/feature__account_onboarding_case_summarization_skill",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent",
+      "to_name": "Account onboarding case summarization skill"
+    },
+    {
+      "from_id": "entities_v2/feature__account_onboarding_case_summarization_skill",
+      "to_id": "entities_v2/product__atf_test_generator_and_cloud_runner",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account onboarding case summarization skill",
+      "to_name": "ATF Test Generator and Cloud Runner"
+    },
+    {
+      "from_id": "entities_v2/product__atlassian_jira",
+      "to_id": "entities_v2/module__agent_actions",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Atlassian Jira",
+      "to_name": "Agent actions"
+    },
+    {
+      "from_id": "entities_v2/module__agent_actions",
+      "to_id": "entities_v2/feature__account_onboarding_landing_page",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent actions",
+      "to_name": "Account onboarding landing page"
+    },
+    {
+      "from_id": "entities_v2/feature__account_onboarding_landing_page",
+      "to_id": "entities_v2/product__atlassian_jira",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account onboarding landing page",
+      "to_name": "Atlassian Jira"
+    },
+    {
+      "from_id": "entities_v2/product__atlassian_jira_integration_for_agile_development",
+      "to_id": "entities_v2/module__agent_calendar",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Atlassian Jira Integration for Agile Development",
+      "to_name": "Agent Calendar"
+    },
+    {
+      "from_id": "entities_v2/module__agent_calendar",
+      "to_id": "entities_v2/feature__account_onboarding_playbook",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Calendar",
+      "to_name": "Account onboarding playbook"
+    },
+    {
+      "from_id": "entities_v2/feature__account_onboarding_playbook",
+      "to_id": "entities_v2/product__atlassian_jira_integration_for_agile_development",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account onboarding playbook",
+      "to_name": "Atlassian Jira Integration for Agile Development"
+    },
+    {
+      "from_id": "entities_v2/product__attended_robot",
+      "to_id": "entities_v2/module__agent_chat",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Attended Robot",
+      "to_name": "Agent Chat"
+    },
+    {
+      "from_id": "entities_v2/module__agent_chat",
+      "to_id": "entities_v2/feature__account_recovery",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Chat",
+      "to_name": "Account recovery"
+    },
+    {
+      "from_id": "entities_v2/feature__account_recovery",
+      "to_id": "entities_v2/product__attended_robot",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account recovery",
+      "to_name": "Attended Robot"
+    },
+    {
+      "from_id": "entities_v2/product__audit",
+      "to_id": "entities_v2/module__agent_client_collector_admin_workspace",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Audit",
+      "to_name": "Agent Client Collector admin workspace"
+    },
+    {
+      "from_id": "entities_v2/module__agent_client_collector_admin_workspace",
+      "to_id": "entities_v2/feature__account_recovery_acr",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Client Collector admin workspace",
+      "to_name": "Account recovery (ACR)"
+    },
+    {
+      "from_id": "entities_v2/feature__account_recovery_acr",
+      "to_id": "entities_v2/product__audit",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account recovery (ACR)",
+      "to_name": "Audit"
+    },
+    {
+      "from_id": "entities_v2/product__audit_management",
+      "to_id": "entities_v2/module__agent_client_collector_for_investigation",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Audit Management",
+      "to_name": "Agent Client Collector for Investigation"
+    },
+    {
+      "from_id": "entities_v2/module__agent_client_collector_for_investigation",
+      "to_id": "entities_v2/feature__account_recovery_context",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Client Collector for Investigation",
+      "to_name": "Account Recovery Context"
+    },
+    {
+      "from_id": "entities_v2/feature__account_recovery_context",
+      "to_id": "entities_v2/product__audit_management",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account Recovery Context",
+      "to_name": "Audit Management"
+    },
+    {
+      "from_id": "entities_v2/product__audit_workspace",
+      "to_id": "entities_v2/module__agent_client_collector_for_visibility_-_content",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Audit Workspace",
+      "to_name": "Agent Client Collector for Visibility - Content"
+    },
+    {
+      "from_id": "entities_v2/module__agent_client_collector_for_visibility_-_content",
+      "to_id": "entities_v2/feature__account_team",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Client Collector for Visibility - Content",
+      "to_name": "Account Team"
+    },
+    {
+      "from_id": "entities_v2/feature__account_team",
+      "to_id": "entities_v2/product__audit_workspace",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account Team",
+      "to_name": "Audit Workspace"
+    },
+    {
+      "from_id": "entities_v2/product__australia",
+      "to_id": "entities_v2/module__agent_client_collector_for_visibility_-_content_file-based_discovery",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Australia",
+      "to_name": "Agent Client Collector for Visibility - Content file-based Discovery"
+    },
+    {
+      "from_id": "entities_v2/module__agent_client_collector_for_visibility_-_content_file-based_discovery",
+      "to_id": "entities_v2/feature__account_team_member",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Client Collector for Visibility - Content file-based Discovery",
+      "to_name": "Account Team Member"
+    },
+    {
+      "from_id": "entities_v2/feature__account_team_member",
+      "to_id": "entities_v2/product__australia",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account Team Member",
+      "to_name": "Australia"
+    },
+    {
+      "from_id": "entities_v2/product__australia_employee_service_management",
+      "to_id": "entities_v2/module__agent_client_collector_framework",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Australia Employee Service Management",
+      "to_name": "Agent Client Collector Framework"
+    },
+    {
+      "from_id": "entities_v2/module__agent_client_collector_framework",
+      "to_id": "entities_v2/feature__account_team_members_related_list",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Client Collector Framework",
+      "to_name": "Account Team Members related list"
+    },
+    {
+      "from_id": "entities_v2/feature__account_team_members_related_list",
+      "to_id": "entities_v2/product__australia_employee_service_management",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account Team Members related list",
+      "to_name": "Australia Employee Service Management"
+    },
+    {
+      "from_id": "entities_v2/product__australia_features",
+      "to_id": "entities_v2/module__agent_client_collector_framework_reference",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Australia Features",
+      "to_name": "Agent Client Collector Framework reference"
+    },
+    {
+      "from_id": "entities_v2/module__agent_client_collector_framework_reference",
+      "to_id": "entities_v2/feature__accountrole_setup_and_notification",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Client Collector Framework reference",
+      "to_name": "Account/role setup and notification"
+    },
+    {
+      "from_id": "entities_v2/feature__accountrole_setup_and_notification",
+      "to_id": "entities_v2/product__australia_features",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account/role setup and notification",
+      "to_name": "Australia Features"
+    },
+    {
+      "from_id": "entities_v2/product__australia_features_and_products",
+      "to_id": "entities_v2/module__agent_client_collector_log_analytics",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Australia features and products",
+      "to_name": "Agent Client Collector Log Analytics"
+    },
+    {
+      "from_id": "entities_v2/module__agent_client_collector_log_analytics",
+      "to_id": "entities_v2/feature__accountrole_setup_and_notification_activity",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Client Collector Log Analytics",
+      "to_name": "Account/role setup and notification activity"
+    },
+    {
+      "from_id": "entities_v2/feature__accountrole_setup_and_notification_activity",
+      "to_id": "entities_v2/product__australia_features_and_products",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Account/role setup and notification activity",
+      "to_name": "Australia features and products"
+    },
+    {
+      "from_id": "entities_v2/product__australia_manufacturing",
+      "to_id": "entities_v2/module__agent_client_collector_monitoring",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Australia Manufacturing",
+      "to_name": "Agent Client Collector Monitoring"
+    },
+    {
+      "from_id": "entities_v2/module__agent_client_collector_monitoring",
+      "to_id": "entities_v2/feature__accounts",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Client Collector Monitoring",
+      "to_name": "Accounts"
+    },
+    {
+      "from_id": "entities_v2/feature__accounts",
+      "to_id": "entities_v2/product__australia_manufacturing",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accounts",
+      "to_name": "Australia Manufacturing"
+    },
+    {
+      "from_id": "entities_v2/product__australia_public_sector",
+      "to_id": "entities_v2/module__agent_client_collector_monitoring_default_checks_and_policies",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Australia Public Sector",
+      "to_name": "Agent Client Collector Monitoring default checks and policies"
+    },
+    {
+      "from_id": "entities_v2/module__agent_client_collector_monitoring_default_checks_and_policies",
+      "to_id": "entities_v2/feature__accounts_payable_document_classification_skill",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Client Collector Monitoring default checks and policies",
+      "to_name": "Accounts payable document classification skill"
+    },
+    {
+      "from_id": "entities_v2/feature__accounts_payable_document_classification_skill",
+      "to_id": "entities_v2/product__australia_public_sector",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accounts payable document classification skill",
+      "to_name": "Australia Public Sector"
+    },
+    {
+      "from_id": "entities_v2/product__australia_sales_and_order_management",
+      "to_id": "entities_v2/module__agent_client_collector_spoke",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Australia Sales and Order Management",
+      "to_name": "Agent Client Collector Spoke"
+    },
+    {
+      "from_id": "entities_v2/module__agent_client_collector_spoke",
+      "to_id": "entities_v2/feature__accounts_payable_operations",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Client Collector Spoke",
+      "to_name": "Accounts Payable Operations"
+    },
+    {
+      "from_id": "entities_v2/feature__accounts_payable_operations",
+      "to_id": "entities_v2/product__australia_sales_and_order_management",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accounts Payable Operations",
+      "to_name": "Australia Sales and Order Management"
+    },
+    {
+      "from_id": "entities_v2/product__australia_telecommunications_network_inventory",
+      "to_id": "entities_v2/module__agent_efficiency",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Australia Telecommunications Network Inventory",
+      "to_name": "Agent Efficiency"
+    },
+    {
+      "from_id": "entities_v2/module__agent_efficiency",
+      "to_id": "entities_v2/feature__accounts_payable_operations_integration_with_document_intelligence",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Efficiency",
+      "to_name": "Accounts Payable Operations integration with Document Intelligence"
+    },
+    {
+      "from_id": "entities_v2/feature__accounts_payable_operations_integration_with_document_intelligence",
+      "to_id": "entities_v2/product__australia_telecommunications_network_inventory",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accounts Payable Operations integration with Document Intelligence",
+      "to_name": "Australia Telecommunications Network Inventory"
+    },
+    {
+      "from_id": "entities_v2/product__australia_xanadu",
+      "to_id": "entities_v2/module__agent_experience_for_csm",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Australia Xanadu",
+      "to_name": "Agent experience for CSM"
+    },
+    {
+      "from_id": "entities_v2/module__agent_experience_for_csm",
+      "to_id": "entities_v2/feature__accounts_payable_specialist_manual_tasks",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent experience for CSM",
+      "to_name": "Accounts Payable Specialist manual tasks"
+    },
+    {
+      "from_id": "entities_v2/feature__accounts_payable_specialist_manual_tasks",
+      "to_id": "entities_v2/product__australia_xanadu",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accounts Payable Specialist manual tasks",
+      "to_name": "Australia Xanadu"
+    },
+    {
+      "from_id": "entities_v2/product__authentication",
+      "to_id": "entities_v2/module__agent_management",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Authentication",
+      "to_name": "Agent management"
+    },
+    {
+      "from_id": "entities_v2/module__agent_management",
+      "to_id": "entities_v2/feature__accounts_payable_workspace",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent management",
+      "to_name": "Accounts Payable Workspace"
+    },
+    {
+      "from_id": "entities_v2/feature__accounts_payable_workspace",
+      "to_id": "entities_v2/product__authentication",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accounts Payable Workspace",
+      "to_name": "Authentication"
+    },
+    {
+      "from_id": "entities_v2/product__automated_test_framework",
+      "to_id": "entities_v2/module__agent_policies_list",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Automated Test Framework",
+      "to_name": "Agent policies list"
+    },
+    {
+      "from_id": "entities_v2/module__agent_policies_list",
+      "to_id": "entities_v2/feature__accurate_background_integration",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent policies list",
+      "to_name": "Accurate Background integration"
+    },
+    {
+      "from_id": "entities_v2/feature__accurate_background_integration",
+      "to_id": "entities_v2/product__automated_test_framework",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Accurate Background integration",
+      "to_name": "Automated Test Framework"
+    },
+    {
+      "from_id": "entities_v2/product__automated_test_framework_atf",
+      "to_id": "entities_v2/module__agent_policy",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Automated Test Framework (ATF)",
+      "to_name": "Agent Policy"
+    },
+    {
+      "from_id": "entities_v2/module__agent_policy",
+      "to_id": "entities_v2/feature__ace_load_balancer",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Policy",
+      "to_name": "ACE Load Balancer"
+    },
+    {
+      "from_id": "entities_v2/feature__ace_load_balancer",
+      "to_id": "entities_v2/product__automated_test_framework_atf",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACE Load Balancer",
+      "to_name": "Automated Test Framework (ATF)"
+    },
+    {
+      "from_id": "entities_v2/product__automation_center_workspace",
+      "to_id": "entities_v2/module__agent_schedule",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Automation Center Workspace",
+      "to_name": "Agent Schedule"
+    },
+    {
+      "from_id": "entities_v2/module__agent_schedule",
+      "to_id": "entities_v2/feature__ach_dispute_ai_agents",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Schedule",
+      "to_name": "ACH dispute AI agents"
+    },
+    {
+      "from_id": "entities_v2/feature__ach_dispute_ai_agents",
+      "to_id": "entities_v2/product__automation_center_workspace",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACH dispute AI agents",
+      "to_name": "Automation Center Workspace"
+    },
+    {
+      "from_id": "entities_v2/product__automation_discovery",
+      "to_id": "entities_v2/module__agent_tools",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Automation Discovery",
+      "to_name": "Agent tools"
+    },
+    {
+      "from_id": "entities_v2/module__agent_tools",
+      "to_id": "entities_v2/feature__ach_dispute_return_recommendation_ai_agent",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent tools",
+      "to_name": "ACH dispute return recommendation AI agent"
+    },
+    {
+      "from_id": "entities_v2/feature__ach_dispute_return_recommendation_ai_agent",
+      "to_id": "entities_v2/product__automation_discovery",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACH dispute return recommendation AI agent",
+      "to_name": "Automation Discovery"
+    },
+    {
+      "from_id": "entities_v2/product__aws",
+      "to_id": "entities_v2/module__agent_workspace",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AWS",
+      "to_name": "Agent Workspace"
+    },
+    {
+      "from_id": "entities_v2/module__agent_workspace",
+      "to_id": "entities_v2/feature__achievement_form",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Workspace",
+      "to_name": "Achievement form"
+    },
+    {
+      "from_id": "entities_v2/feature__achievement_form",
+      "to_id": "entities_v2/product__aws",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Achievement form",
+      "to_name": "AWS"
+    },
+    {
+      "from_id": "entities_v2/product__aws_integration_for_security_exposure_management",
+      "to_id": "entities_v2/module__agent_workspace_for_hr_case_management",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AWS Integration for Security Exposure Management",
+      "to_name": "Agent Workspace for HR Case Management"
+    },
+    {
+      "from_id": "entities_v2/module__agent_workspace_for_hr_case_management",
+      "to_id": "entities_v2/feature__achievements",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Workspace for HR Case Management",
+      "to_name": "Achievements"
+    },
+    {
+      "from_id": "entities_v2/feature__achievements",
+      "to_id": "entities_v2/product__aws_integration_for_security_exposure_management",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Achievements",
+      "to_name": "AWS Integration for Security Exposure Management"
+    },
+    {
+      "from_id": "entities_v2/product__aws_management_console",
+      "to_id": "entities_v2/module__agent_workspace_for_hr_case_management_configurable",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AWS Management Console",
+      "to_name": "Agent Workspace for HR Case Management (Configurable)"
+    },
+    {
+      "from_id": "entities_v2/module__agent_workspace_for_hr_case_management_configurable",
+      "to_id": "entities_v2/feature__acl",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Workspace for HR Case Management (Configurable)",
+      "to_name": "ACL"
+    },
+    {
+      "from_id": "entities_v2/feature__acl",
+      "to_id": "entities_v2/product__aws_management_console",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACL",
+      "to_name": "AWS Management Console"
+    },
+    {
+      "from_id": "entities_v2/product__aws_security_hub",
+      "to_id": "entities_v2/module__agent_workspace_for_hrsd",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "AWS Security Hub",
+      "to_name": "Agent Workspace for HRSD"
+    },
+    {
+      "from_id": "entities_v2/module__agent_workspace_for_hrsd",
+      "to_id": "entities_v2/feature__acl_assessment_for_reports",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agent Workspace for HRSD",
+      "to_name": "ACL Assessment for Reports"
+    },
+    {
+      "from_id": "entities_v2/feature__acl_assessment_for_reports",
+      "to_id": "entities_v2/product__aws_security_hub",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACL Assessment for Reports",
+      "to_name": "AWS Security Hub"
+    },
+    {
+      "from_id": "entities_v2/product__azure",
+      "to_id": "entities_v2/module__agentic_contact_center_for_banking",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Azure",
+      "to_name": "Agentic Contact Center for Banking"
+    },
+    {
+      "from_id": "entities_v2/module__agentic_contact_center_for_banking",
+      "to_id": "entities_v2/feature__acl_configuration_watcher",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agentic Contact Center for Banking",
+      "to_name": "ACL configuration watcher"
+    },
+    {
+      "from_id": "entities_v2/feature__acl_configuration_watcher",
+      "to_id": "entities_v2/product__azure",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACL configuration watcher",
+      "to_name": "Azure"
+    },
+    {
+      "from_id": "entities_v2/product__azure_ad",
+      "to_id": "entities_v2/module__agents",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Azure AD",
+      "to_name": "Agents"
+    },
+    {
+      "from_id": "entities_v2/module__agents",
+      "to_id": "entities_v2/feature__acl_debugging",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agents",
+      "to_name": "ACL debugging"
+    },
+    {
+      "from_id": "entities_v2/feature__acl_debugging",
+      "to_id": "entities_v2/product__azure_ad",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACL debugging",
+      "to_name": "Azure AD"
+    },
+    {
+      "from_id": "entities_v2/product__azure_devops",
+      "to_id": "entities_v2/module__aggregated_reports",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Azure DevOps",
+      "to_name": "Aggregated Reports"
+    },
+    {
+      "from_id": "entities_v2/module__aggregated_reports",
+      "to_id": "entities_v2/feature__acl_rule",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Aggregated Reports",
+      "to_name": "ACL rule"
+    },
+    {
+      "from_id": "entities_v2/feature__acl_rule",
+      "to_id": "entities_v2/product__azure_devops",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACL rule",
+      "to_name": "Azure DevOps"
+    },
+    {
+      "from_id": "entities_v2/product__badge_reader_integration",
+      "to_id": "entities_v2/module__agile_azure_devops_integration",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Badge Reader Integration",
+      "to_name": "Agile Azure DevOps Integration"
+    },
+    {
+      "from_id": "entities_v2/module__agile_azure_devops_integration",
+      "to_id": "entities_v2/feature__acl_rules",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agile Azure DevOps Integration",
+      "to_name": "ACL rules"
+    },
+    {
+      "from_id": "entities_v2/feature__acl_rules",
+      "to_id": "entities_v2/product__badge_reader_integration",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACL rules",
+      "to_name": "Badge Reader Integration"
+    },
+    {
+      "from_id": "entities_v2/product__bcm",
+      "to_id": "entities_v2/module__agile_board",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "BCM",
+      "to_name": "Agile Board"
+    },
+    {
+      "from_id": "entities_v2/module__agile_board",
+      "to_id": "entities_v2/feature__acl_security_implementation",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agile Board",
+      "to_name": "ACL security implementation"
+    },
+    {
+      "from_id": "entities_v2/feature__acl_security_implementation",
+      "to_id": "entities_v2/product__bcm",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACL security implementation",
+      "to_name": "BCM"
+    },
+    {
+      "from_id": "entities_v2/product__bcm_application",
+      "to_id": "entities_v2/module__agile_development",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "BCM application",
+      "to_name": "Agile Development"
+    },
+    {
+      "from_id": "entities_v2/module__agile_development",
+      "to_id": "entities_v2/feature__acl_trails",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agile Development",
+      "to_name": "ACL Trails"
+    },
+    {
+      "from_id": "entities_v2/feature__acl_trails",
+      "to_id": "entities_v2/product__bcm_application",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACL Trails",
+      "to_name": "BCM application"
+    },
+    {
+      "from_id": "entities_v2/product__bcm_configurable_workspace",
+      "to_id": "entities_v2/module__agile_development_2.0",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "BCM Configurable Workspace",
+      "to_name": "Agile Development 2.0"
+    },
+    {
+      "from_id": "entities_v2/module__agile_development_2.0",
+      "to_id": "entities_v2/feature__acls",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agile Development 2.0",
+      "to_name": "ACLs"
+    },
+    {
+      "from_id": "entities_v2/feature__acls",
+      "to_id": "entities_v2/product__bcm_configurable_workspace",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACLs",
+      "to_name": "BCM Configurable Workspace"
+    },
+    {
+      "from_id": "entities_v2/product__bcm_uib_workspace",
+      "to_id": "entities_v2/module__agile_development_v2",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "BCM UIB Workspace",
+      "to_name": "Agile Development v2"
+    },
+    {
+      "from_id": "entities_v2/module__agile_development_v2",
+      "to_id": "entities_v2/feature__acme",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agile Development v2",
+      "to_name": "ACME"
+    },
+    {
+      "from_id": "entities_v2/feature__acme",
+      "to_id": "entities_v2/product__bcm_uib_workspace",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACME",
+      "to_name": "BCM UIB Workspace"
+    },
+    {
+      "from_id": "entities_v2/product__benchmarks",
+      "to_id": "entities_v2/module__agile_development_v2_mobile_app",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Benchmarks",
+      "to_name": "Agile Development v2 mobile app"
+    },
+    {
+      "from_id": "entities_v2/module__agile_development_v2_mobile_app",
+      "to_id": "entities_v2/feature__acme_automated_flow_of_dns_challenge",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agile Development v2 mobile app",
+      "to_name": "ACME automated flow of DNS challenge"
+    },
+    {
+      "from_id": "entities_v2/feature__acme_automated_flow_of_dns_challenge",
+      "to_id": "entities_v2/product__benchmarks",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACME automated flow of DNS challenge",
+      "to_name": "Benchmarks"
+    },
+    {
+      "from_id": "entities_v2/product__bigfix",
+      "to_id": "entities_v2/module__agile_in_cwm",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "BigFix",
+      "to_name": "Agile in CWM"
+    },
+    {
+      "from_id": "entities_v2/module__agile_in_cwm",
+      "to_id": "entities_v2/feature__acme_manual_flow_of_dns_challenge",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agile in CWM",
+      "to_name": "ACME manual flow of DNS challenge"
+    },
+    {
+      "from_id": "entities_v2/feature__acme_manual_flow_of_dns_challenge",
+      "to_id": "entities_v2/product__bigfix",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "ACME manual flow of DNS challenge",
+      "to_name": "BigFix"
+    },
+    {
+      "from_id": "entities_v2/product__bigfix_inventory",
+      "to_id": "entities_v2/module__agile_integration_for_vulnerability_response",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "BigFix Inventory",
+      "to_name": "Agile Integration for Vulnerability Response"
+    },
+    {
+      "from_id": "entities_v2/module__agile_integration_for_vulnerability_response",
+      "to_id": "entities_v2/feature__acquisition_method",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agile Integration for Vulnerability Response",
+      "to_name": "Acquisition method"
+    },
+    {
+      "from_id": "entities_v2/feature__acquisition_method",
+      "to_id": "entities_v2/product__bigfix_inventory",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Acquisition method",
+      "to_name": "BigFix Inventory"
+    },
+    {
+      "from_id": "entities_v2/product__bigfix_inventory_spoke",
+      "to_id": "entities_v2/module__agile_jira_integration",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "BigFix Inventory spoke",
+      "to_name": "Agile Jira Integration"
+    },
+    {
+      "from_id": "entities_v2/module__agile_jira_integration",
+      "to_id": "entities_v2/feature__action",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agile Jira Integration",
+      "to_name": "Action"
+    },
+    {
+      "from_id": "entities_v2/feature__action",
+      "to_id": "entities_v2/product__bigfix_inventory_spoke",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action",
+      "to_name": "BigFix Inventory spoke"
+    },
+    {
+      "from_id": "entities_v2/product__bitbucket",
+      "to_id": "entities_v2/module__agile_release_train",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Bitbucket",
+      "to_name": "Agile Release Train"
+    },
+    {
+      "from_id": "entities_v2/module__agile_release_train",
+      "to_id": "entities_v2/feature__action_assignment",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Agile Release Train",
+      "to_name": "Action Assignment"
+    },
+    {
+      "from_id": "entities_v2/feature__action_assignment",
+      "to_id": "entities_v2/product__bitbucket",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action Assignment",
+      "to_name": "Bitbucket"
+    },
+    {
+      "from_id": "entities_v2/product__blackberry_uem",
+      "to_id": "entities_v2/module__aha_integration",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "BlackBerry UEM",
+      "to_name": "Aha! Integration"
+    },
+    {
+      "from_id": "entities_v2/module__aha_integration",
+      "to_id": "entities_v2/feature__action_assignment_form",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "Aha! Integration",
+      "to_name": "Action Assignment form"
+    },
+    {
+      "from_id": "entities_v2/feature__action_assignment_form",
+      "to_id": "entities_v2/product__blackberry_uem",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action Assignment form",
+      "to_name": "BlackBerry UEM"
+    },
+    {
+      "from_id": "entities_v2/product__blue_prism",
+      "to_id": "entities_v2/module__ai_agent_collection",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Blue Prism",
+      "to_name": "AI Agent Collection"
+    },
+    {
+      "from_id": "entities_v2/module__ai_agent_collection",
+      "to_id": "entities_v2/feature__action_bar",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Agent Collection",
+      "to_name": "action bar"
+    },
+    {
+      "from_id": "entities_v2/feature__action_bar",
+      "to_id": "entities_v2/product__blue_prism",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "action bar",
+      "to_name": "Blue Prism"
+    },
+    {
+      "from_id": "entities_v2/product__bmc_remedy",
+      "to_id": "entities_v2/module__ai_agent_studio",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "BMC Remedy",
+      "to_name": "AI Agent Studio"
+    },
+    {
+      "from_id": "entities_v2/module__ai_agent_studio",
+      "to_id": "entities_v2/feature__action_bar_component",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Agent Studio",
+      "to_name": "Action bar component"
+    },
+    {
+      "from_id": "entities_v2/feature__action_bar_component",
+      "to_id": "entities_v2/product__bmc_remedy",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action bar component",
+      "to_name": "BMC Remedy"
+    },
+    {
+      "from_id": "entities_v2/product__bmc_remedy_spoke",
+      "to_id": "entities_v2/module__ai_agents",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "BMC Remedy Spoke",
+      "to_name": "AI Agents"
+    },
+    {
+      "from_id": "entities_v2/module__ai_agents",
+      "to_id": "entities_v2/feature__action_category",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Agents",
+      "to_name": "Action Category"
+    },
+    {
+      "from_id": "entities_v2/feature__action_category",
+      "to_id": "entities_v2/product__bmc_remedy_spoke",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action Category",
+      "to_name": "BMC Remedy Spoke"
+    },
+    {
+      "from_id": "entities_v2/product__box",
+      "to_id": "entities_v2/module__ai_asset_management",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Box",
+      "to_name": "AI Asset management"
+    },
+    {
+      "from_id": "entities_v2/module__ai_asset_management",
+      "to_id": "entities_v2/feature__action_center",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Asset management",
+      "to_name": "Action Center"
+    },
+    {
+      "from_id": "entities_v2/feature__action_center",
+      "to_id": "entities_v2/product__box",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action Center",
+      "to_name": "Box"
+    },
+    {
+      "from_id": "entities_v2/product__box_spoke",
+      "to_id": "entities_v2/module__ai_assets_api",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Box Spoke",
+      "to_name": "AI Assets API"
+    },
+    {
+      "from_id": "entities_v2/module__ai_assets_api",
+      "to_id": "entities_v2/feature__action_configuration",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Assets API",
+      "to_name": "Action Configuration"
+    },
+    {
+      "from_id": "entities_v2/feature__action_configuration",
+      "to_id": "entities_v2/product__box_spoke",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action Configuration",
+      "to_name": "Box Spoke"
+    },
+    {
+      "from_id": "entities_v2/product__build_agent",
+      "to_id": "entities_v2/module__ai_case_management",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Build Agent",
+      "to_name": "AI Case Management"
+    },
+    {
+      "from_id": "entities_v2/module__ai_case_management",
+      "to_id": "entities_v2/feature__action_designer",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Case Management",
+      "to_name": "Action Designer"
+    },
+    {
+      "from_id": "entities_v2/feature__action_designer",
+      "to_id": "entities_v2/product__build_agent",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action Designer",
+      "to_name": "Build Agent"
+    },
+    {
+      "from_id": "entities_v2/product__building_applications",
+      "to_id": "entities_v2/module__ai_cases",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Building Applications",
+      "to_name": "AI cases"
+    },
+    {
+      "from_id": "entities_v2/module__ai_cases",
+      "to_id": "entities_v2/feature__action_error_evaluation",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI cases",
+      "to_name": "Action error evaluation"
+    },
+    {
+      "from_id": "entities_v2/feature__action_error_evaluation",
+      "to_id": "entities_v2/product__building_applications",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action error evaluation",
+      "to_name": "Building Applications"
+    },
+    {
+      "from_id": "entities_v2/product__business_and_consumer_portal",
+      "to_id": "entities_v2/module__ai_connections",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Business and Consumer portal",
+      "to_name": "AI connections"
+    },
+    {
+      "from_id": "entities_v2/module__ai_connections",
+      "to_id": "entities_v2/feature__action_form",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI connections",
+      "to_name": "Action form"
+    },
+    {
+      "from_id": "entities_v2/feature__action_form",
+      "to_id": "entities_v2/product__business_and_consumer_portal",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action form",
+      "to_name": "Business and Consumer portal"
+    },
+    {
+      "from_id": "entities_v2/product__business_continuity",
+      "to_id": "entities_v2/module__ai_control_tower",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Business Continuity",
+      "to_name": "AI Control Tower"
+    },
+    {
+      "from_id": "entities_v2/module__ai_control_tower",
+      "to_id": "entities_v2/feature__action_framework",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Control Tower",
+      "to_name": "Action framework"
+    },
+    {
+      "from_id": "entities_v2/feature__action_framework",
+      "to_id": "entities_v2/product__business_continuity",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action framework",
+      "to_name": "Business Continuity"
+    },
+    {
+      "from_id": "entities_v2/product__business_continuity_management_application",
+      "to_id": "entities_v2/module__ai_exposures",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Business Continuity Management application",
+      "to_name": "AI Exposures"
+    },
+    {
+      "from_id": "entities_v2/module__ai_exposures",
+      "to_id": "entities_v2/feature__action_function",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Exposures",
+      "to_name": "Action function"
+    },
+    {
+      "from_id": "entities_v2/feature__action_function",
+      "to_id": "entities_v2/product__business_continuity_management_application",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action function",
+      "to_name": "Business Continuity Management application"
+    },
+    {
+      "from_id": "entities_v2/product__business_continuity_workspace",
+      "to_id": "entities_v2/module__ai_files",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Business Continuity Workspace",
+      "to_name": "AI files"
+    },
+    {
+      "from_id": "entities_v2/module__ai_files",
+      "to_id": "entities_v2/feature__action_functions",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI files",
+      "to_name": "Action functions"
+    },
+    {
+      "from_id": "entities_v2/feature__action_functions",
+      "to_id": "entities_v2/product__business_continuity_workspace",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action functions",
+      "to_name": "Business Continuity Workspace"
+    },
+    {
+      "from_id": "entities_v2/product__business_location_service_portal",
+      "to_id": "entities_v2/module__ai_portfolio",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Business Location Service Portal",
+      "to_name": "AI Portfolio"
+    },
+    {
+      "from_id": "entities_v2/module__ai_portfolio",
+      "to_id": "entities_v2/feature__action_group",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Portfolio",
+      "to_name": "Action group"
+    },
+    {
+      "from_id": "entities_v2/feature__action_group",
+      "to_id": "entities_v2/product__business_location_service_portal",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action group",
+      "to_name": "Business Location Service Portal"
+    },
+    {
+      "from_id": "entities_v2/product__business_location_services_portal",
+      "to_id": "entities_v2/module__ai_risk_and_compliance",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Business Location Services portal",
+      "to_name": "AI Risk and Compliance"
+    },
+    {
+      "from_id": "entities_v2/module__ai_risk_and_compliance",
+      "to_id": "entities_v2/feature__action_groups",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Risk and Compliance",
+      "to_name": "Action groups"
+    },
+    {
+      "from_id": "entities_v2/feature__action_groups",
+      "to_id": "entities_v2/product__business_location_services_portal",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action groups",
+      "to_name": "Business Location Services portal"
+    },
+    {
+      "from_id": "entities_v2/product__business_portal",
+      "to_id": "entities_v2/module__ai_risk_and_compliance_content",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Business Portal",
+      "to_name": "AI Risk and Compliance Content"
+    },
+    {
+      "from_id": "entities_v2/module__ai_risk_and_compliance_content",
+      "to_id": "entities_v2/feature__action_item",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Risk and Compliance Content",
+      "to_name": "Action item"
+    },
+    {
+      "from_id": "entities_v2/feature__action_item",
+      "to_id": "entities_v2/product__business_portal",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action item",
+      "to_name": "Business Portal"
+    },
+    {
+      "from_id": "entities_v2/product__buying_group",
+      "to_id": "entities_v2/module__ai_risk_and_compliance_integration_with_control_tower",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Buying Group",
+      "to_name": "AI Risk and Compliance integration with Control Tower"
+    },
+    {
+      "from_id": "entities_v2/module__ai_risk_and_compliance_integration_with_control_tower",
+      "to_id": "entities_v2/feature__action_item_workflow",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Risk and Compliance integration with Control Tower",
+      "to_name": "Action item workflow"
+    },
+    {
+      "from_id": "entities_v2/feature__action_item_workflow",
+      "to_id": "entities_v2/product__buying_group",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action item workflow",
+      "to_name": "Buying Group"
+    },
+    {
+      "from_id": "entities_v2/product__cabrillo",
+      "to_id": "entities_v2/module__ai_risk_and_compliance_management",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Cabrillo",
+      "to_name": "AI Risk and Compliance management"
+    },
+    {
+      "from_id": "entities_v2/module__ai_risk_and_compliance_management",
+      "to_id": "entities_v2/feature__action_items",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Risk and Compliance management",
+      "to_name": "Action items"
+    },
+    {
+      "from_id": "entities_v2/feature__action_items",
+      "to_id": "entities_v2/product__cabrillo",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action items",
+      "to_name": "Cabrillo"
+    },
+    {
+      "from_id": "entities_v2/product__cabrillo_js",
+      "to_id": "entities_v2/module__ai_risk_and_compliance_workspace",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Cabrillo JS",
+      "to_name": "AI Risk and Compliance Workspace"
+    },
+    {
+      "from_id": "entities_v2/module__ai_risk_and_compliance_workspace",
+      "to_id": "entities_v2/feature__action_library",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Risk and Compliance Workspace",
+      "to_name": "Action library"
+    },
+    {
+      "from_id": "entities_v2/feature__action_library",
+      "to_id": "entities_v2/product__cabrillo_js",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action library",
+      "to_name": "Cabrillo JS"
+    },
+    {
+      "from_id": "entities_v2/product__cabrillo.nowapp",
+      "to_id": "entities_v2/module__ai_search",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "cabrillo.nowapp",
+      "to_name": "AI Search"
+    },
+    {
+      "from_id": "entities_v2/module__ai_search",
+      "to_id": "entities_v2/feature__action_management",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Search",
+      "to_name": "Action Management"
+    },
+    {
+      "from_id": "entities_v2/feature__action_management",
+      "to_id": "entities_v2/product__cabrillo.nowapp",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action Management",
+      "to_name": "cabrillo.nowapp"
+    },
+    {
+      "from_id": "entities_v2/product__calendly",
+      "to_id": "entities_v2/module__ai_search_admin",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Calendly",
+      "to_name": "AI Search Admin"
+    },
+    {
+      "from_id": "entities_v2/module__ai_search_admin",
+      "to_id": "entities_v2/feature__action_messages",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Search Admin",
+      "to_name": "Action messages"
+    },
+    {
+      "from_id": "entities_v2/feature__action_messages",
+      "to_id": "entities_v2/product__calendly",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action messages",
+      "to_name": "Calendly"
+    },
+    {
+      "from_id": "entities_v2/product__cam",
+      "to_id": "entities_v2/module__ai_search_admin_console",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "CAM",
+      "to_name": "AI Search Admin console"
+    },
+    {
+      "from_id": "entities_v2/module__ai_search_admin_console",
+      "to_id": "entities_v2/feature__action_plan",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Search Admin console",
+      "to_name": "Action plan"
+    },
+    {
+      "from_id": "entities_v2/feature__action_plan",
+      "to_id": "entities_v2/product__cam",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action plan",
+      "to_name": "CAM"
+    },
+    {
+      "from_id": "entities_v2/product__cam_application",
+      "to_id": "entities_v2/module__ai_search_admin_console_shared_configurations",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "CAM application",
+      "to_name": "AI Search Admin console Shared Configurations"
+    },
+    {
+      "from_id": "entities_v2/module__ai_search_admin_console_shared_configurations",
+      "to_id": "entities_v2/feature__action_plan_guided_tour",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Search Admin console Shared Configurations",
+      "to_name": "Action Plan Guided Tour"
+    },
+    {
+      "from_id": "entities_v2/feature__action_plan_guided_tour",
+      "to_id": "entities_v2/product__cam_application",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "Action Plan Guided Tour",
+      "to_name": "CAM application"
+    },
+    {
+      "from_id": "entities_v2/product__card_data_security",
+      "to_id": "entities_v2/module__ai_search_admin_home",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Card Data Security",
+      "to_name": "AI Search Admin Home"
+    },
+    {
+      "from_id": "entities_v2/module__ai_search_admin_home",
+      "to_id": "entities_v2/feature__action_plan_skill",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Search Admin Home",
+      "to_name": "action plan skill"
+    },
+    {
+      "from_id": "entities_v2/feature__action_plan_skill",
+      "to_id": "entities_v2/product__card_data_security",
+      "from_type": "Feature",
+      "to_type": "Product",
+      "from_name": "action plan skill",
+      "to_name": "Card Data Security"
+    },
+    {
+      "from_id": "entities_v2/product__care_team_mobile",
+      "to_id": "entities_v2/module__ai_search_index",
+      "from_type": "Product",
+      "to_type": "Module",
+      "from_name": "Care Team Mobile",
+      "to_name": "AI Search Index"
+    },
+    {
+      "from_id": "entities_v2/module__ai_search_index",
+      "to_id": "entities_v2/feature__action_planner",
+      "from_type": "Module",
+      "to_type": "Feature",
+      "from_name": "AI Search Index",
+      "to_name": "Action Planner"
+    }
+  ]
+}
