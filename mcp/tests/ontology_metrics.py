@@ -240,3 +240,87 @@ def release_purity(db: Any) -> dict:
         "release_purity": (known / total) if total else 0.0,
         "unknown_samples": unknown,
     }
+
+
+def hub_ids(db: Any) -> set[str]:
+    """Return the ``_id`` of every entity above the frozen hub-degree cutoff.
+
+    Args:
+        db: python-arango database handle.
+
+    Returns:
+        Set of ArangoDB document ids.
+    """
+    return {
+        row["id"]
+        for row in db.aql.execute(
+            """
+            FOR e IN entities_v2
+              LET d = LENGTH(FOR x IN 1..1 ANY e relationships_v2 RETURN 1)
+              FILTER d > @threshold
+              RETURN {id: e._id}
+            """,
+            bind_vars={"threshold": HUB_DEGREE_THRESHOLD},
+        )
+    }
+
+
+def path_metrics(db: Any, pairs: list[dict], hub_ids: set[str]) -> dict:
+    """Measure how often shortest paths route through hub nodes.
+
+    Mirrors what ``kg_path`` does today: ``ANY SHORTEST_PATH``, undirected, one
+    arbitrary shortest path. Querying the edge collection directly is currently
+    equivalent to traversing ``servicenow_graph_v2`` — verified byte-identical —
+    because that graph has exactly one edge definition and no orphan
+    collections. That equivalence would end if the graph ever grew a second
+    edge collection.
+
+    DENOMINATOR DISCIPLINE (spec §4/M2): every rate divides by the full frozen
+    pair count, never by ``paths_found``. A pair whose path disappears counts as
+    a failure, not an exclusion.
+
+    Only INTERMEDIATE nodes count as pass-through.
+
+    Args:
+        db: python-arango database handle.
+        pairs: The frozen pair set.
+        hub_ids: Entity ids considered hubs.
+
+    Returns:
+        Counts and rates over the full pair set.
+    """
+    paths_found = 0
+    no_path = 0
+    hub_pass_through = 0
+
+    for pair in pairs:
+        rows = list(
+            db.aql.execute(
+                """
+                LET nodes = (
+                  FOR v IN ANY SHORTEST_PATH @from TO @to relationships_v2
+                    RETURN v._id
+                )
+                FILTER LENGTH(nodes) > 0
+                RETURN {nodes: nodes}
+                """,
+                bind_vars={"from": pair["from_id"], "to": pair["to_id"]},
+            )
+        )
+        if not rows:
+            no_path += 1
+            continue
+        paths_found += 1
+        nodes = rows[0]["nodes"]
+        if any(node in hub_ids for node in nodes[1:-1]):
+            hub_pass_through += 1
+
+    total = len(pairs)
+    return {
+        "pairs": total,
+        "paths_found": paths_found,
+        "no_path": no_path,
+        "no_path_rate": (no_path / total) if total else 0.0,
+        "hub_pass_through": hub_pass_through,
+        "hub_pass_through_rate": (hub_pass_through / total) if total else 0.0,
+    }

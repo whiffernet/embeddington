@@ -151,3 +151,50 @@ def test_release_purity_accepts_decorated_forms_and_rejects_versions():
     assert out["known_release_entities"] == 3
     assert out["release_purity"] == 0.6
     assert sorted(out["unknown_samples"]) == ["Early", "Version 20.0"]
+
+
+def test_path_metrics_counts_no_path_as_a_failure_not_an_exclusion():
+    """no_path must stay in the denominator (spec §4/M2).
+
+    If a suppressed path silently left the denominator, closing off the only
+    route to a pair would IMPROVE the score — the exact denominator-shrinkage
+    bug gold_metrics.py already fixed once for gold_recall_at_budget, whose
+    docstring credits "critic finding F1" for the normalization discipline.
+    """
+    pairs = [
+        {"from_id": "entities_v2/a", "to_id": "entities_v2/b"},
+        {"from_id": "entities_v2/c", "to_id": "entities_v2/d"},
+    ]
+    db = FakeDB([
+        [{"nodes": ["entities_v2/a", "entities_v2/x", "entities_v2/b"]}],
+        [],
+    ])
+    out = M.path_metrics(db, pairs, hub_ids=set())
+    assert out["pairs"] == 2
+    assert out["paths_found"] == 1
+    assert out["no_path"] == 1
+    assert out["no_path_rate"] == 0.5
+    assert out["hub_pass_through_rate"] == 0.0
+
+
+def test_path_metrics_flags_intermediate_hubs_only():
+    """A hub that is an ENDPOINT is what the caller asked about, not pollution."""
+    pairs = [
+        {"from_id": "entities_v2/a", "to_id": "entities_v2/b"},
+        {"from_id": "entities_v2/hub", "to_id": "entities_v2/d"},
+    ]
+    db = FakeDB([
+        [{"nodes": ["entities_v2/a", "entities_v2/hub", "entities_v2/b"]}],
+        [{"nodes": ["entities_v2/hub", "entities_v2/y", "entities_v2/d"]}],
+    ])
+    out = M.path_metrics(db, pairs, hub_ids={"entities_v2/hub"})
+    assert out["hub_pass_through"] == 1
+    assert out["hub_pass_through_rate"] == 0.5
+
+
+def test_path_metrics_rate_is_zero_for_empty_pair_set():
+    db = FakeDB([])
+    out = M.path_metrics(db, [], hub_ids=set())
+    assert out["pairs"] == 0
+    assert out["no_path_rate"] == 0.0
+    assert out["hub_pass_through_rate"] == 0.0
