@@ -49,3 +49,48 @@ Brandt would want you oriented, so here's the tour — he's a good man, and thor
 
 When the run finishes, the cursor file ties the whole room together — that's your position
 in the chain, ready for the next `update`.
+
+## Targeting: what `update` writes to, and how to run more than one stack
+
+`update` is destructive by design — it restores a baseline and applies diffs into whatever
+Qdrant and ArangoDB it's pointed at. Where it's pointed is controlled entirely by flags:
+
+| Flag           | Default                 | What it targets                           |
+| -------------- | ----------------------- | ----------------------------------------- |
+| `--qdrant-url` | `http://localhost:6333` | the Qdrant instance written to            |
+| `--arango-url` | `http://localhost:8529` | the ArangoDB instance written to          |
+| `--cursor`     | your per-user state dir | which position-in-the-chain gets advanced |
+
+The environment supplies exactly one thing: the Arango password, via `ARANGO_ROOT_PASSWORD`
+(or `ARANGO_PASSWORD`) — the same var `docker-compose.yml` reads, so one `.env` covers both.
+Nothing else is read from the environment. That matters because it's the opposite of the
+`mcp/` server in this repo, which _does_ read `QDRANT_URL` and `ARANGO_URL` straight from
+the environment (see its README). If you're used to exporting those two vars to point the
+MCP server somewhere, carrying that habit here does nothing useful — `update` will still
+write to `localhost:6333`/`localhost:8529` (or wherever your last `--qdrant-url`/
+`--arango-url` pointed) regardless of what's exported.
+
+`update` also prints the targets it resolved — Qdrant, Arango, and the cursor path, each
+marked `(default)` or `(explicit)` — before it checks reachability and before anything is
+downloaded. Read that line before letting a run proceed. `ensure-index` prints the same for
+the one thing it writes to: it materializes and indexes `chunk_text` on whatever
+`--qdrant-url` resolves to (same default as `update`).
+
+To run a genuinely isolated restore — a second collection, a scratch stack, whatever you
+don't want touching your main one — pass all three targeting flags together. Omitting any
+one of them falls back to the default, which is what you're trying to avoid:
+
+```sh
+embeddington-consume update \
+  --qdrant-url http://localhost:7333 \
+  --arango-url http://localhost:9529 \
+  --cursor ./scratch/.cursor
+```
+
+Afterwards, confirm the stack you _didn't_ mean to touch is still what you expect —
+checking your default collection's point count is the fastest sanity check:
+
+```sh
+curl -s http://localhost:6333/collections/technology | python3 -c \
+  "import sys, json; print(json.load(sys.stdin)['result']['points_count'])"
+```

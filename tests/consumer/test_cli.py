@@ -431,3 +431,140 @@ def test_ensure_index_help_documents_the_exit_codes():
     help_text = sub_action.choices["ensure-index"].format_help()
 
     assert "0" in help_text and "ready" in help_text
+
+
+# --- target echo: pre-flight visibility into what a write command touches --------
+
+
+def _target_line(out, field):
+    """Return the whitespace-split tokens of the echoed target line for ``field``.
+
+    Asserting URL/tag membership against this token list (rather than doing a
+    substring check against the whole ``out`` blob) also pins the assertion to
+    the right *line* -- e.g. that the qdrant URL is on the qdrant line, not
+    merely present somewhere in the output.
+    """
+    for line in out.splitlines():
+        parts = line.split()
+        if parts and parts[0] == field:
+            return parts
+    raise AssertionError(f"no target line for {field!r} in:\n{out}")
+
+
+def test_echo_update_targets_marks_defaults_when_nothing_was_passed(tmp_path, capsys):
+    args = cli._build_parser().parse_args(["update"])
+    cli._resolve_paths(args, env={}, home=tmp_path, cwd=tmp_path)
+
+    cli._echo_update_targets(args)
+    out = capsys.readouterr().out
+
+    qdrant, arango, cursor = (
+        _target_line(out, "qdrant"),
+        _target_line(out, "arango"),
+        _target_line(out, "cursor"),
+    )
+    assert out.count("(default)") == 3, "qdrant, arango, and cursor are all unset here"
+    assert "(explicit)" not in out
+    assert args.qdrant_url in qdrant and "(default)" in qdrant
+    assert "collection=technology" in qdrant
+    assert args.arango_url in arango and "(default)" in arango
+    assert "db=technology_kg" in arango and "user=root" in arango
+    assert str(args.cursor) in cursor and "(default)" in cursor
+
+
+def test_echo_update_targets_marks_explicit_flags(tmp_path, capsys):
+    cursor = tmp_path / "mine" / ".cursor"
+    qdrant_url = "http://q.example:6333"
+    arango_url = "http://a.example:8529"
+    args = cli._build_parser().parse_args(
+        [
+            "update",
+            "--qdrant-url",
+            qdrant_url,
+            "--arango-url",
+            arango_url,
+            "--cursor",
+            str(cursor),
+        ]
+    )
+    cli._resolve_paths(args, env={}, home=tmp_path, cwd=tmp_path)
+
+    cli._echo_update_targets(args)
+    out = capsys.readouterr().out
+
+    qdrant, arango, cursor_line = (
+        _target_line(out, "qdrant"),
+        _target_line(out, "arango"),
+        _target_line(out, "cursor"),
+    )
+    assert out.count("(explicit)") == 3
+    assert "(default)" not in out
+    assert qdrant_url in qdrant and "(explicit)" in qdrant
+    assert arango_url in arango and "(explicit)" in arango
+    assert str(cursor) in cursor_line and "(explicit)" in cursor_line
+
+
+def test_echo_update_targets_treats_each_flag_independently(tmp_path, capsys):
+    """Passing only --qdrant-url must not mark arango or cursor as explicit too."""
+    args = cli._build_parser().parse_args(["update", "--qdrant-url", "http://q.example:6333"])
+    cli._resolve_paths(args, env={}, home=tmp_path, cwd=tmp_path)
+
+    cli._echo_update_targets(args)
+    out = capsys.readouterr().out
+
+    qdrant, arango, cursor = (
+        _target_line(out, "qdrant"),
+        _target_line(out, "arango"),
+        _target_line(out, "cursor"),
+    )
+    # Per-field assertions -- not aggregate counts -- so an inverted _flag_tag
+    # (one that swaps "(default)" and "(explicit)") cannot pass by coincidence.
+    assert "(explicit)" in qdrant and "(default)" not in qdrant
+    assert "(default)" in arango and "(explicit)" not in arango
+    assert "(default)" in cursor and "(explicit)" not in cursor
+
+
+def test_echo_ensure_index_targets_marks_default(capsys):
+    args = cli._build_parser().parse_args(["ensure-index"])
+
+    cli._echo_ensure_index_targets(args)
+    out = capsys.readouterr().out
+
+    assert "ensure-index — targets" in out
+    qdrant = _target_line(out, "qdrant")
+    assert args.qdrant_url in qdrant and "(default)" in qdrant
+    assert "collection=technology" in qdrant
+
+
+def test_echo_ensure_index_targets_marks_explicit(capsys):
+    qdrant_url = "http://custom:6333"
+    args = cli._build_parser().parse_args(
+        ["ensure-index", "--qdrant-url", qdrant_url, "--collection", "mine"]
+    )
+
+    cli._echo_ensure_index_targets(args)
+    out = capsys.readouterr().out
+
+    qdrant = _target_line(out, "qdrant")
+    assert qdrant_url in qdrant and "(explicit)" in qdrant
+    assert "collection=mine" in qdrant
+
+
+def test_preflight_prints_targets_even_when_unreachable(monkeypatch, tmp_path, capsys):
+    """The echo is most valuable exactly when the reachability check is about to fail --
+    it must fire before that check, not only on the happy path."""
+    import urllib.error
+
+    def fake_urlopen(*a, **k):
+        raise urllib.error.URLError("refused")
+
+    monkeypatch.setattr("consumer.cli.urllib.request.urlopen", fake_urlopen)
+    args = cli._build_parser().parse_args(["update"])
+    cli._resolve_paths(args, env={}, home=tmp_path, cwd=tmp_path)
+
+    with pytest.raises(SystemExit):
+        cli._preflight(args)
+
+    out = capsys.readouterr().out
+    assert "update — targets" in out
+    assert args.qdrant_url in _target_line(out, "qdrant")
