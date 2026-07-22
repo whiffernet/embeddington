@@ -165,10 +165,12 @@ def test_path_metrics_counts_no_path_as_a_failure_not_an_exclusion():
         {"from_id": "entities_v2/a", "to_id": "entities_v2/b"},
         {"from_id": "entities_v2/c", "to_id": "entities_v2/d"},
     ]
-    db = FakeDB([
-        [{"nodes": ["entities_v2/a", "entities_v2/x", "entities_v2/b"]}],
-        [],
-    ])
+    db = FakeDB(
+        [
+            [{"nodes": ["entities_v2/a", "entities_v2/x", "entities_v2/b"]}],
+            [],
+        ]
+    )
     out = M.path_metrics(db, pairs, hub_ids=set())
     assert out["pairs"] == 2
     assert out["paths_found"] == 1
@@ -183,10 +185,12 @@ def test_path_metrics_flags_intermediate_hubs_only():
         {"from_id": "entities_v2/a", "to_id": "entities_v2/b"},
         {"from_id": "entities_v2/hub", "to_id": "entities_v2/d"},
     ]
-    db = FakeDB([
-        [{"nodes": ["entities_v2/a", "entities_v2/hub", "entities_v2/b"]}],
-        [{"nodes": ["entities_v2/hub", "entities_v2/y", "entities_v2/d"]}],
-    ])
+    db = FakeDB(
+        [
+            [{"nodes": ["entities_v2/a", "entities_v2/hub", "entities_v2/b"]}],
+            [{"nodes": ["entities_v2/hub", "entities_v2/y", "entities_v2/d"]}],
+        ]
+    )
     out = M.path_metrics(db, pairs, hub_ids={"entities_v2/hub"})
     assert out["hub_pass_through"] == 1
     assert out["hub_pass_through_rate"] == 0.5
