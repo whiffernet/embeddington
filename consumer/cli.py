@@ -19,6 +19,82 @@ from consumer import lexical_index, release_client, restore_ops, state_paths, up
 from consumer.fetcher import HttpFetcher
 from embeddington import SchemaVersionError
 
+PROG = "embeddington-consume"
+
+
+def _subparser(name):
+    """Return one subcommand's own ``ArgumentParser``.
+
+    Used to compare resolved args against argparse's own defaults, so target-echo
+    code isn't hand-maintaining a second copy of the default strings already
+    declared in ``_build_parser``.
+
+    Args:
+        name: The subcommand name (e.g. ``"update"`` or ``"ensure-index"``).
+
+    Returns:
+        The subcommand's ``ArgumentParser``.
+    """
+    parser = _build_parser()
+    sub_action = next(
+        a
+        for a in parser._subparsers._group_actions
+        if a.dest == "command"  # noqa: SLF001
+    )
+    return sub_action.choices[name]
+
+
+def _flag_tag(value, default):
+    """Tag a resolved value as having come from its argparse default or an explicit flag.
+
+    Args:
+        value: The value in play (from the parsed/resolved args).
+        default: The value argparse would have used had the flag been omitted.
+
+    Returns:
+        ``"(default)"`` or ``"(explicit)"``.
+    """
+    return "(default)" if value == default else "(explicit)"
+
+
+def _echo_update_targets(args):
+    """Print what `update` is about to write to, before the reachability checks run.
+
+    Exporting ``ARANGO_ROOT_PASSWORD`` configures only the Arango *password* -- every
+    URL, the collection, the db/user, and the cursor are flag-only, and most of them
+    default to the same local stack. That's easy to miss: the MCP server in this repo
+    DOES read ``QDRANT_URL``/``ARANGO_URL`` from the environment, so the habit carries
+    over here even though the CLI never reads those vars. This is the one line that
+    shows a stranger exactly what's about to be written, while it's still just a print.
+
+    Args:
+        args: The parsed, path-resolved CLI namespace (post ``_resolve_paths``).
+    """
+    up = _subparser("update")
+    cursor_tag = "(default)" if getattr(args, "cursor_was_default", True) else "(explicit)"
+    print(f"{PROG} update — targets")
+    print(
+        f"  qdrant   {args.qdrant_url} {_flag_tag(args.qdrant_url, up.get_default('qdrant_url'))}"
+        f"   collection={args.collection}"
+    )
+    print(
+        f"  arango   {args.arango_url} {_flag_tag(args.arango_url, up.get_default('arango_url'))}"
+        f"   db={args.arango_db} user={args.arango_user}"
+    )
+    print(f"  cursor   {args.cursor} {cursor_tag}")
+
+
+def _echo_ensure_index_targets(args):
+    """Print the Qdrant target `ensure-index` is about to write to.
+
+    Args:
+        args: The parsed CLI namespace for ``ensure-index``.
+    """
+    ei = _subparser("ensure-index")
+    tag = _flag_tag(args.qdrant_url, ei.get_default("qdrant_url"))
+    print(f"{PROG} ensure-index — targets")
+    print(f"  qdrant   {args.qdrant_url} {tag}   collection={args.collection}")
+
 
 def _preflight(args):
     """Fail fast -- before any download -- on the two mistakes strangers make.
@@ -35,6 +111,7 @@ def _preflight(args):
         SystemExit: With an actionable message when Qdrant is unreachable,
             ArangoDB is unreachable, or the Arango credentials are rejected.
     """
+    _echo_update_targets(args)
     try:
         with urllib.request.urlopen(f"{args.qdrant_url}/collections", timeout=10):
             pass
@@ -89,6 +166,7 @@ def _resolve_paths(args, env=None, home=None, cwd=None, install_root_dir=None):
     home = Path.home() if home is None else Path(home)
     cwd = Path.cwd() if cwd is None else Path(cwd)
 
+    args.cursor_was_default = args.cursor is None
     args.cursor = Path(args.cursor) if args.cursor else state_paths.default_cursor_path(env, home)
     args.work_dir = (
         Path(args.work_dir) if args.work_dir else state_paths.default_work_dir(env, home)
@@ -165,6 +243,7 @@ def _cmd_ensure_index(args):
     Returns:
         0 if the index reached "ready", 1 for any degraded status.
     """
+    _echo_ensure_index_targets(args)
     status = lexical_index.ensure_chunk_text_index(args.qdrant_url, args.collection)
     print(f"chunk_text index: {status}")
     return 0 if status == "ready" else 1
@@ -214,7 +293,7 @@ def _build_parser():
     Returns:
         The configured ``argparse.ArgumentParser``.
     """
-    parser = argparse.ArgumentParser(prog="embeddington-consume")
+    parser = argparse.ArgumentParser(prog=PROG)
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_up = sub.add_parser("update", help="pull and apply the latest diffs")

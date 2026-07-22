@@ -431,3 +431,100 @@ def test_ensure_index_help_documents_the_exit_codes():
     help_text = sub_action.choices["ensure-index"].format_help()
 
     assert "0" in help_text and "ready" in help_text
+
+
+# --- target echo: pre-flight visibility into what a write command touches --------
+
+
+def test_echo_update_targets_marks_defaults_when_nothing_was_passed(tmp_path, capsys):
+    args = cli._build_parser().parse_args(["update"])
+    cli._resolve_paths(args, env={}, home=tmp_path, cwd=tmp_path)
+
+    cli._echo_update_targets(args)
+    out = capsys.readouterr().out
+
+    assert out.count("(default)") == 3, "qdrant, arango, and cursor are all unset here"
+    assert "(explicit)" not in out
+    assert "http://localhost:6333" in out and "collection=technology" in out
+    assert "http://localhost:8529" in out and "db=technology_kg user=root" in out
+    assert str(args.cursor) in out
+
+
+def test_echo_update_targets_marks_explicit_flags(tmp_path, capsys):
+    cursor = tmp_path / "mine" / ".cursor"
+    args = cli._build_parser().parse_args(
+        [
+            "update",
+            "--qdrant-url",
+            "http://q.example:6333",
+            "--arango-url",
+            "http://a.example:8529",
+            "--cursor",
+            str(cursor),
+        ]
+    )
+    cli._resolve_paths(args, env={}, home=tmp_path, cwd=tmp_path)
+
+    cli._echo_update_targets(args)
+    out = capsys.readouterr().out
+
+    assert out.count("(explicit)") == 3
+    assert "(default)" not in out
+    assert "http://q.example:6333" in out
+    assert "http://a.example:8529" in out
+    assert str(cursor) in out
+
+
+def test_echo_update_targets_treats_each_flag_independently(tmp_path, capsys):
+    """Passing only --qdrant-url must not mark arango or cursor as explicit too."""
+    args = cli._build_parser().parse_args(["update", "--qdrant-url", "http://q.example:6333"])
+    cli._resolve_paths(args, env={}, home=tmp_path, cwd=tmp_path)
+
+    cli._echo_update_targets(args)
+    out = capsys.readouterr().out
+
+    assert out.count("(explicit)") == 1
+    assert out.count("(default)") == 2
+
+
+def test_echo_ensure_index_targets_marks_default(capsys):
+    args = cli._build_parser().parse_args(["ensure-index"])
+
+    cli._echo_ensure_index_targets(args)
+    out = capsys.readouterr().out
+
+    assert "ensure-index — targets" in out
+    assert "http://localhost:6333" in out and "(default)" in out
+    assert "collection=technology" in out
+
+
+def test_echo_ensure_index_targets_marks_explicit(capsys):
+    args = cli._build_parser().parse_args(
+        ["ensure-index", "--qdrant-url", "http://custom:6333", "--collection", "mine"]
+    )
+
+    cli._echo_ensure_index_targets(args)
+    out = capsys.readouterr().out
+
+    assert "http://custom:6333" in out and "(explicit)" in out
+    assert "collection=mine" in out
+
+
+def test_preflight_prints_targets_even_when_unreachable(monkeypatch, tmp_path, capsys):
+    """The echo is most valuable exactly when the reachability check is about to fail --
+    it must fire before that check, not only on the happy path."""
+    import urllib.error
+
+    def fake_urlopen(*a, **k):
+        raise urllib.error.URLError("refused")
+
+    monkeypatch.setattr("consumer.cli.urllib.request.urlopen", fake_urlopen)
+    args = cli._build_parser().parse_args(["update"])
+    cli._resolve_paths(args, env={}, home=tmp_path, cwd=tmp_path)
+
+    with pytest.raises(SystemExit):
+        cli._preflight(args)
+
+    out = capsys.readouterr().out
+    assert "update — targets" in out
+    assert "http://localhost:6333" in out
