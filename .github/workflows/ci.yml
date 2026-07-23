@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v6.3.0
         with: { python-version: "3.12" }
       - run: pip install -e ".[dev]"
       - run: pytest --cov=embeddington --cov-report=term-missing -q -m "not integration"
@@ -30,7 +30,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v6.3.0
         with: { python-version: "3.12" }
       - run: pip install -r requirements-dev.txt
         working-directory: mcp
@@ -72,7 +72,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v6.3.0
         with: { python-version: "3.12" }
       - run: pip install -e ".[dev]"
       - run: mypy src/embeddington/
@@ -82,7 +82,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v6.3.0
         with: { python-version: "3.12" }
       - run: pip install semgrep
       - run: semgrep scan --config p/python --config p/secrets --error --metrics off .
