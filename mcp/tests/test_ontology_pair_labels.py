@@ -161,7 +161,7 @@ def test_finalize_stage_merges_auto_and_escalated_and_computes_rate():
         {"n": 2, "duplicate_of": None, "from_id": "c", "to_id": "d"},
         {"n": 3, "duplicate_of": None, "from_id": "e", "to_id": "f"},
     ]
-    escalated_labels = {2: "trivial"}
+    escalated_labels = {2: {"label": "trivial", "low_confidence": False}}
 
     snapshot = O.finalize_stage(scored_pairs, extrinsic_pairs, escalated_labels)
 
@@ -176,6 +176,7 @@ def test_finalize_stage_merges_auto_and_escalated_and_computes_rate():
     assert snapshot["total_scored"] == 2  # excludes pre_fix_no_path from the rate denominator
     assert snapshot["meaningful_path_rate"] == pytest.approx(1 / 2)
     assert snapshot["pre_fix_no_path_count"] == 1
+    assert snapshot["noise_floor_comparable_count"] == 0
 
 
 def test_finalize_stage_raises_on_unresolved_escalation():
@@ -185,3 +186,45 @@ def test_finalize_stage_raises_on_unresolved_escalation():
     extrinsic_pairs = [{"n": 1, "duplicate_of": None, "from_id": "a", "to_id": "b"}]
     with pytest.raises(ValueError, match="unresolved escalation"):
         O.finalize_stage(scored_pairs, extrinsic_pairs, escalated_labels={})
+
+
+def test_finalize_stage_marks_low_confidence_escalations_as_judge_fallback():
+    scored_pairs = [
+        {"n": 1, "status": "escalate", "label": None, "no_path": False},
+        {"n": 2, "status": "escalate", "label": None, "no_path": False},
+    ]
+    extrinsic_pairs = [
+        {"n": 1, "duplicate_of": None, "from_id": "a", "to_id": "b"},
+        {"n": 2, "duplicate_of": None, "from_id": "c", "to_id": "d"},
+    ]
+    escalated_labels = {
+        1: {"label": "trivial", "low_confidence": True},
+        2: {"label": "meaningful", "low_confidence": False},
+    }
+
+    snapshot = O.finalize_stage(scored_pairs, extrinsic_pairs, escalated_labels)
+
+    by_n = {p["n"]: p for p in snapshot["pairs"]}
+    assert by_n[1]["source"] == "judge_fallback"
+    assert by_n[2]["source"] == "human"
+
+
+def test_finalize_stage_noise_floor_comparable_count_matches_flip_rate_denominator():
+    scored_pairs = [
+        {"n": 1, "status": "auto", "label": "meaningful", "no_path": False},
+        {"n": 2, "status": "auto", "label": "trivial", "no_path": False},
+        {"n": 3, "status": "auto", "label": "meaningful", "no_path": False},
+        {"n": 4, "status": "pre_fix_no_path", "label": None, "no_path": True},
+    ]
+    extrinsic_pairs = [
+        {"n": 1, "duplicate_of": None, "from_id": "a", "to_id": "b"},
+        {"n": 2, "duplicate_of": 1, "from_id": "c", "to_id": "d"},
+        {"n": 3, "duplicate_of": None, "from_id": "e", "to_id": "f"},
+        {"n": 4, "duplicate_of": 3, "from_id": "g", "to_id": "h"},
+    ]
+
+    snapshot = O.finalize_stage(scored_pairs, extrinsic_pairs, escalated_labels={})
+
+    # Pair 2 is comparable to pair 1 (both labeled); pair 4 is pre_fix_no_path
+    # so it has no label and is excluded -- only one comparable duplicate.
+    assert snapshot["noise_floor_comparable_count"] == 1

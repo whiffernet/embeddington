@@ -116,9 +116,12 @@ EMBED_CONFIDENT_BAD_PCT = 0.60  # percentile < this -> "bad" vote (else "abstain
 
 # Minimum consensus-zone concordance against Erik's labels required before
 # the pipeline is allowed to auto-label anything. Measured at 0.909 (10/11)
-# on the seed set (mcp/tests/ontology/seed-validation.json) — see
-# test_ontology_consensus.py's regression tripwire. If a future re-validation
-# (prompt change, model swap) drops below this bar, auto-labeling must stop
-# and every pair in the frozen set escalates — spec §4/M2 is explicit this is
-# a real possible outcome, not a formality.
+# BINARY concordance (meaningful vs not-meaningful) on the seed set
+# (mcp/tests/ontology/seed-validation.json) — see test_ontology_consensus.py's
+# regression tripwire. This is NOT exact 3-class label concordance, which was
+# only 5/11 on the same data; applying this bar to exact-label concordance in
+# a future re-validation would wrongly read as a regression. If a future
+# re-validation (prompt change, model swap) drops below this bar, auto-labeling
+# must stop and every pair in the frozen set escalates — spec §4/M2 is
+# explicit this is a real possible outcome, not a formality.
 CONCORDANCE_BAR = 0.85

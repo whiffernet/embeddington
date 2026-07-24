@@ -139,3 +139,17 @@ async def test_score_pairs_chunks_calls_under_the_endpoint_request_limit():
     assert sorted(all_texts) == sorted(set(all_texts))  # no text embedded twice
     assert set(all_texts) == set(pool_names)
     assert all(len(call) <= 100 for call in calls)
+
+
+@pytest.mark.asyncio
+async def test_score_pairs_raises_when_embed_batch_returns_too_few_vectors():
+    class _ShortEmbed:
+        """Fake client that silently drops a vector, simulating a server bug."""
+
+        async def embed_batch(self, texts):
+            return [[0.0] * 1024 for _ in texts[:-1]]
+
+    pairs = [{"n": 1, "from_name": "A", "to_name": "B"}]
+    pool_names = ["A", "B", "C"]
+    with pytest.raises(ValueError, match="embed_batch returned"):
+        await S.score_pairs(pairs, pool_names, _ShortEmbed())

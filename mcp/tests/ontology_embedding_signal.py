@@ -85,9 +85,10 @@ async def score_pairs(
 ) -> dict[int, dict]:
     """Score every pair's endpoint-name similarity against a population baseline.
 
-    The population baseline is the full set of distinct entity names already
-    present in the frozen pair pool (ontology_pairs.py's pairs.json) — no
-    fresh Arango query, so this function needs no database access at all.
+    The population baseline is whatever ``pool_names`` the caller supplies —
+    this function is agnostic to where those names were sourced from and does
+    no database access itself; see the caller (``_score_stage`` in
+    ontology_pair_labels.py) for what it actually passes in a given run.
     Every distinct text (pair endpoints + population names) is embedded
     exactly once, in as few batch calls as the endpoint's own request-size
     cap allows (the real `/embed` endpoint rejects more than 100 texts per
@@ -113,6 +114,8 @@ async def score_pairs(
     for i in range(0, len(distinct_texts), _EMBED_REQUEST_LIMIT):
         chunk = distinct_texts[i : i + _EMBED_REQUEST_LIMIT]
         vectors = await client.embed_batch(chunk)
+        if len(vectors) != len(chunk):
+            raise ValueError(f"embed_batch returned {len(vectors)} vectors for {len(chunk)} texts")
         vec_by_text.update(zip(chunk, vectors))
 
     pool_vectors = [vec_by_text[name] for name in pool_names]

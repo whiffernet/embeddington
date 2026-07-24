@@ -147,22 +147,29 @@ def noise_floor_flip_rate(
 
 
 def finalize_stage(
-    scored_pairs: list[dict], extrinsic_pairs: list[dict], escalated_labels: dict[int, str]
+    scored_pairs: list[dict],
+    extrinsic_pairs: list[dict],
+    escalated_labels: dict[int, dict],
 ) -> dict:
     """Merge auto + escalated labels into the committed pre-fix reference snapshot.
 
     Args:
         scored_pairs: build_score()["pairs"] output.
         extrinsic_pairs: The frozen extrinsic set (for duplicate_of lookups).
-        escalated_labels: Resolved labels for every ``n`` that build_score()
-            marked "escalate" — from the bounded human A/B session, or (for
-            any pair the session did not reach) the judge's own label, which
-            the caller must flag as low-confidence in the artifact separately.
+        escalated_labels: Resolved entries for every ``n`` that build_score()
+            marked "escalate", keyed by ``n``. Each value is a dict
+            ``{"label": str, "low_confidence": bool}`` — ``label`` is the
+            resolved value (from the bounded human A/B session, or, for any
+            pair the session did not reach, the judge's own label); the
+            caller flags the latter case with ``low_confidence=True`` so this
+            stage can record accurate provenance rather than stamping every
+            escalated pair as human-reviewed (Task 14 Step 4).
 
     Returns:
         The full snapshot dict: ``pairs`` (per-pair n/status/label/source/no_path),
         ``total_scored``, ``meaningful_path_rate``, ``pre_fix_no_path_count``,
-        ``noise_floor_flip_rate``.
+        ``noise_floor_flip_rate``, ``noise_floor_comparable_count`` (the
+        number of duplicate pairs actually used in the flip-rate denominator).
 
     Raises:
         ValueError: If any "escalate"-status pair has no entry in escalated_labels.
@@ -182,10 +189,12 @@ def finalize_stage(
         else:  # escalate
             if n not in escalated_labels:
                 raise ValueError(f"unresolved escalation for n={n}")
+            resolved = escalated_labels[n]
+            source = "judge_fallback" if resolved.get("low_confidence") else "human"
             final_pairs.append(
-                {"n": n, "status": "escalate", "label": escalated_labels[n], "source": "human"}
+                {"n": n, "status": "escalate", "label": resolved["label"], "source": source}
             )
-            final_labels[n] = escalated_labels[n]
+            final_labels[n] = resolved["label"]
 
     scored_labels = {p["n"]: p["label"] for p in final_pairs if p["label"] is not None}
     meaningful_count = sum(1 for label in scored_labels.values() if label == "meaningful")
@@ -196,10 +205,42 @@ def finalize_stage(
         "meaningful_path_rate": meaningful_count / len(scored_labels) if scored_labels else 0.0,
         "pre_fix_no_path_count": sum(1 for p in final_pairs if p["status"] == "pre_fix_no_path"),
         "noise_floor_flip_rate": noise_floor_flip_rate(extrinsic_pairs, final_labels),
+        "noise_floor_comparable_count": _noise_floor_comparable_count(
+            extrinsic_pairs, final_labels
+        ),
     }
 
 
+def _noise_floor_comparable_count(
+    extrinsic_pairs: list[dict], final_labels: dict[int, str | None]
+) -> int:
+    """Count duplicate pairs with a comparable label on both sides.
+
+    Uses the same comparability rule as noise_floor_flip_rate (both the
+    duplicate and its original must have a non-None final label), so this is
+    the denominator that rate already divides by, exposed as its own field.
+
+    Args:
+        extrinsic_pairs: The frozen extrinsic set (carries ``duplicate_of``).
+        final_labels: Pair ``n`` -> final label (None for pre_fix_no_path pairs).
+
+    Returns:
+        The number of duplicate pairs where both sides have a label.
+    """
+    count = 0
+    for pair in extrinsic_pairs:
+        if pair["duplicate_of"] is None:
+            continue
+        original_label = final_labels.get(pair["duplicate_of"])
+        dupe_label = final_labels.get(pair["n"])
+        if original_label is None or dupe_label is None:
+            continue
+        count += 1
+    return count
+
+
 def main() -> None:
+    """Orchestrate the extrinsic-floor pipeline stages."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("stage", choices=["select", "fetch-paths", "score", "finalize"])
     parser.add_argument("--write", action="store_true")
@@ -222,7 +263,7 @@ def main() -> None:
         return
 
 
-def _load_json(path: Path) -> dict:
+def _load_json(path: Path) -> Any:
     return json.loads(path.read_text())
 
 
@@ -322,10 +363,13 @@ def _finalize_stage_cli(write: bool) -> None:
     scored = _load_json(ONTOLOGY_DIR / "scored-pairs.json")
 
     escalation_resolution_path = ONTOLOGY_DIR / "escalation_output.json"
-    escalated_labels: dict[int, str] = {}
+    escalated_labels: dict[int, dict] = {}
     if escalation_resolution_path.exists():
         for row in _load_json(escalation_resolution_path):
-            escalated_labels[row["n"]] = row["label"]
+            escalated_labels[row["n"]] = {
+                "label": row["label"],
+                "low_confidence": row.get("low_confidence", False),
+            }
 
     snapshot = finalize_stage(scored["pairs"], extrinsic["pairs"], escalated_labels)
     snapshot["extrinsic_set_fingerprint"] = extrinsic["fingerprint"]
