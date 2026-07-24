@@ -88,3 +88,37 @@ def normalize_release(name: str) -> str:
         The normalized comparison key.
     """
     return _NON_ALNUM_RELEASE.sub("", name.casefold())
+
+
+# --- Extrinsic floor (spec §4/M2, revised 2026-07-22) ---------------------
+# Size of the frozen extrinsic pair set, INCLUDING the blind noise-floor
+# duplicates below. Drawn from the already-frozen, fingerprinted PAIR_SET_SIZE
+# pool (pairs.json) rather than a fresh query — no new sampling decision, no
+# new fingerprint-provenance question.
+EXTRINSIC_SET_SIZE = 200
+
+# How many of the EXTRINSIC_SET_SIZE entries are blind duplicates of another
+# entry in the same set, used to measure the judge's own labeling noise floor
+# (spec §4/M2, "Noise floor"). The judge is never told which entries repeat.
+EXTRINSIC_DUPLICATE_COUNT = 10
+
+# /embed?index= routing — must match the encoder that built the `technology`
+# Qdrant collection (config.py:ALLOWED_QDRANT_COLLECTIONS), or similarity is
+# garbage.
+EMBED_INDEX = "technology"
+
+# Embedding-signal confidence bands, validated against Erik's 30-pair v2
+# labels (spec §2.7): consensus-zone auto-labeling at these bands matched his
+# verdict 10/11 = 91%, clearing CONCORDANCE_BAR below. Not tuned on this run —
+# they are the bands the validation was measured at.
+EMBED_CONFIDENT_GOOD_PCT = 0.90  # percentile >= this -> "good" vote
+EMBED_CONFIDENT_BAD_PCT = 0.60  # percentile < this -> "bad" vote (else "abstain")
+
+# Minimum consensus-zone concordance against Erik's labels required before
+# the pipeline is allowed to auto-label anything. Measured at 0.909 (10/11)
+# on the seed set (mcp/tests/ontology/seed-validation.json) — see
+# test_ontology_consensus.py's regression tripwire. If a future re-validation
+# (prompt change, model swap) drops below this bar, auto-labeling must stop
+# and every pair in the frozen set escalates — spec §4/M2 is explicit this is
+# a real possible outcome, not a formality.
+CONCORDANCE_BAR = 0.85
