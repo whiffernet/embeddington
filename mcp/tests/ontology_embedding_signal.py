@@ -75,6 +75,11 @@ def embedding_vote(pct: float) -> str:
     return "abstain"
 
 
+# The /embed endpoint's own cap, hit running this pipeline live 2026-07-24
+# ("Maximum 100 texts per request") -- not a tunable, a fixed server limit.
+_EMBED_REQUEST_LIMIT = 100
+
+
 async def score_pairs(
     pairs: list[dict], pool_names: list[str], client: "EmbeddingClient"
 ) -> dict[int, dict]:
@@ -83,9 +88,11 @@ async def score_pairs(
     The population baseline is the full set of distinct entity names already
     present in the frozen pair pool (ontology_pairs.py's pairs.json) — no
     fresh Arango query, so this function needs no database access at all.
-    Every distinct text (pair endpoints + population names) is embedded in
-    exactly one batch call, then population-vs-population cosines are computed
-    once and reused for every pair's percentile rank.
+    Every distinct text (pair endpoints + population names) is embedded
+    exactly once, in as few batch calls as the endpoint's own request-size
+    cap allows (the real `/embed` endpoint rejects more than 100 texts per
+    request). Population-vs-population cosines are computed once and reused
+    for every pair's percentile rank.
 
     Args:
         pairs: Pair dicts each carrying ``n``, ``from_name``, ``to_name``.
@@ -102,8 +109,11 @@ async def score_pairs(
         pair_texts.append(pair["to_name"])
 
     distinct_texts = sorted(set(pair_texts) | set(pool_names))
-    vectors = await client.embed_batch(distinct_texts)
-    vec_by_text = dict(zip(distinct_texts, vectors))
+    vec_by_text: dict[str, list[float]] = {}
+    for i in range(0, len(distinct_texts), _EMBED_REQUEST_LIMIT):
+        chunk = distinct_texts[i : i + _EMBED_REQUEST_LIMIT]
+        vectors = await client.embed_batch(chunk)
+        vec_by_text.update(zip(chunk, vectors))
 
     pool_vectors = [vec_by_text[name] for name in pool_names]
     population_cosines = [

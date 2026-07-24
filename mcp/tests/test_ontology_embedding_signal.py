@@ -114,3 +114,28 @@ async def test_score_pairs_embeds_each_distinct_text_once():
     # "A" and "B" overlap between the pair and the pool -> 3 distinct texts).
     assert len(calls) == 1
     assert sorted(set(calls[0])) == ["A", "B", "C"]
+
+
+@pytest.mark.asyncio
+async def test_score_pairs_chunks_calls_under_the_endpoint_request_limit():
+    calls = []
+
+    class _CountingEmbed(_FixedVectorEmbed):
+        async def embed_batch(self, texts):
+            calls.append(list(texts))
+            return await super().embed_batch(texts)
+
+    # 150 distinct pool names forces 2 chunks under a 100-text-per-request cap
+    # -- discovered 2026-07-24 running this pipeline live: the real /embed
+    # endpoint rejects a single request over 100 texts ("Maximum 100 texts
+    # per request"), and this repo's 190-pair extrinsic set produces 180
+    # distinct texts, so a real run always needs chunking, not just large
+    # future sets.
+    pool_names = [f"Name{i}" for i in range(150)]
+    pairs = [{"n": 1, "from_name": "Name0", "to_name": "Name1"}]
+    await S.score_pairs(pairs, pool_names, _CountingEmbed())
+    assert len(calls) == 2
+    all_texts = [t for call in calls for t in call]
+    assert sorted(all_texts) == sorted(set(all_texts))  # no text embedded twice
+    assert set(all_texts) == set(pool_names)
+    assert all(len(call) <= 100 for call in calls)
