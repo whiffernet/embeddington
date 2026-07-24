@@ -13,9 +13,12 @@ python-dotenv, httpx); 1024-dim cosine similarity needs no vector library.
 """
 
 import math
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 import ontology_frozen as F
+
+if TYPE_CHECKING:
+    from embedding_client import EmbeddingClient
 
 
 def cosine(a: Sequence[float], b: Sequence[float]) -> float:
@@ -70,3 +73,49 @@ def embedding_vote(pct: float) -> str:
     if pct < F.EMBED_CONFIDENT_BAD_PCT:
         return "bad"
     return "abstain"
+
+
+async def score_pairs(
+    pairs: list[dict], pool_names: list[str], client: "EmbeddingClient"
+) -> dict[int, dict]:
+    """Score every pair's endpoint-name similarity against a population baseline.
+
+    The population baseline is the full set of distinct entity names already
+    present in the frozen pair pool (ontology_pairs.py's pairs.json) — no
+    fresh Arango query, so this function needs no database access at all.
+    Every distinct text (pair endpoints + population names) is embedded in
+    exactly one batch call, then population-vs-population cosines are computed
+    once and reused for every pair's percentile rank.
+
+    Args:
+        pairs: Pair dicts each carrying ``n``, ``from_name``, ``to_name``.
+        pool_names: Distinct entity names forming the population baseline.
+        client: An EmbeddingClient (or compatible fake) with async embed_batch.
+
+    Returns:
+        Dict keyed by pair ``n``, each value ``{"sim": float, "pct": float,
+        "vote": str}``.
+    """
+    pair_texts: list[str] = []
+    for pair in pairs:
+        pair_texts.append(pair["from_name"])
+        pair_texts.append(pair["to_name"])
+
+    distinct_texts = sorted(set(pair_texts) | set(pool_names))
+    vectors = await client.embed_batch(distinct_texts)
+    vec_by_text = dict(zip(distinct_texts, vectors))
+
+    pool_vectors = [vec_by_text[name] for name in pool_names]
+    population_cosines = [
+        cosine(pool_vectors[i], pool_vectors[j])
+        for i in range(len(pool_vectors))
+        for j in range(len(pool_vectors))
+        if i != j
+    ]
+
+    result: dict[int, dict] = {}
+    for pair in pairs:
+        sim = cosine(vec_by_text[pair["from_name"]], vec_by_text[pair["to_name"]])
+        pct = percentile_rank(sim, population_cosines)
+        result[pair["n"]] = {"sim": sim, "pct": pct, "vote": embedding_vote(pct)}
+    return result

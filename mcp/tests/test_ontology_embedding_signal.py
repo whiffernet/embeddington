@@ -51,3 +51,66 @@ def test_vote_abstain_in_the_ambiguous_middle():
     assert S.embedding_vote(0.60) == "abstain"
     assert S.embedding_vote(0.75) == "abstain"
     assert S.embedding_vote(0.899999) == "abstain"
+
+
+class _FixedVectorEmbed:
+    """Fake EmbeddingClient returning a deterministic vector per text.
+
+    Maps each distinct input text to a fixed pseudo-random-but-deterministic
+    1024-dim vector (seeded by the text's own hash), so cosine similarity
+    between two DIFFERENT texts is stable across runs without needing a real
+    embedding model.
+    """
+
+    def __init__(self):
+        self._cache: dict[str, list[float]] = {}
+
+    def _vector_for(self, text: str) -> list[float]:
+        if text not in self._cache:
+            seed = sum(ord(c) for c in text)
+            self._cache[text] = [((seed * (i + 1)) % 97) / 97.0 for i in range(1024)]
+        return self._cache[text]
+
+    async def embed_batch(self, texts):
+        return [self._vector_for(t) for t in texts]
+
+
+@pytest.mark.asyncio
+async def test_score_pairs_returns_one_entry_per_pair():
+    pairs = [
+        {"n": 1, "from_name": "Incident Management", "to_name": "incident table"},
+        {"n": 2, "from_name": "admin role", "to_name": "unrelated widget"},
+    ]
+    pool_names = ["Incident Management", "incident table", "admin role", "unrelated widget", "X"]
+    result = await S.score_pairs(pairs, pool_names, _FixedVectorEmbed())
+    assert set(result) == {1, 2}
+    for entry in result.values():
+        assert -1.0 <= entry["sim"] <= 1.0
+        assert 0.0 <= entry["pct"] <= 1.0
+        assert entry["vote"] in ("good", "bad", "abstain")
+
+
+@pytest.mark.asyncio
+async def test_score_pairs_vote_matches_the_frozen_thresholds():
+    pairs = [{"n": 1, "from_name": "Incident Management", "to_name": "incident table"}]
+    pool_names = ["Incident Management", "incident table"]
+    result = await S.score_pairs(pairs, pool_names, _FixedVectorEmbed())
+    assert result[1]["vote"] == S.embedding_vote(result[1]["pct"])
+
+
+@pytest.mark.asyncio
+async def test_score_pairs_embeds_each_distinct_text_once():
+    calls = []
+
+    class _CountingEmbed(_FixedVectorEmbed):
+        async def embed_batch(self, texts):
+            calls.append(list(texts))
+            return await super().embed_batch(texts)
+
+    pairs = [{"n": 1, "from_name": "A", "to_name": "B"}]
+    pool_names = ["A", "B", "C"]
+    await S.score_pairs(pairs, pool_names, _CountingEmbed())
+    # One batch call covering every distinct text (2 pair endpoints + 3 pool names,
+    # "A" and "B" overlap between the pair and the pool -> 3 distinct texts).
+    assert len(calls) == 1
+    assert sorted(set(calls[0])) == ["A", "B", "C"]
