@@ -117,3 +117,71 @@ def test_select_stage_writes_the_frozen_extrinsic_pairs_artifact(tmp_path, monke
     written = json.loads((tmp_path / "extrinsic-pairs.json").read_text())
     assert written["fingerprint"] == subset["fingerprint"]
     assert len(written["pairs"]) == 200
+
+
+def test_noise_floor_flip_rate_all_duplicates_agree():
+    extrinsic_pairs = [
+        {"n": 1, "duplicate_of": None},
+        {"n": 2, "duplicate_of": 1},
+    ]
+    final_labels = {1: "meaningful", 2: "meaningful"}
+    assert O.noise_floor_flip_rate(extrinsic_pairs, final_labels) == 0.0
+
+
+def test_noise_floor_flip_rate_counts_disagreements():
+    extrinsic_pairs = [
+        {"n": 1, "duplicate_of": None},
+        {"n": 2, "duplicate_of": 1},
+        {"n": 3, "duplicate_of": None},
+        {"n": 4, "duplicate_of": 3},
+    ]
+    final_labels = {1: "meaningful", 2: "trivial", 3: "none", 4: "none"}
+    import pytest
+
+    assert O.noise_floor_flip_rate(extrinsic_pairs, final_labels) == pytest.approx(0.5)
+
+
+def test_noise_floor_flip_rate_skips_pairs_missing_a_label():
+    # e.g. one side of the duplicate pair is pre_fix_no_path (label=None)
+    extrinsic_pairs = [{"n": 1, "duplicate_of": None}, {"n": 2, "duplicate_of": 1}]
+    final_labels = {1: "meaningful", 2: None}
+    assert O.noise_floor_flip_rate(extrinsic_pairs, final_labels) == 0.0
+
+
+def test_finalize_stage_merges_auto_and_escalated_and_computes_rate():
+    import pytest
+
+    scored_pairs = [
+        {"n": 1, "status": "auto", "label": "meaningful", "no_path": False},
+        {"n": 2, "status": "escalate", "label": None, "no_path": False},
+        {"n": 3, "status": "pre_fix_no_path", "label": None, "no_path": True},
+    ]
+    extrinsic_pairs = [
+        {"n": 1, "duplicate_of": None, "from_id": "a", "to_id": "b"},
+        {"n": 2, "duplicate_of": None, "from_id": "c", "to_id": "d"},
+        {"n": 3, "duplicate_of": None, "from_id": "e", "to_id": "f"},
+    ]
+    escalated_labels = {2: "trivial"}
+
+    snapshot = O.finalize_stage(scored_pairs, extrinsic_pairs, escalated_labels)
+
+    by_n = {p["n"]: p for p in snapshot["pairs"]}
+    assert by_n[1]["label"] == "meaningful"
+    assert by_n[1]["source"] == "consensus"
+    assert by_n[2]["label"] == "trivial"
+    assert by_n[2]["source"] == "human"
+    assert by_n[3]["label"] is None
+    assert by_n[3]["status"] == "pre_fix_no_path"
+
+    assert snapshot["total_scored"] == 2  # excludes pre_fix_no_path from the rate denominator
+    assert snapshot["meaningful_path_rate"] == pytest.approx(1 / 2)
+    assert snapshot["pre_fix_no_path_count"] == 1
+
+
+def test_finalize_stage_raises_on_unresolved_escalation():
+    import pytest
+
+    scored_pairs = [{"n": 1, "status": "escalate", "label": None, "no_path": False}]
+    extrinsic_pairs = [{"n": 1, "duplicate_of": None, "from_id": "a", "to_id": "b"}]
+    with pytest.raises(ValueError, match="unresolved escalation"):
+        O.finalize_stage(scored_pairs, extrinsic_pairs, escalated_labels={})
