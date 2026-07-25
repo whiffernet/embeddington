@@ -1,0 +1,597 @@
+[
+  {
+    "n": 2,
+    "from_name": "360\u00b0 Relationship Visualization",
+    "to_name": "15-minute forecasting",
+    "path_text": "360\u00b0 Relationship Visualization (Module)  --[CONTAINS]-->  Governance, Risk, and Compliance (Product)  --[CONTAINS]-->  Configurable Workspace (Feature)  --[CONTAINS]-->  Customer Service Management (Product)  --[CONTAINS]-->  15-minute forecasting (Feature)",
+    "judge_label": "none"
+  },
+  {
+    "n": 7,
+    "from_name": "Access Analyzer",
+    "to_name": "ACC Data Inputs",
+    "path_text": "Access Analyzer (Product)  --[REQUIRES_ROLE]-->  evt_mgmt_admin (Role)  --[REQUIRES_ROLE]-->  ACC Data Inputs (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 9,
+    "from_name": "360\u00b0 relationship view",
+    "to_name": "Access Analyzer",
+    "path_text": "360\u00b0 relationship view (Feature)  --[ENHANCED_BY]-->  360\u00b0 Relationship Visualization (Feature)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Access Analyzer (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 10,
+    "from_name": "Access Control",
+    "to_name": "ACC Log Analytics",
+    "path_text": "Access Control (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Agent Client Collector (Product)  --[CONTAINS]-->  ACC Log Analytics (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 13,
+    "from_name": "Access Management",
+    "to_name": "ACC Log Policies",
+    "path_text": "Access Management (Product)  --[INTRODUCED_IN]-->  Xanadu (Release)  --[INTRODUCED_IN]-->  Agent Client Collector (Product)  --[CONTAINS]-->  ACC Log Policies (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 15,
+    "from_name": "360 View",
+    "to_name": "Access Management",
+    "path_text": "360 View (Feature)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Access Management (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 21,
+    "from_name": "360-degree view",
+    "to_name": "Account Lifecycle",
+    "path_text": "360-degree view (Feature)  --[CONTAINS]-->  Workspace (Feature)  --[CONTAINS]-->  Customer Success (Module)  --[CONTAINS]-->  Account Lifecycle (Product)",
+    "judge_label": "meaningful"
+  },
+  {
+    "n": 31,
+    "from_name": "Active Directory",
+    "to_name": "Access Analyzer",
+    "path_text": "Active Directory (Product)  --[CONTAINS]-->  Reset AD User Password activity (Feature)  --[CONTAINS]-->  Active Directory activity pack (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Analyzer (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 34,
+    "from_name": "Active Directory Application Mode (ADAM)",
+    "to_name": "Access Analyzer Queries",
+    "path_text": "Active Directory Application Mode (ADAM) (Product)  --[USES_TABLE]-->  sys_user (Table)  --[USES_TABLE]-->  Access Analyzer (Product)  --[CONTAINS]-->  Access Analyzer Queries (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 37,
+    "from_name": "Activity Management",
+    "to_name": "Access control",
+    "path_text": "Activity Management (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Access control (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 40,
+    "from_name": "Adaptive Authentication",
+    "to_name": "Access Hours Management",
+    "path_text": "Adaptive Authentication (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Hours Management (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 41,
+    "from_name": "Access Hours Management",
+    "to_name": "4-eyes policy",
+    "path_text": "Access Hours Management (Module)  --[CONTAINS]-->  Field Service Management (Product)  --[INTEGRATES_WITH]-->  Financial Services Operations (Product)  --[CONTAINS]-->  4-eyes policy (Feature)",
+    "judge_label": "meaningful"
+  },
+  {
+    "n": 43,
+    "from_name": "Admin Center",
+    "to_name": "Access Management",
+    "path_text": "Admin Center (Product)  --[CONTAINS]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access findings (Feature)  --[CONTAINS]-->  Access Management (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 46,
+    "from_name": "Adobe",
+    "to_name": "Access Management Automation",
+    "path_text": "Adobe (Product)  --[CONTAINS]-->  Inactive user subscriptions (Feature)  --[USES_TABLE]-->  sys_user (Table)  --[USES_TABLE]-->  Okta spoke (Plugin)  --[REQUIRES_PLUGIN]-->  Access Management Automation (Module)",
+    "judge_label": "none"
+  },
+  {
+    "n": 47,
+    "from_name": "Access Management Automation",
+    "to_name": "A2-Talent Acquisitio",
+    "path_text": "Access Management Automation (Module)  --[REQUIRES_ROLE]-->  itil (Role)  --[REQUIRES_ROLE]-->  HR Service Delivery (Product)  --[CONTAINS]-->  A2-Talent Acquisitio (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 52,
+    "from_name": "Adobe Experience Manager",
+    "to_name": "Accessibility features in mobile",
+    "path_text": "Adobe Experience Manager (Product)  --[CONTAINS]-->  Adobe Experience Manager as a Cloud Service external content connector (Feature)  --[INTEGRATES_WITH]-->  Virtual Agent (Feature)  --[INTEGRATES_WITH]-->  Mobile (Product)  --[CONTAINS]-->  Accessibility features in mobile (Module)",
+    "judge_label": "meaningful"
+  },
+  {
+    "n": 53,
+    "from_name": "Accessibility features in mobile",
+    "to_name": "Ability to submit a third-party document for review",
+    "path_text": "Accessibility features in mobile (Module)  --[CONTAINS]-->  Screen reader support (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Contract Management Pro (Product)  --[CONTAINS]-->  Ability to submit a third-party document for review (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 55,
+    "from_name": "Adobe Sign Spoke",
+    "to_name": "Account",
+    "path_text": "Adobe Sign Spoke (Product)  --[REQUIRES_ROLE]-->  connection_admin (Role)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Activate Plugin (Feature)  --[CONTAINS]-->  Account (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 57,
+    "from_name": "Ability to upload multiple contract and supporting documents for review",
+    "to_name": "Adobe Sign Spoke",
+    "path_text": "Ability to upload multiple contract and supporting documents for review (Feature)  --[IMPLEMENTS]-->  Non-self-served contract request (BusinessProcess)  --[IMPLEMENTS]-->  Electronic signature integrations with Adobe Acrobat Sign and Docusign (Feature)  --[INTEGRATES_WITH]-->  Adobe Sign Spoke (Product)",
+    "judge_label": "meaningful"
+  },
+  {
+    "n": 58,
+    "from_name": "Adoption Services",
+    "to_name": "Account Addresses",
+    "path_text": "Adoption Services (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Account Addresses (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 61,
+    "from_name": "Advanced",
+    "to_name": "Account hierarchy",
+    "path_text": "Advanced (Product)  --[INTEGRATES_WITH]-->  CSM Maturity Assessment (Feature)  --[CONTAINS]-->  Customer Service Management (Product)  --[CONTAINS]-->  Account hierarchy (Module)",
+    "judge_label": "meaningful"
+  },
+  {
+    "n": 66,
+    "from_name": "ACC Diagnostic Workflow",
+    "to_name": "Advanced AI Search Management Tools",
+    "path_text": "ACC Diagnostic Workflow (Feature)  --[INTEGRATES_WITH]-->  AI Agent Studio (Feature)  --[INTRODUCED_IN]-->  Xanadu (Release)  --[INTRODUCED_IN]-->  Advanced AI Search Management Tools (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 67,
+    "from_name": "Advanced Approval Management",
+    "to_name": "Account lifecycle onboarding process",
+    "path_text": "Advanced Approval Management (Product)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Account Lifecycle (Product)  --[CONTAINS]-->  Account lifecycle onboarding process (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 70,
+    "from_name": "Advanced Audit",
+    "to_name": "Account Onboarding",
+    "path_text": "Advanced Audit (Product)  --[USES_TABLE]-->  Observation (Table)  --[USES_TABLE]-->  Now Assist panel (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Account Onboarding (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 74,
+    "from_name": "Account Onboarding Cases",
+    "to_name": "ACC Log Analytics (ACC-L)",
+    "path_text": "Account Onboarding Cases (Module)  --[CREATES_DATA]-->  Account Onboarding Case (DataEntity)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Agent Client Collector (Plugin)  --[REQUIRES_PLUGIN]-->  ACC Log Analytics (ACC-L) (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 78,
+    "from_name": "ACC Proxy Configuration",
+    "to_name": "Advanced package",
+    "path_text": "ACC Proxy Configuration (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Impact Accelerator (Feature)  --[CONTAINS]-->  Advanced package (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 85,
+    "from_name": "Advanced Work Assignment",
+    "to_name": "Account Relationships",
+    "path_text": "Advanced Work Assignment (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Account Relationships (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 86,
+    "from_name": "Account Relationships",
+    "to_name": "Accelerate complaint case handling",
+    "path_text": "Account Relationships (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Accelerate complaint case handling (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 87,
+    "from_name": "Accelerate complaint case handling",
+    "to_name": "Advanced Work Assignment",
+    "path_text": "Accelerate complaint case handling (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Advanced Work Assignment (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 89,
+    "from_name": "Account Team Members",
+    "to_name": "Accelerate complaint case handling agentic workflow",
+    "path_text": "Account Team Members (Module)  --[CONTAINS]-->  Customer Service Management (Product)  --[CONTAINS]-->  Now Assist panel (Feature)  --[INTEGRATES_WITH]-->  Accelerate complaint case handling agentic workflow (Feature)",
+    "judge_label": "meaningful"
+  },
+  {
+    "n": 90,
+    "from_name": "Accelerate complaint case handling agentic workflow",
+    "to_name": "Advanced Work Assignment (AWA)",
+    "path_text": "Accelerate complaint case handling agentic workflow (Feature)  --[CONTAINS]-->  Accelerate complaint case handling collection (Feature)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Advanced Work Assignment (AWA) (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 94,
+    "from_name": "Agent Chat",
+    "to_name": "Accounts",
+    "path_text": "Agent Chat (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Accounts (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 97,
+    "from_name": "Agent Client Collector for Visibility - Content",
+    "to_name": "Accounts payable invoice processing",
+    "path_text": "Agent Client Collector for Visibility - Content (Product)  --[USES_TABLE]-->  incident (Table)  --[USES_TABLE]-->  Accounts payable invoice processing (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 98,
+    "from_name": "Accounts payable invoice processing",
+    "to_name": "Accelerate your DevOps change process",
+    "path_text": "Accounts payable invoice processing (Module)  --[USES_TABLE]-->  incident (Table)  --[USES_TABLE]-->  DevOps Change Velocity (Product)  --[CONTAINS]-->  Accelerate your DevOps change process (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 114,
+    "from_name": "Accept a live chat from a requester",
+    "to_name": "Agent Client Collector Spoke",
+    "path_text": "Accept a live chat from a requester (Feature)  --[REQUIRES_ROLE]-->  itil (Role)  --[REQUIRES_ROLE]-->  sn_si.analyst (Role)  --[REQUIRES_ROLE]-->  Get Network Statistics (Feature)  --[CONTAINS]-->  Agent Client Collector Spoke (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 119,
+    "from_name": "Accounts Payable Operations Integration with SAP Ariba",
+    "to_name": "Accept an incoming chat request",
+    "path_text": "Accounts Payable Operations Integration with SAP Ariba (Module)  --[CONTAINS]-->  Accounts Payable Operations (Product)  --[CONTAINS]-->  Interaction Management (Feature)  --[CONTAINS]-->  Accept an incoming chat request (Feature)",
+    "judge_label": "meaningful"
+  },
+  {
+    "n": 121,
+    "from_name": "Agent-Initiated Messaging Interface",
+    "to_name": "Accounts Payable Workspace",
+    "path_text": "Agent-Initiated Messaging Interface (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Accounts Payable Workspace (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 126,
+    "from_name": "Accept or reject part requests",
+    "to_name": "Agentic Contact Center for Banking",
+    "path_text": "Accept or reject part requests (Feature)  --[CONTAINS]-->  Field Service Management (Product)  --[INTEGRATES_WITH]-->  Financial Services Operations (Product)  --[CONTAINS]-->  Agentic Contact Center for Banking (Product)",
+    "judge_label": "meaningful"
+  },
+  {
+    "n": 130,
+    "from_name": "Agile Development",
+    "to_name": "Action",
+    "path_text": "Agile Development (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Automation Center (Product)  --[CONTAINS]-->  Action (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 131,
+    "from_name": "Action",
+    "to_name": "Accept work",
+    "path_text": "Action (Module)  --[CREATES_DATA]-->  Action Record (DataEntity)  --[CONTAINS]-->  Demand Management (Module)  --[CONTAINS]-->  Assessment Instance (DataEntity)  --[CREATES_DATA]-->  Accept work (Feature)",
+    "judge_label": "none"
+  },
+  {
+    "n": 134,
+    "from_name": "Action Designer",
+    "to_name": "Acceptance criteria generation",
+    "path_text": "Action Designer (Module)  --[CONTAINS]-->  Action (Feature)  --[CONTAINS]-->  Now Assist (Feature)  --[CONTAINS]-->  Acceptance criteria generation (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 138,
+    "from_name": "Acceptance criteria generation skill",
+    "to_name": "Agile Development v2",
+    "path_text": "Acceptance criteria generation skill (Feature)  --[USES_TABLE]-->  rm_story (Table)  --[USES_TABLE]-->  Scrum task (DataEntity)  --[CREATES_DATA]-->  Add Scrum Tasks (Feature)  --[CONTAINS]-->  Agile Development v2 (Product)",
+    "judge_label": "meaningful"
+  },
+  {
+    "n": 139,
+    "from_name": "Aha! Spoke",
+    "to_name": "Action Groups",
+    "path_text": "Aha! Spoke (Product)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Employee Center (Product)  --[CONTAINS]-->  Action Groups (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 140,
+    "from_name": "Action Groups",
+    "to_name": "Access",
+    "path_text": "Action Groups (Module)  --[CONTAINS]-->  Employee Center (Product)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Access (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 141,
+    "from_name": "Access",
+    "to_name": "Aha! Spoke",
+    "path_text": "Access (Feature)  --[CONTAINS]-->  Now Assist (Feature)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Aha! Spoke (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 142,
+    "from_name": "AI Agent Advisor",
+    "to_name": "Action Management",
+    "path_text": "AI Agent Advisor (Product)  --[HAS_API]-->  /api/now/v1/table/incident (API)  --[HAS_API]-->  UI Builder (Feature)  --[CONTAINS]-->  Action (DataEntity)  --[CONTAINS]-->  Action Management (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 143,
+    "from_name": "Action Management",
+    "to_name": "Access analytics overlay",
+    "path_text": "Action Management (Module)  --[CONTAINS]-->  Digital Factory Workspace (Product)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Access analytics overlay (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 144,
+    "from_name": "Access analytics overlay",
+    "to_name": "AI Agent Advisor",
+    "path_text": "Access analytics overlay (Feature)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Now Assist Center workspace (Feature)  --[INTEGRATES_WITH]-->  AI Agent Advisor (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 145,
+    "from_name": "AI Agent Studio",
+    "to_name": "Action Plan",
+    "path_text": "AI Agent Studio (Product)  --[CONTAINS]-->  Citation (Feature)  --[CONTAINS]-->  Governance, Risk, and Compliance (Product)  --[CONTAINS]-->  Action Plan (Module)",
+    "judge_label": "none"
+  },
+  {
+    "n": 146,
+    "from_name": "Action Plan",
+    "to_name": "Access Analyzer",
+    "path_text": "Action Plan (Module)  --[CONTAINS]-->  GRC (Product)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Access Analyzer (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 147,
+    "from_name": "Access Analyzer",
+    "to_name": "AI Agent Studio",
+    "path_text": "Access Analyzer (Feature)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  AI Agent Studio (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 148,
+    "from_name": "AI Agent Topology Mapping",
+    "to_name": "Actions",
+    "path_text": "AI Agent Topology Mapping (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Discovery Console for OT (Product)  --[CONTAINS]-->  Actions (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 150,
+    "from_name": "Access Analyzer Debug logs",
+    "to_name": "AI Agent Topology Mapping",
+    "path_text": "Access Analyzer Debug logs (Feature)  --[CONTAINS]-->  Data Filtration (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Agent Topology Mapping (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 152,
+    "from_name": "Actions (UI)",
+    "to_name": "Access Control",
+    "path_text": "Actions (UI) (Module)  --[CONTAINS]-->  RPA Desktop Design Studio (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Control (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 153,
+    "from_name": "Access Control",
+    "to_name": "AI Case Management",
+    "path_text": "Access Control (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Anonymous Report Center (Plugin)  --[CONTAINS]-->  AI Case Management (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 154,
+    "from_name": "AI Data Explorer",
+    "to_name": "Active Directory",
+    "path_text": "AI Data Explorer (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  MID Server (Product)  --[CONTAINS]-->  Active Directory (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 155,
+    "from_name": "Active Directory",
+    "to_name": "Access Control (ACL)",
+    "path_text": "Active Directory (Module)  --[INTEGRATES_WITH]-->  Powershell (Feature)  --[CONTAINS]-->  MID Server (TechnicalComponent)  --[USES_TABLE]-->  sys_attachment (Table)  --[USES_TABLE]-->  Access Control (ACL) (Feature)",
+    "judge_label": "none"
+  },
+  {
+    "n": 157,
+    "from_name": "AI Desktop Actions",
+    "to_name": "Active Directory activities",
+    "path_text": "AI Desktop Actions (Product)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Orchestration (Product)  --[CONTAINS]-->  Active Directory activities (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 158,
+    "from_name": "Active Directory activities",
+    "to_name": "Access Control List",
+    "path_text": "Active Directory activities (Module)  --[INTRODUCED_IN]-->  Geneva (Release)  --[INTRODUCED_IN]-->  Contextual Security: Role Management Enhancements REST API (Plugin)  --[REQUIRES_PLUGIN]-->  /api/global/user_role_inheritance (API)  --[HAS_API]-->  Access Control List (Feature)",
+    "judge_label": "none"
+  },
+  {
+    "n": 159,
+    "from_name": "Access Control List",
+    "to_name": "AI Desktop Actions",
+    "path_text": "Access Control List (Feature)  --[IMPLEMENTS]-->  Access Control (BusinessProcess)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Desktop Actions (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 161,
+    "from_name": "Active Directory activity pack",
+    "to_name": "Access Control List (ACL)",
+    "path_text": "Active Directory activity pack (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Script (Feature)  --[CONTAINS]-->  Access Control List (ACL) (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 164,
+    "from_name": "Active Directory (AD) activities",
+    "to_name": "Access Control List API",
+    "path_text": "Active Directory (AD) activities (Module)  --[CONTAINS]-->  Orchestration (Product)  --[CONTAINS]-->  ServiceNow AI Platform (Product)  --[USES_TABLE]-->  task (Table)  --[USES_TABLE]-->  Access Control List API (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 165,
+    "from_name": "Access Control List API",
+    "to_name": "AI Platform Security Incident Response",
+    "path_text": "Access Control List API (Feature)  --[USES_TABLE]-->  task (Table)  --[USES_TABLE]-->  ServiceNow AI Platform (Product)  --[CONTAINS]-->  Mapping alerts and events (Feature)  --[CONTAINS]-->  AI Platform Security Incident Response (Product)",
+    "judge_label": "none"
+  },
+  {
+    "n": 169,
+    "from_name": "AI Risk and Compliance",
+    "to_name": "Active scheduled test runners",
+    "path_text": "AI Risk and Compliance (Product)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Automated Test Framework (ATF) (Feature)  --[CONTAINS]-->  Active scheduled test runners (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 171,
+    "from_name": "Access Control Lists",
+    "to_name": "AI Risk and Compliance",
+    "path_text": "Access Control Lists (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[CONTAINS]-->  AI Risk and Compliance (Product)",
+    "judge_label": "none"
+  },
+  {
+    "n": 173,
+    "from_name": "Active Transactions",
+    "to_name": "Access Control Lists (ACLs)",
+    "path_text": "Active Transactions (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Control Lists (ACLs) (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 174,
+    "from_name": "Access Control Lists (ACLs)",
+    "to_name": "AI Risk and Compliance Content",
+    "path_text": "Access Control Lists (ACLs) (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Risk and Compliance Content (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 175,
+    "from_name": "AI Risk and Compliance Content Pack",
+    "to_name": "Active Worker Downloads",
+    "path_text": "AI Risk and Compliance Content Pack (Product)  --[CONTAINS]-->  Risk Statements (DataEntity)  --[CONTAINS]-->  Risk Management (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Active Worker Downloads (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 178,
+    "from_name": "AI Risk and Compliance Workspace",
+    "to_name": "Activities",
+    "path_text": "AI Risk and Compliance Workspace (Product)  --[CONTAINS]-->  AI cases tab (Feature)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Now Assist for RPA Hub (Feature)  --[INTEGRATES_WITH]-->  Activities (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 179,
+    "from_name": "Activities",
+    "to_name": "Access Controls",
+    "path_text": "Activities (Module)  --[INTEGRATES_WITH]-->  Now Assist for RPA Hub (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Controls (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 180,
+    "from_name": "Access Controls",
+    "to_name": "AI Risk and Compliance Workspace",
+    "path_text": "Access Controls (Feature)  --[CONTAINS]-->  Access Control List (Feature)  --[USES_TABLE]-->  incident (Table)  --[USES_TABLE]-->  Operations Tab (Module)  --[CONTAINS]-->  AI Risk and Compliance Workspace (Product)",
+    "judge_label": "none"
+  },
+  {
+    "n": 181,
+    "from_name": "AI Search application",
+    "to_name": "Activity Configuration",
+    "path_text": "AI Search application (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Activity Configuration (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 182,
+    "from_name": "Activity Configuration",
+    "to_name": "Access Controls Auditor checks",
+    "path_text": "Activity Configuration (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Controls Auditor checks (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 184,
+    "from_name": "AI Search for Next Experience",
+    "to_name": "Activity Configurations",
+    "path_text": "AI Search for Next Experience (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Activity Configurations (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 185,
+    "from_name": "Activity Configurations",
+    "to_name": "Access Controls Auditor Suite",
+    "path_text": "Activity Configurations (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Controls Auditor Suite (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 186,
+    "from_name": "Access Controls Auditor Suite",
+    "to_name": "AI Search for Next Experience",
+    "path_text": "Access Controls Auditor Suite (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Search for Next Experience (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 187,
+    "from_name": "AI Security Exposure Management",
+    "to_name": "Activity Management",
+    "path_text": "AI Security Exposure Management (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  CSM (Product)  --[CONTAINS]-->  Activity Management (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 190,
+    "from_name": "AI Service Graph Connector for Microsoft",
+    "to_name": "Activity stream",
+    "path_text": "AI Service Graph Connector for Microsoft (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Activity stream (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 191,
+    "from_name": "AI Search application",
+    "to_name": "Activity Configuration",
+    "path_text": "AI Search application (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Activity Configuration (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 192,
+    "from_name": "Activity Configuration",
+    "to_name": "Access Controls Auditor checks",
+    "path_text": "Activity Configuration (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Controls Auditor checks (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 194,
+    "from_name": "AI Search for Next Experience",
+    "to_name": "Activity Configurations",
+    "path_text": "AI Search for Next Experience (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Activity Configurations (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 195,
+    "from_name": "Activity Configurations",
+    "to_name": "Access Controls Auditor Suite",
+    "path_text": "Activity Configurations (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Controls Auditor Suite (Feature)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 196,
+    "from_name": "Access Controls Auditor Suite",
+    "to_name": "AI Search for Next Experience",
+    "path_text": "Access Controls Auditor Suite (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Search for Next Experience (Product)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 197,
+    "from_name": "AI Security Exposure Management",
+    "to_name": "Activity Management",
+    "path_text": "AI Security Exposure Management (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  CSM (Product)  --[CONTAINS]-->  Activity Management (Module)",
+    "judge_label": "trivial"
+  },
+  {
+    "n": 200,
+    "from_name": "AI Service Graph Connector for Microsoft",
+    "to_name": "Activity stream",
+    "path_text": "AI Service Graph Connector for Microsoft (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Activity stream (Module)",
+    "judge_label": "trivial"
+  }
+]

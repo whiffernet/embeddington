@@ -1,0 +1,1215 @@
+{
+  "extrinsic_set_fingerprint": "sha256:647f4d5ec85b9fff52a949b6ec4b452706a3266ffbcf5abc837924305cf0dee4",
+  "frozen": {
+    "concordance_bar": 0.85,
+    "extrinsic_duplicate_count": 10,
+    "extrinsic_set_size": 200
+  },
+  "meaningful_path_rate": 0.010526315789473684,
+  "noise_floor_comparable_count": 10,
+  "noise_floor_flip_rate": 0.0,
+  "pairs": [
+    {
+      "label": "trivial",
+      "n": 1,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "none",
+      "n": 2,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 3,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 4,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 5,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 6,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 7,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 8,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 9,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 10,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 11,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 12,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 13,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 14,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 15,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 16,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 17,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 18,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 19,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 20,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 21,
+      "source": "human",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 22,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 23,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 24,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 25,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 26,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 27,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 28,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 29,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 30,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 31,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 32,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 33,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 34,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 35,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 36,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 37,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 38,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 39,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 40,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 41,
+      "source": "human",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 42,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 43,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 44,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 45,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "none",
+      "n": 46,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 47,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": null,
+      "n": 48,
+      "source": null,
+      "status": "pre_fix_no_path"
+    },
+    {
+      "label": null,
+      "n": 49,
+      "source": null,
+      "status": "pre_fix_no_path"
+    },
+    {
+      "label": null,
+      "n": 50,
+      "source": null,
+      "status": "pre_fix_no_path"
+    },
+    {
+      "label": null,
+      "n": 51,
+      "source": null,
+      "status": "pre_fix_no_path"
+    },
+    {
+      "label": "trivial",
+      "n": 52,
+      "source": "human",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 53,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "none",
+      "n": 54,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 55,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 56,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "meaningful",
+      "n": 57,
+      "source": "human",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 58,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 59,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 60,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 61,
+      "source": "human",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 62,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 63,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 64,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 65,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 66,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 67,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 68,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 69,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 70,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 71,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": null,
+      "n": 72,
+      "source": null,
+      "status": "pre_fix_no_path"
+    },
+    {
+      "label": null,
+      "n": 73,
+      "source": null,
+      "status": "pre_fix_no_path"
+    },
+    {
+      "label": "trivial",
+      "n": 74,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": null,
+      "n": 75,
+      "source": null,
+      "status": "pre_fix_no_path"
+    },
+    {
+      "label": "trivial",
+      "n": 76,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 77,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 78,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 79,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 80,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 81,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 82,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 83,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 84,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 85,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 86,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 87,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 88,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "none",
+      "n": 89,
+      "source": "human",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 90,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 91,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 92,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 93,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 94,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 95,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 96,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 97,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 98,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 99,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "none",
+      "n": 100,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 101,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 102,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": null,
+      "n": 103,
+      "source": null,
+      "status": "pre_fix_no_path"
+    },
+    {
+      "label": "none",
+      "n": 104,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 105,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 106,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 107,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 108,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 109,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "none",
+      "n": 110,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "none",
+      "n": 111,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": null,
+      "n": 112,
+      "source": null,
+      "status": "pre_fix_no_path"
+    },
+    {
+      "label": "trivial",
+      "n": 113,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 114,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 115,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "none",
+      "n": 116,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 117,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 118,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 119,
+      "source": "human",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 120,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 121,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 122,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 123,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 124,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 125,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 126,
+      "source": "human",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 127,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 128,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 129,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 130,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "none",
+      "n": 131,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 132,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": null,
+      "n": 133,
+      "source": null,
+      "status": "pre_fix_no_path"
+    },
+    {
+      "label": "trivial",
+      "n": 134,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 135,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 136,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 137,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "meaningful",
+      "n": 138,
+      "source": "human",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 139,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 140,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 141,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 142,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 143,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 144,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "none",
+      "n": 145,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 146,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 147,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 148,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 149,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 150,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 151,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 152,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 153,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 154,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "none",
+      "n": 155,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 156,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 157,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "none",
+      "n": 158,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 159,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 160,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 161,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 162,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "none",
+      "n": 163,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 164,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "none",
+      "n": 165,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 166,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 167,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 168,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 169,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 170,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "none",
+      "n": 171,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 172,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 173,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 174,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 175,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 176,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "none",
+      "n": 177,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 178,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 179,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "none",
+      "n": 180,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 181,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 182,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 183,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 184,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 185,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 186,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 187,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 188,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 189,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 190,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 191,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 192,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 193,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 194,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 195,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 196,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 197,
+      "source": "judge_fallback",
+      "status": "escalate"
+    },
+    {
+      "label": "trivial",
+      "n": 198,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 199,
+      "source": "consensus",
+      "status": "auto"
+    },
+    {
+      "label": "trivial",
+      "n": 200,
+      "source": "judge_fallback",
+      "status": "escalate"
+    }
+  ],
+  "pre_fix_no_path_count": 10,
+  "total_scored": 190
+}

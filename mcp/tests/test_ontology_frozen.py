@@ -41,3 +41,12 @@ def test_binding_matches_the_frozen_gold_baseline():
     assert F.BASELINE_TAG == gold_pools.EXPECTED_BINDING["baseline"]
     assert F.EXPECTED_ENTITIES == gold_pools.EXPECTED_BINDING["entities"]
     assert F.EXPECTED_EDGES == gold_pools.EXPECTED_BINDING["edges"]
+
+
+def test_extrinsic_floor_constants_are_frozen():
+    assert F.EXTRINSIC_SET_SIZE == 200
+    assert F.EXTRINSIC_DUPLICATE_COUNT == 10
+    assert F.EMBED_INDEX == "technology"
+    assert F.EMBED_CONFIDENT_GOOD_PCT == 0.90
+    assert F.EMBED_CONFIDENT_BAD_PCT == 0.60
+    assert F.CONCORDANCE_BAR == 0.85

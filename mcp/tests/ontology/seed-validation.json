@@ -1,0 +1,146 @@
+{
+  "validated_on": "2026-07-22",
+  "note": "Historical record of the seed-label validation in spec §2.7. vote/judge_label/user_label are frozen facts from that run, not recomputed. concordance is measured over auto-status rows only.",
+  "rows": [
+    {
+      "n": 1,
+      "vote": "bad",
+      "judge_label": "trivial",
+      "user_label": "trivial"
+    },
+    {
+      "n": 2,
+      "vote": "abstain",
+      "judge_label": "meaningful",
+      "user_label": "trivial"
+    },
+    {
+      "n": 3,
+      "vote": "good",
+      "judge_label": "meaningful",
+      "user_label": "meaningful"
+    },
+    {
+      "n": 4,
+      "vote": "abstain",
+      "judge_label": "meaningful",
+      "user_label": "none"
+    },
+    { "n": 5, "vote": "good", "judge_label": "trivial", "user_label": "none" },
+    {
+      "n": 6,
+      "vote": "bad",
+      "judge_label": "trivial",
+      "user_label": "trivial"
+    },
+    {
+      "n": 7,
+      "vote": "good",
+      "judge_label": "trivial",
+      "user_label": "meaningful"
+    },
+    {
+      "n": 8,
+      "vote": "good",
+      "judge_label": "trivial",
+      "user_label": "trivial"
+    },
+    { "n": 9, "vote": "bad", "judge_label": "trivial", "user_label": "none" },
+    { "n": 10, "vote": "good", "judge_label": "trivial", "user_label": "none" },
+    { "n": 11, "vote": "bad", "judge_label": "trivial", "user_label": "none" },
+    { "n": 12, "vote": "bad", "judge_label": "trivial", "user_label": "none" },
+    {
+      "n": 13,
+      "vote": "abstain",
+      "judge_label": "trivial",
+      "user_label": "none"
+    },
+    {
+      "n": 14,
+      "vote": "good",
+      "judge_label": "meaningful",
+      "user_label": "meaningful"
+    },
+    { "n": 15, "vote": "good", "judge_label": "trivial", "user_label": "none" },
+    {
+      "n": 16,
+      "vote": "good",
+      "judge_label": "meaningful",
+      "user_label": "meaningful"
+    },
+    {
+      "n": 17,
+      "vote": "bad",
+      "judge_label": "meaningful",
+      "user_label": "trivial"
+    },
+    {
+      "n": 18,
+      "vote": "abstain",
+      "judge_label": "trivial",
+      "user_label": "trivial"
+    },
+    {
+      "n": 19,
+      "vote": "abstain",
+      "judge_label": "meaningful",
+      "user_label": "trivial"
+    },
+    {
+      "n": 20,
+      "vote": "abstain",
+      "judge_label": "trivial",
+      "user_label": "trivial"
+    },
+    {
+      "n": 21,
+      "vote": "bad",
+      "judge_label": "meaningful",
+      "user_label": "trivial"
+    },
+    {
+      "n": 22,
+      "vote": "good",
+      "judge_label": "trivial",
+      "user_label": "trivial"
+    },
+    {
+      "n": 23,
+      "vote": "good",
+      "judge_label": "trivial",
+      "user_label": "trivial"
+    },
+    {
+      "n": 24,
+      "vote": "bad",
+      "judge_label": "trivial",
+      "user_label": "meaningful"
+    },
+    {
+      "n": 25,
+      "vote": "good",
+      "judge_label": "trivial",
+      "user_label": "trivial"
+    },
+    { "n": 26, "vote": "bad", "judge_label": "trivial", "user_label": "none" },
+    {
+      "n": 27,
+      "vote": "bad",
+      "judge_label": "meaningful",
+      "user_label": "trivial"
+    },
+    {
+      "n": 28,
+      "vote": "abstain",
+      "judge_label": "trivial",
+      "user_label": "trivial"
+    },
+    { "n": 29, "vote": "bad", "judge_label": "trivial", "user_label": "none" },
+    {
+      "n": 30,
+      "vote": "abstain",
+      "judge_label": "none",
+      "user_label": "trivial"
+    }
+  ]
+}

@@ -1,0 +1,952 @@
+[
+ {
+  "n": 1,
+  "label": "trivial",
+  "reason": "Routes through the generic MID Server plugin hub, which nearly every product requires, so the chain implies nothing specific."
+ },
+ {
+  "n": 2,
+  "label": "none",
+  "reason": "CONTAINS edges flip direction repeatedly (Module contains Product, then Feature contains Product) making the chain incoherent as a real hierarchy."
+ },
+ {
+  "n": 3,
+  "label": "trivial",
+  "reason": "Classic admin-role hub pattern ('both require admin/MID Server') that implies a relationship that isn't really there."
+ },
+ {
+  "n": 4,
+  "label": "trivial",
+  "reason": "Passes through the Australia release as a hub node, the classic 'both shipped in the same release' non-relationship."
+ },
+ {
+  "n": 5,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub, not a real functional link."
+ },
+ {
+  "n": 6,
+  "label": "trivial",
+  "reason": "Ends in an Australia release hub, implying an unfounded relationship via shared shipping release."
+ },
+ {
+  "n": 7,
+  "label": "trivial",
+  "reason": "Connected only through a shared role requirement (evt_mgmt_admin), a hub-style non-explanatory link."
+ },
+ {
+  "n": 8,
+  "label": "trivial",
+  "reason": "Long detour through an unrelated product and an Xanadu release hub before reaching the endpoint."
+ },
+ {
+  "n": 9,
+  "label": "trivial",
+  "reason": "Routed through the Australia release hub, implying a relationship based only on shared release timing."
+ },
+ {
+  "n": 10,
+  "label": "trivial",
+  "reason": "Connected via the Australia release hub rather than any functional link between the endpoints."
+ },
+ {
+  "n": 11,
+  "label": "trivial",
+  "reason": "Connected via the Australia release hub, a shared-shipping-date artifact not a real relationship."
+ },
+ {
+  "n": 12,
+  "label": "trivial",
+  "reason": "Two-hop chain entirely through the Australia release hub node."
+ },
+ {
+  "n": 13,
+  "label": "trivial",
+  "reason": "Connected via the Xanadu release hub, not a substantive relationship between the endpoints."
+ },
+ {
+  "n": 14,
+  "label": "trivial",
+  "reason": "Routed through the generic 'Application Service' CI type, a hub node shared by huge numbers of unrelated modules."
+ },
+ {
+  "n": 15,
+  "label": "trivial",
+  "reason": "Two-hop chain entirely through the Zurich release hub node."
+ },
+ {
+  "n": 16,
+  "label": "trivial",
+  "reason": "Routed through the generic admin role hub before reaching the endpoint."
+ },
+ {
+  "n": 17,
+  "label": "trivial",
+  "reason": "Routed through the Xanadu release hub, implying an unfounded relationship via shared release."
+ },
+ {
+  "n": 18,
+  "label": "trivial",
+  "reason": "Connected only via the generic /api/now/table/{tableName} API, which nearly every table-backed entity has."
+ },
+ {
+  "n": 19,
+  "label": "trivial",
+  "reason": "Routed through the Zurich release hub rather than any functional connection."
+ },
+ {
+  "n": 20,
+  "label": "trivial",
+  "reason": "Passes through sys_attachment, a near-universal generic table used by countless unrelated features."
+ },
+ {
+  "n": 21,
+  "label": "meaningful",
+  "reason": "Specific, non-hub containment chain (Workspace to Customer Success to Account Lifecycle) that plausibly explains how the feature sits within the product's suite."
+ },
+ {
+  "n": 22,
+  "label": "trivial",
+  "reason": "Routed through the Zurich release hub, a shared-shipping-date artifact."
+ },
+ {
+  "n": 23,
+  "label": "trivial",
+  "reason": "Connected via the Yokohama release hub, not a substantive relationship."
+ },
+ {
+  "n": 24,
+  "label": "trivial",
+  "reason": "Routed through the Yokohama release hub plus an unrelated Workflow Studio detour."
+ },
+ {
+  "n": 25,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 26,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 27,
+  "label": "trivial",
+  "reason": "Two-hop chain entirely through the generic admin role hub."
+ },
+ {
+  "n": 28,
+  "label": "trivial",
+  "reason": "Routed through the generic admin role hub before reaching an unrelated dashboard chain."
+ },
+ {
+  "n": 29,
+  "label": "trivial",
+  "reason": "Routed through the 'incident' table, a near-universal hub table used by huge numbers of unrelated features."
+ },
+ {
+  "n": 30,
+  "label": "trivial",
+  "reason": "Routed through the generic admin role hub after an unrelated integration hop."
+ },
+ {
+  "n": 31,
+  "label": "trivial",
+  "reason": "Ends via the generic admin role hub linking to an unrelated product."
+ },
+ {
+  "n": 32,
+  "label": "trivial",
+  "reason": "Two-hop chain entirely through the generic admin role hub."
+ },
+ {
+  "n": 33,
+  "label": "trivial",
+  "reason": "Routed through the generic table API and the 'ServiceNow platform' mega-hub node that touches nearly everything."
+ },
+ {
+  "n": 34,
+  "label": "trivial",
+  "reason": "Routed through sys_user, a near-universal generic table."
+ },
+ {
+  "n": 35,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 36,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub before an unrelated plugin hop."
+ },
+ {
+  "n": 37,
+  "label": "trivial",
+  "reason": "Two-hop chain entirely through the Australia release hub node."
+ },
+ {
+  "n": 38,
+  "label": "trivial",
+  "reason": "Routed through the generic admin role hub before an unrelated telecom detour."
+ },
+ {
+  "n": 39,
+  "label": "trivial",
+  "reason": "Routed through the Xanadu release hub, a shared-shipping-date artifact, with a reversed table/module containment hop."
+ },
+ {
+  "n": 40,
+  "label": "trivial",
+  "reason": "Two-hop chain entirely through the generic admin role hub."
+ },
+ {
+  "n": 41,
+  "label": "meaningful",
+  "reason": "Coherent chain via specific module/product containment and an INTEGRATES_WITH hop landing on the target feature."
+ },
+ {
+  "n": 42,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub, implying an unreal relationship."
+ },
+ {
+  "n": 43,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 44,
+  "label": "trivial",
+  "reason": "Routes through the New York release hub, a generic version node."
+ },
+ {
+  "n": 45,
+  "label": "trivial",
+  "reason": "Routes through the New York release hub."
+ },
+ {
+  "n": 46,
+  "label": "none",
+  "reason": "sys_user is a near-universal hub table and the Table--USES_TABLE-->Plugin hop is an incoherent direction."
+ },
+ {
+  "n": 47,
+  "label": "trivial",
+  "reason": "Routes through the generic itil role hub."
+ },
+ {
+  "n": 52,
+  "label": "meaningful",
+  "reason": "Specific chain of product/feature containment and integration links from Adobe Experience Manager to mobile accessibility features."
+ },
+ {
+  "n": 53,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 54,
+  "label": "none",
+  "reason": "cmdb_ci is a near-universal hub table and the Table--USES_TABLE-->API hop is an incoherent direction."
+ },
+ {
+  "n": 55,
+  "label": "trivial",
+  "reason": "Routes through connection_admin into the generic admin role hub."
+ },
+ {
+  "n": 56,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 57,
+  "label": "meaningful",
+  "reason": "Specific business-process and integration chain connecting document upload to the Adobe Sign Spoke."
+ },
+ {
+  "n": 58,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 59,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 60,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 61,
+  "label": "meaningful",
+  "reason": "Specific INTEGRATES_WITH hop into CSM Maturity Assessment ties Advanced to Account hierarchy through a real feature relationship."
+ },
+ {
+  "n": 62,
+  "label": "trivial",
+  "reason": "Pure chain of generic CONTAINS hops through the broad Customer Service Management product hub."
+ },
+ {
+  "n": 63,
+  "label": "trivial",
+  "reason": "Long detour of generic CONTAINS hops through the Customer Service Management product hub."
+ },
+ {
+  "n": 64,
+  "label": "trivial",
+  "reason": "Routes through the Zurich release hub."
+ },
+ {
+  "n": 65,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 66,
+  "label": "trivial",
+  "reason": "Routes through the Xanadu release hub."
+ },
+ {
+  "n": 67,
+  "label": "trivial",
+  "reason": "Routes through the Zurich release hub."
+ },
+ {
+  "n": 68,
+  "label": "trivial",
+  "reason": "Routes through a generic admin-type role (sn_si.admin) hub."
+ },
+ {
+  "n": 69,
+  "label": "trivial",
+  "reason": "Routes through the Xanadu release hub."
+ },
+ {
+  "n": 70,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 71,
+  "label": "trivial",
+  "reason": "Routes through the Zurich release hub."
+ },
+ {
+  "n": 74,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 76,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 77,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 78,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 79,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 80,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 81,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 82,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 83,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 84,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 85,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 86,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 87,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 88,
+  "label": "trivial",
+  "reason": "Chain of CONTAINS hops runs from a narrow feature outward to progressively bigger products, implying AWA 'contains' CSM's module structure which isn't a real relationship."
+ },
+ {
+  "n": 89,
+  "label": "meaningful",
+  "reason": "Shows Account Team Members and the complaint-handling workflow are linked through CSM's Now Assist panel integration, a specific and coherent connection."
+ },
+ {
+  "n": 90,
+  "label": "trivial",
+  "reason": "Classic Release-hub detour through Australia links two otherwise unrelated products."
+ },
+ {
+  "n": 91,
+  "label": "trivial",
+  "reason": "Classic admin-role hub pattern that implies a relationship based only on shared role requirement."
+ },
+ {
+  "n": 92,
+  "label": "trivial",
+  "reason": "Classic Release-hub detour through Australia connects unrelated entities."
+ },
+ {
+  "n": 93,
+  "label": "trivial",
+  "reason": "Classic admin-role hub pattern linking unrelated entities via a shared generic role."
+ },
+ {
+  "n": 94,
+  "label": "trivial",
+  "reason": "Two-hop admin-role hub explains nothing about how Agent Chat relates to Accounts."
+ },
+ {
+  "n": 95,
+  "label": "trivial",
+  "reason": "Admin-role hub detour before reaching an ENHANCED_BY hop, still explained mainly by the generic role."
+ },
+ {
+  "n": 96,
+  "label": "trivial",
+  "reason": "Same admin-role hub pattern in reverse, explains nothing specific."
+ },
+ {
+  "n": 97,
+  "label": "trivial",
+  "reason": "Routes through the generic incident table, which nearly every product references, so it doesn't show a real specific relationship."
+ },
+ {
+  "n": 98,
+  "label": "trivial",
+  "reason": "Generic incident table hub connects two otherwise unrelated modules/products."
+ },
+ {
+  "n": 99,
+  "label": "trivial",
+  "reason": "Classic Release-hub (Australia) detour between unrelated products."
+ },
+ {
+  "n": 100,
+  "label": "none",
+  "reason": "Claims IT Asset Management 'contains' Accounts Payable Operations, a false relationship between unrelated product families."
+ },
+ {
+  "n": 101,
+  "label": "trivial",
+  "reason": "Routes through the generic universal Table API used by virtually all products, so the link is an artifact of graph density."
+ },
+ {
+  "n": 102,
+  "label": "trivial",
+  "reason": "Generic Table API plus an obscure technical-component node make this a hub-style detour, not a real explanation."
+ },
+ {
+  "n": 104,
+  "label": "none",
+  "reason": "Chain uses backward/incoherent typing (a plugin requiring a feature, an API 'having' an unrelated feature) and reads as nonsensical rather than explanatory."
+ },
+ {
+  "n": 105,
+  "label": "trivial",
+  "reason": "Classic Release-hub (Xanadu) detour linking unrelated entities."
+ },
+ {
+  "n": 106,
+  "label": "trivial",
+  "reason": "Admin-role hub detour dominates the path, explaining nothing specific about the two endpoints."
+ },
+ {
+  "n": 107,
+  "label": "trivial",
+  "reason": "Classic Release-hub (Zurich) detour between unrelated entities."
+ },
+ {
+  "n": 108,
+  "label": "trivial",
+  "reason": "Admin-role hub detour connects otherwise unrelated features/products."
+ },
+ {
+  "n": 109,
+  "label": "trivial",
+  "reason": "Routes through the generic cmdb_ci table, which is referenced by nearly every CMDB-adjacent product, so it's an artifact of graph density."
+ },
+ {
+  "n": 110,
+  "label": "none",
+  "reason": "Final hop has a DataEntity 'creating data' for a Feature, a backward and incoherent relationship type."
+ },
+ {
+  "n": 111,
+  "label": "none",
+  "reason": "A DataEntity is claimed to 'contain' a Feature, a type-mismatched and incoherent statement."
+ },
+ {
+  "n": 113,
+  "label": "trivial",
+  "reason": "Admin-role hub detour links two otherwise unrelated products/features."
+ },
+ {
+  "n": 114,
+  "label": "trivial",
+  "reason": "Chains through two generic roles (itil, sn_si.analyst) as a hub-like detour rather than a real explanation."
+ },
+ {
+  "n": 115,
+  "label": "trivial",
+  "reason": "Classic Release-hub (Australia) detour between unrelated entities."
+ },
+ {
+  "n": 116,
+  "label": "none",
+  "reason": "Claims a Sourcing and Procurement module 'contains' the entire Field Service Management product, a false relationship between separate product lines."
+ },
+ {
+  "n": 117,
+  "label": "trivial",
+  "reason": "Classic Release-hub (Australia) detour connects unrelated entities."
+ },
+ {
+  "n": 118,
+  "label": "trivial",
+  "reason": "Admin-role hub detour explains nothing specific about the two endpoints."
+ },
+ {
+  "n": 119,
+  "label": "meaningful",
+  "reason": "Coherent product-to-feature hierarchy showing the integration module sits within AP Operations, which contains the specific chat-accept feature."
+ },
+ {
+  "n": 120,
+  "label": "trivial",
+  "reason": "Admin-role hub detour dominates the explanation."
+ },
+ {
+  "n": 121,
+  "label": "trivial",
+  "reason": "Two-hop admin-role hub explains nothing specific about the relationship."
+ },
+ {
+  "n": 122,
+  "label": "trivial",
+  "reason": "Admin-role hub detour before reaching the target feature."
+ },
+ {
+  "n": 123,
+  "label": "trivial",
+  "reason": "Classic Release-hub (Australia) detour between unrelated entities."
+ },
+ {
+  "n": 124,
+  "label": "trivial",
+  "reason": "Classic Release-hub (Xanadu) detour connects unrelated entities."
+ },
+ {
+  "n": 125,
+  "label": "trivial",
+  "reason": "Classic Release-hub (Xanadu) detour dominates the path."
+ },
+ {
+  "n": 126,
+  "label": "meaningful",
+  "reason": "Shows a real integration: Field Service Management integrates with Financial Services Operations, which contains the banking contact center product."
+ },
+ {
+  "n": 127,
+  "label": "trivial",
+  "reason": "Admin-role hub pattern, even with atypical CONTAINS/REQUIRES_ROLE direction, still explains nothing specific."
+ },
+ {
+  "n": 128,
+  "label": "trivial",
+  "reason": "Admin-role hub detour connects unrelated entities."
+ },
+ {
+  "n": 129,
+  "label": "trivial",
+  "reason": "Admin-role hub detour in reverse, same generic-role artifact."
+ },
+ {
+  "n": 130,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub, which links almost everything."
+ },
+ {
+  "n": 131,
+  "label": "none",
+  "reason": "Incoherent chain where a DataEntity 'contains' an unrelated Module, breaking the narrative."
+ },
+ {
+  "n": 132,
+  "label": "trivial",
+  "reason": "Ends via the generic admin role hub, implying a relationship that isn't really there."
+ },
+ {
+  "n": 134,
+  "label": "trivial",
+  "reason": "Routes through Now Assist acting as a catch-all hub feature, with a backwards Feature-contains-Feature hop."
+ },
+ {
+  "n": 135,
+  "label": "trivial",
+  "reason": "Double release hub (Zurich, then Agile Development 2.0 release) with confusing Product/Release name collisions."
+ },
+ {
+  "n": 136,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub connecting two unrelated products."
+ },
+ {
+  "n": 137,
+  "label": "trivial",
+  "reason": "Backwards module-contains-product hop into a Zurich release hub, not a real explanation."
+ },
+ {
+  "n": 138,
+  "label": "meaningful",
+  "reason": "Concrete Agile/Scrum data chain from the skill through rm_story/Scrum task to Add Scrum Tasks and Agile Development v2."
+ },
+ {
+  "n": 139,
+  "label": "trivial",
+  "reason": "Routes through the generic /api/now/table/{tableName} endpoint that nearly every product exposes."
+ },
+ {
+  "n": 140,
+  "label": "trivial",
+  "reason": "Backwards module-contains-product hop into a Zurich release hub."
+ },
+ {
+  "n": 141,
+  "label": "trivial",
+  "reason": "Routes through Now Assist and the generic table API endpoint, both hub-like."
+ },
+ {
+  "n": 142,
+  "label": "trivial",
+  "reason": "Routes through the generic incident table API endpoint used across the platform."
+ },
+ {
+  "n": 143,
+  "label": "trivial",
+  "reason": "Routes through the generic /api/now/table/{tableName} endpoint shared by countless products."
+ },
+ {
+  "n": 144,
+  "label": "trivial",
+  "reason": "Routes through the generic table API endpoint before reaching AI Agent Advisor via integration."
+ },
+ {
+  "n": 145,
+  "label": "none",
+  "reason": "Incoherent hop where a small Feature (Citation) 'contains' an entire product (GRC)."
+ },
+ {
+  "n": 146,
+  "label": "trivial",
+  "reason": "Routes through the Zurich release hub shared by unrelated entities."
+ },
+ {
+  "n": 147,
+  "label": "trivial",
+  "reason": "Classic release hub: both entities merely shipped in the Australia release."
+ },
+ {
+  "n": 148,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 149,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub plus a backwards product-contains-module hop."
+ },
+ {
+  "n": 150,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 151,
+  "label": "trivial",
+  "reason": "Classic release hub: both entities merely shipped alongside Xanadu."
+ },
+ {
+  "n": 152,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 153,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub connecting unrelated plugin and product."
+ },
+ {
+  "n": 154,
+  "label": "trivial",
+  "reason": "Routes through the Australia release hub shared by unrelated products."
+ },
+ {
+  "n": 155,
+  "label": "none",
+  "reason": "Backwards/incoherent hops (feature containing a technical component) routed through the generic sys_attachment table."
+ },
+ {
+  "n": 156,
+  "label": "trivial",
+  "reason": "Routes through an admin-style role hub and the catch-all Now Assist feature."
+ },
+ {
+  "n": 157,
+  "label": "trivial",
+  "reason": "Classic release hub: both entities merely shipped alongside Zurich."
+ },
+ {
+  "n": 158,
+  "label": "none",
+  "reason": "Predicate direction is incoherent (a plugin 'requires' an API entity), making the chain unreadable as a statement."
+ },
+ {
+  "n": 159,
+  "label": "trivial",
+  "reason": "A meaningful first hop is undercut by ending through the generic admin role hub."
+ },
+ {
+  "n": 160,
+  "label": "trivial",
+  "reason": "Routes through the generic /api/now/table/{tableName} endpoint."
+ },
+ {
+  "n": 161,
+  "label": "trivial",
+  "reason": "Routes through the generic admin role hub."
+ },
+ {
+  "n": 162,
+  "label": "trivial",
+  "reason": "Routes through the generic table API endpoint, plus an odd ACL-contains-product hop."
+ },
+ {
+  "n": 163,
+  "label": "none",
+  "reason": "Long detour of nested CONTAINS hops with backwards feature-contains-product logic that explains nothing specific."
+ },
+ {
+  "n": 164,
+  "label": "trivial",
+  "reason": "Routes through the generic 'task' base table used by nearly every ITSM entity."
+ },
+ {
+  "n": 165,
+  "label": "none",
+  "reason": "Backwards predicate direction (a table 'using' a product) through the generic 'task' table makes the chain incoherent."
+ },
+ {
+  "n": 171,
+  "label": "none",
+  "reason": "A generic admin role does not literally 'contain' a product; the edge direction and hub role make the sentence incoherent."
+ },
+ {
+  "n": 172,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub, implying no real relationship."
+ },
+ {
+  "n": 173,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub, implying no real relationship."
+ },
+ {
+  "n": 174,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub, implying no real relationship."
+ },
+ {
+  "n": 175,
+  "label": "trivial",
+  "reason": "Meaningful containment chain is undercut by a final detour through the admin role hub to reach an unrelated module."
+ },
+ {
+  "n": 176,
+  "label": "trivial",
+  "reason": "Starts with a detour through the admin role hub before reaching an unrelated feature."
+ },
+ {
+  "n": 177,
+  "label": "none",
+  "reason": "Routes through a generic, unnamed 'Table' node that cannot coherently 'contain' a product; the chain reads as nonsensical."
+ },
+ {
+  "n": 178,
+  "label": "trivial",
+  "reason": "Connected via the generic Zurich release hub, implying two unrelated things merely shipped together."
+ },
+ {
+  "n": 179,
+  "label": "trivial",
+  "reason": "Detours through the generic admin role hub, implying no real specific relationship."
+ },
+ {
+  "n": 180,
+  "label": "none",
+  "reason": "Edge directions are incoherent (a table 'used by' a module, a module 'containing' a product workspace) and hinge on the generic incident table hub."
+ },
+ {
+  "n": 181,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 182,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 183,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 184,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 185,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 186,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 187,
+  "label": "trivial",
+  "reason": "Detours through the generic admin role hub before reaching CSM and its module."
+ },
+ {
+  "n": 188,
+  "label": "trivial",
+  "reason": "Connected via the generic Australia release hub, implying two unrelated things merely shipped together."
+ },
+ {
+  "n": 189,
+  "label": "trivial",
+  "reason": "Detours through the generic admin role hub to reach the target product."
+ },
+ {
+  "n": 190,
+  "label": "trivial",
+  "reason": "Connected via the generic Australia release hub, implying two unrelated things merely shipped together."
+ },
+ {
+  "n": 191,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 192,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 193,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 194,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 195,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 196,
+  "label": "trivial",
+  "reason": "Connected only via the generic admin role hub."
+ },
+ {
+  "n": 197,
+  "label": "trivial",
+  "reason": "Detours through the generic admin role hub before reaching CSM and its module."
+ },
+ {
+  "n": 198,
+  "label": "trivial",
+  "reason": "Connected via the generic Australia release hub, implying two unrelated things merely shipped together."
+ },
+ {
+  "n": 199,
+  "label": "trivial",
+  "reason": "Detours through the generic admin role hub to reach the target product."
+ },
+ {
+  "n": 200,
+  "label": "trivial",
+  "reason": "Connected via the generic Australia release hub, implying two unrelated things merely shipped together."
+ },
+ {
+  "n": 166,
+  "label": "trivial",
+  "reason": "Routes through the generic /api/now/table/{tableName} hub API that nearly every entity exposes, so it doesn't show a real link to Active Manual Test Runners."
+ },
+ {
+  "n": 167,
+  "label": "trivial",
+  "reason": "Detours through generic hub nodes Application and Security Attributes, implying a relationship to Access Control List Rules that isn't really specific to Active Manual Test Runners."
+ },
+ {
+  "n": 168,
+  "label": "trivial",
+  "reason": "Routes through the generic /api/now/table/{tableName} hub API shared by countless entities, not a specific connection between Access Control List Rules and AI Platform Security Operations."
+ },
+ {
+  "n": 169,
+  "label": "trivial",
+  "reason": "Routes through the generic /api/now/table/{tableName} hub API rather than showing any specific relationship between AI Risk and Compliance and the ATF test runners."
+ },
+ {
+  "n": 170,
+  "label": "trivial",
+  "reason": "Passes through the broad ServiceNow AI Platform product node, which CONTAINS nearly everything, so it doesn't establish a real link to Access Control Lists."
+ }
+]

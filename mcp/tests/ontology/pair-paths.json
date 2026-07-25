@@ -1,0 +1,1202 @@
+[
+  {
+    "n": 1,
+    "no_path": false,
+    "path_text": "ACC-F (Product)  --[REQUIRES_PLUGIN]-->  MID Server (Plugin)  --[REQUIRES_PLUGIN]-->  Security Incident Response (Module)  --[CONTAINS]-->  Governance, Risk, and Compliance (Product)  --[CONTAINS]-->  360\u00b0 Relationship Visualization (Module)",
+    "hop_count": 4
+  },
+  {
+    "n": 2,
+    "no_path": false,
+    "path_text": "360\u00b0 Relationship Visualization (Module)  --[CONTAINS]-->  Governance, Risk, and Compliance (Product)  --[CONTAINS]-->  Configurable Workspace (Feature)  --[CONTAINS]-->  Customer Service Management (Product)  --[CONTAINS]-->  15-minute forecasting (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 3,
+    "no_path": false,
+    "path_text": "15-minute forecasting (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  MID Server (Plugin)  --[REQUIRES_PLUGIN]-->  ACC-F (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 4,
+    "no_path": false,
+    "path_text": "Accelerator and Initiative List (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Business Continuity Management (Product)  --[CONTAINS]-->  360\u00b0 View Configurations (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 5,
+    "no_path": false,
+    "path_text": "360\u00b0 View Configurations (Module)  --[CONTAINS]-->  Business Continuity Management (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  2011 SLA Engine (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 6,
+    "no_path": false,
+    "path_text": "2011 SLA Engine (Feature)  --[REQUIRES_PLUGIN]-->  Service level management plugin (Plugin)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Accelerator and Initiative List (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 7,
+    "no_path": false,
+    "path_text": "Access Analyzer (Product)  --[REQUIRES_ROLE]-->  evt_mgmt_admin (Role)  --[REQUIRES_ROLE]-->  ACC Data Inputs (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 8,
+    "no_path": false,
+    "path_text": "ACC Data Inputs (Module)  --[CONTAINS]-->  Agent Client Collector (Product)  --[INTRODUCED_IN]-->  Xanadu (Release)  --[INTRODUCED_IN]-->  Operational Sustainability Management (Module)  --[INTEGRATES_WITH]-->  360\u00b0 relationship view (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 9,
+    "no_path": false,
+    "path_text": "360\u00b0 relationship view (Feature)  --[ENHANCED_BY]-->  360\u00b0 Relationship Visualization (Feature)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Access Analyzer (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 10,
+    "no_path": false,
+    "path_text": "Access Control (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Agent Client Collector (Product)  --[CONTAINS]-->  ACC Log Analytics (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 11,
+    "no_path": false,
+    "path_text": "ACC Log Analytics (Module)  --[CONTAINS]-->  Agent Client Collector (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  360\u00b0 Relationship Visualization (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 12,
+    "no_path": false,
+    "path_text": "360\u00b0 Relationship Visualization (Feature)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Access Control (Product)",
+    "hop_count": 2
+  },
+  {
+    "n": 13,
+    "no_path": false,
+    "path_text": "Access Management (Product)  --[INTRODUCED_IN]-->  Xanadu (Release)  --[INTRODUCED_IN]-->  Agent Client Collector (Product)  --[CONTAINS]-->  ACC Log Policies (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 14,
+    "no_path": false,
+    "path_text": "ACC Log Policies (Module)  --[HAS_CI_TYPE]-->  Application Service (ConfigItemType)  --[HAS_CI_TYPE]-->  Operational Resilience Workspace (Module)  --[CONTAINS]-->  360 View (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 15,
+    "no_path": false,
+    "path_text": "360 View (Feature)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Access Management (Product)",
+    "hop_count": 2
+  },
+  {
+    "n": 16,
+    "no_path": false,
+    "path_text": "Access Management Automation (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  MID Server (Plugin)  --[CONTAINS]-->  ACC-F (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 17,
+    "no_path": false,
+    "path_text": "ACC-F (Module)  --[CONTAINS]-->  Agent Client Collector (Product)  --[INTRODUCED_IN]-->  Xanadu (Release)  --[INTRODUCED_IN]-->  BCM Configurable Workspace (Module)  --[CONTAINS]-->  360\u00b0 View Configurations (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 18,
+    "no_path": false,
+    "path_text": "360\u00b0 View Configurations (Feature)  --[CONTAINS]-->  Business Continuity Management (Product)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Access Management Automation (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 19,
+    "no_path": false,
+    "path_text": "Account Lifecycle (Product)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Agent Client Collector Framework (Plugin)  --[CONTAINS]-->  ACC-L (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 20,
+    "no_path": false,
+    "path_text": "ACC-L (Module)  --[CONTAINS]-->  Agent Client Collector (Product)  --[USES_TABLE]-->  sys_attachment (Table)  --[USES_TABLE]-->  Widget (Feature)  --[ENHANCED_BY]-->  360-degree view (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 21,
+    "no_path": false,
+    "path_text": "360-degree view (Feature)  --[CONTAINS]-->  Workspace (Feature)  --[CONTAINS]-->  Customer Success (Module)  --[CONTAINS]-->  Account Lifecycle (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 22,
+    "no_path": false,
+    "path_text": "Accounts Payable Invoice Processing (Product)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Agent Client Collector Framework (Plugin)  --[CONTAINS]-->  ACC-M (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 23,
+    "no_path": false,
+    "path_text": "ACC-M (Module)  --[CONTAINS]-->  Agent Client Collector (Product)  --[INTRODUCED_IN]-->  Yokohama (Release)  --[INTRODUCED_IN]-->  360-degree view of a patient (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 24,
+    "no_path": false,
+    "path_text": "360-degree view of a patient (Feature)  --[INTRODUCED_IN]-->  Yokohama (Release)  --[INTRODUCED_IN]-->  Workflow Studio (Feature)  --[CONTAINS]-->  Accounts Payable Invoice Processing (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 25,
+    "no_path": false,
+    "path_text": "Accounts Payable Operations integration with Document Intelligence (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Agent Client Collector (Product)  --[CONTAINS]-->  ACC-VC (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 26,
+    "no_path": false,
+    "path_text": "ACC-VC (Module)  --[CONTAINS]-->  Agent Client Collector (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  3E integration (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 27,
+    "no_path": false,
+    "path_text": "3E integration (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Accounts Payable Operations integration with Document Intelligence (Product)",
+    "hop_count": 2
+  },
+  {
+    "n": 28,
+    "no_path": false,
+    "path_text": "Accounts Payable Operations with Document Intelligence (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  DevOps Insights dashboard (Feature)  --[CONTAINS]-->  Average deployment frequency (DataEntity)  --[CONTAINS]-->  Accelerate metrics dashboard (Module)",
+    "hop_count": 4
+  },
+  {
+    "n": 29,
+    "no_path": false,
+    "path_text": "Accelerate metrics dashboard (Module)  --[CONTAINS]-->  Average MTTR (DataEntity)  --[USES_TABLE]-->  incident (Table)  --[USES_TABLE]-->  3E Protect (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 30,
+    "no_path": false,
+    "path_text": "3E Protect (Feature)  --[INTEGRATES_WITH]-->  Health and Safety Environmental Management (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Accounts Payable Operations with Document Intelligence (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 31,
+    "no_path": false,
+    "path_text": "Active Directory (Product)  --[CONTAINS]-->  Reset AD User Password activity (Feature)  --[CONTAINS]-->  Active Directory activity pack (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Analyzer (Module)",
+    "hop_count": 4
+  },
+  {
+    "n": 32,
+    "no_path": false,
+    "path_text": "Access Analyzer (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  3E Regulatory Intelligence (Feature)",
+    "hop_count": 2
+  },
+  {
+    "n": 33,
+    "no_path": false,
+    "path_text": "3E Regulatory Intelligence (Feature)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  ServiceNow platform (Product)  --[INTEGRATES_WITH]-->  Active Directory (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 34,
+    "no_path": false,
+    "path_text": "Active Directory Application Mode (ADAM) (Product)  --[USES_TABLE]-->  sys_user (Table)  --[USES_TABLE]-->  Access Analyzer (Product)  --[CONTAINS]-->  Access Analyzer Queries (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 35,
+    "no_path": false,
+    "path_text": "Access Analyzer Queries (Module)  --[CONTAINS]-->  Export (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  3E service provider integration (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 36,
+    "no_path": false,
+    "path_text": "3E service provider integration (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Adaptive Authentication (Plugin)  --[REQUIRES_PLUGIN]-->  Active Directory Application Mode (ADAM) (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 37,
+    "no_path": false,
+    "path_text": "Activity Management (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Access control (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 38,
+    "no_path": false,
+    "path_text": "Access control (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Telecommunications Network Inventory (Module)  --[CONTAINS]-->  pack_3gpp_gnb_cu_cp_function (Table)  --[USES_TABLE]-->  3GPP Pack Tables (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 39,
+    "no_path": false,
+    "path_text": "3GPP Pack Tables (Feature)  --[USES_TABLE]-->  pack_3gpp_gnb_cu_cp_function (Table)  --[CONTAINS]-->  Telecommunications Network Inventory (Module)  --[INTRODUCED_IN]-->  Xanadu (Release)  --[INTRODUCED_IN]-->  Activity Management (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 40,
+    "no_path": false,
+    "path_text": "Adaptive Authentication (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Hours Management (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 41,
+    "no_path": false,
+    "path_text": "Access Hours Management (Module)  --[CONTAINS]-->  Field Service Management (Product)  --[INTEGRATES_WITH]-->  Financial Services Operations (Product)  --[CONTAINS]-->  4-eyes policy (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 42,
+    "no_path": false,
+    "path_text": "4-eyes policy (Feature)  --[CONTAINS]-->  Dispute Management (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Adaptive Authentication (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 43,
+    "no_path": false,
+    "path_text": "Admin Center (Product)  --[CONTAINS]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access findings (Feature)  --[CONTAINS]-->  Access Management (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 44,
+    "no_path": false,
+    "path_text": "Access Management (Module)  --[CONTAINS]-->  Service Portal (Product)  --[INTEGRATES_WITH]-->  Domain separation (Feature)  --[INTRODUCED_IN]-->  New York (Release)  --[INTRODUCED_IN]-->  A10 Load Balancer (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 45,
+    "no_path": false,
+    "path_text": "A10 Load Balancer (Feature)  --[INTRODUCED_IN]-->  New York (Release)  --[INTRODUCED_IN]-->  ServiceNow Store (Product)  --[CONTAINS]-->  Application Manager (Feature)  --[CONTAINS]-->  Admin Center (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 46,
+    "no_path": false,
+    "path_text": "Adobe (Product)  --[CONTAINS]-->  Inactive user subscriptions (Feature)  --[USES_TABLE]-->  sys_user (Table)  --[USES_TABLE]-->  Okta spoke (Plugin)  --[REQUIRES_PLUGIN]-->  Access Management Automation (Module)",
+    "hop_count": 4
+  },
+  {
+    "n": 47,
+    "no_path": false,
+    "path_text": "Access Management Automation (Module)  --[REQUIRES_ROLE]-->  itil (Role)  --[REQUIRES_ROLE]-->  HR Service Delivery (Product)  --[CONTAINS]-->  A2-Talent Acquisitio (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 48,
+    "no_path": true,
+    "path_text": "",
+    "hop_count": null
+  },
+  {
+    "n": 49,
+    "no_path": true,
+    "path_text": "",
+    "hop_count": null
+  },
+  {
+    "n": 50,
+    "no_path": true,
+    "path_text": "",
+    "hop_count": null
+  },
+  {
+    "n": 51,
+    "no_path": true,
+    "path_text": "",
+    "hop_count": null
+  },
+  {
+    "n": 52,
+    "no_path": false,
+    "path_text": "Adobe Experience Manager (Product)  --[CONTAINS]-->  Adobe Experience Manager as a Cloud Service external content connector (Feature)  --[INTEGRATES_WITH]-->  Virtual Agent (Feature)  --[INTEGRATES_WITH]-->  Mobile (Product)  --[CONTAINS]-->  Accessibility features in mobile (Module)",
+    "hop_count": 4
+  },
+  {
+    "n": 53,
+    "no_path": false,
+    "path_text": "Accessibility features in mobile (Module)  --[CONTAINS]-->  Screen reader support (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Contract Management Pro (Product)  --[CONTAINS]-->  Ability to submit a third-party document for review (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 54,
+    "no_path": false,
+    "path_text": "Ability to submit a third-party document for review (Feature)  --[CONTAINS]-->  Contract Management Pro (Product)  --[USES_TABLE]-->  cmdb_ci (Table)  --[USES_TABLE]-->  Case API (API)  --[HAS_API]-->  Adobe Experience Manager (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 55,
+    "no_path": false,
+    "path_text": "Adobe Sign Spoke (Product)  --[REQUIRES_ROLE]-->  connection_admin (Role)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Activate Plugin (Feature)  --[CONTAINS]-->  Account (Module)",
+    "hop_count": 4
+  },
+  {
+    "n": 56,
+    "no_path": false,
+    "path_text": "Account (Module)  --[CONTAINS]-->  Activate Plugin (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Contract Management Pro (Product)  --[CONTAINS]-->  Ability to upload multiple contract and supporting documents for review (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 57,
+    "no_path": false,
+    "path_text": "Ability to upload multiple contract and supporting documents for review (Feature)  --[IMPLEMENTS]-->  Non-self-served contract request (BusinessProcess)  --[IMPLEMENTS]-->  Electronic signature integrations with Adobe Acrobat Sign and Docusign (Feature)  --[INTEGRATES_WITH]-->  Adobe Sign Spoke (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 58,
+    "no_path": false,
+    "path_text": "Adoption Services (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Account Addresses (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 59,
+    "no_path": false,
+    "path_text": "Account Addresses (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AbstractTimelineSchedulePage (Feature)",
+    "hop_count": 2
+  },
+  {
+    "n": 60,
+    "no_path": false,
+    "path_text": "AbstractTimelineSchedulePage (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Adoption Services (Product)",
+    "hop_count": 2
+  },
+  {
+    "n": 61,
+    "no_path": false,
+    "path_text": "Advanced (Product)  --[INTEGRATES_WITH]-->  CSM Maturity Assessment (Feature)  --[CONTAINS]-->  Customer Service Management (Product)  --[CONTAINS]-->  Account hierarchy (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 62,
+    "no_path": false,
+    "path_text": "Account hierarchy (Module)  --[CONTAINS]-->  Customer Service Management (Product)  --[CONTAINS]-->  Communities (Module)  --[CONTAINS]-->  Abuse Reporting (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 63,
+    "no_path": false,
+    "path_text": "Abuse Reporting (Feature)  --[CONTAINS]-->  Communities (Module)  --[CONTAINS]-->  Customer Service Management (Product)  --[CONTAINS]-->  CSM Configurable Workspace Accelerator (Feature)  --[CONTAINS]-->  Advanced (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 64,
+    "no_path": false,
+    "path_text": "Advanced AI Search Management Tools (Product)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Account Onboarding (Module)  --[CONTAINS]-->  Account Lifecycle (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 65,
+    "no_path": false,
+    "path_text": "Account Lifecycle (Module)  --[CONTAINS]-->  Account Onboarding (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Agent Studio (Feature)  --[INTEGRATES_WITH]-->  ACC Diagnostic Workflow (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 66,
+    "no_path": false,
+    "path_text": "ACC Diagnostic Workflow (Feature)  --[INTEGRATES_WITH]-->  AI Agent Studio (Feature)  --[INTRODUCED_IN]-->  Xanadu (Release)  --[INTRODUCED_IN]-->  Advanced AI Search Management Tools (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 67,
+    "no_path": false,
+    "path_text": "Advanced Approval Management (Product)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Account Lifecycle (Product)  --[CONTAINS]-->  Account lifecycle onboarding process (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 68,
+    "no_path": false,
+    "path_text": "Account lifecycle onboarding process (Module)  --[CONTAINS]-->  Process Automation Designer (Feature)  --[REQUIRES_ROLE]-->  sn_si.admin (Role)  --[REQUIRES_ROLE]-->  Agent Client Collector (Feature)  --[INTEGRATES_WITH]-->  ACC health instance scan suite (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 69,
+    "no_path": false,
+    "path_text": "ACC health instance scan suite (Feature)  --[INTRODUCED_IN]-->  Xanadu (Release)  --[INTRODUCED_IN]-->  Advanced Approval Management (Product)",
+    "hop_count": 2
+  },
+  {
+    "n": 70,
+    "no_path": false,
+    "path_text": "Advanced Audit (Product)  --[USES_TABLE]-->  Observation (Table)  --[USES_TABLE]-->  Now Assist panel (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Account Onboarding (Module)",
+    "hop_count": 4
+  },
+  {
+    "n": 71,
+    "no_path": false,
+    "path_text": "Account Onboarding (Module)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Agent Client Collector (Product)  --[CONTAINS]-->  ACC installation (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 72,
+    "no_path": true,
+    "path_text": "",
+    "hop_count": null
+  },
+  {
+    "n": 73,
+    "no_path": true,
+    "path_text": "",
+    "hop_count": null
+  },
+  {
+    "n": 74,
+    "no_path": false,
+    "path_text": "Account Onboarding Cases (Module)  --[CREATES_DATA]-->  Account Onboarding Case (DataEntity)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Agent Client Collector (Plugin)  --[REQUIRES_PLUGIN]-->  ACC Log Analytics (ACC-L) (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 75,
+    "no_path": true,
+    "path_text": "",
+    "hop_count": null
+  },
+  {
+    "n": 76,
+    "no_path": false,
+    "path_text": "Advanced package (Product)  --[CONTAINS]-->  Impact Accelerator (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Account Onboarding Playbook (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 77,
+    "no_path": false,
+    "path_text": "Account Onboarding Playbook (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  ACC Proxy Configuration (Feature)",
+    "hop_count": 2
+  },
+  {
+    "n": 78,
+    "no_path": false,
+    "path_text": "ACC Proxy Configuration (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Impact Accelerator (Feature)  --[CONTAINS]-->  Advanced package (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 79,
+    "no_path": false,
+    "path_text": "Advanced Risk (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Account relationship records (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 80,
+    "no_path": false,
+    "path_text": "Account relationship records (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AccAgentsAPI (Feature)",
+    "hop_count": 2
+  },
+  {
+    "n": 81,
+    "no_path": false,
+    "path_text": "AccAgentsAPI (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Advanced Risk (Product)",
+    "hop_count": 2
+  },
+  {
+    "n": 82,
+    "no_path": false,
+    "path_text": "Advanced Risk application (Product)  --[CONTAINS]-->  GRC: Risk Management Workspace (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Account relationship types (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 83,
+    "no_path": false,
+    "path_text": "Account relationship types (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AccCheckDefsAPI (Feature)",
+    "hop_count": 2
+  },
+  {
+    "n": 84,
+    "no_path": false,
+    "path_text": "AccCheckDefsAPI (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  GRC: Risk Management Workspace (Product)  --[CONTAINS]-->  Advanced Risk application (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 85,
+    "no_path": false,
+    "path_text": "Advanced Work Assignment (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Account Relationships (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 86,
+    "no_path": false,
+    "path_text": "Account Relationships (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Accelerate complaint case handling (Feature)",
+    "hop_count": 2
+  },
+  {
+    "n": 87,
+    "no_path": false,
+    "path_text": "Accelerate complaint case handling (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Advanced Work Assignment (Product)",
+    "hop_count": 2
+  },
+  {
+    "n": 88,
+    "no_path": false,
+    "path_text": "Advanced Work Assignment (AWA) (Product)  --[CONTAINS]-->  Workforce Optimization for Customer Service (Product)  --[CONTAINS]-->  Customer Service Management (Product)  --[CONTAINS]-->  Account Team Members (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 89,
+    "no_path": false,
+    "path_text": "Account Team Members (Module)  --[CONTAINS]-->  Customer Service Management (Product)  --[CONTAINS]-->  Now Assist panel (Feature)  --[INTEGRATES_WITH]-->  Accelerate complaint case handling agentic workflow (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 90,
+    "no_path": false,
+    "path_text": "Accelerate complaint case handling agentic workflow (Feature)  --[CONTAINS]-->  Accelerate complaint case handling collection (Feature)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Advanced Work Assignment (AWA) (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 91,
+    "no_path": false,
+    "path_text": "AEMC (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Service account (DataEntity)  --[CONTAINS]-->  Account to owner mappings (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 92,
+    "no_path": false,
+    "path_text": "Account to owner mappings (Module)  --[CONTAINS]-->  Cloud Cost Management (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Accelerate complaint case handling collection (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 93,
+    "no_path": false,
+    "path_text": "Accelerate complaint case handling collection (Feature)  --[CONTAINS]-->  Accelerate complaint case handling agentic workflow (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AEMC (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 94,
+    "no_path": false,
+    "path_text": "Agent Chat (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Accounts (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 95,
+    "no_path": false,
+    "path_text": "Accounts (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  DevOps system property (Feature)  --[ENHANCED_BY]-->  Accelerate metrics (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 96,
+    "no_path": false,
+    "path_text": "Accelerate metrics (Feature)  --[ENHANCED_BY]-->  DevOps system property (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Agent Chat (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 97,
+    "no_path": false,
+    "path_text": "Agent Client Collector for Visibility - Content (Product)  --[USES_TABLE]-->  incident (Table)  --[USES_TABLE]-->  Accounts payable invoice processing (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 98,
+    "no_path": false,
+    "path_text": "Accounts payable invoice processing (Module)  --[USES_TABLE]-->  incident (Table)  --[USES_TABLE]-->  DevOps Change Velocity (Product)  --[CONTAINS]-->  Accelerate your DevOps change process (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 99,
+    "no_path": false,
+    "path_text": "Accelerate your DevOps change process (Feature)  --[CONTAINS]-->  DevOps Change Velocity (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Agent Client Collector for Visibility - Content (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 100,
+    "no_path": false,
+    "path_text": "Agent Client Collector for Visibility - Content (ACC-VC) (Product)  --[CONTAINS]-->  alm_license (Table)  --[USES_TABLE]-->  IT Asset Management (Product)  --[CONTAINS]-->  Accounts Payable Operations (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 101,
+    "no_path": false,
+    "path_text": "Accounts Payable Operations (Module)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Impact (Product)  --[CONTAINS]-->  Accelerator (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 102,
+    "no_path": false,
+    "path_text": "Accelerator (Feature)  --[CONTAINS]-->  Impact (Product)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  glide.discovery.domain.name.nbt (TechnicalComponent)  --[CONTAINS]-->  Agent Client Collector for Visibility - Content (ACC-VC) (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 103,
+    "no_path": true,
+    "path_text": "",
+    "hop_count": null
+  },
+  {
+    "n": 104,
+    "no_path": false,
+    "path_text": "Accounts Payable Operations Integration (Module)  --[REQUIRES_PLUGIN]-->  sn_shop (Plugin)  --[REQUIRES_PLUGIN]-->  Priority defaulting for purchase requisitions (Feature)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Accelerator catalog (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 105,
+    "no_path": false,
+    "path_text": "Accelerator catalog (Feature)  --[INTRODUCED_IN]-->  Xanadu (Release)  --[INTRODUCED_IN]-->  Agent Client Collector health instance scan suite (Feature)  --[CONTAINS]-->  Agent Client Collector Framework (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 106,
+    "no_path": false,
+    "path_text": "Agent Client Collector Log Analytics (Product)  --[CONTAINS]-->  log shipper (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Accounts Payable Invoice Processing (Plugin)  --[CONTAINS]-->  Accounts Payable Operations Integration with Coupa (Module)",
+    "hop_count": 4
+  },
+  {
+    "n": 107,
+    "no_path": false,
+    "path_text": "Accounts Payable Operations Integration with Coupa (Module)  --[CONTAINS]-->  Coupa Spoke (Plugin)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Consumption Report (Feature)  --[CONTAINS]-->  Accelerators (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 108,
+    "no_path": false,
+    "path_text": "Accelerators (Feature)  --[CONTAINS]-->  Consumption Report (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  log shipper (Feature)  --[CONTAINS]-->  Agent Client Collector Log Analytics (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 109,
+    "no_path": false,
+    "path_text": "Agent Client Collector Monitoring (Product)  --[CONTAINS]-->  Metric Intelligence (Feature)  --[USES_TABLE]-->  cmdb_ci (Table)  --[USES_TABLE]-->  Accounts Payable Operations Integration with Document Intelligence (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 110,
+    "no_path": false,
+    "path_text": "Accounts Payable Operations Integration with Document Intelligence (Module)  --[CONTAINS]-->  Accounts Payable Operations (Product)  --[CONTAINS]-->  Interaction record (DataEntity)  --[CREATES_DATA]-->  Accept (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 111,
+    "no_path": false,
+    "path_text": "Accept (Feature)  --[CREATES_DATA]-->  Interaction (DataEntity)  --[CONTAINS]-->  Agent Workspace (Feature)  --[CONTAINS]-->  Metric Intelligence (Feature)  --[CONTAINS]-->  Agent Client Collector Monitoring (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 112,
+    "no_path": true,
+    "path_text": "",
+    "hop_count": null
+  },
+  {
+    "n": 113,
+    "no_path": false,
+    "path_text": "Accounts Payable Operations Integration with Oracle EBS (Module)  --[CONTAINS]-->  Source-to-Pay (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Simplified IT Service Management (Product)  --[CONTAINS]-->  Accept a live chat from a requester (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 114,
+    "no_path": false,
+    "path_text": "Accept a live chat from a requester (Feature)  --[REQUIRES_ROLE]-->  itil (Role)  --[REQUIRES_ROLE]-->  sn_si.analyst (Role)  --[REQUIRES_ROLE]-->  Get Network Statistics (Feature)  --[CONTAINS]-->  Agent Client Collector Spoke (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 115,
+    "no_path": false,
+    "path_text": "Agent experience for CSM (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  SAP ECC IDoc spoke (Plugin)  --[CONTAINS]-->  Accounts Payable Operations Integration with SAP (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 116,
+    "no_path": false,
+    "path_text": "Accounts Payable Operations Integration with SAP (Module)  --[CONTAINS]-->  ERP Integration Framework (Plugin)  --[REQUIRES_PLUGIN]-->  Sourcing and Procurement Operations (Module)  --[CONTAINS]-->  Field Service Management (Product)  --[CONTAINS]-->  Accept a task (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 117,
+    "no_path": false,
+    "path_text": "Accept a task (Feature)  --[CONTAINS]-->  Field Service Management (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Agent experience for CSM (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 118,
+    "no_path": false,
+    "path_text": "Agent Workspace for HR Case Management (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Accounts Payable Invoice Processing (Plugin)  --[REQUIRES_PLUGIN]-->  Accounts Payable Operations Integration with SAP Ariba (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 119,
+    "no_path": false,
+    "path_text": "Accounts Payable Operations Integration with SAP Ariba (Module)  --[CONTAINS]-->  Accounts Payable Operations (Product)  --[CONTAINS]-->  Interaction Management (Feature)  --[CONTAINS]-->  Accept an incoming chat request (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 120,
+    "no_path": false,
+    "path_text": "Accept an incoming chat request (Feature)  --[CONTAINS]-->  Interaction Management (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Agent Workspace for HR Case Management (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 121,
+    "no_path": false,
+    "path_text": "Agent-Initiated Messaging Interface (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Accounts Payable Workspace (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 122,
+    "no_path": false,
+    "path_text": "Accounts Payable Workspace (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Evidence Request (Feature)  --[CONTAINS]-->  Accept evidence (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 123,
+    "no_path": false,
+    "path_text": "Accept evidence (Feature)  --[CONTAINS]-->  Evidence Request (Feature)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Agent-Initiated Messaging Interface (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 124,
+    "no_path": false,
+    "path_text": "Agentic Contact Center for Banking (Product)  --[INTRODUCED_IN]-->  Xanadu (Release)  --[INTRODUCED_IN]-->  Talent Development Core (Product)  --[CONTAINS]-->  Achievements and Credentials (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 125,
+    "no_path": false,
+    "path_text": "Achievements and Credentials (Module)  --[CONTAINS]-->  Talent Development Core (Product)  --[INTRODUCED_IN]-->  Xanadu (Release)  --[INTRODUCED_IN]-->  Field Service Management (Product)  --[CONTAINS]-->  Accept or reject part requests (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 126,
+    "no_path": false,
+    "path_text": "Accept or reject part requests (Feature)  --[CONTAINS]-->  Field Service Management (Product)  --[INTEGRATES_WITH]-->  Financial Services Operations (Product)  --[CONTAINS]-->  Agentic Contact Center for Banking (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 127,
+    "no_path": false,
+    "path_text": "Agentic Contact Center for Insurance (Product)  --[CONTAINS]-->  admin (Role)  --[REQUIRES_ROLE]-->  ACL Assessment for Reports (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 128,
+    "no_path": false,
+    "path_text": "ACL Assessment for Reports (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Consumer Service Portal (Feature)  --[CONTAINS]-->  Accept Solution (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 129,
+    "no_path": false,
+    "path_text": "Accept Solution (Feature)  --[CONTAINS]-->  Consumer Service Portal (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Agentic Contact Center for Insurance (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 130,
+    "no_path": false,
+    "path_text": "Agile Development (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Automation Center (Product)  --[CONTAINS]-->  Action (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 131,
+    "no_path": false,
+    "path_text": "Action (Module)  --[CREATES_DATA]-->  Action Record (DataEntity)  --[CONTAINS]-->  Demand Management (Module)  --[CONTAINS]-->  Assessment Instance (DataEntity)  --[CREATES_DATA]-->  Accept work (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 132,
+    "no_path": false,
+    "path_text": "Accept work (Feature)  --[CREATES_DATA]-->  Assessment Instance (DataEntity)  --[CREATES_DATA]-->  Assessment generation (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Agile Development (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 133,
+    "no_path": true,
+    "path_text": "",
+    "hop_count": null
+  },
+  {
+    "n": 134,
+    "no_path": false,
+    "path_text": "Action Designer (Module)  --[CONTAINS]-->  Action (Feature)  --[CONTAINS]-->  Now Assist (Feature)  --[CONTAINS]-->  Acceptance criteria generation (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 135,
+    "no_path": false,
+    "path_text": "Acceptance criteria generation (Feature)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Agile Development 2.0 (Product)  --[INTRODUCED_IN]-->  Agile Development 2.0 (Release)  --[INTRODUCED_IN]-->  Agile Development \u2014 Unified Backlog (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 136,
+    "no_path": false,
+    "path_text": "Agile Development v2 (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Employee Center (Product)  --[CONTAINS]-->  Action framework (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 137,
+    "no_path": false,
+    "path_text": "Action framework (Module)  --[CONTAINS]-->  Employee Center (Product)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Acceptance criteria generation skill (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 138,
+    "no_path": false,
+    "path_text": "Acceptance criteria generation skill (Feature)  --[USES_TABLE]-->  rm_story (Table)  --[USES_TABLE]-->  Scrum task (DataEntity)  --[CREATES_DATA]-->  Add Scrum Tasks (Feature)  --[CONTAINS]-->  Agile Development v2 (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 139,
+    "no_path": false,
+    "path_text": "Aha! Spoke (Product)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Employee Center (Product)  --[CONTAINS]-->  Action Groups (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 140,
+    "no_path": false,
+    "path_text": "Action Groups (Module)  --[CONTAINS]-->  Employee Center (Product)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Access (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 141,
+    "no_path": false,
+    "path_text": "Access (Feature)  --[CONTAINS]-->  Now Assist (Feature)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Aha! Spoke (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 142,
+    "no_path": false,
+    "path_text": "AI Agent Advisor (Product)  --[HAS_API]-->  /api/now/v1/table/incident (API)  --[HAS_API]-->  UI Builder (Feature)  --[CONTAINS]-->  Action (DataEntity)  --[CONTAINS]-->  Action Management (Module)",
+    "hop_count": 4
+  },
+  {
+    "n": 143,
+    "no_path": false,
+    "path_text": "Action Management (Module)  --[CONTAINS]-->  Digital Factory Workspace (Product)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Access analytics overlay (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 144,
+    "no_path": false,
+    "path_text": "Access analytics overlay (Feature)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Now Assist Center workspace (Feature)  --[INTEGRATES_WITH]-->  AI Agent Advisor (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 145,
+    "no_path": false,
+    "path_text": "AI Agent Studio (Product)  --[CONTAINS]-->  Citation (Feature)  --[CONTAINS]-->  Governance, Risk, and Compliance (Product)  --[CONTAINS]-->  Action Plan (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 146,
+    "no_path": false,
+    "path_text": "Action Plan (Module)  --[CONTAINS]-->  GRC (Product)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Access Analyzer (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 147,
+    "no_path": false,
+    "path_text": "Access Analyzer (Feature)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  AI Agent Studio (Product)",
+    "hop_count": 2
+  },
+  {
+    "n": 148,
+    "no_path": false,
+    "path_text": "AI Agent Topology Mapping (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Discovery Console for OT (Product)  --[CONTAINS]-->  Actions (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 149,
+    "no_path": false,
+    "path_text": "Actions (Module)  --[CONTAINS]-->  Discovery Console for OT (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Data Filtration (Feature)  --[CONTAINS]-->  Access Analyzer Debug logs (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 150,
+    "no_path": false,
+    "path_text": "Access Analyzer Debug logs (Feature)  --[CONTAINS]-->  Data Filtration (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Agent Topology Mapping (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 151,
+    "no_path": false,
+    "path_text": "AI Case Management (Product)  --[INTRODUCED_IN]-->  Xanadu (Release)  --[INTRODUCED_IN]-->  RPA Desktop Design Studio (Product)  --[CONTAINS]-->  Actions (UI) (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 152,
+    "no_path": false,
+    "path_text": "Actions (UI) (Module)  --[CONTAINS]-->  RPA Desktop Design Studio (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Control (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 153,
+    "no_path": false,
+    "path_text": "Access Control (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Anonymous Report Center (Plugin)  --[CONTAINS]-->  AI Case Management (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 154,
+    "no_path": false,
+    "path_text": "AI Data Explorer (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  MID Server (Product)  --[CONTAINS]-->  Active Directory (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 155,
+    "no_path": false,
+    "path_text": "Active Directory (Module)  --[INTEGRATES_WITH]-->  Powershell (Feature)  --[CONTAINS]-->  MID Server (TechnicalComponent)  --[USES_TABLE]-->  sys_attachment (Table)  --[USES_TABLE]-->  Access Control (ACL) (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 156,
+    "no_path": false,
+    "path_text": "Access Control (ACL) (Feature)  --[REQUIRES_ROLE]-->  sn_hr_core.admin (Role)  --[REQUIRES_ROLE]-->  Now Assist (Feature)  --[CONTAINS]-->  AI Data Explorer skills (Feature)  --[CONTAINS]-->  AI Data Explorer (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 157,
+    "no_path": false,
+    "path_text": "AI Desktop Actions (Product)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Orchestration (Product)  --[CONTAINS]-->  Active Directory activities (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 158,
+    "no_path": false,
+    "path_text": "Active Directory activities (Module)  --[INTRODUCED_IN]-->  Geneva (Release)  --[INTRODUCED_IN]-->  Contextual Security: Role Management Enhancements REST API (Plugin)  --[REQUIRES_PLUGIN]-->  /api/global/user_role_inheritance (API)  --[HAS_API]-->  Access Control List (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 159,
+    "no_path": false,
+    "path_text": "Access Control List (Feature)  --[IMPLEMENTS]-->  Access Control (BusinessProcess)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Desktop Actions (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 160,
+    "no_path": false,
+    "path_text": "AI Gateway (Product)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Orchestration (Product)  --[CONTAINS]-->  Active Directory activity pack (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 161,
+    "no_path": false,
+    "path_text": "Active Directory activity pack (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Script (Feature)  --[CONTAINS]-->  Access Control List (ACL) (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 162,
+    "no_path": false,
+    "path_text": "Access Control List (ACL) (Feature)  --[CONTAINS]-->  Access Analyzer (Product)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  AI Gateway (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 163,
+    "no_path": false,
+    "path_text": "AI Platform Security Incident Response (Product)  --[CONTAINS]-->  Mapping alerts and events (Feature)  --[CONTAINS]-->  ServiceNow AI Platform (Product)  --[CONTAINS]-->  Orchestration (Product)  --[CONTAINS]-->  Active Directory (AD) activities (Module)",
+    "hop_count": 4
+  },
+  {
+    "n": 164,
+    "no_path": false,
+    "path_text": "Active Directory (AD) activities (Module)  --[CONTAINS]-->  Orchestration (Product)  --[CONTAINS]-->  ServiceNow AI Platform (Product)  --[USES_TABLE]-->  task (Table)  --[USES_TABLE]-->  Access Control List API (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 165,
+    "no_path": false,
+    "path_text": "Access Control List API (Feature)  --[USES_TABLE]-->  task (Table)  --[USES_TABLE]-->  ServiceNow AI Platform (Product)  --[CONTAINS]-->  Mapping alerts and events (Feature)  --[CONTAINS]-->  AI Platform Security Incident Response (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 166,
+    "no_path": false,
+    "path_text": "AI Platform Security Operations (Product)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Automated Test Framework (Feature)  --[INTEGRATES_WITH]-->  Active Manual Test Runners (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 167,
+    "no_path": false,
+    "path_text": "Active Manual Test Runners (Module)  --[INTEGRATES_WITH]-->  Automated Test Framework (Feature)  --[CONTAINS]-->  Application (DataEntity)  --[CONTAINS]-->  Security Attributes (Feature)  --[INTEGRATES_WITH]-->  Access Control List Rules (Feature)",
+    "hop_count": 4
+  },
+  {
+    "n": 168,
+    "no_path": false,
+    "path_text": "Access Control List Rules (Feature)  --[CONTAINS]-->  Authentication (Product)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  AI Platform Security Operations (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 169,
+    "no_path": false,
+    "path_text": "AI Risk and Compliance (Product)  --[HAS_API]-->  /api/now/table/{tableName} (API)  --[HAS_API]-->  Automated Test Framework (ATF) (Feature)  --[CONTAINS]-->  Active scheduled test runners (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 170,
+    "no_path": false,
+    "path_text": "Active scheduled test runners (Module)  --[CONTAINS]-->  Automated Test Framework (ATF) (Feature)  --[CONTAINS]-->  ServiceNow AI Platform (Product)  --[CONTAINS]-->  Access Control Lists (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 171,
+    "no_path": false,
+    "path_text": "Access Control Lists (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[CONTAINS]-->  AI Risk and Compliance (Product)",
+    "hop_count": 2
+  },
+  {
+    "n": 172,
+    "no_path": false,
+    "path_text": "AI Risk and Compliance Content (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Active Transactions (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 173,
+    "no_path": false,
+    "path_text": "Active Transactions (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Control Lists (ACLs) (Feature)",
+    "hop_count": 2
+  },
+  {
+    "n": 174,
+    "no_path": false,
+    "path_text": "Access Control Lists (ACLs) (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Risk and Compliance Content (Product)",
+    "hop_count": 2
+  },
+  {
+    "n": 175,
+    "no_path": false,
+    "path_text": "AI Risk and Compliance Content Pack (Product)  --[CONTAINS]-->  Risk Statements (DataEntity)  --[CONTAINS]-->  Risk Management (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Active Worker Downloads (Module)",
+    "hop_count": 4
+  },
+  {
+    "n": 176,
+    "no_path": false,
+    "path_text": "Active Worker Downloads (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Record feeds (Feature)  --[INTEGRATES_WITH]-->  Access control rules (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 177,
+    "no_path": false,
+    "path_text": "Access control rules (Feature)  --[USES_TABLE]-->  Table (Table)  --[CONTAINS]-->  Privacy Management (Product)  --[CONTAINS]-->  Control Objectives (Feature)  --[CONTAINS]-->  AI Risk and Compliance Content Pack (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 178,
+    "no_path": false,
+    "path_text": "AI Risk and Compliance Workspace (Product)  --[CONTAINS]-->  AI cases tab (Feature)  --[INTRODUCED_IN]-->  Zurich (Release)  --[INTRODUCED_IN]-->  Now Assist for RPA Hub (Feature)  --[INTEGRATES_WITH]-->  Activities (Module)",
+    "hop_count": 4
+  },
+  {
+    "n": 179,
+    "no_path": false,
+    "path_text": "Activities (Module)  --[INTEGRATES_WITH]-->  Now Assist for RPA Hub (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Controls (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 180,
+    "no_path": false,
+    "path_text": "Access Controls (Feature)  --[CONTAINS]-->  Access Control List (Feature)  --[USES_TABLE]-->  incident (Table)  --[USES_TABLE]-->  Operations Tab (Module)  --[CONTAINS]-->  AI Risk and Compliance Workspace (Product)",
+    "hop_count": 4
+  },
+  {
+    "n": 181,
+    "no_path": false,
+    "path_text": "AI Search application (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Activity Configuration (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 182,
+    "no_path": false,
+    "path_text": "Activity Configuration (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Controls Auditor checks (Feature)",
+    "hop_count": 2
+  },
+  {
+    "n": 183,
+    "no_path": false,
+    "path_text": "Access Controls Auditor checks (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Search application (Product)",
+    "hop_count": 2
+  },
+  {
+    "n": 184,
+    "no_path": false,
+    "path_text": "AI Search for Next Experience (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Activity Configurations (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 185,
+    "no_path": false,
+    "path_text": "Activity Configurations (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Controls Auditor Suite (Feature)",
+    "hop_count": 2
+  },
+  {
+    "n": 186,
+    "no_path": false,
+    "path_text": "Access Controls Auditor Suite (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Search for Next Experience (Product)",
+    "hop_count": 2
+  },
+  {
+    "n": 187,
+    "no_path": false,
+    "path_text": "AI Security Exposure Management (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  CSM (Product)  --[CONTAINS]-->  Activity Management (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 188,
+    "no_path": false,
+    "path_text": "Activity Management (Module)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Threat Intelligence Security Center (Product)  --[CONTAINS]-->  Access controls for a case (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 189,
+    "no_path": false,
+    "path_text": "Access controls for a case (Feature)  --[CONTAINS]-->  Threat Intelligence Security Center (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Security Exposure Management (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 190,
+    "no_path": false,
+    "path_text": "AI Service Graph Connector for Microsoft (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Activity stream (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 191,
+    "no_path": false,
+    "path_text": "AI Search application (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Activity Configuration (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 192,
+    "no_path": false,
+    "path_text": "Activity Configuration (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Controls Auditor checks (Feature)",
+    "hop_count": 2
+  },
+  {
+    "n": 193,
+    "no_path": false,
+    "path_text": "Access Controls Auditor checks (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Search application (Product)",
+    "hop_count": 2
+  },
+  {
+    "n": 194,
+    "no_path": false,
+    "path_text": "AI Search for Next Experience (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Activity Configurations (Module)",
+    "hop_count": 2
+  },
+  {
+    "n": 195,
+    "no_path": false,
+    "path_text": "Activity Configurations (Module)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  Access Controls Auditor Suite (Feature)",
+    "hop_count": 2
+  },
+  {
+    "n": 196,
+    "no_path": false,
+    "path_text": "Access Controls Auditor Suite (Feature)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Search for Next Experience (Product)",
+    "hop_count": 2
+  },
+  {
+    "n": 197,
+    "no_path": false,
+    "path_text": "AI Security Exposure Management (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  CSM (Product)  --[CONTAINS]-->  Activity Management (Module)",
+    "hop_count": 3
+  },
+  {
+    "n": 198,
+    "no_path": false,
+    "path_text": "Activity Management (Module)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Threat Intelligence Security Center (Product)  --[CONTAINS]-->  Access controls for a case (Feature)",
+    "hop_count": 3
+  },
+  {
+    "n": 199,
+    "no_path": false,
+    "path_text": "Access controls for a case (Feature)  --[CONTAINS]-->  Threat Intelligence Security Center (Product)  --[REQUIRES_ROLE]-->  admin (Role)  --[REQUIRES_ROLE]-->  AI Security Exposure Management (Product)",
+    "hop_count": 3
+  },
+  {
+    "n": 200,
+    "no_path": false,
+    "path_text": "AI Service Graph Connector for Microsoft (Product)  --[INTRODUCED_IN]-->  Australia (Release)  --[INTRODUCED_IN]-->  Activity stream (Module)",
+    "hop_count": 2
+  }
+]
