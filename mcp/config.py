@@ -9,7 +9,15 @@ import os
 
 # --- Connectivity ---------------------------------------------------------
 QDRANT_URL = os.environ.get("QDRANT_URL", "http://localhost:6333")
-# v1: no QDRANT_JWT — JWT auth deferred (see spec §5). Future variable: QDRANT_JWT.
+# Optional API key, for a Qdrant that requires authentication (Qdrant Cloud, or a
+# self-hosted instance with `service.api_key` set). Sent as the `api-key` header.
+#
+# None means send no credential at all, which is the default and what the bundled
+# compose file's local Qdrant expects. Blank is normalised to None: an empty
+# `api-key` header is rejected by an authenticated Qdrant, and a whitespace-only
+# string is truthy in Python, so a stray space in a config file would otherwise
+# become a puzzling 401 instead of the keyless behaviour the user intended.
+QDRANT_API_KEY = (os.environ.get("QDRANT_API_KEY") or "").strip() or None
 
 ARANGO_URL = os.environ.get("ARANGO_URL", "http://localhost:8529")
 ARANGO_DATABASE = os.environ.get("ARANGO_DATABASE", "technology_kg")

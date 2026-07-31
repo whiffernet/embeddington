@@ -64,6 +64,11 @@ class QdrantSearchClient:
         collection: The single collection this client may read. Hardcoded
             into every request path; never overridden by callers.
         timeout: Request timeout in seconds.
+        api_key: Optional Qdrant API key, for an instance that requires
+            authentication. Absent, empty and whitespace-only are equivalent and
+            send no ``api-key`` header at all, leaving a keyless install's
+            requests byte-identical. Keyword-optional, so existing callers are
+            unaffected.
         transport: Optional httpx transport (used by tests).
     """
 
@@ -72,19 +77,27 @@ class QdrantSearchClient:
         url: str,
         collection: str,
         timeout: float = 30.0,
+        api_key: Optional[str] = None,
         transport: Optional[httpx.BaseTransport] = None,
     ) -> None:
         self.url = url.rstrip("/")
         self.collection = collection
         self.timeout = timeout
+        # Normalised once, here, so every downstream check is a plain `is None`
+        # and a whitespace-only value can never reach the wire as a credential.
+        self.api_key = (api_key or "").strip() or None
         self._transport = transport
         self._client: Optional[httpx.AsyncClient] = None
 
     async def _http(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:
-            # v1: no auth headers. When JWT lands, add headers={"api-key": jwt} here.
+            # No credential means NO header, not an empty one — an empty api-key
+            # is rejected by an authenticated Qdrant, while sending nothing is
+            # the supported keyless path.
+            headers = {"api-key": self.api_key} if self.api_key else None
             self._client = httpx.AsyncClient(
                 timeout=self.timeout,
+                headers=headers,
                 transport=self._transport,
             )
         return self._client
