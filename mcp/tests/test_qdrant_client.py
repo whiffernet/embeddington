@@ -262,3 +262,101 @@ async def test_search_match_text_adds_filter_and_plain_search_does_not():
     assert "filter" not in bodies[0]
     assert bodies[1]["filter"]["must"][0] == {"key": "chunk_text", "match": {"text": "cmdb_rel_ci"}}
     await c.close()
+
+
+# ---------------------------------------------------------------------------
+# Optional QDRANT_API_KEY (#66).
+#
+# The default -- no credential -- is what every install using the bundled
+# compose file runs, and these tests exist to guarantee that path is untouched.
+# `test_request_shape_is_unchanged_when_credential_absent` is the one that
+# actually protects existing users: it pins URL, method and body, so a
+# regression here shows up as a failing test rather than as a broken install.
+# ---------------------------------------------------------------------------
+
+_KEY = "test-api-key-value"
+
+
+def _capture(seen):
+    def handler(request):
+        seen["headers"] = {k.lower(): v for k, v in request.headers.items()}
+        seen["url"] = str(request.url)
+        seen["method"] = request.method
+        seen["body"] = request.content
+        return httpx.Response(200, json={"result": []})
+
+    return httpx.MockTransport(handler)
+
+
+@pytest.mark.asyncio
+async def test_no_api_key_header_when_credential_absent():
+    """The default path, and the one every keyless install takes."""
+    seen = {}
+    c = QdrantSearchClient("http://x:6333", "technology", transport=_capture(seen))
+    await c.search([0.1] * 4)
+    assert "api-key" not in seen["headers"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("blank", ["", "   ", "\t", "\n", "  \t\n "])
+async def test_no_api_key_header_when_credential_is_blank(blank):
+    """Blank must behave as absent, never as an empty credential.
+
+    An empty `api-key` is rejected by an authenticated Qdrant, and a
+    whitespace-only string is truthy in Python -- so a stray space in a config
+    file would otherwise turn into a puzzling 401 rather than the keyless
+    behaviour the user expected.
+    """
+    seen = {}
+    c = QdrantSearchClient("http://x:6333", "technology", api_key=blank, transport=_capture(seen))
+    await c.search([0.1] * 4)
+    assert "api-key" not in seen["headers"]
+
+
+@pytest.mark.asyncio
+async def test_exactly_one_api_key_header_when_credential_set():
+    seen = {}
+    c = QdrantSearchClient("http://x:6333", "technology", api_key=_KEY, transport=_capture(seen))
+    await c.search([0.1] * 4)
+    assert seen["headers"].get("api-key") == _KEY
+
+
+@pytest.mark.asyncio
+async def test_surrounding_whitespace_is_stripped():
+    """A pasted key usually carries a trailing newline."""
+    seen = {}
+    c = QdrantSearchClient(
+        "http://x:6333", "technology", api_key=f"  {_KEY}\n", transport=_capture(seen)
+    )
+    await c.search([0.1] * 4)
+    assert seen["headers"].get("api-key") == _KEY
+
+
+@pytest.mark.asyncio
+async def test_request_shape_is_unchanged_when_credential_absent():
+    """URL, method and body must match the pre-change baseline exactly.
+
+    This is the compatibility guarantee for existing installs, stated as an
+    executable assertion rather than an intention.
+    """
+    seen = {}
+    c = QdrantSearchClient("http://x:6333", "technology", transport=_capture(seen))
+    await c.search([0.1] * 4, limit=7)
+    assert seen["method"] == "POST"
+    assert seen["url"] == "http://x:6333/collections/technology/points/search"
+    assert b'"limit": 7' in seen["body"] or b'"limit":7' in seen["body"]
+
+
+@pytest.mark.asyncio
+async def test_can_read_collection_is_false_on_401():
+    """A wrong or missing key must read as 'not reachable', not crash.
+
+    `can_read_collection` drives the startup check, so a 401 needs to surface as
+    a clean False and a legible refusal rather than an opaque traceback.
+    """
+
+    def handler(request):
+        return httpx.Response(401, json={"status": {"error": "unauthorized"}})
+
+    c = QdrantSearchClient("http://x:6333", "technology", transport=httpx.MockTransport(handler))
+    assert await c.can_read_collection("technology") is False

@@ -132,6 +132,9 @@ def _get_qdrant(collection: str | None = None) -> QdrantSearchClient:
             url=config.QDRANT_URL,
             collection=collection,
             timeout=config.HTTP_TIMEOUT,
+            # None unless QDRANT_API_KEY is set — the keyless local Qdrant the
+            # bundled compose file starts needs no credential.
+            api_key=config.QDRANT_API_KEY,
         )
     return _qdrant_clients[collection]
 
