@@ -1,16 +1,8 @@
 {
   "mcpServers": {
     "embeddington": {
-      "command": "python3",
-      "args": ["mcp/server.py"],
-      "env": {
-        "QDRANT_URL": "http://localhost:6333",
-        "ARANGO_URL": "http://localhost:8529",
-        "ARANGO_DATABASE": "technology_kg",
-        "ARANGO_USER": "root",
-        "ARANGO_PASSWORD": "${ARANGO_ROOT_PASSWORD}",
-        "EMBED_URL": "http://localhost:8100/embed"
-      }
+      "command": ".venv/bin/python",
+      "args": ["mcp/server.py"]
     }
   }
 }
