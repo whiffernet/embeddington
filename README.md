@@ -807,8 +807,28 @@ gap, a schema version mismatch, ...). Re-run the installer; if it repeats, run
 #### EMB-51 — MCP dependency install failed
 
 `pip install -r mcp/requirements.txt` failed while wiring up Claude — the graph
-itself is unaffected and fully usable without it. Run that `pip install` manually to
-see why, then launch Claude from the repo root with `consumer/.env` loaded.
+itself is unaffected and fully usable without it. Run that `pip install` manually with
+the clone's own interpreter (`.venv/bin/pip`) to see why.
+
+#### EMB-52 — the MCP server didn't start when probed
+
+After wiring Claude, the installer starts the server once to prove it works, instead of
+assuming it does. This code means that probe failed, and the message names which of the
+few possible causes it was: the clone's `.venv` is missing, the server's dependencies
+aren't installed in it, `mcp/.env` has no `ARANGO_PASSWORD`, or the local stack isn't
+answering (which is the stack being down, not the wiring being wrong).
+
+Your knowledge graph is unaffected either way — this step only concerns querying it from
+Claude. To watch the failure yourself:
+
+```bash
+# run from: repo root
+.venv/bin/python mcp/server.py < /dev/null
+```
+
+A healthy server prints a startup line and exits cleanly when its input closes. Any other
+outcome prints the real reason, which your client would otherwise report only as a closed
+connection.
 
 #### EMB-61 — couldn't inspect store contents before deletion
 

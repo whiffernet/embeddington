@@ -131,3 +131,84 @@ def test_missing_consumer_env_is_reported_not_raised(tmp_path):
     (tmp_path / "mcp").mkdir(parents=True)
     assert claude_step.ensure_mcp_env(tmp_path) == "no-password"
     assert not (tmp_path / "mcp" / ".env").exists()
+
+
+# --- startup verification (issue #85, Part D) -------------------------------
+# Measured exit semantics of the real server, with stdin closed:
+#   healthy                 -> rc 0 (transport reads EOF and shuts down cleanly)
+#   interpreter has no deps -> rc 1, "ModuleNotFoundError: No module named ..."
+#   no password anywhere    -> rc 1, "Missing required env var: ARANGO_PASSWORD ..."
+# The client reports every one of these identically as "Connection closed", which is
+# why the wizard has to run the spawn itself and quote what came back.
+
+import subprocess
+
+
+def test_verified_when_the_server_exits_cleanly(tmp_path):
+    run = FakeRun([RunResult(0, "", "")])
+    status, _ = claude_step.verify_mcp_server(run, tmp_path)
+    assert status == "verified"
+
+
+def test_verify_uses_the_clone_venv_and_closes_stdin(tmp_path):
+    """Bare `python3` is the bug under test; and an inherited TTY stdin would make the
+    server sit there waiting for a request that never comes, hanging the installer."""
+    run = FakeRun([RunResult(0, "", "")])
+    claude_step.verify_mcp_server(run, tmp_path)
+    call = run.calls[0]
+    assert call["cmd"][0] == str(tmp_path / ".venv" / "bin" / "python")
+    assert call["cmd"][1:] == ["mcp/server.py"]
+    assert call["cwd"] == tmp_path
+    assert call["stdin_devnull"] is True
+
+
+def test_missing_deps_are_named(tmp_path):
+    run = FakeRun([RunResult(1, "", "ModuleNotFoundError: No module named 'dotenv'")])
+    status, detail = claude_step.verify_mcp_server(run, tmp_path)
+    assert status == "deps"
+    assert "dotenv" in detail
+
+
+def test_missing_password_is_named(tmp_path):
+    err = "Missing required env var: ARANGO_PASSWORD must be set (via .env)."
+    run = FakeRun([RunResult(1, "", err)])
+    status, _ = claude_step.verify_mcp_server(run, tmp_path)
+    assert status == "password"
+
+
+def test_unreachable_stack_is_not_reported_as_a_wiring_fault(tmp_path):
+    """The server refuses to start when Qdrant is unreachable. That is the stack being
+    down, not the wiring being wrong, and saying otherwise sends the user to fix a file
+    that is already correct."""
+    run = FakeRun([RunResult(1, "", "Refusing to start:\n  Qdrant collection ...")])
+    status, _ = claude_step.verify_mcp_server(run, tmp_path)
+    assert status == "stack"
+
+
+def test_absent_interpreter_is_named(tmp_path):
+    run = FakeRun([RunResult(127, "", "command not found: .venv/bin/python")])
+    status, _ = claude_step.verify_mcp_server(run, tmp_path)
+    assert status == "no-interpreter"
+
+
+def test_unknown_failure_surfaces_the_servers_own_stderr(tmp_path):
+    run = FakeRun([RunResult(1, "", "AttributeError: something we have never seen")])
+    status, detail = claude_step.verify_mcp_server(run, tmp_path)
+    assert status == "unknown"
+    assert "never seen" in detail
+
+
+def test_a_hung_server_is_a_timeout_not_a_crash(tmp_path):
+    def hang(*_a, **_k):
+        raise subprocess.TimeoutExpired(cmd="python", timeout=1)
+
+    status, _ = claude_step.verify_mcp_server(hang, tmp_path)
+    assert status == "timeout"
+
+
+def test_every_failure_status_maps_to_a_registered_error(tmp_path):
+    for status in ("deps", "password", "stack", "no-interpreter", "timeout", "unknown"):
+        err = claude_step.mcp_verification_error(status, "detail here")
+        assert err.code == "EMB-52"
+        assert err.fix  # every one tells the user what to do next
+    assert claude_step.mcp_verification_error("verified", "") is None

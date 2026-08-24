@@ -12,8 +12,12 @@ class FakeRun:
         self.calls = []
         self.results = list(results or [])
 
-    def __call__(self, cmd, *, cwd=None, env=None, timeout=None, stream=False):
-        self.calls.append({"cmd": list(cmd), "cwd": cwd, "stream": stream})
+    def __call__(
+        self, cmd, *, cwd=None, env=None, timeout=None, stream=False, stdin_devnull=False
+    ):
+        self.calls.append(
+            {"cmd": list(cmd), "cwd": cwd, "stream": stream, "stdin_devnull": stdin_devnull}
+        )
         if self.results:
             return self.results.pop(0)
         return RunResult(0, "", "")

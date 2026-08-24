@@ -33,6 +33,7 @@ CODES = {
     "EMB-44": "proof-of-life query returned zero",
     "EMB-45": "updater error (chain gap, schema version, ...)",
     "EMB-51": "MCP dependency install failed (Claude wiring is optional)",
+    "EMB-52": "the MCP server did not start when the wizard probed it",
     "EMB-61": "could not inspect store contents before volume deletion",
     "EMB-62": "crontab rewrite failed",
     "EMB-63": "clone self-delete handoff failed",

@@ -11,6 +11,7 @@ start their client from.
 """
 
 import os
+import subprocess
 import sys
 
 from installer import errors, stack, ui
@@ -158,3 +159,118 @@ def offer_claude_wiring(console, run, repo_root, *, assume_yes, which=None, inpu
         "see mcp/README.md.[/dim]"
     )
     return "installed"
+
+
+# Generous: the server's startup sanity check makes real calls to the local stores, and a
+# cold container answers slowly. This only bounds a hang, it is not a latency budget.
+MCP_VERIFY_TIMEOUT = 60
+
+
+def _stderr_tail(text, lines=3):
+    """The last few non-blank lines — the part that names the actual failure."""
+    kept = [line for line in (text or "").splitlines() if line.strip()]
+    return "\n".join(kept[-lines:]).strip()
+
+
+def _diagnose(res):
+    """Classify a probe result into (status, detail).
+
+    Every one of these reaches the user's client as the same "Connection closed", so the
+    wizard's whole value here is telling them apart. Signatures are taken from the
+    server's own startup paths, not guessed.
+
+    Args:
+        res: RunResult from the probe spawn.
+
+    Returns:
+        (status, detail) where status is verified | no-interpreter | deps | password |
+        stack | unknown.
+    """
+    text = f"{res.err or ''}\n{res.out or ''}"
+    if res.rc == 0:
+        return "verified", ""
+    if res.rc == 127 or "command not found" in text:
+        return "no-interpreter", _stderr_tail(text)
+    if "No module named" in text:
+        return "deps", _stderr_tail(text)
+    if "Missing required env var" in text:
+        return "password", _stderr_tail(text)
+    if "Refusing to start" in text:
+        return "stack", _stderr_tail(text)
+    return "unknown", _stderr_tail(text)
+
+
+def verify_mcp_server(run, repo_root, *, timeout=MCP_VERIFY_TIMEOUT):
+    """Actually start the server and see what happens. Never raises.
+
+    Spawns exactly what the client will spawn — the clone's venv interpreter, the
+    repo-relative script, the same working directory — with stdin closed. Measured: a
+    healthy server takes the EOF, shuts down cleanly, and exits 0.
+
+    Args:
+        run: runner.run-compatible callable.
+        repo_root: the clone root.
+        timeout: seconds before the probe is treated as hung.
+
+    Returns:
+        (status, detail) — see _diagnose. "timeout" when the server never exited.
+    """
+    interpreter = repo_root / ".venv" / "bin" / "python"
+    try:
+        res = run(
+            [str(interpreter), "mcp/server.py"],
+            cwd=repo_root,
+            timeout=timeout,
+            stdin_devnull=True,
+        )
+    except subprocess.TimeoutExpired:
+        return "timeout", f"still running after {timeout}s with stdin closed"
+    return _diagnose(res)
+
+
+_VERIFY_FIXES = {
+    "no-interpreter": (
+        "The clone's .venv is missing or incomplete. Re-run the install one-liner; it "
+        "rebuilds the environment."
+    ),
+    "deps": (
+        "Re-run embeddington-setup and accept the Claude step, or install them yourself "
+        "with the clone's own interpreter: .venv/bin/pip install -r mcp/requirements.txt"
+    ),
+    "password": (
+        "Re-run embeddington-setup — it writes mcp/.env from consumer/.env. To do it by "
+        "hand, set ARANGO_PASSWORD in mcp/.env to the ARANGO_ROOT_PASSWORD in consumer/.env."
+    ),
+    "stack": (
+        "This is the local stack being down, not the Claude wiring — that part is fine. "
+        "Run embeddington-setup --check to see which container isn't answering."
+    ),
+    "timeout": (
+        "The server started but never exited when its input closed. Run it by hand to "
+        "watch it: .venv/bin/python mcp/server.py < /dev/null"
+    ),
+    "unknown": (
+        "Run the probe yourself to see the whole error: "
+        ".venv/bin/python mcp/server.py < /dev/null"
+    ),
+}
+
+
+def mcp_verification_error(status, detail):
+    """Turn a non-verified probe status into a SetupError; None when it verified.
+
+    Args:
+        status: a status from verify_mcp_server.
+        detail: the accompanying detail (the server's own words, when it had any).
+
+    Returns:
+        errors.SetupError (EMB-52), or None when status is "verified".
+    """
+    if status == "verified":
+        return None
+    said = f" It said: {detail}" if detail else ""
+    return errors.SetupError(
+        "EMB-52",
+        f"The MCP server didn't start when I probed it ({status}).{said}",
+        _VERIFY_FIXES.get(status, _VERIFY_FIXES["unknown"]),
+    )
