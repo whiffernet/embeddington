@@ -13,6 +13,7 @@ start their client from.
 import os
 import subprocess
 import sys
+from dataclasses import dataclass
 
 from installer import errors, stack, ui
 
@@ -97,32 +98,44 @@ def ensure_mcp_env(repo_root):
 
 
 def offer_claude_wiring(console, run, repo_root, *, assume_yes, which=None, input_fn=input):
-    """Offer MCP dependency install; return installed|skipped|no-claude|failed.
+    """Configure the MCP server, install its deps, prove it starts, and offer reach.
+
+    Order matters. mcp/.env is written FIRST and unconditionally — before the check for
+    the Claude Code CLI — because a Claude Desktop user has no CLI on PATH and needs that
+    file more than anyone: a GUI app inherits no shell exports at all.
+
+    Never fatal. Every failure here is shown and stepped over; the graph is complete and
+    queryable without any of it.
 
     Args:
         console: rich Console for output.
         run: Callable that runs a subprocess command (takes cmd argv list).
-        repo_root: Path to the repo root (to locate mcp/requirements.txt).
+        repo_root: Path to the repo root.
         assume_yes: If True, skip prompts and assume affirmative answers.
         which: Callable to locate a binary on PATH (default: shutil.which).
         input_fn: Callable to read user input (default: builtins.input).
 
     Returns:
-        A status string:
-        - "no-claude": Claude Code not found on PATH
-        - "skipped": User declined the offer
-        - "installed": Dependencies installed successfully
-        - "failed": pip install failed (shown as a warning, not raised)
+        WiringResult describing each half of the outcome.
     """
     import shutil
 
     which = shutil.which if which is None else which
+    env_status = ensure_mcp_env(repo_root)
+    if env_status == "no-password":
+        console.print(
+            "[yellow]Couldn't read a password from consumer/.env, so mcp/.env wasn't "
+            "written — Claude access will need it set by hand.[/yellow]"
+        )
+
     if which("claude") is None:
         console.print(
-            "[dim]Claude Code isn't on your PATH. Install it later and see the README's "
-            "'query with Claude' section — the graph works either way.[/dim]"
+            "[dim]Claude Code isn't on your PATH. mcp/.env is written and ready, so "
+            "Claude Desktop works once you point it at mcp/server.py (see mcp/README.md); "
+            "the graph itself works either way.[/dim]"
         )
-        return "no-claude"
+        return WiringResult(env_status, "no-claude", "not-run", "not-offered")
+
     if not ui.confirm(
         console,
         "Claude Code detected. Wire up the embeddington MCP server (installs mcp/ deps)?",
@@ -130,7 +143,8 @@ def offer_claude_wiring(console, run, repo_root, *, assume_yes, which=None, inpu
         assume_yes=assume_yes,
         input_fn=input_fn,
     ):
-        return "skipped"
+        return WiringResult(env_status, "skipped", "not-run", "not-offered")
+
     req = repo_root / "mcp" / "requirements.txt"
     result = run([sys.executable, "-m", "pip", "install", "-r", str(req)])
     if result.rc != 0:
@@ -139,26 +153,67 @@ def offer_claude_wiring(console, run, repo_root, *, assume_yes, which=None, inpu
             errors.SetupError(
                 "EMB-51",
                 "Installing the MCP server's dependencies failed (the graph itself is fine).",
-                f"Run `pip install -r {req}` manually to see why; then just launch Claude "
-                "from the repo root with consumer/.env loaded.",
+                f"Run `.venv/bin/pip install -r {req}` manually to see why.",
             ),
         )
-        return "failed"
-    # [CRITIC] The deps just landed in THIS venv, but .mcp.json launches the server with
-    # a bare python3 — the recipe must activate the venv first or the server Claude
-    # starts can't import them. (Implementer: verify the interpreter .mcp.json actually
-    # names and keep this recipe consistent with it.)
-    console.print(
-        "\n[green]✓[/green] MCP deps installed. To query the graph:\n"
-        "    [bold]cd <your clone>[/bold]\n"
-        "    [bold]. .venv/bin/activate && set -a; . consumer/.env; set +a && claude[/bold]\n"
-        "  Claude Code auto-discovers the repo's .mcp.json — approve the 'embeddington' "
-        "server when prompted. The venv activation matters: the MCP server runs with "
-        "whatever python3 is on PATH.\n"
-        "  [dim]Claude Desktop instead? cp mcp/.env.example mcp/.env, set ARANGO_PASSWORD, "
-        "see mcp/README.md.[/dim]"
+        return WiringResult(env_status, "failed", "not-run", "not-offered")
+
+    verify_status, detail = verify_mcp_server(run, repo_root)
+    if verify_status != "verified":
+        # Shown, never raised: a server that won't start costs the user nothing they
+        # already had, and the data update that preceded this is worth keeping.
+        ui.show_error(console, mcp_verification_error(verify_status, detail))
+        return WiringResult(env_status, "installed", verify_status, "not-offered")
+
+    console.print("\n[green]✓[/green] MCP server verified — it starts and answers.")
+    registration = offer_user_scope(
+        console, run, repo_root, assume_yes=assume_yes, input_fn=input_fn
     )
-    return "installed"
+
+    if registration in ("registered", "refreshed"):
+        console.print(
+            f"  Registered as [bold]{USER_SCOPE_NAME}[/bold] — run [bold]claude[/bold] "
+            "from anywhere and it's there."
+        )
+    else:
+        console.print(
+            "  To query the graph: [bold]cd <your clone> && claude[/bold], then approve "
+            "the 'embeddington' server. No venv activation, no exported password — "
+            "mcp/.env carries the configuration."
+        )
+    return WiringResult(env_status, "installed", verify_status, registration)
+
+
+def ensure_claude_wiring(console, run, repo_root):
+    """Prompt-free wiring refresh for the update path. Never raises, never asks.
+
+    Mirrors the cron step's split: refresh what the user already has, never introduce
+    something that needs consent. That is what makes it safe to run from an unattended
+    nightly update — and what lets an install broken by the old configuration repair
+    itself without anybody doing anything.
+
+    The server is only probed when its dependencies are actually installed. A user who
+    declined Claude wiring should not be nagged about a component they never wanted.
+
+    Args:
+        console: rich Console for output.
+        run: runner.run-compatible callable.
+        repo_root: the clone root.
+
+    Returns:
+        WiringResult (deps here reports what was found, not what was installed).
+    """
+    env_status = ensure_mcp_env(repo_root)
+    if not mcp_deps_installed(run, repo_root):
+        return WiringResult(env_status, "absent", "not-run", "not-offered")
+
+    verify_status, detail = verify_mcp_server(run, repo_root)
+    if verify_status not in ("verified", "stack"):
+        # "stack" is the containers being down mid-update, not a wiring problem, and it
+        # resolves itself; anything else is worth a word.
+        ui.show_error(console, mcp_verification_error(verify_status, detail))
+
+    return WiringResult(env_status, "present", verify_status, refresh_user_scope(run, repo_root))
 
 
 # Generous: the server's startup sanity check makes real calls to the local stores, and a
@@ -274,3 +329,109 @@ def mcp_verification_error(status, detail):
         f"The MCP server didn't start when I probed it ({status}).{said}",
         _VERIFY_FIXES.get(status, _VERIFY_FIXES["unknown"]),
     )
+
+
+# Distinct from the project-scoped server in .mcp.json on purpose. Measured: the same
+# name in two scopes makes the client print a standing "defined in multiple scopes with
+# different endpoints" warning on every listing, and the project entry wins in-project
+# anyway. Two names, no warning, and the scopes stay tellable apart.
+USER_SCOPE_NAME = "embeddington-local"
+
+
+def _mcp_add_argv(repo_root):
+    """The registration command. Absolute paths are mandatory, not tidy: measured, a
+    relative command under user scope is never spawned at all from another directory."""
+    return [
+        "claude", "mcp", "add", USER_SCOPE_NAME, "--scope", "user", "--",
+        str(repo_root / ".venv" / "bin" / "python"),
+        str(repo_root / "mcp" / "server.py"),
+    ]
+
+
+def user_scope_present(run):
+    """True iff a user-scope registration under our name exists. Never raises."""
+    return run(["claude", "mcp", "get", USER_SCOPE_NAME]).rc == 0
+
+
+def register_user_scope(run, repo_root):
+    """Point the user-scope registration at THIS clone; return whether it stuck.
+
+    Remove-then-add, because `claude mcp add` refuses an existing name — and does so
+    while exiting 0, so its return code proves nothing. Success is confirmed by reading
+    the registration back, which is the only trustworthy signal available.
+
+    Args:
+        run: runner.run-compatible callable.
+        repo_root: the clone root the registration should point at.
+
+    Returns:
+        True iff a registration exists afterwards.
+    """
+    run(["claude", "mcp", "remove", USER_SCOPE_NAME, "-s", "user"])  # absent is fine
+    run(_mcp_add_argv(repo_root))
+    return user_scope_present(run)
+
+
+def remove_user_scope(run):
+    """Drop the user-scope registration (uninstall). Never raises."""
+    run(["claude", "mcp", "remove", USER_SCOPE_NAME, "-s", "user"])
+    return not user_scope_present(run)
+
+
+def offer_user_scope(console, run, repo_root, *, assume_yes, input_fn=input):
+    """Offer to make the server reachable from every directory.
+
+    An existing registration is refreshed silently rather than re-offered — the same
+    never-re-nag contract the cron step follows. Unattended runs cannot consent, so they
+    neither prompt nor register.
+
+    Returns:
+        "registered" | "refreshed" | "declined" | "skipped-unattended" | "failed".
+    """
+    if assume_yes:
+        return "skipped-unattended"
+    if user_scope_present(run):
+        return "refreshed" if register_user_scope(run, repo_root) else "failed"
+    if not ui.confirm(
+        console,
+        "Make the graph queryable from every directory, not just this clone?",
+        default=True,
+        input_fn=input_fn,
+    ):
+        return "declined"
+    return "registered" if register_user_scope(run, repo_root) else "failed"
+
+
+def refresh_user_scope(run, repo_root):
+    """Update path: repoint an existing registration; never create one.
+
+    Adding a registration is a consent-bearing act, and an unattended nightly update is
+    the wrong place to perform one.
+
+    Returns:
+        "refreshed" | "absent" | "failed".
+    """
+    if not user_scope_present(run):
+        return "absent"
+    return "refreshed" if register_user_scope(run, repo_root) else "failed"
+
+
+def mcp_deps_installed(run, repo_root):
+    """True iff the server's dependencies import under the interpreter that runs it.
+
+    Deliberately not `find_spec` from the wizard: that tests the WRONG interpreter, and
+    the repo's own `mcp/` directory is importable as a namespace package, so it can
+    report success with no SDK installed at all.
+    """
+    interpreter = repo_root / ".venv" / "bin" / "python"
+    return run([str(interpreter), "-c", "import fastmcp"]).rc == 0
+
+
+@dataclass(frozen=True)
+class WiringResult:
+    """What the Claude step actually accomplished, for the receipt to report honestly."""
+
+    env: str  # created | filled | merged | unchanged | no-password
+    deps: str  # installed | skipped | failed | no-claude
+    verify: str  # verified | deps | password | stack | ... | not-run
+    registration: str  # registered | refreshed | declined | skipped-unattended | failed | not-offered
