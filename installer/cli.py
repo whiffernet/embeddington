@@ -98,6 +98,9 @@ def _production_deps(repo_root, args):
         "claude_wiring": lambda console, assume_yes, input_fn: claude_step.offer_claude_wiring(
             console, runner.run, repo_root, assume_yes=assume_yes, input_fn=input_fn
         ),
+        "ensure_claude_wiring": lambda console: claude_step.ensure_claude_wiring(
+            console, runner.run, repo_root
+        ),
         "install_cron": lambda console, assume_yes, input_fn: install_cron(
             console, runner.run, repo_root, assume_yes=assume_yes, input_fn=input_fn
         ),
@@ -161,7 +164,35 @@ def _cron_receipt(outcome, repo_root):
     )
 
 
-def _update_receipt(did, points, entities, mcp_changed, cron_outcome, repo_root):
+def _claude_receipt(wiring):
+    """Render the receipt's Claude line from a WiringResult.
+
+    Reports what was PROVEN, not what was attempted — the whole point of probing the
+    server is that "deps installed" was never evidence it runs.
+
+    Args:
+        wiring: the WiringResult the Claude step returned.
+
+    Returns:
+        A ready-to-print receipt fragment.
+    """
+    if wiring.deps == "no-claude":
+        return "  Claude:    Claude Code not found — mcp/.env is ready for Claude Desktop"
+    if wiring.deps == "skipped":
+        return "  Claude:    skipped (re-run embeddington-setup to wire it up later)"
+    if wiring.deps == "failed":
+        return "  Claude:    dependency install failed — see EMB-51 above"
+    if wiring.verify != "verified":
+        return f"  Claude:    server didn't start ({wiring.verify}) — see EMB-52 above"
+    if wiring.registration in ("registered", "refreshed"):
+        return (
+            f"  Claude:    verified — available in every directory "
+            f"as {claude_step.USER_SCOPE_NAME}"
+        )
+    return "  Claude:    verified — run `claude` from this clone to query the graph"
+
+
+def _update_receipt(did, points, entities, mcp_changed, cron_outcome, repo_root, wiring=None):
     """Render a two-shape Update receipt: light when nothing structural changed,
     heavy (enumerated) when one-time upgrades landed.
 
@@ -200,6 +231,12 @@ def _update_receipt(did, points, entities, mcp_changed, cron_outcome, repo_root)
         heavy.append("  Auto-updates: enabled (daily 06:00)")
     if cron_outcome == "refreshed":
         heavy.append("  Auto-updates: cron refreshed to the current self-upgrading form")
+    if wiring is not None and wiring.env in ("created", "filled", "merged"):
+        heavy.append(
+            "  Claude:   mcp/.env written — Claude no longer needs an exported password"
+        )
+    if wiring is not None and wiring.registration == "refreshed":
+        heavy.append("  Claude:   registration repointed at this clone")
 
     lines = [data]
     if heavy:
@@ -323,6 +360,11 @@ def _update_flow(console, deps, args, input_fn):
     result, points, entities = _import_with_readiness_retry(console, deps, args, password)
     did["data_mode"], did["applied"] = result.get("mode"), result.get("applied", 0)
 
+    # Prompt-free, and idempotent: this is the line that repairs an install wired by an
+    # older installer without the user doing anything.
+    ui.rule(console, "Claude")
+    wiring = deps["ensure_claude_wiring"](console)
+
     mcp_changed = any(f.startswith("mcp/") for f in changed)
     cron_outcome = None
     if deps["cron_present"]():
@@ -332,7 +374,9 @@ def _update_flow(console, deps, args, input_fn):
         cron_outcome = deps["install_cron"](console, args.yes, input_fn)
 
     ui.rule(console, "Receipt")
-    console.print(_update_receipt(did, points, entities, mcp_changed, cron_outcome, _repo_root()))
+    console.print(
+        _update_receipt(did, points, entities, mcp_changed, cron_outcome, _repo_root(), wiring)
+    )
     return 0
 
 
@@ -415,7 +459,7 @@ def _install_flow(console, deps, st, args, input_fn):
     )
 
     ui.rule(console, "Claude")
-    deps["claude_wiring"](console, args.yes, input_fn)
+    wiring = deps["claude_wiring"](console, args.yes, input_fn)
 
     ui.rule(console, "Auto-updates")
     cron_outcome = deps["install_cron"](console, args.yes, input_fn)
@@ -425,6 +469,7 @@ def _install_flow(console, deps, st, args, input_fn):
         f"  Install:   {_repo_root()}\n"
         f"  State:     ~/.local/share/embeddington (or $EMBEDDINGTON_HOME)\n"
         f"  Version:   {result['cursor']}\n"
+        f"{_claude_receipt(wiring)}\n"
         f"{_cron_receipt(cron_outcome, _repo_root())}\n"
         f"  Health:    embeddington-setup --check\n"
         f"  Leaving?   embeddington-setup --uninstall\n"
