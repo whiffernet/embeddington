@@ -1,6 +1,6 @@
 ---
 description: "Check the local install's health and explain what it reports"
-allowed-tools: ["Bash"]
+allowed-tools: Bash(.venv/bin/embeddington-setup --check)
 ---
 
 # Install health check

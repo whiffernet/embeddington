@@ -1,6 +1,7 @@
 ---
 description: "Raw semantic search over the corpus — evidence, not synthesis"
 argument-hint: "[search terms]"
+allowed-tools: mcp__embeddington__vector_search, mcp__embeddington-local__vector_search
 ---
 
 # Search embeddington

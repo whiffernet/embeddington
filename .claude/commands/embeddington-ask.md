@@ -1,6 +1,7 @@
 ---
 description: "Ask the knowledge graph a question and get a grounded answer"
 argument-hint: "[question]"
+allowed-tools: mcp__embeddington__enrich, mcp__embeddington-local__enrich
 ---
 
 # Ask embeddington

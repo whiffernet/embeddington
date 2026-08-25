@@ -1,6 +1,7 @@
 ---
 description: "Look up an entity by name and show what it connects to"
 argument-hint: "[entity name]"
+allowed-tools: mcp__embeddington__kg_find_entities, mcp__embeddington-local__kg_find_entities, mcp__embeddington__kg_get_entity, mcp__embeddington-local__kg_get_entity, mcp__embeddington__kg_neighbors, mcp__embeddington-local__kg_neighbors
 ---
 
 # Entity lookup

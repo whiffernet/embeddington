@@ -1,6 +1,7 @@
 ---
 description: "Show how two entities are connected, with the hub caveat applied"
 argument-hint: "[entity A] [entity B]"
+allowed-tools: mcp__embeddington__kg_find_entities, mcp__embeddington-local__kg_find_entities, mcp__embeddington__kg_path, mcp__embeddington-local__kg_path
 ---
 
 # Path between entities

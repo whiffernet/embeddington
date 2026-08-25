@@ -1,5 +1,6 @@
 ---
 description: "List the knowledge graph's entity types and predicate vocabulary"
+allowed-tools: mcp__embeddington__kg_schema, mcp__embeddington-local__kg_schema
 ---
 
 # Graph vocabulary

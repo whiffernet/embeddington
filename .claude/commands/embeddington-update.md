@@ -1,6 +1,6 @@
 ---
 description: "Bring the local install current and explain the receipt"
-allowed-tools: ["Bash"]
+allowed-tools: Bash(.venv/bin/embeddington-setup --yes)
 ---
 
 # Update the install
