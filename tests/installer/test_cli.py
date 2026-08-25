@@ -78,6 +78,7 @@ def make_deps(rec):
         "merge_env": rec.step("merge_env", []),
         "index_absent": lambda: rec._record("index_absent") or False,
         "cron_present": lambda: rec._record("cron_present") or False,
+        "record_install_path": lambda: rec._record("record_install") or True,
     }
 
 
@@ -100,6 +101,7 @@ def test_fresh_install_runs_steps_in_order():
         "proof",
         "claude",
         "install_cron",
+        "record_install",
     ]
 
 
@@ -609,3 +611,25 @@ def test_doctor_says_unknown_not_down_when_it_could_not_ask():
     rec2 = SequenceRecorder([stopped])
     cli.main(["--check"], console=con2, deps=_deps_with(rec2))
     assert "EMB-31" in con2.export_text()
+
+
+def test_both_flows_record_where_the_clone_lives():
+    """install.sh has no other way to find an existing install: without this breadcrumb it
+    defaults its prompt to $HOME/embeddington and a stray Enter builds a second clone."""
+    fresh = Recorder(state=FRESH)
+    assert run_main(["--yes"], fresh) == 0
+    assert "record_install" in fresh.order
+
+    updating = Recorder(state=ALL_GOOD)
+    assert cli.main([], console=console(), deps=make_deps(updating), input_fn=lambda: "u") == 0
+    assert "record_install" in updating.order
+
+
+def test_a_failed_recording_does_not_fail_the_install():
+    """A read-only state dir is a nuisance for the NEXT run, not a reason to fail this one."""
+    rec = Recorder(state=FRESH)
+    deps = make_deps(rec)
+    deps["record_install_path"] = lambda: False
+    con = Console(record=True, width=200)
+    assert cli.main(["--yes"], console=con, deps=deps, input_fn=lambda: "") == 0
+    assert "couldn't record" in con.export_text()

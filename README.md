@@ -137,8 +137,12 @@ verifies it — interactively, with taste:
 curl -fsSL https://raw.githubusercontent.com/whiffernet/embeddington/main/install.sh | bash
 ```
 
-- Re-running it later is safe: on an installed machine it offers **Update / Repair /
-  Uninstall** instead.
+- Re-running it later is safe, from anywhere: the installer remembers where it put things
+  and offers **Update / Repair / Uninstall** on a machine that already has it. You do not
+  need to remember the path or pass it again — just re-run the same one command.
+- **macOS:** if you point it at `~/Documents`, `~/Desktop`, `~/Downloads`, or iCloud Drive,
+  it says so and offers `~/embeddington` instead. Background jobs cannot read those folders
+  without a Full Disk Access grant, so a clone there never auto-updates.
 - Unattended (CI, scripts): `EMBEDDINGTON_YES=1`, install dir via
   `EMBEDDINGTON_INSTALL_DIR`. Unattended mode never installs Docker (it can't consent)
   and never deletes data.
@@ -314,7 +318,10 @@ just works. Each platform has a wrinkle worth knowing:
   inherit macOS privacy limits, so if you installed embeddington **under `~/Documents`,
   `~/Desktop`, `~/Downloads`, or iCloud Drive**, the nightly `cd` into it can be blocked
   and the update silently does nothing — install somewhere like `~/embeddington` or
-  `~/code/embeddington` to avoid this.
+  `~/code/embeddington` to avoid this. The installer now warns before cloning into one of
+  those folders, and warns again on every run if you are already installed in one; if that
+  is you, the fix is to move the clone (or grant Full Disk Access to the program that runs
+  the update) — until then, treat updates as something you run by hand.
 - **WSL2:** a crontab entry only fires while the distro is running, and WSL2 shuts the
   distro down when idle and does not launch it at boot. For reliable 06:00 updates you
   need `systemd=true` in `/etc/wsl.conf` **and** something keeping the distro alive (e.g.
@@ -619,7 +626,7 @@ vector count over `baseline-2026-06`, and the disk figures moved with it.
 | Variable                   | Default                                          | Purpose                                                                        |
 | -------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------ |
 | `EMBEDDINGTON_YES`         | unset                                            | `1` for a fully unattended install (never installs Docker, never deletes data) |
-| `EMBEDDINGTON_INSTALL_DIR` | `~/embeddington`                                 | Where to clone and install                                                     |
+| `EMBEDDINGTON_INSTALL_DIR` | remembered install, else `~/embeddington`         | Where to clone and install. Overrides the remembered location; skips the prompt |
 | `EMBEDDINGTON_CLONE_URL`   | `https://github.com/whiffernet/embeddington.git` | Clone source override (CI, forks)                                              |
 
 `embeddington-consume update` flags (all optional — `--repo` defaults to

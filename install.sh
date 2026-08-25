@@ -11,7 +11,6 @@
 set -euo pipefail
 
 CLONE_URL="${EMBEDDINGTON_CLONE_URL:-https://github.com/whiffernet/embeddington.git}"
-DEFAULT_DIR="${EMBEDDINGTON_INSTALL_DIR:-$HOME/embeddington}"
 YES="${EMBEDDINGTON_YES:-}"
 ANCHOR="https://github.com/whiffernet/embeddington#"
 
@@ -55,14 +54,98 @@ if ! git ls-remote --heads "$CLONE_URL" >/dev/null 2>&1; then
     "Check your connection / proxy, then re-run."
 fi
 
+# --- Where an existing install lives --------------------------------------------
+# Mirrors consumer/state_paths.resolve_state_dir. Two implementations of one ladder is
+# a drift risk, so tests/test_install_sh.py runs both and compares.
+state_dir() {
+  if [ -n "${EMBEDDINGTON_HOME:-}" ]; then printf '%s' "$EMBEDDINGTON_HOME"; return; fi
+  if [ -n "${XDG_DATA_HOME:-}" ]; then printf '%s/embeddington' "$XDG_DATA_HOME"; return; fi
+  printf '%s/.local/share/embeddington' "$HOME"
+}
+
+# The clone root of an existing install, or empty. Never fails the run.
+recorded_install_dir() {
+  pointer="$(state_dir)/install_path"
+  if [ -r "$pointer" ]; then
+    recorded="$(head -n 1 "$pointer" 2>/dev/null | tr -d '\r\n')"
+    if [ -n "$recorded" ] && [ -d "$recorded/.git" ]; then printf '%s' "$recorded"; return; fi
+  fi
+  # Installs predating the pointer: the nightly job's own `cd <path>` knows where it is.
+  from_cron="$(crontab -l 2>/dev/null \
+    | grep -E 'embeddington-(setup|consume)' \
+    | sed -n 's/.*cd \([^ ]*\).*/\1/p' | head -n 1)"
+  if [ -n "$from_cron" ] && [ -d "$from_cron/.git" ]; then printf '%s' "$from_cron"; return; fi
+  printf ''
+}
+
+# macOS blocks background jobs (cron, launchd) from reading these folders without an
+# explicit Full Disk Access grant, so a clone here updates by hand forever while the
+# nightly job silently does nothing. Case-folded: the default macOS filesystem is
+# case-insensitive, so ~/documents is the same folder as ~/Documents.
+is_protected_macos_path() {
+  [ "$(uname -s)" = "Darwin" ] || return 1
+  _lower="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
+  _home="$(printf '%s' "$HOME" | tr '[:upper:]' '[:lower:]')"
+  case "$_lower" in
+    "$_home"/documents|"$_home"/documents/*) return 0 ;;
+    "$_home"/desktop|"$_home"/desktop/*) return 0 ;;
+    "$_home"/downloads|"$_home"/downloads/*) return 0 ;;
+    "$_home"/library/mobile\ documents|"$_home"/library/mobile\ documents/*) return 0 ;;
+  esac
+  return 1
+}
+
 # --- Install location ----------------------------------------------------------
+DEFAULT_NOTE=""
+if [ -n "${EMBEDDINGTON_INSTALL_DIR:-}" ]; then
+  DEFAULT_DIR="$EMBEDDINGTON_INSTALL_DIR"
+else
+  RECORDED="$(recorded_install_dir)"
+  if [ -n "$RECORDED" ]; then
+    DEFAULT_DIR="$RECORDED"
+    DEFAULT_NOTE=" — your existing install"
+  else
+    DEFAULT_DIR="$HOME/embeddington"
+  fi
+fi
+
 DIR="$DEFAULT_DIR"
 if [ "$INTERACTIVE" -eq 1 ] && [ -z "$YES" ] && [ -z "${EMBEDDINGTON_INSTALL_DIR:-}" ]; then
-  printf 'Where should embeddington live? [%s] ' "$DEFAULT_DIR" > /dev/tty
+  printf 'Where should embeddington live? [%s%s] ' "$DEFAULT_DIR" "$DEFAULT_NOTE" > /dev/tty
   read -r answer < /dev/tty || answer=""
   [ -n "$answer" ] && DIR="$answer"
 fi
 case "$DIR" in "~"*) DIR="$HOME${DIR#\~}";; esac
+
+# --- macOS: warn before a clone lands somewhere background jobs can't reach -------
+if is_protected_macos_path "$DIR"; then
+  if [ -d "$DIR/.git" ]; then
+    # Already installed here. Offering to clone elsewhere would make a SECOND install,
+    # which is worse than the problem — so explain and let them decide.
+    say ""
+    say "  !  $DIR is a macOS-protected folder."
+    say "     Background jobs can't read it, so the nightly auto-update never runs — you"
+    say "     will need to re-run this installer by hand to get updates. To fix it: move"
+    say "     the clone somewhere like \$HOME/embeddington, or grant Full Disk Access to"
+    say "     the program that runs the update (System Settings -> Privacy & Security)."
+    say ""
+  elif [ "$INTERACTIVE" -eq 1 ] && [ -z "$YES" ]; then
+    say ""
+    say "  !  macOS blocks background jobs from reading $DIR, so nightly auto-updates"
+    say "     would silently never run from there."
+    printf 'Install into %s/embeddington instead? [Y/n] ' "$HOME" > /dev/tty
+    read -r relocate < /dev/tty || relocate=""
+    case "$relocate" in
+      [Nn]*) say "     Keeping $DIR — updates will need this installer run by hand." ;;
+      *) DIR="$HOME/embeddington"; say "     Using $DIR." ;;
+    esac
+    say ""
+  else
+    say "warning: $DIR is a macOS-protected folder — nightly auto-updates will not run"
+    say "         from there. Re-run this installer by hand to update, or reinstall to"
+    say "         \$HOME/embeddington."
+  fi
+fi
 
 # --- Clone or refresh ----------------------------------------------------------
 if [ -d "$DIR/.git" ]; then
