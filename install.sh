@@ -71,9 +71,19 @@ recorded_install_dir() {
     if [ -n "$recorded" ] && [ -d "$recorded/.git" ]; then printf '%s' "$recorded"; return; fi
   fi
   # Installs predating the pointer: the nightly job's own `cd <path>` knows where it is.
-  from_cron="$(crontab -l 2>/dev/null \
-    | grep -E 'embeddington-(setup|consume)' \
-    | sed -n 's/.*cd \([^ ]*\).*/\1/p' | head -n 1)"
+  cron_line="$(crontab -l 2>/dev/null \
+    | grep -E 'embeddington-(setup|consume)' | head -n 1)"
+  # Parameter expansion rather than sed: the scheduled line is `… cd <path> && …`, and a
+  # path may contain spaces (an iCloud Drive install lives under "Mobile Documents"), so
+  # the field cannot be cut at the first space. `#* cd ` trims to the FIRST " cd " and
+  # `%% &&*` keeps everything before the FIRST " &&" — spaces in between survive.
+  from_cron=""
+  case "$cron_line" in
+    *" cd "*)
+      from_cron="${cron_line#* cd }"
+      from_cron="${from_cron%% &&*}"
+      ;;
+  esac
   if [ -n "$from_cron" ] && [ -d "$from_cron/.git" ]; then printf '%s' "$from_cron"; return; fi
   printf ''
 }
