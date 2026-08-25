@@ -4,12 +4,12 @@ Never mutates anything: pure reads of the filesystem, docker compose ps, and the
 counters the consumer already ships (point_count / entity_count).
 """
 
-import importlib.util
 import os
 from dataclasses import dataclass
 from pathlib import Path
 
 from consumer import state_paths
+from installer import claude_step
 
 
 @dataclass(frozen=True)
@@ -19,7 +19,25 @@ class InstallState:
     embed_running: bool  # separate: builds late; doctor cares, menu gating doesn't
     stores_populated: bool
     cursor_present: bool
-    mcp_deps: bool
+    mcp_deps: bool  # importable by the interpreter that actually RUNS the server
+    mcp_env_present: bool = False  # mcp/.env carries a usable password
+    mcp_registered: bool = False  # reachable outside the clone
+
+
+def _mcp_env_has_password(repo_root):
+    """True iff mcp/.env exists and carries a non-empty ARANGO_PASSWORD.
+
+    A present-but-empty key is the shape `cp .env.example .env` leaves behind, and it
+    fails exactly like a missing file — so it must not read as configured.
+    """
+    env_file = repo_root / "mcp" / ".env"
+    try:
+        lines = env_file.read_text().splitlines()
+    except OSError:
+        return False
+    return any(
+        line.startswith("ARANGO_PASSWORD=") and line.split("=", 1)[1].strip() for line in lines
+    )
 
 
 def detect_state(repo_root, run, point_count, entity_count, *, env=None, home=None, find_spec=None):
@@ -31,7 +49,8 @@ def detect_state(repo_root, run, point_count, entity_count, *, env=None, home=No
         point_count: callable() -> int (QdrantConsumerWriter.point_count or a fake).
         entity_count: callable() -> int (ArangoConsumerWriter.entity_count or a fake).
         env / home: forwarded to consumer.state_paths for cursor resolution.
-        find_spec: importlib.util.find_spec-compatible; injected in tests.
+        find_spec: accepted for call-compatibility; no longer used (see the note on
+            mcp_deps below).
 
     Returns:
         InstallState. Any store error reads as "not populated" — detection must never
@@ -39,7 +58,6 @@ def detect_state(repo_root, run, point_count, entity_count, *, env=None, home=No
     """
     env = os.environ if env is None else env
     home = Path.home() if home is None else Path(home)
-    find_spec = importlib.util.find_spec if find_spec is None else find_spec
 
     repo_root = Path(repo_root)
     env_present = (repo_root / "consumer" / ".env").exists()
@@ -58,7 +76,12 @@ def detect_state(repo_root, run, point_count, entity_count, *, env=None, home=No
         stores_populated = False
 
     cursor_present = state_paths.default_cursor_path(env, home).exists()
-    mcp_deps = find_spec("mcp") is not None
+
+    # [CRITIC] NOT find_spec from this process. That tests the wizard's interpreter, not
+    # the one .mcp.json launches — and the repo's own `mcp/` directory (no __init__.py)
+    # is importable as a namespace package, so find_spec("mcp") can report success on a
+    # machine with no SDK installed at all. Ask the interpreter that does the work.
+    mcp_deps = claude_step.mcp_deps_installed(run, repo_root)
     return InstallState(
         env_present,
         containers_running,
@@ -66,4 +89,6 @@ def detect_state(repo_root, run, point_count, entity_count, *, env=None, home=No
         stores_populated,
         cursor_present,
         mcp_deps,
+        _mcp_env_has_password(repo_root),
+        claude_step.user_scope_present(run),
     )

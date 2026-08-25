@@ -21,7 +21,14 @@ def detect(tmp_path, *, run=None, points=lambda: 1, entities=lambda: 1, find_spe
 def test_fresh_box_is_all_false(tmp_path):
     st = detect(
         tmp_path,
-        run=FakeRun([RunResult(1, "", "no compose file")]),
+        # compose ps, then the two MCP probes: deps import, and the user-scope lookup.
+        run=FakeRun(
+            [
+                RunResult(1, "", "no compose file"),
+                RunResult(1, "", "No module named 'fastmcp'"),
+                RunResult(1, "", "no server found"),
+            ]
+        ),
         points=lambda: 0,
         entities=lambda: 0,
     )
@@ -66,3 +73,41 @@ def test_store_errors_read_as_not_populated(tmp_path):
 def test_containers_need_both_qdrant_and_arango(tmp_path):
     st = detect(tmp_path, run=FakeRun([RunResult(0, "qdrant\n", "")]))
     assert not st.containers_running
+
+
+# --- MCP rows ask the interpreter that actually runs the server (issue #85) ---
+
+
+def test_mcp_deps_probe_uses_the_clone_venv_not_this_process(tmp_path):
+    """find_spec here would test the WRONG interpreter — and the repo's own `mcp/`
+    directory has no __init__.py, so it is importable as a namespace package and can
+    report success on a machine with no SDK installed at all."""
+    run = FakeRun([RunResult(0, "qdrant\narango\nembed\n", "")])
+    detect(tmp_path, run=run, find_spec=lambda n: object())
+    probe = [c for c in run.calls if c["cmd"][-1] == "import fastmcp"][0]
+    assert probe["cmd"][0] == str(tmp_path / ".venv" / "bin" / "python")
+
+
+def test_mcp_config_row_rejects_an_empty_password(tmp_path):
+    """A present-but-empty key fails exactly like a missing file, so it must not read
+    as configured."""
+    (tmp_path / "mcp").mkdir()
+    (tmp_path / "mcp" / ".env").write_text("ARANGO_USER=root\nARANGO_PASSWORD=\n")
+    assert not detect(tmp_path).mcp_env_present
+
+    (tmp_path / "mcp" / ".env").write_text("ARANGO_PASSWORD=actual-value\n")
+    assert detect(tmp_path).mcp_env_present
+
+
+def test_mcp_reach_row_reflects_the_user_scope_registration(tmp_path):
+    reachable = FakeRun([RunResult(0, "qdrant\narango\nembed\n", "")])
+    assert detect(tmp_path, run=reachable).mcp_registered
+
+    clone_only = FakeRun(
+        [
+            RunResult(0, "qdrant\narango\nembed\n", ""),
+            RunResult(0, "", ""),  # deps import fine
+            RunResult(1, "", "no server found"),  # but nothing registered
+        ]
+    )
+    assert not detect(tmp_path, run=clone_only).mcp_registered

@@ -401,7 +401,27 @@ def _doctor(console, deps):
         ("embed", st.embed_running, "running" if st.embed_running else "down (EMB-32)"),
         ("stores", st.stores_populated, "populated" if st.stores_populated else "empty"),
         ("cursor", st.cursor_present, "present" if st.cursor_present else "missing (EMB-43)"),
-        ("mcp deps", st.mcp_deps, "installed" if st.mcp_deps else "not installed (optional)"),
+        (
+            "mcp deps",
+            st.mcp_deps,
+            "importable by the server's own interpreter"
+            if st.mcp_deps
+            else "not installed (optional)",
+        ),
+        (
+            "mcp config",
+            st.mcp_env_present,
+            "mcp/.env has a password"
+            if st.mcp_env_present
+            else "mcp/.env missing a password — Claude can't authenticate",
+        ),
+        (
+            "mcp reach",
+            st.mcp_registered,
+            f"registered as {claude_step.USER_SCOPE_NAME} (every directory)"
+            if st.mcp_registered
+            else "this clone only (project scope)",
+        ),
     ]
     ui.check_rows(console, rows)
     hard_checks_ok = all(r.ok for r in results)
