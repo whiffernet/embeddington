@@ -494,3 +494,21 @@ async def test_enrich_carries_degraded_note_even_without_identifier_tokens(monke
     monkeypatch.setattr(srv, "_maybe_reprobe", _async_noop)
     out = await srv.enrich(query="plain prose question")
     assert any("lexical lane degraded" in w for w in out["warnings"])
+
+
+@pytest.mark.asyncio
+async def test_kg_path_description_carries_the_hub_caveat():
+    """A tool's description is the only guidance that reaches EVERY caller.
+
+    The slash command and the README carry this caveat, but neither travels to Claude
+    Desktop or to a model that simply picks the tool itself from a plain prompt — which is
+    the common case. Every other tool here already states its own trap (enrich the
+    do-not-fabricate contract, kg_neighbors the depth/predicate warning); kg_path was the
+    one that did not.
+    """
+    from server import kg_path as tool
+
+    fn = tool.fn if hasattr(tool, "fn") else tool  # FastMCP wraps the coroutine
+    doc = " ".join((fn.__doc__ or "").split())
+    assert "hub" in doc.lower(), "kg_path must warn that hub-mediated paths are weak evidence"
+    assert "no_path" in doc, "kg_path must present no_path as a legitimate answer"
