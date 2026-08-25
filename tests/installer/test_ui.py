@@ -92,3 +92,19 @@ def test_choose_reprompts_on_garbage():
         input_fn=lambda: next(answers),
     )
     assert got == "c"
+
+
+def test_banner_is_silent_when_the_bootstrap_already_showed_it(monkeypatch):
+    """install.sh prints the banner first so a piped install is not silent while the
+    prereq checks run; the wizard it execs must not print it a second time."""
+    monkeypatch.setenv("EMBEDDINGTON_BANNER_SHOWN", "1")
+    con = Console(record=True, width=100)
+    ui.show_banner(con)
+    assert con.export_text().strip() == ""
+
+
+def test_banner_prints_when_the_wizard_is_run_on_its_own(monkeypatch):
+    monkeypatch.delenv("EMBEDDINGTON_BANNER_SHOWN", raising=False)
+    con = Console(record=True, width=100)
+    ui.show_banner(con)
+    assert "embeddington" in con.export_text()

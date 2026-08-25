@@ -21,6 +21,44 @@ fail() { # fail EMB-nn "friendly" "fix"
   exit 1
 }
 
+# --- Banner ---------------------------------------------------------------------
+# Printed FIRST, before any check runs. With `curl | bash` the whole script is
+# downloaded before execution, so this appears the instant the command is accepted —
+# previously the first thing a user saw was a bare location prompt, and the logo only
+# arrived after the venv build, which is the slowest step in the run.
+#
+# The art is duplicated from installer/ui.py because install.sh runs before the clone
+# exists and has nothing to read it from. tests/test_install_sh.py pins the two copies
+# against each other; a quoted heredoc keeps the backslashes and the backtick in row 3
+# literal.
+QUOTES=(
+  "The Dude abides."
+  "Careful, man, there's a beverage here!"
+  "New information has come to light, man."
+  "This is a very complicated case. A lotta ins, a lotta outs."
+  "Yeah, well, that's just, like, your opinion, man."
+)
+
+show_banner() {
+  cyan=""; dim=""; off=""
+  if [ -t 1 ]; then cyan=$'\033[1;36m'; dim=$'\033[2m'; off=$'\033[0m'; fi
+  printf '%s' "$cyan"
+  cat <<'EMB_BANNER'
+
+  ___ __  __ ___ ___ ___  ___ ___ _  _  ___ _____ ___  _  _
+ | __|  \/  | _ ) __|   \|   \_ _| \| |/ __|_   _/ _ \| \| |
+ | _|| |\/| | _ \ _|| |) | |) | || .` | (_ | | || (_) | .` |
+ |___|_|  |_|___/___|___/|___/___|_|\_|\___| |_| \___/|_|\_|
+EMB_BANNER
+  printf '%s\n' "$off"
+  printf '  embeddington — the knowledge graph that ties the room together\n'
+  # Rotate on the PID, exactly as the wizard does. The array is a non-empty literal, so
+  # indexing it is safe under `set -u` on stock macOS bash 3.2.
+  printf '  %s"%s"%s\n\n' "$dim" "${QUOTES[$(( $$ % ${#QUOTES[@]} ))]}" "$off"
+}
+
+show_banner
+
 # --- TTY: prompts must come from the terminal, not the curl pipe -------------
 # Attempt a real open: permission bits ([ -r /dev/tty ]) pass in containers and
 # daemons that have no controlling terminal, where any actual open fails (ENXIO)
@@ -35,6 +73,9 @@ fi
 # expand a possibly-empty array with "${ARR[@]}" under set -u (aborts before bash 4.4).
 
 # --- Prerequisites ------------------------------------------------------------
+# Announced, because `git ls-remote` below can sit silently for a second or two on a slow
+# link and dead air after a piped command reads as a hang.
+say "  Checking prerequisites ..."
 command -v git >/dev/null 2>&1 || fail EMB-11 "git is not installed." \
   "Install git (xcode-select --install on macOS; apt/dnf install git on Linux), re-run."
 
@@ -196,6 +237,10 @@ fi
 # ${YES:+--yes} expands to nothing when unset — bash-3.2-safe (an empty array
 # expansion under set -u would abort on stock macOS). Unattended mode never reads
 # a prompt, so it never gets the /dev/tty redirect — headless boxes have none.
+# The wizard prints the same banner when run on its own; it must not repeat it here.
+# Exported only into the exec'd process — a piped install leaves nothing behind in the
+# user's interactive shell.
+export EMBEDDINGTON_BANNER_SHOWN=1
 if [ -z "$YES" ] && [ "$INTERACTIVE" -eq 1 ]; then
   exec .venv/bin/embeddington-setup < /dev/tty
 else
