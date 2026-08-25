@@ -708,6 +708,17 @@ async def kg_path(
     open-ended neighborhood exploration use ``kg_neighbors`` instead.
     Returns ``{nodes:[], edges:[]}`` if no path exists within ``max_hops``.
 
+    Hub caveat — apply this before describing any path as a relationship. A path routed
+    through a very high-degree node usually means both endpoints touch something popular,
+    not that they are related to each other. Measured on this graph: the large majority of
+    paths between arbitrary entities are hub-mediated, and for most such pairs there is no
+    hub-free route at all within 4 hops — the hub IS the only connection. So: a short path
+    over specific, meaningful predicates is a real relationship, and worth stating as one;
+    a path that hops through an obvious hub is weak evidence, and saying so (naming the
+    node doing the connecting) is more useful than narrating a story around it. ``no_path``
+    is a legitimate answer — report it rather than raising ``max_hops`` until something
+    appears.
+
     Grounding: path edges carry `source_quote` (verbatim, citable),
     `extraction_type`, and `releases` (but not `confidence`). Cite the quote,
     treat inferred edges as tentative, and scope claims to `releases`.
