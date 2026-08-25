@@ -1,6 +1,7 @@
 """CLI flow: flag parsing, doctor exit codes, step ordering, error rendering."""
 
 import io
+from dataclasses import replace
 from pathlib import Path
 
 from rich.console import Console
@@ -474,3 +475,137 @@ def test_install_receipt_states_what_was_proven_not_attempted():
 
     desktop = cli._claude_receipt(WiringResult("no-claude", "not-run", "not-offered"))
     assert "Claude Desktop" in desktop
+
+
+# --- routing waits for the Docker ladder (issue #87) ------------------------
+
+
+class SequenceRecorder(Recorder):
+    """Recorder whose detect_state returns a different state on each call — the whole
+    point of #87 is that state changes once the ladder has run."""
+
+    def __init__(self, states, **kw):
+        super().__init__(**kw)
+        self.states = list(states)
+        self.detect_calls = 0
+
+    def detect(self, _console):
+        self.order.append("state")
+        self.detect_calls += 1
+        return self.states[min(self.detect_calls - 1, len(self.states) - 1)]
+
+
+def _deps_with(rec):
+    deps = make_deps(rec)
+    deps["detect_state"] = rec.detect
+    return deps
+
+
+DOWN_BUT_INSTALLED = InstallState(
+    env_present=True,
+    containers_running=False,  # can't tell — daemon is down
+    embed_running=False,
+    stores_populated=True,
+    cursor_present=True,
+    mcp_deps=True,
+    docker_present=True,
+    docker_reachable=False,
+)
+UP_AND_INSTALLED = InstallState(
+    env_present=True,
+    containers_running=True,
+    embed_running=True,
+    stores_populated=True,
+    cursor_present=True,
+    mcp_deps=True,
+    docker_present=True,
+    docker_reachable=True,
+)
+DOWN_AND_FRESH = InstallState(
+    env_present=False,
+    containers_running=False,
+    embed_running=False,
+    stores_populated=False,
+    cursor_present=False,
+    mcp_deps=False,
+    docker_present=True,
+    docker_reachable=False,
+)
+NO_DOCKER_AT_ALL = InstallState(
+    env_present=False,
+    containers_running=False,
+    embed_running=False,
+    stores_populated=False,
+    cursor_present=False,
+    mcp_deps=False,
+    docker_present=False,
+    docker_reachable=False,
+)
+
+
+def test_a_stopped_daemon_no_longer_hides_an_existing_install():
+    """The bug: routing happened on state read before the ladder could start Docker, so a
+    complete install was walked through the fresh-install flow — and Uninstall, which only
+    the menu offers, became unreachable."""
+    rec = SequenceRecorder([DOWN_BUT_INSTALLED, UP_AND_INSTALLED])
+    assert cli.main([], console=console(), deps=_deps_with(rec), input_fn=lambda: "q") == 0
+    assert rec.detect_calls == 2, "state must be re-read after the ladder"
+    assert "preflight" not in rec.order, "the menu was reached, not the install flow"
+
+
+def test_the_ladder_runs_before_routing_when_the_daemon_is_down():
+    rec = SequenceRecorder([DOWN_BUT_INSTALLED, UP_AND_INSTALLED])
+    cli.main([], console=console(), deps=_deps_with(rec), input_fn=lambda: "q")
+    assert rec.order[:3] == ["state", "docker", "state"]
+
+
+def test_a_genuinely_fresh_box_still_installs():
+    """Re-detection must not turn an empty machine into a menu."""
+    rec = SequenceRecorder([DOWN_AND_FRESH, replace(DOWN_AND_FRESH, docker_reachable=True)])
+    assert cli.main(["--yes"], console=console(), deps=_deps_with(rec), input_fn=lambda: "") == 0
+    assert "preflight" in rec.order  # install flow, as before
+
+
+def test_no_docker_at_all_is_left_to_the_install_flow():
+    """With no Docker binary the ladder may INSTALL one, and that must stay behind
+    preflight's disk and port gates rather than running before them."""
+    rec = SequenceRecorder([NO_DOCKER_AT_ALL])
+    cli.main(["--yes"], console=console(), deps=_deps_with(rec), input_fn=lambda: "")
+    assert rec.order[:2] == ["state", "preflight"], "no pre-routing ladder on a bare box"
+    assert rec.detect_calls == 1
+
+
+def test_a_healthy_box_does_no_extra_work():
+    rec = SequenceRecorder([UP_AND_INSTALLED])
+    cli.main([], console=console(), deps=_deps_with(rec), input_fn=lambda: "q")
+    assert rec.detect_calls == 1
+    assert "docker" not in rec.order
+
+
+def test_doctor_never_runs_the_ladder_even_with_the_daemon_down():
+    """--check is a read-only probe; it must report, not repair."""
+    rec = SequenceRecorder([DOWN_BUT_INSTALLED])
+    assert cli.main(["--check"], console=console(), deps=_deps_with(rec)) == 1
+    assert rec.order == ["state", "preflight"]
+
+
+def test_uninstall_never_runs_the_ladder():
+    rec = SequenceRecorder([DOWN_BUT_INSTALLED])
+    cli.main(["--uninstall"], console=console(), deps=_deps_with(rec), input_fn=lambda: "")
+    assert "docker" not in rec.order
+
+
+def test_doctor_says_unknown_not_down_when_it_could_not_ask():
+    """Reporting `down (EMB-31)` on an unreachable daemon claims evidence we do not have,
+    and sends the user to debug containers instead of Docker."""
+    con = Console(record=True, width=200)
+    rec = SequenceRecorder([DOWN_BUT_INSTALLED])
+    cli.main(["--check"], console=con, deps=_deps_with(rec))
+    text = con.export_text()
+    assert "unknown" in text.lower()
+
+    con2 = Console(record=True, width=200)
+    stopped = replace(UP_AND_INSTALLED, containers_running=False, embed_running=False)
+    rec2 = SequenceRecorder([stopped])
+    cli.main(["--check"], console=con2, deps=_deps_with(rec2))
+    assert "EMB-31" in con2.export_text()
