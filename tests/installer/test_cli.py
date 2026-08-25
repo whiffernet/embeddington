@@ -28,6 +28,7 @@ class Recorder:
         # What the staleness record says. None = nothing recorded, which is the state every
         # install predating the feature is in.
         self.update_record = update_record
+        self.recorded_pull = []
 
     def step(self, name, ret=None):
         def _step(*args, **kwargs):
@@ -82,7 +83,9 @@ def make_deps(rec):
         "index_absent": lambda: rec._record("index_absent") or False,
         "cron_present": lambda: rec._record("cron_present") or False,
         "record_install_path": lambda: rec._record("record_install") or True,
-        "record_update": lambda mode: rec._record("record_update") or True,
+        "record_update": lambda mode, pull_ok=None: (
+            rec.recorded_pull.append(pull_ok) or rec._record("record_update") or True
+        ),
         "read_update_record": lambda: rec.update_record,
     }
 
@@ -706,3 +709,66 @@ def test_being_behind_never_fails_the_doctor():
     old = (datetime.now(timezone.utc) - timedelta(days=99)).isoformat()
     healthy_but_stale = Recorder(state=ALL_GOOD, update_record={"at": old, "version": "v0.1.0"})
     assert run_main(["--check"], healthy_but_stale) == 0
+
+
+def test_a_failed_pull_is_recorded_as_such():
+    """Time-based staleness cannot see a clone stuck on old code: the job runs nightly, the
+    data moves, the timestamp stays fresh, and `git pull --ff-only` fails every time."""
+    from installer.runner import RunResult
+
+    rec = Recorder(state=ALL_GOOD)
+    deps = make_deps(rec)
+    deps["git_pull"] = lambda _c: RunResult(1, "", "Not possible to fast-forward")
+    assert cli.main([], console=console(), deps=deps, input_fn=lambda: "u") == 0
+    assert rec.recorded_pull == [False]
+
+
+def test_a_healthy_pull_is_recorded_as_such():
+    rec = Recorder(state=ALL_GOOD)
+    assert cli.main([], console=console(), deps=make_deps(rec), input_fn=lambda: "u") == 0
+    assert rec.recorded_pull == [True]
+
+
+def test_a_stuck_clone_is_called_out_by_name():
+    """And it is called out regardless of age — a nightly job keeps the timestamp fresh
+    forever while the code never moves."""
+    from datetime import datetime, timezone
+
+    rec = Recorder(
+        state=ALL_GOOD,
+        update_record={
+            "at": datetime.now(timezone.utc).isoformat(),
+            "version": "v0.1.0",
+            "pull": "failed",
+        },
+    )
+    con = Console(record=True, width=200)
+    cli.main([], console=con, deps=make_deps(rec), input_fn=lambda: "q")
+    text = con.export_text()
+    assert "could not pull new code" in text
+    assert "data is current but the code is not" in text
+
+
+def test_a_healthy_record_says_nothing_about_pulls():
+    from datetime import datetime, timezone
+
+    rec = Recorder(
+        state=ALL_GOOD,
+        update_record={"at": datetime.now(timezone.utc).isoformat(), "pull": "ok"},
+    )
+    con = Console(record=True, width=200)
+    cli.main([], console=con, deps=make_deps(rec), input_fn=lambda: "q")
+    assert "could not pull" not in con.export_text()
+
+
+def test_the_receipt_names_the_resolved_state_dir(monkeypatch, tmp_path):
+    """It hardcoded ~/.local/share/embeddington, which is wrong for anyone using
+    EMBEDDINGTON_HOME or XDG_DATA_HOME — the receipt pointed at a directory the install
+    was not using."""
+    monkeypatch.setenv("EMBEDDINGTON_HOME", str(tmp_path / "elsewhere"))
+    con = Console(record=True, width=200)
+    assert (
+        cli.main(["--yes"], console=con, deps=make_deps(Recorder(state=FRESH)), input_fn=lambda: "")
+        == 0
+    )
+    assert str(tmp_path / "elsewhere") in con.export_text()

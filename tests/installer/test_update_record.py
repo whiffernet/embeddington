@@ -128,3 +128,34 @@ def test_a_naive_timestamp_is_read_as_utc():
     """Hand-edited or older records may lack an offset; that must not crash the doctor."""
     tier, _ = update_record.staleness({"at": "2026-08-25T11:00:00"}, now=NOW)
     assert tier == "fresh"
+
+
+# --- did the CODE half of the update land? ---------------------------------
+
+
+def test_a_failed_pull_is_recorded(tmp_path):
+    update_record.record_update(
+        tmp_path, "diffs", _describes(), pull_ok=False, env=_env(tmp_path), now=NOW
+    )
+    assert json.loads((tmp_path / "state" / "last_update").read_text())["pull"] == "failed"
+
+
+def test_a_successful_pull_is_recorded(tmp_path):
+    update_record.record_update(
+        tmp_path, "diffs", _describes(), pull_ok=True, env=_env(tmp_path), now=NOW
+    )
+    assert json.loads((tmp_path / "state" / "last_update").read_text())["pull"] == "ok"
+
+
+def test_a_flow_that_does_not_pull_records_no_verdict(tmp_path):
+    """The install path does not pull — install.sh already did — so it must not claim
+    either outcome."""
+    update_record.record_update(tmp_path, "baseline", _describes(), env=_env(tmp_path), now=NOW)
+    assert "pull" not in json.loads((tmp_path / "state" / "last_update").read_text())
+
+
+def test_code_is_stuck_only_on_a_recorded_failure():
+    assert update_record.code_is_stuck({"pull": "failed"}) is True
+    assert update_record.code_is_stuck({"pull": "ok"}) is False
+    assert update_record.code_is_stuck({}) is False
+    assert update_record.code_is_stuck(None) is False

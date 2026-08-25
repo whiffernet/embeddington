@@ -6,10 +6,11 @@ stays import-free of the others.
 """
 
 import argparse
+import os
 import time
 from pathlib import Path
 
-from consumer import lexical_index
+from consumer import lexical_index, state_paths
 from installer import (
     claude_step,
     cron,
@@ -133,7 +134,9 @@ def _production_deps(repo_root, args):
         ),
         "cron_present": lambda: cron.cron_line_present(runner.run),
         "record_install_path": lambda: install_record.record_install_path(repo_root),
-        "record_update": lambda mode: update_record.record_update(repo_root, mode, runner.run),
+        "record_update": lambda mode, pull_ok=None: update_record.record_update(
+            repo_root, mode, runner.run, pull_ok=pull_ok
+        ),
         "read_update_record": lambda: update_record.read_record(),
     }
 
@@ -182,7 +185,10 @@ def _claude_receipt(wiring):
         A ready-to-print receipt fragment.
     """
     if wiring.deps == "no-claude":
-        return "  Claude:    Claude Code not found — mcp/.env is ready for Claude Desktop"
+        return (
+            "  Claude:    Claude Code not found — the server reads consumer/.env, so "
+            "Claude Desktop works too"
+        )
     if wiring.deps == "skipped":
         return "  Claude:    skipped (re-run embeddington-setup to wire it up later)"
     if wiring.deps == "failed":
@@ -359,7 +365,7 @@ def _update_flow(console, deps, args, input_fn):
     password = deps["read_password"](console)
     result, points, entities = _import_with_readiness_retry(console, deps, args, password)
     did["data_mode"], did["applied"] = result.get("mode"), result.get("applied", 0)
-    deps["record_update"](did["data_mode"])
+    deps["record_update"](did["data_mode"], pull_ok=(pull.rc == 0))
 
     # Prompt-free, and idempotent: this is the line that repairs an install wired by an
     # older installer without the user doing anything.
@@ -408,7 +414,14 @@ def _notice_if_stale(console, deps):
     cause is named from what can actually be checked (is a job even scheduled?) rather than
     guessed at.
     """
-    tier, days = update_record.staleness(deps["read_update_record"]())
+    record = deps["read_update_record"]()
+    if update_record.code_is_stuck(record):
+        console.print(
+            "[yellow]The last update could not pull new code (local changes in the clone, "
+            "or a diverged branch) — your data is current but the code is not. "
+            "`git -C <clone> status` shows what is in the way.[/yellow]"
+        )
+    tier, days = update_record.staleness(record)
     if tier in ("unknown", "fresh"):
         return
     if deps["cron_present"]():
@@ -549,7 +562,7 @@ def _install_flow(console, deps, st, args, input_fn):
     ui.rule(console, "Receipt")
     console.print(
         f"  Install:   {_repo_root()}\n"
-        f"  State:     ~/.local/share/embeddington (or $EMBEDDINGTON_HOME)\n"
+        f"  State:     {state_paths.resolve_state_dir(os.environ, Path.home())}\n"
         f"  Version:   {result['cursor']}\n"
         f"{_claude_receipt(wiring)}\n"
         f"{_cron_receipt(cron_outcome, _repo_root())}\n"

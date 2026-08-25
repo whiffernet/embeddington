@@ -163,3 +163,26 @@ def test_path_carries_the_hub_caveat():
 def test_worktrees_are_ignored_so_committing_commands_is_safe():
     """.claude/ is now a tracked directory; a working clone also grows .claude/worktrees/."""
     assert ".claude/worktrees/" in (_ROOT / ".gitignore").read_text(encoding="utf-8")
+
+
+_COMMAND_REF = re.compile(r"`/([a-z][a-z0-9-]*)`")
+
+
+@pytest.mark.parametrize("path", _command_files(), ids=lambda p: p.stem)
+def test_commands_only_point_at_commands_that_exist(path):
+    """A command telling the user to run another one is a promise the repo has to keep.
+
+    Renaming the set from /emb-* to /embeddington-* updated the FILENAMES and left two
+    bodies pointing at commands that no longer existed — the tool-reference pin could not
+    see it, because a command name is not a tool name.
+    """
+    referenced = {m for m in _COMMAND_REF.findall(path.read_text(encoding="utf-8")) if "emb" in m}
+    unknown = referenced - EXPECTED
+    assert not unknown, f"{path.name} points at non-existent command(s): {sorted(unknown)}"
+
+
+def test_the_readme_only_names_commands_that_exist():
+    readme = (_ROOT / "README.md").read_text(encoding="utf-8")
+    referenced = {m for m in _COMMAND_REF.findall(readme) if "emb" in m}
+    unknown = referenced - EXPECTED
+    assert not unknown, f"README points at non-existent command(s): {sorted(unknown)}"

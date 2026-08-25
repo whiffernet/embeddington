@@ -57,7 +57,7 @@ def clone_version(repo_root, run):
     return described or "unknown"
 
 
-def record_update(repo_root, mode, run, *, env=None, home=None, now=None):
+def record_update(repo_root, mode, run, *, pull_ok=None, env=None, home=None, now=None):
     """Record a successful update run; report whether it stuck. Never raises.
 
     A no-op update still refreshes the timestamp: the signal is "the machinery ran", not
@@ -68,6 +68,10 @@ def record_update(repo_root, mode, run, *, env=None, home=None, now=None):
         repo_root: the clone root.
         mode: the updater's own result ("baseline" / "diffs" / anything falsy for a no-op).
         run: runner.run-compatible callable, for the version lookup.
+        pull_ok: whether the code half of the update landed. False records that this run
+            updated data while remaining stuck on old code — a state that otherwise looks
+            identical to a healthy update, because the data really did move. None means the
+            flow does not pull at all (the install path; install.sh pulled before it ran).
         env / home: forwarded to `record_path` (injected in tests).
         now: datetime override (injected in tests).
 
@@ -80,6 +84,8 @@ def record_update(repo_root, mode, run, *, env=None, home=None, now=None):
         "version": clone_version(repo_root, run),
         "mode": mode or "none",
     }
+    if pull_ok is not None:
+        payload["pull"] = "ok" if pull_ok else "failed"
     target = record_path(env=env, home=home)
     try:
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -135,3 +141,14 @@ def staleness(record, now=None):
     if days >= STALE_AFTER_DAYS:
         return "stale", days
     return "fresh", days
+
+
+def code_is_stuck(record):
+    """True when the last run updated data but could not pull new code.
+
+    Time-based staleness cannot see this: the job runs nightly, the data moves, the
+    timestamp stays fresh — and the clone sits on old code indefinitely because
+    `git pull --ff-only` fails every time (a local edit, a detached HEAD, a diverged
+    branch). The only trace is this flag.
+    """
+    return bool(record) and record.get("pull") == "failed"

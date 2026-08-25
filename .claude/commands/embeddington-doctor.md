@@ -18,7 +18,7 @@ Explain the rows that are not ✓, in the user's terms rather than the table's:
 - **containers / embed down** — the stack isn't running; `docker compose up -d` from
   `consumer/` brings it back, and the data in the volumes is untouched.
 - **stores empty / cursor missing** — the graph was never imported, or the state directory
-  moved. `/emb-update` is the fix.
+  moved. `/embeddington-update` is the fix.
 - **mcp deps** — the server's dependencies are missing from the clone's own `.venv`, which
   is the interpreter the server actually runs under. Claude access is affected; the graph
   itself is fine.

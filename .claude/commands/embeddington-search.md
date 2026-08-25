@@ -14,4 +14,4 @@ evidence, so do not summarize it away.
 
 If the top scores are low and clustered, say so — that pattern usually means nothing in
 the corpus really matches, and it is more useful to the user than a confident paraphrase
-of the least-bad hit. Use `/emb-ask` instead when they want an answer rather than sources.
+of the least-bad hit. Use `/embeddington-ask` instead when they want an answer rather than sources.
