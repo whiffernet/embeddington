@@ -112,6 +112,65 @@ def restore_qdrant_bundle(qdrant_url, collection, bundle_path, coll_cfg):
     )
 
 
+REDACTED = "***"
+
+
+def redact_argv(cmd, secret_flags):
+    """A copy of `cmd` with the value after each secret-bearing flag replaced.
+
+    Args:
+        cmd: the argv list.
+        secret_flags: flags whose FOLLOWING element is a secret.
+
+    Returns:
+        A new list, safe to put in an error message or a log.
+    """
+    safe, redact_next = [], False
+    for part in cmd:
+        safe.append(REDACTED if redact_next else part)
+        redact_next = part in secret_flags
+    return safe
+
+
+def _run_without_leaking_secrets(cmd, *, secret_flags):
+    """Run `cmd`, raising an error whose text carries no credential.
+
+    `subprocess.run(check=True)` raises CalledProcessError, and that exception's string
+    contains the ENTIRE argv — including any password in it. The installer turns an
+    unexpected exception into EMB-45 by interpolating the exception, and the nightly job
+    redirects that into ~/embeddington-update.log. So one ordinary restore failure wrote
+    the ArangoDB root password, in plaintext, into a file that then sits there.
+
+    Raising our own error with a redacted command keeps everything that made the original
+    message useful — the failing command and the tool's own stderr — and drops only the
+    part nobody needed to see.
+
+    Args:
+        cmd: argv list to execute.
+        secret_flags: flags whose following argument must never appear in an error.
+
+    Raises:
+        RuntimeError: on a non-zero exit, with the command redacted.
+    """
+    result = subprocess.run(cmd, capture_output=True)
+    if result.returncode == 0:
+        return result
+
+    safe_cmd = redact_argv(cmd, secret_flags)
+    stderr = (result.stderr or b"").decode("utf-8", errors="replace").strip()
+    # The tool can echo its own arguments back at us, so scrub the secrets out of its
+    # output too rather than trusting it to be quiet about them.
+    for flag in secret_flags:
+        if flag in cmd:
+            value = cmd[cmd.index(flag) + 1]
+            if value:
+                stderr = stderr.replace(value, REDACTED)
+    detail = f": {stderr}" if stderr else ""
+    raise RuntimeError(
+        f"{safe_cmd[0]} exited {result.returncode} running {' '.join(safe_cmd)}{detail}"
+    )
+
+
 def restore_arango_dump(arango_url, db, username, password, dump_dir, image=ARANGO_IMAGE):
     """arangorestore a dump into the local Arango database (creating it if needed).
 
@@ -126,7 +185,7 @@ def restore_arango_dump(arango_url, db, username, password, dump_dir, image=ARAN
         image: Arango image providing ``arangorestore`` (pinned to the stack version).
     """
     host = arango_url.replace("http://", "").replace("https://", "")
-    subprocess.run(
+    _run_without_leaking_secrets(
         [
             "docker",
             "run",
@@ -150,8 +209,7 @@ def restore_arango_dump(arango_url, db, username, password, dump_dir, image=ARAN
             "--input-directory",
             "/dump",
         ],
-        check=True,
-        capture_output=True,
+        secret_flags=("--server.password",),
     )
 
 
