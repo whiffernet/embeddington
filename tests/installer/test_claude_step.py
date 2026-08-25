@@ -309,3 +309,29 @@ def test_uninstall_removes_the_registration(tmp_path):
     run = FakeRun([RunResult(0, "", ""), RunResult(1, "", "")])  # remove ok, then absent
     assert claude_step.remove_user_scope(run) is True
     assert run.calls[0]["cmd"][:4] == ["claude", "mcp", "remove", claude_step.USER_SCOPE_NAME]
+
+
+def test_supplies_a_password_key_that_is_missing_entirely(tmp_path):
+    """The other half of the same problem: a file with settings but no password line."""
+    target = _consumer_env(tmp_path)
+    target.write_text("ARANGO_USER=root\n")
+    assert claude_step.ensure_mcp_env(tmp_path) == "filled"
+    assert "ARANGO_PASSWORD=s3cret-token-value" in target.read_text()
+
+
+def test_the_secret_never_flows_through_the_shared_settings_helper(tmp_path, monkeypatch):
+    """merge_env_keys is for ordinary settings. Keeping the password out of it means the
+    only writers of a secret are the two paths in this module that own the 0600 handling
+    — which is also what CodeQL objected to when the dataflow first widened."""
+    seen = {}
+
+    def spy(env_file, additions):
+        seen.update(additions)
+        return []
+
+    monkeypatch.setattr(claude_step.stack, "merge_env_keys", spy)
+    target = _consumer_env(tmp_path)
+    target.write_text("ARANGO_PASSWORD=mine\n")
+    claude_step.ensure_mcp_env(tmp_path)
+    assert "ARANGO_PASSWORD" not in seen
+    assert "QDRANT_URL" in seen

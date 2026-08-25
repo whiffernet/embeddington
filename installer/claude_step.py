@@ -35,27 +35,40 @@ MCP_ENV_HEADER = (
 )
 
 
-def _fill_empty_password(env_file, password):
-    """Give a present-but-empty ARANGO_PASSWORD a value; return whether one was set.
+def _ensure_password_line(env_file, password):
+    """Make sure an existing mcp/.env carries a usable ARANGO_PASSWORD; report if we set it.
 
-    `cp .env.example .env` leaves `ARANGO_PASSWORD=` in place — a key that a
-    merge-if-absent pass skips as "already present", leaving the server unable to start
-    for a user who did exactly what the docs told them to.
+    Deliberately NOT routed through stack.merge_env_keys, which exists for ordinary
+    settings: keeping the secret out of that shared helper means the only code paths that
+    can ever write a password are the two in this module, both of which own the 0600
+    handling. (CodeQL flagged the widened dataflow the moment the password reached the
+    generic helper — a fair call on a helper that had only ever carried a memory cap.)
+
+    Two shapes need fixing, and a merge-if-absent pass catches only one of them:
+    a missing key, and the `ARANGO_PASSWORD=` that `cp .env.example .env` leaves behind,
+    which a merge skips as "already present" while the server refuses to start.
 
     Args:
-        env_file: Path to an existing mcp/.env.
+        env_file: Path to an existing mcp/.env (already tightened to 0600).
         password: The value to write.
 
     Returns:
-        True iff an empty password line was replaced.
+        True iff this call supplied the password.
     """
     lines = env_file.read_text().splitlines(keepends=True)
     for i, line in enumerate(lines):
-        if line.startswith("ARANGO_PASSWORD=") and not line.split("=", 1)[1].strip():
-            lines[i] = f"ARANGO_PASSWORD={password}\n"
-            env_file.write_text("".join(lines))
-            return True
-    return False
+        if not line.startswith("ARANGO_PASSWORD="):
+            continue
+        if line.split("=", 1)[1].strip():
+            return False  # the user's own value; never touched
+        lines[i] = f"ARANGO_PASSWORD={password}\n"
+        env_file.write_text("".join(lines))
+        return True
+
+    tail = "" if not lines or lines[-1].endswith("\n") else "\n"
+    with open(env_file, "a") as handle:
+        handle.write(f"{tail}ARANGO_PASSWORD={password}\n")
+    return True
 
 
 def ensure_mcp_env(repo_root):
@@ -78,20 +91,21 @@ def ensure_mcp_env(repo_root):
         return "no-password"
 
     target = repo_root / "mcp" / ".env"
-    values = dict(MCP_ENV_DEFAULTS, ARANGO_PASSWORD=password)
 
     if not target.exists():
         # 0600 from birth (O_CREAT|O_EXCL with the mode), never write-then-chmod: under
         # the default umask that leaves a window where any local user can read it.
         fd = os.open(target, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         with os.fdopen(fd, "w") as handle:
-            handle.write(MCP_ENV_HEADER + "".join(f"{k}={v}\n" for k, v in values.items()))
+            handle.write(MCP_ENV_HEADER)
+            handle.write("".join(f"{k}={v}\n" for k, v in MCP_ENV_DEFAULTS.items()))
+            handle.write(f"ARANGO_PASSWORD={password}\n")
         return "created"
 
     # Tighten BEFORE writing a secret into a file that may have been created 0644.
     os.chmod(target, 0o600)
-    filled = _fill_empty_password(target, password)
-    added = stack.merge_env_keys(target, values)
+    filled = _ensure_password_line(target, password)
+    added = stack.merge_env_keys(target, MCP_ENV_DEFAULTS)  # settings only, never secrets
     if filled:
         return "filled"
     return "merged" if added else "unchanged"
