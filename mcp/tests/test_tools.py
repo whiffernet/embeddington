@@ -548,7 +548,11 @@ async def test_a_current_install_is_never_mentioned(monkeypatch):
 def test_a_broken_record_lookup_never_breaks_a_query(monkeypatch):
     """An advisory line is never a reason for a tool call to fail — a missing, unreadable,
     or corrupt state directory must degrade to silence, not to an error in the response."""
-    from installer import update_record
+    update_record = pytest.importorskip(
+        "installer.update_record",
+        reason="the MCP suite runs without the installer package installed, which is the "
+        "deployment shape test_a_server_without_the_installer_package_stays_quiet covers",
+    )
 
     def boom():
         raise RuntimeError("state dir on fire")
@@ -557,3 +561,14 @@ def test_a_broken_record_lookup_never_breaks_a_query(monkeypatch):
     monkeypatch.setattr(srv, "_stale_notice", "unchecked")
     assert srv._startup_staleness_notice() is None
     assert srv._consume_stale_notice() is None
+
+
+def test_a_server_without_the_installer_package_stays_quiet(monkeypatch):
+    """The server can be deployed with only mcp/requirements.txt — CI's own unit-mcp job
+    is exactly that shape. With no installer package there is no record to read, and the
+    right behaviour is silence rather than an import error mid-query."""
+    import sys
+
+    monkeypatch.setitem(sys.modules, "installer", None)
+    monkeypatch.setattr(srv, "_stale_notice", "unchecked")
+    assert srv._startup_staleness_notice() is None
