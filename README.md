@@ -419,6 +419,32 @@ claude mcp add embeddington-local --scope user -- "$PWD/.venv/bin/python" "$PWD/
 started at all from another directory.) `embeddington-setup --uninstall` removes the
 registration along with everything else.
 
+### Slash commands
+
+Launch Claude Code from the clone and seven commands come with it — thin wrappers over the
+MCP tools that carry the caveats you would otherwise have to remember:
+
+| Command | What it does |
+| --- | --- |
+| `/emb-ask <question>` | The main path. Answers from the graph and refuses to fill gaps from memory when the retrieval came back thin. |
+| `/emb-search <terms>` | Raw semantic hits with scores — the evidence, not a synthesis. |
+| `/emb-entity <name>` | Resolves a name to an entity and shows what it connects to. |
+| `/emb-path <a> <b>` | How two things connect, with the hub caveat applied (see below). |
+| `/emb-schema` | The entity types and predicate vocabulary — what you can actually ask for. |
+| `/emb-doctor` | Runs the health check and translates the rows. |
+| `/emb-update` | Runs the unattended update and reads the receipt back. |
+
+Two of these encode things that are easy to get wrong. `/emb-ask` carries `enrich`'s
+do-not-fabricate contract: when the `grounding` signal says the retrieval was weak or
+empty, it tells you what was *not* found instead of answering from prior knowledge.
+`/emb-path` applies the measured hub caveat — most paths between arbitrary entities in this
+graph route through a handful of very popular nodes, and such a path means "both of these
+touch something popular", not "these two are related".
+
+Unlike the MCP server, these are **project-scoped only**: they live in the clone's
+`.claude/commands/` and are available when the clone is your project directory. Copy them
+into `~/.claude/commands/` if you want them everywhere.
+
 Pointing the server somewhere else — a different store, a scoped read-only user, a Qdrant
 that needs an API key — is what `mcp/.env` is for: `cp mcp/.env.example mcp/.env` and set
 what you need. It takes precedence over `consumer/.env`, and an explicit environment
