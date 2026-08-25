@@ -507,12 +507,18 @@ With the embeddington MCP loaded, ask Claude the kind of deep, multi-hop Service
 architecture questions that need the graph **and** the docs together. Talk to it like you'd
 talk to a colleague who's read everything: describe the mess you're actually in, then say
 what you want back — a recommendation, the trade-offs, a decision framework, whatever helps.
+
+From inside the clone you can put **`/embeddington-ask`** in front of any of these and get the
+same answer with the grounding contract applied: if the graph doesn't actually hold what you
+asked about, it says so instead of filling the gap from memory. See
+[Slash commands](#slash-commands) for the other eight.
+
 Two examples to steal from:
 
 **1. CI identification & deduplication strategy**
 
-> We're loading CMDB from three places — Discovery, a Service Graph Connector, and a legacy
-> import that predates all of us — and we're drowning in duplicate CIs. Can you help me work
+> /embeddington-ask We're loading CMDB from three places — Discovery, a Service Graph
+> Connector, and a legacy import that predates all of us — and we're drowning in duplicate CIs. Can you help me work
 > out how identification _should_ be settled here?
 >
 > The parts I keep going back and forth on: when to trust Discovery's identification rules
@@ -725,8 +731,41 @@ with a per-issue adversarial audit; the full record lives in
 
 > _"This is a very complicated case."_
 
-Every installer failure prints an `[EMB-nn]` code with a fix line already attached. Find
-yours here for the full story.
+Every installer *failure* prints an `[EMB-nn]` code with a fix line already attached — find
+yours below for the full story. The first entry has no code at all, because it happens after
+an install that worked.
+
+#### "I installed it, but I don't see embeddington in Claude"
+
+**First, the surface.** embeddington is an MCP server, not a plugin. It shows up under
+**`/mcp`**, and it will never show up under `/plugin`. If that's where you looked, there is
+nothing wrong with your install.
+
+**Second, the directory.** The `.mcp.json` this repo ships is *project-scoped*: Claude Code
+finds it when the clone is your project directory. Start Claude anywhere else and there is
+nothing to see.
+
+```bash
+# run from: your clone
+claude
+```
+
+**Still nothing?** Ask the client what it thinks, from the clone:
+
+```bash
+claude mcp list
+```
+
+Three answers, three unrelated problems:
+
+| What it says | What it means |
+| --- | --- |
+| `embeddington … ⏸ Pending approval` | You were asked to approve it and didn't. Run `claude` there and accept — or `claude mcp reset-project-choices`, then relaunch, to be asked again. |
+| `embeddington … ✘ Failed to connect` | Found, but it won't start. `embeddington-setup --check` names the reason; see **EMB-52**. |
+| not listed at all | Claude isn't treating that directory as the project. Check where you launched it from. |
+
+**Want it from every directory, not just the clone?** That's what the wizard's user-scope
+offer is for — see the registration line under [query with Claude](#in-the-parlance-of-our-times-query-with-claude).
 
 #### EMB-10 — no interactive terminal
 
