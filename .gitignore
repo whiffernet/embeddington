@@ -15,4 +15,9 @@ data/
 !*.env.example
 .superpowers/
 .coverage
+# Claude Code: the repo SHIPS .claude/commands/ (slash commands for the MCP tools), but a
+# working clone also grows .claude/worktrees/ locally. Ignore that one directory so a
+# `git add .claude` can never sweep an entire worktree into the repo.
+.claude/worktrees/
+
 install.log
