@@ -20,9 +20,10 @@ from installer import errors, ui
 def offer_claude_wiring(console, run, repo_root, *, assume_yes, which=None, input_fn=input):
     """Configure the MCP server, install its deps, prove it starts, and offer reach.
 
-    Order matters. mcp/.env is written FIRST and unconditionally — before the check for
-    the Claude Code CLI — because a Claude Desktop user has no CLI on PATH and needs that
-    file more than anyone: a GUI app inherits no shell exports at all.
+    Order matters, but not in the way it once did: nothing here writes configuration at
+    all. server.py reads the password from the consumer stack's own .env, so a Claude
+    Desktop user — who has no CLI on PATH and inherits no shell exports — is served without
+    this step running at all.
 
     Never fatal. Every failure here is shown and stepped over; the graph is complete and
     queryable without any of it.
