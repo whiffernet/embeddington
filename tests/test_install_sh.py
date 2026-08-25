@@ -238,3 +238,50 @@ def test_the_check_is_macos_only():
         prelude="uname() { printf 'Linux\\n'; }",
         home="/home/someone",
     )
+
+
+# --- the banner exists in two languages (issue: logo arrived last) ---------
+
+
+def _installer_banner_lines():
+    """The ASCII art install.sh prints, from its quoted heredoc."""
+    body = re.search(r"cat <<'EMB_BANNER'\n(.*?)\nEMB_BANNER", _INSTALL_SH.read_text(), re.S)
+    assert body, "install.sh no longer prints a banner heredoc"
+    return [ln for ln in body.group(1).splitlines() if ln.strip()]
+
+
+def _installer_quotes():
+    """The quote list install.sh rotates through."""
+    body = re.search(r"^QUOTES=\(\n(.*?)^\)", _INSTALL_SH.read_text(), re.S | re.M)
+    assert body, "install.sh no longer defines QUOTES"
+    return [ln.strip().strip('"') for ln in body.group(1).splitlines() if ln.strip()]
+
+
+def test_the_bootstrap_banner_matches_the_wizard_banner():
+    """install.sh runs before the clone exists, so it cannot read the art from the repo and
+    has to carry its own copy. Two copies of one thing are only safe while a test says they
+    agree."""
+    from installer import ui
+
+    assert _installer_banner_lines() == [ln for ln in ui.BANNER.splitlines() if ln.strip()]
+
+
+def test_the_bootstrap_quotes_match_the_wizard_quotes():
+    from installer import ui
+
+    assert _installer_quotes() == list(ui.QUOTES)
+
+
+def test_the_bootstrap_hands_the_wizard_a_do_not_repeat_flag():
+    """Without this the logo prints twice in a single piped install."""
+    text = _INSTALL_SH.read_text()
+    assert "export EMBEDDINGTON_BANNER_SHOWN=1" in text
+    assert text.index("export EMBEDDINGTON_BANNER_SHOWN=1") < text.index("exec .venv/bin/")
+
+
+def test_the_banner_is_the_first_thing_the_script_does():
+    """The whole point: a piped install used to show a bare prompt first and the logo only
+    after the venv build, which is the slowest step in the run."""
+    text = _INSTALL_SH.read_text()
+    assert text.index("\nshow_banner\n") < text.index("command -v git")
+    assert text.index("\nshow_banner\n") < text.index("Checking prerequisites")

@@ -32,8 +32,18 @@ def make_console():
 
 
 def show_banner(console):
-    """Print the ASCII banner, a plain-text name line, and a per-process rotating quote."""
+    """Print the ASCII banner, a plain-text name line, and a per-process rotating quote.
+
+    Silent when EMBEDDINGTON_BANNER_SHOWN is set. install.sh shows the same banner as its
+    very first output — before any check runs, so a piped install has something to look at
+    immediately — and exports that flag into the wizard it execs, so the logo is not
+    printed twice in one run. A wizard started on its own sees no flag and banners as
+    usual.
+    """
     import os
+
+    if os.environ.get("EMBEDDINGTON_BANNER_SHOWN"):
+        return
 
     console.print(f"[bold cyan]{BANNER}[/bold cyan]")
     console.print("  [bold]embeddington[/bold] — the knowledge graph that ties the room together")
