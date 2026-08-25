@@ -43,9 +43,7 @@ class MapRun:
         self.calls = []
         self.mapping = dict(self.NO_REGISTRATION, **dict(mapping or {}))
 
-    def __call__(
-        self, cmd, *, cwd=None, env=None, timeout=None, stream=False, stdin_devnull=False
-    ):
+    def __call__(self, cmd, *, cwd=None, env=None, timeout=None, stream=False, stdin_devnull=False):
         self.calls.append({"cmd": list(cmd), "cwd": cwd, "stream": stream})
         for prefix, res in self.mapping.items():
             if " ".join(cmd).startswith(prefix):

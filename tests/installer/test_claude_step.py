@@ -1,6 +1,9 @@
 """Claude wiring: optional, never fatal."""
 
 import io
+import os
+import stat
+import subprocess
 
 from rich.console import Console
 
@@ -74,9 +77,6 @@ def test_assume_yes_installs_by_default(tmp_path):
 # that survives a launch from another directory, a GUI launch, or a shell that never
 # sourced consumer/.env.
 
-import os
-import stat
-
 
 def _consumer_env(tmp_path, password="s3cret-token-value"):
     (tmp_path / "consumer").mkdir(parents=True, exist_ok=True)
@@ -140,8 +140,6 @@ def test_missing_consumer_env_is_reported_not_raised(tmp_path):
 #   no password anywhere    -> rc 1, "Missing required env var: ARANGO_PASSWORD ..."
 # The client reports every one of these identically as "Connection closed", which is
 # why the wizard has to run the spawn itself and quote what came back.
-
-import subprocess
 
 
 def test_verified_when_the_server_exits_cleanly(tmp_path):
@@ -259,7 +257,10 @@ def test_existing_registration_is_refreshed_not_re_offered(tmp_path):
     """Never re-nag: same contract the cron step follows."""
     asked = []
     got = claude_step.offer_user_scope(
-        console(), FakeRun(), tmp_path, assume_yes=False,
+        console(),
+        FakeRun(),
+        tmp_path,
+        assume_yes=False,
         input_fn=lambda: asked.append(1) or "n",
     )
     assert got == "refreshed"
@@ -268,9 +269,12 @@ def test_existing_registration_is_refreshed_not_re_offered(tmp_path):
 
 def test_unattended_never_registers(tmp_path):
     run = FakeRun()
-    assert claude_step.offer_user_scope(
-        console(), run, tmp_path, assume_yes=True, input_fn=lambda: "y"
-    ) == "skipped-unattended"
+    assert (
+        claude_step.offer_user_scope(
+            console(), run, tmp_path, assume_yes=True, input_fn=lambda: "y"
+        )
+        == "skipped-unattended"
+    )
     assert not run.calls
 
 

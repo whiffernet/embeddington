@@ -388,21 +388,37 @@ gone too.
 > _"You're entering a world of context."_
 
 `mcp/` is a stdio MCP server exposing vector search and graph traversal over your local
-stores. The repo ships a project-scoped **`.mcp.json`** that Claude Code auto-discovers, so
-the server appears as **embeddington** (its tools as `mcp__embeddington__…`) — no manual
-endpoint wiring beyond having `ARANGO_ROOT_PASSWORD` set.
+stores. It shows up in Claude Code under **`/mcp`** as **embeddington** (its tools as
+`mcp__embeddington__…`). It is not a plugin and will never appear under `/plugin` — if
+that's where you went looking, nothing is broken.
 
-The one bit of wiring: the server needs `ARANGO_ROOT_PASSWORD` in the environment Claude
-launches it from — a GUI app doesn't inherit your shell's exports. Easiest path:
+**The installer wires it for you.** It writes `mcp/.env` with the password from
+`consumer/.env`, points the config at the clone's own interpreter, then starts the server
+once to prove it works rather than assuming it does. Nothing depends on the environment
+you happen to launch from — no exported password, no activated venv:
 
 ```bash
-# run from: repo root — launch Claude Code with the password loaded
-set -a; . consumer/.env; set +a
+# run from: repo root
 claude
 ```
 
-For Claude Desktop, put the value in `mcp/.env` instead (`cp mcp/.env.example mcp/.env`,
-fill in `ARANGO_PASSWORD`) — `server.py` reads it at startup.
+Approve the `embeddington` server when prompted, then `/mcp` to confirm it connected.
+
+**Want it everywhere, not just here?** The shipped `.mcp.json` is *project-scoped*: it
+exists only when the clone is your project directory. During install the wizard offers a
+user-scope registration named **`embeddington-local`**, which works from any directory.
+To add it later by hand:
+
+```bash
+claude mcp add embeddington-local --scope user -- "$PWD/.venv/bin/python" "$PWD/mcp/server.py"
+```
+
+(Absolute paths are not optional there — a relative command under user scope is never
+started at all from another directory.) `embeddington-setup --uninstall` removes the
+registration along with everything else.
+
+For Claude Desktop, the same `mcp/.env` the installer wrote is what `server.py` reads at
+startup; point Desktop's config at `mcp/server.py` and see `mcp/README.md`.
 
 > _"This is a private residence, man."_ `.mcp.json` connects as `ARANGO_USER: root`. That's
 > **your own** ArangoDB container — the one `consumer/docker-compose.yml` started, with the
@@ -418,12 +434,14 @@ deliberately decided to accept the risk, set `EMBEDDINGTON_ALLOW_REMOTE_ROOT=1`.
 **`mcp/README.md`** for the full variable table and the exact `SystemExit` text.
 
 ```bash
-# run from: repo root — installs the MCP server's deps into your active venv
-pip install -r mcp/requirements.txt
+# run from: repo root — the installer does this; here it is by hand
+.venv/bin/pip install -r mcp/requirements.txt
 ```
 
-Then open this repo in Claude Code (or Claude Desktop) and approve the `embeddington` MCP
-when prompted. See **`mcp/README.md`** for details and Claude Desktop's JSON config.
+Use the clone's own `.venv/bin/pip`, not a bare `pip`: the server is launched with
+`.venv/bin/python`, and dependencies installed anywhere else are invisible to it. If the
+server won't start, `embeddington-setup --check` names the reason, and **EMB-52** in the
+troubleshooting table below walks through it.
 
 Both query styles work out of the box: graph traversal (`kg_find_entities`, `kg_neighbors`,
 `kg_path`, `kg_schema`, `kg_get_entity`) runs against your local ArangoDB, and

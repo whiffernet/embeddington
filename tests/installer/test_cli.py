@@ -444,7 +444,12 @@ def test_update_refreshes_claude_wiring_after_the_stack_is_up():
 def test_update_receipt_reports_a_written_mcp_env():
     """The self-repair line: an install wired by an older installer heals here."""
     line = cli._update_receipt(
-        {"data_mode": "diffs", "applied": 0}, 1, 1, False, None, Path("/x"),
+        {"data_mode": "diffs", "applied": 0},
+        1,
+        1,
+        False,
+        None,
+        Path("/x"),
         WiringResult("created", "present", "verified", "refreshed"),
     )
     assert "mcp/.env written" in line
@@ -453,7 +458,12 @@ def test_update_receipt_reports_a_written_mcp_env():
 
 def test_update_receipt_stays_quiet_when_claude_wiring_did_not_change():
     line = cli._update_receipt(
-        {"data_mode": "diffs", "applied": 0}, 1, 1, False, None, Path("/x"),
+        {"data_mode": "diffs", "applied": 0},
+        1,
+        1,
+        False,
+        None,
+        Path("/x"),
         WiringResult("unchanged", "present", "verified", "absent"),
     )
     assert "mcp/.env" not in line

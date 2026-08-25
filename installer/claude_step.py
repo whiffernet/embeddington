@@ -305,8 +305,7 @@ _VERIFY_FIXES = {
         "watch it: .venv/bin/python mcp/server.py < /dev/null"
     ),
     "unknown": (
-        "Run the probe yourself to see the whole error: "
-        ".venv/bin/python mcp/server.py < /dev/null"
+        "Run the probe yourself to see the whole error: .venv/bin/python mcp/server.py < /dev/null"
     ),
 }
 
@@ -342,7 +341,13 @@ def _mcp_add_argv(repo_root):
     """The registration command. Absolute paths are mandatory, not tidy: measured, a
     relative command under user scope is never spawned at all from another directory."""
     return [
-        "claude", "mcp", "add", USER_SCOPE_NAME, "--scope", "user", "--",
+        "claude",
+        "mcp",
+        "add",
+        USER_SCOPE_NAME,
+        "--scope",
+        "user",
+        "--",
         str(repo_root / ".venv" / "bin" / "python"),
         str(repo_root / "mcp" / "server.py"),
     ]
@@ -434,4 +439,5 @@ class WiringResult:
     env: str  # created | filled | merged | unchanged | no-password
     deps: str  # installed | skipped | failed | no-claude
     verify: str  # verified | deps | password | stack | ... | not-run
-    registration: str  # registered | refreshed | declined | skipped-unattended | failed | not-offered
+    # registered | refreshed | declined | skipped-unattended | failed | not-offered
+    registration: str

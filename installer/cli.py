@@ -186,8 +186,7 @@ def _claude_receipt(wiring):
         return f"  Claude:    server didn't start ({wiring.verify}) — see EMB-52 above"
     if wiring.registration in ("registered", "refreshed"):
         return (
-            f"  Claude:    verified — available in every directory "
-            f"as {claude_step.USER_SCOPE_NAME}"
+            f"  Claude:    verified — available in every directory as {claude_step.USER_SCOPE_NAME}"
         )
     return "  Claude:    verified — run `claude` from this clone to query the graph"
 
@@ -232,9 +231,7 @@ def _update_receipt(did, points, entities, mcp_changed, cron_outcome, repo_root,
     if cron_outcome == "refreshed":
         heavy.append("  Auto-updates: cron refreshed to the current self-upgrading form")
     if wiring is not None and wiring.env in ("created", "filled", "merged"):
-        heavy.append(
-            "  Claude:   mcp/.env written — Claude no longer needs an exported password"
-        )
+        heavy.append("  Claude:   mcp/.env written — Claude no longer needs an exported password")
     if wiring is not None and wiring.registration == "refreshed":
         heavy.append("  Claude:   registration repointed at this clone")
 

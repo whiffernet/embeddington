@@ -15,8 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from consumer import state_paths
-from installer import ui
-from installer import claude_step
+from installer import claude_step, ui
 from installer.cron import CRON_MARKERS, strip_cron_lines
 from installer.errors import SetupError
 
