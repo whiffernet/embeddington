@@ -69,6 +69,7 @@ def drive(
     really=False,
     crontab="",
     run=None,
+    http_get=None,
 ):
     """Run run_uninstall fully faked; returns (rc, recorder, console_output)."""
     repo = make_repo(tmp_path)
@@ -83,7 +84,7 @@ def drive(
         really_delete_data=really,
         env={"EMBEDDINGTON_HOME": str(repo / "state")},
         home=repo,
-        http_get=FakeHttp({":6333/collections": qdrant}),
+        http_get=http_get if http_get is not None else FakeHttp({":6333/collections": qdrant}),
         list_databases=lambda: list(dbs),
         crontab_text=crontab,
         input_fn=lambda: next(it),
@@ -344,3 +345,77 @@ def test_uninstall_offers_and_removes_the_registration_when_present(tmp_path):
     removed = [c for c in run.calls if c["cmd"][:3] == ["claude", "mcp", "remove"]]
     assert removed, "the registration must actually be removed, not just listed"
     assert "embeddington-local" in out
+
+
+# --- the stores must be inspected while they can still answer --------------
+
+
+class StackAwareRun(MapRun):
+    """MapRun that remembers when the containers were taken down."""
+
+    def __init__(self, mapping=None):
+        super().__init__(mapping)
+        self.stack_down = False
+
+    def __call__(self, cmd, **kwargs):
+        if cmd[:3] == ["docker", "compose", "down"]:
+            self.stack_down = True
+        return super().__call__(cmd, **kwargs)
+
+
+class StackAwareHttp:
+    """An HTTP fake that goes dark once the containers are removed.
+
+    The existing FakeHttp answers whatever the run state is, which is exactly why the old
+    ordering looked fine under test: inspection ran after `docker compose down`, and only
+    a fake that models a stopped stack can tell the difference.
+    """
+
+    def __init__(self, run, responses):
+        self.run = run
+        self.responses = dict(responses)
+
+    def __call__(self, url, timeout=5):
+        if self.run.stack_down:
+            raise OSError(f"connection refused (containers are gone): {url}")
+        for fragment, reply in self.responses.items():
+            if fragment in url:
+                return reply
+        raise OSError(f"connection refused: {url}")
+
+
+def test_foreign_data_is_still_detectable_after_the_containers_are_removed(tmp_path):
+    """The guard exists to keep volumes that hold somebody else's collections. Inspection
+    talks to the stores over their published ports, so doing it after `docker compose down`
+    meant it could never succeed — foreign was always empty and the guard was unreachable
+    in exactly the runs it exists for."""
+    run = StackAwareRun()
+    http = StackAwareHttp(run, {":6333/collections": FOREIGN_QDRANT})
+    rc, _, out = drive(tmp_path, [], assume_yes=True, really=True, run=run, http_get=http)
+
+    assert rc == 0
+    assert run.stack_down, "the containers step must still have run"
+    assert "my_precious_data" in out, "the foreign collection must be named"
+    assert "data volumes KEPT" in out
+    removed = [c for c in run.calls if c["cmd"][:3] == ["docker", "volume", "rm"]]
+    assert not [c for c in removed if any("arango" in a or "qdrant" in a for a in c["cmd"])], (
+        "data volumes must survive an unacknowledged foreign-data finding"
+    )
+
+
+def test_a_clean_stack_still_deletes_when_asked(tmp_path):
+    """The guard must not become a blanket refusal — an inspected, embeddington-only stack
+    still honours --really-delete-data."""
+    run = StackAwareRun()
+    http = StackAwareHttp(run, {":6333/collections": KNOWN_QDRANT})
+    _, _, out = drive(tmp_path, [], assume_yes=True, really=True, run=run, http_get=http)
+    assert "volumes to delete:" in out
+
+
+def test_a_stack_already_down_reports_that_it_could_not_look(tmp_path):
+    """Inspecting early does not invent an answer when the stack was never running."""
+    run = StackAwareRun()
+    run.stack_down = True  # nothing was up when the uninstall started
+    http = StackAwareHttp(run, {":6333/collections": KNOWN_QDRANT})
+    _, _, out = drive(tmp_path, [], assume_yes=True, really=False, run=run, http_get=http)
+    assert "EMB-61" in out
