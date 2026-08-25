@@ -133,6 +133,30 @@ def test_legacy_scheduler_entries_are_understood(tmp_path):
     assert out == str(clone)
 
 
+def test_a_path_containing_spaces_is_recovered(tmp_path):
+    """An iCloud Drive install lives under "Mobile Documents" — a directory with a space in
+    its name. Cutting the field at the first space truncated it, so the clone was not found
+    and the prompt fell back to the default, which is how a second clone gets made."""
+    clone = tmp_path / "Mobile Documents" / "com~apple~CloudDocs" / "embeddington"
+    (clone / ".git").mkdir(parents=True)
+    cron_line = (
+        f"0 6 * * * cd {clone} && set -a && . consumer/.env && set +a && "
+        ".venv/bin/embeddington-setup --yes"
+    )
+    env = {
+        "HOME": str(tmp_path),
+        "PATH": "/usr/bin:/bin",
+        "EMBEDDINGTON_HOME": str(tmp_path / "empty"),
+    }
+    out = _bash(
+        ["state_dir", "recorded_install_dir"],
+        "recorded_install_dir",
+        env=env,
+        prelude=f"crontab() {{ printf '%s\\n' '{cron_line}'; }}",
+    )
+    assert out == str(clone)
+
+
 def test_an_unrelated_crontab_is_not_mistaken_for_an_install(tmp_path):
     env = {
         "HOME": str(tmp_path),
