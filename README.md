@@ -853,6 +853,12 @@ or Qdrant/ArangoDB didn't answer within the store timeout. Fix what compose
 complained about (ports, disk, daemon) — or check `docker compose ps` and
 `docker compose logs` in `consumer/` — then re-run; it picks up where it left off.
 
+**Not the same as `unknown`.** If `embeddington-setup --check` reports the containers (or
+`embed`) as **`unknown — Docker isn't answering`**, that is not this error: the daemon never
+replied, so nothing could be asked about the containers at all. Start Docker — open
+OrbStack/Docker Desktop, `colima start`, or `sudo systemctl start docker` — and re-run the
+check. The containers may well be fine underneath.
+
 #### EMB-32 — embed service didn't come up
 
 The `embed` service's first build downloads ~2 GB of model weights, and that stalled

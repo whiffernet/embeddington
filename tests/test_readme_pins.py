@@ -111,3 +111,15 @@ def test_every_emb_code_has_a_readme_troubleshooting_heading():
     readme = _readme_text()
     missing = [code for code in errors.CODES if f"#### {code}" not in readme]
     assert not missing, f"EMB codes without a README troubleshooting heading: {missing}"
+
+
+def test_readme_documents_the_unknown_container_row_verbatim():
+    """`embeddington-setup --check` can report containers as "unknown — Docker isn't
+    answering" (issue #87), and EMB-31 carries the entry explaining that it is NOT that
+    error. The entry is keyed on the exact wording, so reword one without the other and a
+    user searching for what they saw on screen finds nothing."""
+    from installer.cli import _UNKNOWN_CONTAINERS
+
+    assert _UNKNOWN_CONTAINERS in _readme_text(), (
+        f"README does not contain the doctor's exact wording: {_UNKNOWN_CONTAINERS!r}"
+    )
