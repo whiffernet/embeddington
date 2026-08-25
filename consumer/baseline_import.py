@@ -22,6 +22,8 @@ Plan-3b ops.
 
 from pathlib import Path
 
+from consumer.fetcher import discard
+
 GRAPH_NAME = "servicenow_graph_v2"
 
 
@@ -60,13 +62,24 @@ def import_baseline(
         never raised for a degraded status -- see ``ensure_lexical_index``'s contract).
     """
     work = Path(work_dir)
-    work.mkdir(parents=True, exist_ok=True)
     tag = baseline_entry["tag"]
+
+    # Everything this restore creates goes in one directory we own, so cleaning up is
+    # "remove that directory" rather than "remember every intermediate". Enumerating them
+    # does not hold: decompress writes an uncompressed .tar beside the archive, extracts
+    # into a sibling -dump/ and hands back a directory ONE LEVEL DOWN inside it, and the
+    # Qdrant path decompresses an 861 MB .zst into a larger .snapshot. Deleting the two
+    # downloads would have left every one of those behind — the biggest ones.
+    #
+    # It also keeps cleanup off any path the user chose: --work-dir can point anywhere, so
+    # "empty the work directory" is not ours to do. This directory is.
+    scratch = work / f"baseline-{tag}"
+    scratch.mkdir(parents=True, exist_ok=True)
 
     q_asset = baseline_entry["assets"]["qdrant"]
     a_asset = baseline_entry["assets"]["arango"]
-    q_zst = download_asset(tag, q_asset, work / q_asset, baseline_entry["sha256"]["qdrant"])
-    a_zst = download_asset(tag, a_asset, work / a_asset, baseline_entry["sha256"]["arango"])
+    q_zst = download_asset(tag, q_asset, scratch / q_asset, baseline_entry["sha256"]["qdrant"])
+    a_zst = download_asset(tag, a_asset, scratch / a_asset, baseline_entry["sha256"]["arango"])
 
     dump_dir = decompress(a_zst)
 
@@ -74,5 +87,11 @@ def import_baseline(
     restore_arango(dump_dir)
     ensure_graph()  # the named graph arangodump can't carry — required for embeddington
     chunk_text_status = ensure_lexical_index()  # warm it now, not at the first MCP request
+
+    # Everything above is now a duplicate of what is in the stores — comfortably over a
+    # gigabyte of it, in a directory the user never looks at. Removed only after the
+    # restore has actually succeeded: on a failure it stays put as evidence, and re-running
+    # re-downloads regardless (the fetcher never reuses an existing file).
+    discard(scratch)
 
     return {"head_sha": baseline_entry["head_sha"], "chunk_text_status": chunk_text_status}

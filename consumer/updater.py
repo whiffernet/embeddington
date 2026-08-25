@@ -25,6 +25,7 @@ import time
 from pathlib import Path
 
 from consumer.cursor_store import read_cursor, write_cursor
+from consumer.fetcher import discard
 from embeddington import apply_diff, plan_update
 from embeddington.apply.cursor import SUPPORTED_SCHEMA_MAJOR
 from embeddington.errors import EmbeddingtonError
@@ -291,6 +292,10 @@ def update(
         release_client.download_asset(diffs_tag, diff["asset"], dest, diff["sha256"])
         apply_diff(bundle_mod.read_bundle(dest), qdrant, arango)
         write_cursor(cursor_path, diff["head_sha"])  # advance only after full apply
+        # Consumed: its contents are in the stores and the cursor says so. Downloads are
+        # never reused (the fetcher re-fetches unconditionally), so keeping it would just
+        # grow the work directory by every diff ever published.
+        discard(dest)
         applied += 1
 
     # Keep the lexical index complete for the points we just brought in. up_to_date

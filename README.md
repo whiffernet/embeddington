@@ -601,12 +601,15 @@ Plan for **~8.5 GB** once everything settles. Itemized:
 | `embed` service image (CPU-only torch)           | ~1.3 GB |
 | Qdrant + ArangoDB engine images                  | ~0.7 GB |
 | Restored graph (Qdrant ~2.4 GB + Arango ~0.9 GB) | ~3.3 GB |
-| Baseline download (transient — deletable)        | ~1.0 GB |
+| Baseline download (transient — cleaned up for you) | ~1.0 GB |
 
 Figure a little extra headroom during the first download — the compressed baseline and the
-restored copy coexist until you clear `~/.local/share/embeddington/work/` (or
-`$EMBEDDINGTON_HOME/work/` if set) — plus **~6–8 GB RAM** — the embedder alone holds
-~2.3 GB once bge-m3 loads, on top of Qdrant + ArangoDB serving the full graph.
+restored copy coexist while the restore runs, in `~/.local/share/embeddington/work/` (or
+`$EMBEDDINGTON_HOME/work/` if set). That scratch is deleted once the restore succeeds, and
+each nightly diff bundle is deleted once it applies, so the directory does not grow over
+time. A failed download, or a diff that could not be applied, is left in place deliberately —
+it is evidence, and re-running re-fetches it anyway. Plus **~6–8 GB RAM** — the embedder
+alone holds ~2.3 GB once bge-m3 loads, on top of Qdrant + ArangoDB serving the full graph.
 
 Upgrading? Downloads used to land in `data/work/` inside your clone. That directory is no
 longer used and can be deleted outright — it may still be holding ~1 GB of baseline scratch.
