@@ -772,3 +772,16 @@ def test_the_receipt_names_the_resolved_state_dir(monkeypatch, tmp_path):
         == 0
     )
     assert str(tmp_path / "elsewhere") in con.export_text()
+
+
+def test_uninstall_is_not_nagged_about_being_out_of_date():
+    """Urging someone to update the install they are removing is noise at exactly the
+    wrong moment."""
+    from datetime import datetime, timedelta, timezone
+
+    old = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
+    rec = Recorder(state=ALL_GOOD, update_record={"at": old, "version": "v0.1.0"})
+    con = Console(record=True, width=200)
+    cli.main(["--uninstall", "--yes"], console=con, deps=make_deps(rec), input_fn=lambda: "")
+    assert "last updated successfully" not in con.export_text()
+    assert "uninstall" in rec.order

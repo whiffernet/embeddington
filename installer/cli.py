@@ -654,13 +654,15 @@ def main(argv=None, *, console=None, deps=None, input_fn=input):
     try:
         if args.check:
             return _doctor(console, deps)
-        # Deliberately here and not in the receipt: by receipt time this run has just
-        # updated, so the record is always fresh and the line would never fire. The moment
-        # it is worth saying is when someone returns after a long gap.
-        _notice_if_stale(console, deps)
         st = deps["detect_state"](console)
         if args.uninstall:
             return deps["run_uninstall"](console, args.yes, args.really_delete_data, input_fn)
+
+        # Deliberately here: not in the receipt, because by receipt time this run has just
+        # updated and the line could never fire; and not before the uninstall branch,
+        # because urging someone to update the install they are in the middle of removing
+        # is noise at exactly the wrong moment.
+        _notice_if_stale(console, deps)
 
         # [#87] A daemon that isn't answering makes a complete install look like a bare
         # machine: `docker compose ps` fails, containers read as not-running, and routing
