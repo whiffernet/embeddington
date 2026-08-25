@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from consumer import state_paths
-from installer import ui
+from installer import claude_step, ui
 from installer.cron import CRON_MARKERS, strip_cron_lines
 from installer.errors import SetupError
 
@@ -105,6 +105,15 @@ def build_manifest(repo_root, run, *, env=None, home=None, crontab_text=None):
     items = []
     if crontab_text and any(m in crontab_text for m in CRON_MARKERS):
         items.append(ManifestItem("cron", "daily-update crontab line", "1 line", "safe"))
+    if claude_step.user_scope_present(run):
+        items.append(
+            ManifestItem(
+                "mcp-registration",
+                f"Claude MCP registration ({claude_step.USER_SCOPE_NAME})",
+                "1 entry, user scope",
+                "safe",
+            )
+        )
     items.append(
         ManifestItem(
             "containers",
@@ -278,6 +287,15 @@ def run_uninstall(
         return True
 
     offer("cron", "Remove the daily-update crontab line?", rm_cron, default=assume_yes)
+
+    # 1b. the user-scope MCP registration — ours, and nothing else's: it is removed by
+    # our own name, so a registration the user added by hand is never touched.
+    offer(
+        "mcp-registration",
+        f"Remove the Claude MCP registration ({claude_step.USER_SCOPE_NAME})?",
+        lambda: claude_step.remove_user_scope(run),
+        default=assume_yes,
+    )
 
     # 2. containers
     offer(

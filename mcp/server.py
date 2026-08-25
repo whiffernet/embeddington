@@ -34,6 +34,54 @@ _ENV_PATH = Path(__file__).resolve().parent / ".env"
 if _ENV_PATH.exists():
     load_dotenv(_ENV_PATH, override=False)
 
+# Lowest-precedence password source: the consumer stack's own .env, which already holds
+# this credential, 0600, written at install time. Reading it here is what lets the
+# installer avoid copying the password into a second file — one secret, one place on
+# disk. Precedence stays process env > mcp/.env > this.
+_CONSUMER_ENV_PATH = Path(__file__).resolve().parent.parent / "consumer" / ".env"
+
+
+def _password_from_consumer_env(path):
+    """Return ARANGO_ROOT_PASSWORD from a consumer/.env, or None if unreadable/unset.
+
+    Args:
+        path: Path to the consumer stack's .env.
+
+    Returns:
+        The password, or None. An empty assignment counts as unset.
+    """
+    try:
+        lines = path.read_text().splitlines()
+    except OSError:
+        return None
+    for line in lines:
+        if line.startswith("ARANGO_ROOT_PASSWORD="):
+            return line.split("=", 1)[1].strip() or None
+    return None
+
+
+def _fallback_arango_password(environ, consumer_env_path):
+    """The password to inject, or None when one is already configured.
+
+    An EMPTY ARANGO_PASSWORD counts as unset: `cp .env.example .env` leaves exactly that
+    behind, and it must not shadow a usable password sitting one directory away.
+
+    Args:
+        environ: the process environment mapping (already merged with mcp/.env).
+        consumer_env_path: Path to the consumer stack's .env.
+
+    Returns:
+        A password string, or None to leave the environment untouched.
+    """
+    if environ.get("ARANGO_PASSWORD", "").strip():
+        return None
+    return _password_from_consumer_env(consumer_env_path)
+
+
+_FALLBACK_PASSWORD = _fallback_arango_password(os.environ, _CONSUMER_ENV_PATH)
+if _FALLBACK_PASSWORD:
+    os.environ["ARANGO_PASSWORD"] = _FALLBACK_PASSWORD
+
 # Imports work in two contexts:
 #   1. As a package (tests, `python -m server`) — relative imports
 #   2. As a direct script (Claude Desktop calling `python3 .../server.py`) — script-style

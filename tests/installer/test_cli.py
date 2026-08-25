@@ -6,6 +6,7 @@ from pathlib import Path
 from rich.console import Console
 
 from installer import cli, errors
+from installer.claude_step import WiringResult
 from installer.state import InstallState
 
 ALL_GOOD = InstallState(True, True, True, True, True, True)
@@ -63,7 +64,10 @@ def make_deps(rec):
             },
         ),
         "proof_of_life": rec.step("proof", (152_194, 41_000)),
-        "claude_wiring": rec.step("claude", "skipped"),
+        "claude_wiring": rec.step("claude", WiringResult("installed", "verified", "registered")),
+        "ensure_claude_wiring": rec.step(
+            "claude_wiring", WiringResult("present", "verified", "refreshed")
+        ),
         "install_cron": rec.step("install_cron", "skipped-unattended"),
         "refresh_cron": rec.step("refresh_cron", "unchanged"),
         "run_uninstall": rec.step("uninstall", 0),
@@ -420,3 +424,53 @@ def test_production_merge_env_writes_memory_cap(tmp_path):
     text = (tmp_path / "consumer" / ".env").read_text()
     assert "ARANGO_MEMORY_CAP=" in text  # real value written to the real path
     assert "ARANGO_ROOT_PASSWORD=secret" in text  # user value untouched
+
+
+# --- Claude wiring in both flows (issue #85) --------------------------------
+
+
+def test_update_refreshes_claude_wiring_after_the_stack_is_up():
+    """Probing the server before the containers answer would report a wiring fault for
+    what is really a stack that has not finished starting."""
+    rec = Recorder(state=ALL_GOOD)
+    assert cli.main([], console=console(), deps=make_deps(rec), input_fn=lambda: "u") == 0
+    assert "claude_wiring" in rec.order
+    assert rec.order.index("wait") < rec.order.index("claude_wiring")
+    assert rec.order.index("import") < rec.order.index("claude_wiring")
+
+
+def test_update_receipt_reports_a_repointed_registration():
+    line = cli._update_receipt(
+        {"data_mode": "diffs", "applied": 0},
+        1,
+        1,
+        False,
+        None,
+        Path("/x"),
+        WiringResult("present", "verified", "refreshed"),
+    )
+    assert "repointed at this clone" in line
+
+
+def test_update_receipt_stays_quiet_when_claude_wiring_did_not_change():
+    line = cli._update_receipt(
+        {"data_mode": "diffs", "applied": 0},
+        1,
+        1,
+        False,
+        None,
+        Path("/x"),
+        WiringResult("present", "verified", "absent"),
+    )
+    assert "Claude" not in line
+
+
+def test_install_receipt_states_what_was_proven_not_attempted():
+    verified = cli._claude_receipt(WiringResult("installed", "verified", "registered"))
+    assert "verified" in verified and "every directory" in verified
+
+    broken = cli._claude_receipt(WiringResult("installed", "deps", "not-offered"))
+    assert "didn't start" in broken and "EMB-52" in broken
+
+    desktop = cli._claude_receipt(WiringResult("no-claude", "not-run", "not-offered"))
+    assert "Claude Desktop" in desktop

@@ -30,13 +30,20 @@ ACK_TEXT = "Acknowledge"
 
 
 class MapRun:
-    """Run fake keyed on command-prefix; unmatched commands succeed with rc 0."""
+    """Run fake keyed on command-prefix; unmatched commands succeed with rc 0.
+
+    The default world has NO user-scope MCP registration: `claude mcp get` fails, so the
+    manifest carries no registration item and these tests answer only the prompts they
+    were written for. A test that wants one maps that prefix to rc 0.
+    """
+
+    NO_REGISTRATION = {"claude mcp get": RunResult(1, "", "no server found")}
 
     def __init__(self, mapping=None):
         self.calls = []
-        self.mapping = dict(mapping or {})
+        self.mapping = dict(self.NO_REGISTRATION, **dict(mapping or {}))
 
-    def __call__(self, cmd, *, cwd=None, env=None, timeout=None, stream=False):
+    def __call__(self, cmd, *, cwd=None, env=None, timeout=None, stream=False, stdin_devnull=False):
         self.calls.append({"cmd": list(cmd), "cwd": cwd, "stream": stream})
         for prefix, res in self.mapping.items():
             if " ".join(cmd).startswith(prefix):
@@ -308,3 +315,32 @@ def test_receipt_includes_the_clone_fate(tmp_path):
     _, _, out = drive(tmp_path, ["n", "n", "n", "n", "n"])
     removed_or_kept = out[out.index("Removed:") :]
     assert "clone" in removed_or_kept  # printed AFTER the clone decision
+
+
+# --- the MCP registration is ours to clean up (issue #85) -------------------
+
+
+def test_registration_appears_in_the_manifest_when_present(tmp_path):
+    from installer import claude_step
+    from installer.runner import RunResult
+    from tests.installer.conftest import FakeRun
+
+    present = FakeRun()  # every probe rc 0 -> registration exists
+    keys = [i.key for i in uninstall.build_manifest(tmp_path, present, crontab_text="")]
+    assert "mcp-registration" in keys
+
+    absent = FakeRun([RunResult(1, "", "no server found")])
+    keys = [i.key for i in uninstall.build_manifest(tmp_path, absent, crontab_text="")]
+    assert "mcp-registration" not in keys
+    assert claude_step.USER_SCOPE_NAME  # named, not hardcoded at the call site
+
+
+def test_uninstall_offers_and_removes_the_registration_when_present(tmp_path):
+    """Ours to clean up: the wizard created it, so leaving it behind would point Claude
+    at a clone that may be gone."""
+    run = MapRun({"claude mcp get": RunResult(0, "", "")})
+    rc, _, out = drive(tmp_path, [], assume_yes=True, really=False, run=run)
+    assert rc == 0
+    removed = [c for c in run.calls if c["cmd"][:3] == ["claude", "mcp", "remove"]]
+    assert removed, "the registration must actually be removed, not just listed"
+    assert "embeddington-local" in out

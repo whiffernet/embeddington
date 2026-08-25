@@ -20,7 +20,7 @@ class RunResult:
     err: str
 
 
-def run(cmd, *, cwd=None, env=None, timeout=None, stream=False):
+def run(cmd, *, cwd=None, env=None, timeout=None, stream=False, stdin_devnull=False):
     """Run a command and return a RunResult.
 
     Args:
@@ -30,6 +30,9 @@ def run(cmd, *, cwd=None, env=None, timeout=None, stream=False):
         timeout: seconds before subprocess.TimeoutExpired propagates.
         stream: when True, the child inherits stdout/stderr (live output for long
             builds); out/err come back empty.
+        stdin_devnull: when True, the child gets /dev/null on stdin instead of inheriting
+            the wizard's terminal. Required for probing a stdio server: it would otherwise
+            block reading a request that is never coming, and hang the installer.
 
     Returns:
         RunResult(rc, out, err).
@@ -39,11 +42,18 @@ def run(cmd, *, cwd=None, env=None, timeout=None, stream=False):
     # with a traceback on any box without docker/crontab/git — the exact machines the
     # docker ladder and friendly EMB codes exist for.
     try:
+        stdin = subprocess.DEVNULL if stdin_devnull else None
         if stream:
-            proc = subprocess.run(cmd, cwd=cwd, env=env, timeout=timeout)
+            proc = subprocess.run(cmd, cwd=cwd, env=env, timeout=timeout, stdin=stdin)
             return RunResult(proc.returncode, "", "")
         proc = subprocess.run(
-            cmd, cwd=cwd, env=env, timeout=timeout, capture_output=True, text=True
+            cmd,
+            cwd=cwd,
+            env=env,
+            timeout=timeout,
+            stdin=stdin,
+            capture_output=True,
+            text=True,
         )
         return RunResult(proc.returncode, proc.stdout, proc.stderr)
     except FileNotFoundError:

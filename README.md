@@ -388,21 +388,43 @@ gone too.
 > _"You're entering a world of context."_
 
 `mcp/` is a stdio MCP server exposing vector search and graph traversal over your local
-stores. The repo ships a project-scoped **`.mcp.json`** that Claude Code auto-discovers, so
-the server appears as **embeddington** (its tools as `mcp__embeddington__…`) — no manual
-endpoint wiring beyond having `ARANGO_ROOT_PASSWORD` set.
+stores. It shows up in Claude Code under **`/mcp`** as **embeddington** (its tools as
+`mcp__embeddington__…`). It is not a plugin and will never appear under `/plugin` — if
+that's where you went looking, nothing is broken.
 
-The one bit of wiring: the server needs `ARANGO_ROOT_PASSWORD` in the environment Claude
-launches it from — a GUI app doesn't inherit your shell's exports. Easiest path:
+**The installer wires it for you.** It points the config at the clone's own interpreter,
+then starts the server once to prove it works rather than assuming it does. The password
+needs no wiring at all: the server reads `ARANGO_ROOT_PASSWORD` straight from
+`consumer/.env`, so the credential stays in the one 0600 file that already held it rather
+than being copied into a second one. Nothing depends on the environment you launch from —
+no exported password, no activated venv:
 
 ```bash
-# run from: repo root — launch Claude Code with the password loaded
-set -a; . consumer/.env; set +a
+# run from: repo root
 claude
 ```
 
-For Claude Desktop, put the value in `mcp/.env` instead (`cp mcp/.env.example mcp/.env`,
-fill in `ARANGO_PASSWORD`) — `server.py` reads it at startup.
+Approve the `embeddington` server when prompted, then `/mcp` to confirm it connected.
+
+**Want it everywhere, not just here?** The shipped `.mcp.json` is *project-scoped*: it
+exists only when the clone is your project directory. During install the wizard offers a
+user-scope registration named **`embeddington-local`**, which works from any directory.
+To add it later by hand:
+
+```bash
+claude mcp add embeddington-local --scope user -- "$PWD/.venv/bin/python" "$PWD/mcp/server.py"
+```
+
+(Absolute paths are not optional there — a relative command under user scope is never
+started at all from another directory.) `embeddington-setup --uninstall` removes the
+registration along with everything else.
+
+Pointing the server somewhere else — a different store, a scoped read-only user, a Qdrant
+that needs an API key — is what `mcp/.env` is for: `cp mcp/.env.example mcp/.env` and set
+what you need. It takes precedence over `consumer/.env`, and an explicit environment
+variable takes precedence over both. Claude Desktop needs no extra wiring either: point it
+at `mcp/server.py` (see `mcp/README.md`) and the same resolution applies, which matters
+because a GUI app inherits none of your shell's exports.
 
 > _"This is a private residence, man."_ `.mcp.json` connects as `ARANGO_USER: root`. That's
 > **your own** ArangoDB container — the one `consumer/docker-compose.yml` started, with the
@@ -418,12 +440,14 @@ deliberately decided to accept the risk, set `EMBEDDINGTON_ALLOW_REMOTE_ROOT=1`.
 **`mcp/README.md`** for the full variable table and the exact `SystemExit` text.
 
 ```bash
-# run from: repo root — installs the MCP server's deps into your active venv
-pip install -r mcp/requirements.txt
+# run from: repo root — the installer does this; here it is by hand
+.venv/bin/pip install -r mcp/requirements.txt
 ```
 
-Then open this repo in Claude Code (or Claude Desktop) and approve the `embeddington` MCP
-when prompted. See **`mcp/README.md`** for details and Claude Desktop's JSON config.
+Use the clone's own `.venv/bin/pip`, not a bare `pip`: the server is launched with
+`.venv/bin/python`, and dependencies installed anywhere else are invisible to it. If the
+server won't start, `embeddington-setup --check` names the reason, and **EMB-52** in the
+troubleshooting table below walks through it.
 
 Both query styles work out of the box: graph traversal (`kg_find_entities`, `kg_neighbors`,
 `kg_path`, `kg_schema`, `kg_get_entity`) runs against your local ArangoDB, and
@@ -807,8 +831,29 @@ gap, a schema version mismatch, ...). Re-run the installer; if it repeats, run
 #### EMB-51 — MCP dependency install failed
 
 `pip install -r mcp/requirements.txt` failed while wiring up Claude — the graph
-itself is unaffected and fully usable without it. Run that `pip install` manually to
-see why, then launch Claude from the repo root with `consumer/.env` loaded.
+itself is unaffected and fully usable without it. Run that `pip install` manually with
+the clone's own interpreter (`.venv/bin/pip`) to see why.
+
+#### EMB-52 — the MCP server didn't start when probed
+
+After wiring Claude, the installer starts the server once to prove it works, instead of
+assuming it does. This code means that probe failed, and the message names which of the
+few possible causes it was: the clone's `.venv` is missing, the server's dependencies
+aren't installed in it, no password is resolvable (`consumer/.env` is missing or empty and
+`mcp/.env` doesn't supply one), or the local stack isn't answering (which is the stack
+being down, not the wiring being wrong).
+
+Your knowledge graph is unaffected either way — this step only concerns querying it from
+Claude. To watch the failure yourself:
+
+```bash
+# run from: repo root
+.venv/bin/python mcp/server.py < /dev/null
+```
+
+A healthy server prints a startup line and exits cleanly when its input closes. Any other
+outcome prints the real reason, which your client would otherwise report only as a closed
+connection.
 
 #### EMB-61 — couldn't inspect store contents before deletion
 
