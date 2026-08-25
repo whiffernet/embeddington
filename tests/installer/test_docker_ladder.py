@@ -318,3 +318,36 @@ def test_linux_install_declined_is_emb20():
             run, platform="linux", which=lambda n: None, os_release="ID=ubuntu\n", answers=("n",)
         )
     assert exc.value.code == "EMB-20"
+
+
+# --- the guard cli.main() routes on must agree with this module (issue #87) ---
+
+
+def test_an_installed_but_stopped_runtime_is_never_an_install_path():
+    """cli.main() now runs this ladder BEFORE routing when Docker is present but not
+    answering, deciding "present" from `docker info` rc != 127 (runner's missing-binary
+    contract). That is safe only while this module's own branch — install when
+    `which("docker")` is None, start when it isn't — agrees with it. If the two ever
+    drift, a runtime INSTALL would run ahead of preflight's disk and port gates.
+
+    macOS is where it would hurt: the install path here brew-installs OrbStack or guides
+    Colima. With the binary present, none of that may happen — only "start it, I'll wait".
+    """
+    run = FakeRun([DOWN, DOWN, UP, OK])
+    ensure(
+        run,
+        platform="macos",
+        which=lambda n: "/usr/local/bin/docker" if n == "docker" else None,
+        answers=("",),
+    )
+    issued = [" ".join(c["cmd"]) for c in run.calls]
+    assert not [c for c in issued if "brew" in c], f"installed a runtime: {issued}"
+    assert all(c.startswith("docker ") for c in issued), issued
+
+
+def test_an_absent_binary_still_reaches_the_install_ladder():
+    """The other half of the same agreement: with no binary, cli.main() deliberately does
+    NOT pre-run this ladder, because this is the path that installs things."""
+    run = FakeRun([DOWN])
+    with pytest.raises(errors.SetupError):
+        ensure(run, platform="macos", which=lambda n: None, answers=("x",))

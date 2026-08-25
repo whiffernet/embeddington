@@ -375,6 +375,11 @@ def _update_flow(console, deps, args, input_fn):
     return 0
 
 
+# Said instead of "down" when the daemon never answered: claiming the containers are down
+# asserts evidence we do not have, and sends the user to debug the wrong layer.
+_UNKNOWN_CONTAINERS = "unknown — Docker isn't answering"
+
+
 def _doctor(console, deps):
     """--check: render state + preflight, mutate nothing, exit 0 iff healthy.
 
@@ -391,9 +396,17 @@ def _doctor(console, deps):
         (
             "containers",
             st.containers_running,
-            "qdrant+arango running" if st.containers_running else "down (EMB-31)",
+            "qdrant+arango running"
+            if st.containers_running
+            else ("down (EMB-31)" if st.docker_reachable else _UNKNOWN_CONTAINERS),
         ),
-        ("embed", st.embed_running, "running" if st.embed_running else "down (EMB-32)"),
+        (
+            "embed",
+            st.embed_running,
+            "running"
+            if st.embed_running
+            else ("down (EMB-32)" if st.docker_reachable else _UNKNOWN_CONTAINERS),
+        ),
         ("stores", st.stores_populated, "populated" if st.stores_populated else "empty"),
         ("cursor", st.cursor_present, "present" if st.cursor_present else "missing (EMB-43)"),
         (
@@ -577,6 +590,21 @@ def main(argv=None, *, console=None, deps=None, input_fn=input):
         st = deps["detect_state"](console)
         if args.uninstall:
             return deps["run_uninstall"](console, args.yes, args.really_delete_data, input_fn)
+
+        # [#87] A daemon that isn't answering makes a complete install look like a bare
+        # machine: `docker compose ps` fails, containers read as not-running, and routing
+        # sends the user through the fresh-install flow — where Uninstall, which only the
+        # menu offers, is unreachable. Give the ladder its chance, then ask again.
+        #
+        # Deliberately only when Docker is INSTALLED and merely not answering. With no
+        # binary at all the ladder may install one, and that has to stay behind preflight's
+        # disk and port gates inside the install flow rather than running ahead of them.
+        # A ladder failure propagates as its own EMB-2x, exactly as it would have a moment
+        # later — the user is blocked on Docker either way.
+        if st.docker_present and not st.docker_reachable:
+            deps["ensure_docker"](console, args.yes, input_fn)
+            st = deps["detect_state"](console)
+
         installed = st.containers_running and st.stores_populated and st.cursor_present
         if installed:
             return _menu(console, deps, st, args, input_fn)

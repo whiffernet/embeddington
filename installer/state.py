@@ -20,6 +20,11 @@ class InstallState:
     stores_populated: bool
     cursor_present: bool
     mcp_deps: bool  # importable by the interpreter that actually RUNS the server
+    # Docker reachability is reported separately from container state on purpose: a failed
+    # `docker compose ps` means we could not ASK, not that the containers are down, and
+    # conflating the two makes a complete install look like a bare machine (issue #87).
+    docker_present: bool = True  # the binary exists (a missing one comes back as rc 127)
+    docker_reachable: bool = True  # `docker info` succeeded
     mcp_password_resolvable: bool = False  # from mcp/.env or the consumer stack's .env
     mcp_registered: bool = False  # reachable outside the clone
 
@@ -60,6 +65,8 @@ def detect_state(repo_root, run, point_count, entity_count, *, env=None, home=No
     Returns:
         InstallState. Any store error reads as "not populated" — detection must never
         crash a doctor run; the preflight/docker checks own reporting connectivity.
+        `docker_present` / `docker_reachable` let a caller tell "the containers are down"
+        apart from "we could not ask", which routing depends on (issue #87).
     """
     env = os.environ if env is None else env
     home = Path.home() if home is None else Path(home)
@@ -67,11 +74,21 @@ def detect_state(repo_root, run, point_count, entity_count, *, env=None, home=No
     repo_root = Path(repo_root)
     env_present = (repo_root / "consumer" / ".env").exists()
 
-    ps = run(
-        ["docker", "compose", "ps", "--services", "--status", "running"],
-        cwd=repo_root / "consumer",
-    )
-    services = set(ps.out.split()) if ps.rc == 0 else set()
+    # Ask whether Docker can be talked to at all before asking it anything. rc 127 is a
+    # missing binary (runner.run's contract); any other non-zero is a daemon that is not
+    # answering. Querying compose in that state buys a guaranteed failure and a confusing
+    # error line, so skip it and report the container state as unknown-hence-not-running.
+    info = run(["docker", "info"])
+    docker_present = info.rc != 127
+    docker_reachable = info.rc == 0
+
+    services = set()
+    if docker_reachable:
+        ps = run(
+            ["docker", "compose", "ps", "--services", "--status", "running"],
+            cwd=repo_root / "consumer",
+        )
+        services = set(ps.out.split()) if ps.rc == 0 else set()
     containers_running = {"qdrant", "arango"} <= services
     embed_running = "embed" in services
 
@@ -94,6 +111,8 @@ def detect_state(repo_root, run, point_count, entity_count, *, env=None, home=No
         stores_populated,
         cursor_present,
         mcp_deps,
+        docker_present,
+        docker_reachable,
         _mcp_password_resolvable(repo_root),
         claude_step.user_scope_present(run),
     )

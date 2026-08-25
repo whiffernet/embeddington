@@ -4,12 +4,16 @@ from installer import state
 from installer.runner import RunResult
 from tests.installer.conftest import FakeRun
 
+# Call order inside detect_state: `docker info` first (can we ask?), then
+# `docker compose ps` (what is running?), then the two MCP probes.
+_HEALTHY_DOCKER = [RunResult(0, "", ""), RunResult(0, "qdrant\narango\nembed\n", "")]
+
 
 def detect(tmp_path, *, run=None, points=lambda: 1, entities=lambda: 1, find_spec=lambda n: None):
     env = {"EMBEDDINGTON_HOME": str(tmp_path / "state")}
     return state.detect_state(
         tmp_path,
-        run or FakeRun([RunResult(0, "qdrant\narango\nembed\n", "")]),
+        run or FakeRun(list(_HEALTHY_DOCKER)),
         points,
         entities,
         env=env,
@@ -24,7 +28,7 @@ def test_fresh_box_is_all_false(tmp_path):
         # compose ps, then the two MCP probes: deps import, and the user-scope lookup.
         run=FakeRun(
             [
-                RunResult(1, "", "no compose file"),
+                RunResult(1, "", "Cannot connect to the Docker daemon"),
                 RunResult(1, "", "No module named 'fastmcp'"),
                 RunResult(1, "", "no server found"),
             ]
@@ -39,7 +43,7 @@ def test_fresh_box_is_all_false(tmp_path):
 def test_missing_docker_binary_reads_as_not_running_not_a_crash(tmp_path):
     st = detect(
         tmp_path,
-        run=FakeRun([RunResult(127, "", "command not found: docker")]),
+        run=FakeRun([RunResult(127, "", "command not found: docker")]),  # info -> 127
         points=lambda: 0,
         entities=lambda: 0,
     )
@@ -71,7 +75,7 @@ def test_store_errors_read_as_not_populated(tmp_path):
 
 
 def test_containers_need_both_qdrant_and_arango(tmp_path):
-    st = detect(tmp_path, run=FakeRun([RunResult(0, "qdrant\n", "")]))
+    st = detect(tmp_path, run=FakeRun([RunResult(0, "", ""), RunResult(0, "qdrant\n", "")]))
     assert not st.containers_running
 
 
@@ -108,14 +112,52 @@ def test_mcp_config_row_accepts_the_consumer_stack_password_alone(tmp_path):
 
 
 def test_mcp_reach_row_reflects_the_user_scope_registration(tmp_path):
-    reachable = FakeRun([RunResult(0, "qdrant\narango\nembed\n", "")])
+    reachable = FakeRun(list(_HEALTHY_DOCKER))
     assert detect(tmp_path, run=reachable).mcp_registered
 
     clone_only = FakeRun(
-        [
-            RunResult(0, "qdrant\narango\nembed\n", ""),
+        _HEALTHY_DOCKER
+        + [
             RunResult(0, "", ""),  # deps import fine
             RunResult(1, "", "no server found"),  # but nothing registered
         ]
     )
     assert not detect(tmp_path, run=clone_only).mcp_registered
+
+
+# --- Docker reachability is its own signal (issue #87) ----------------------
+# `docker compose ps` failing does NOT mean the containers are down — it means we could
+# not ask. A daemon that is merely stopped otherwise makes a complete install look like a
+# bare machine.
+
+
+def _docker(rc, out=""):
+    """A run fake whose FIRST reply is `docker info`, then `docker compose ps`."""
+    return FakeRun([RunResult(rc, out, ""), RunResult(0, "qdrant\narango\nembed\n", "")])
+
+
+def test_reachable_daemon_reports_present_and_reachable(tmp_path):
+    st = detect(tmp_path, run=_docker(0))
+    assert st.docker_present and st.docker_reachable
+    assert st.containers_running
+
+
+def test_stopped_daemon_is_present_but_unreachable(tmp_path):
+    """The issue #87 case: Docker installed, daemon not answering."""
+    st = detect(tmp_path, run=_docker(1, "Cannot connect to the Docker daemon"))
+    assert st.docker_present
+    assert not st.docker_reachable
+    assert not st.containers_running  # unknown, reported as not-running
+
+
+def test_absent_docker_binary_is_neither(tmp_path):
+    st = detect(tmp_path, run=_docker(127))
+    assert not st.docker_present and not st.docker_reachable
+
+
+def test_compose_is_not_consulted_when_the_daemon_is_unreachable(tmp_path):
+    """Asking compose anything with the daemon down buys a guaranteed failure and a
+    confusing error in the log; skip it."""
+    run = _docker(1)
+    detect(tmp_path, run=run)
+    assert not [c for c in run.calls if "compose" in c["cmd"]]
