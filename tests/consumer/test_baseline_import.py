@@ -62,7 +62,11 @@ def test_import_baseline_orchestrates_in_order(tmp_path):
     assert kinds.count("download") == 2
     assert kinds.count("decompress") == 1
     assert "restore_qdrant" in kinds and "restore_arango" in kinds
-    assert ("restore_qdrant", str(tmp_path / "technology.snapshot.zst")) in calls
+    # Downloads land in a per-restore scratch directory rather than the work dir root, so
+    # cleanup can remove one directory instead of guessing at every intermediate the
+    # decompression leaves behind.
+    scratch = tmp_path / "baseline-baseline-2026-06"
+    assert ("restore_qdrant", str(scratch / "technology.snapshot.zst")) in calls
     # the named graph is created LAST, then the lexical index is warmed AFTER it
     assert kinds[-2:] == ["ensure_graph", "ensure_lexical_index"]
     # checksums were passed through to the downloader

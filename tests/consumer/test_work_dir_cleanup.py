@@ -69,10 +69,20 @@ def _wire(tmp_path, *, restore_arango=None):
         return Path(dest)
 
     def decompress(path):
-        d = work / "dump"
-        d.mkdir(parents=True, exist_ok=True)
-        (d / "data.json").write_text("{}")
-        return d
+        """Mirrors the real one's shape, which is the whole point of this fix.
+
+        It writes an uncompressed .tar BESIDE the archive, extracts into a sibling -dump/,
+        and returns a directory ONE LEVEL DOWN inside that. Deleting only what the caller
+        named would leave the .tar and the outer directory behind — the .tar being the
+        larger of the two.
+        """
+        src = Path(path)
+        src.with_suffix("").write_text("uncompressed tar")  # the intermediate
+        out = src.parent / (src.name.replace(".tar.zst", "").replace(".zst", "") + "-dump")
+        inner = out / "arangodump-output"
+        inner.mkdir(parents=True, exist_ok=True)
+        (inner / "data.json").write_text("{}")
+        return inner
 
     return dict(
         baseline_entry=_baseline_entry(),
@@ -87,11 +97,24 @@ def _wire(tmp_path, *, restore_arango=None):
 
 
 def test_a_successful_restore_leaves_no_scratch_behind(tmp_path):
+    """Not just the two downloads: the uncompressed .tar, the extraction directory, and the
+    inner directory decompress actually returns must all go too."""
     kw = _wire(tmp_path)
     result = baseline_import.import_baseline(**kw)
     assert result["head_sha"] == "sha-baseline"
-    leftovers = sorted(p.name for p in (tmp_path / "work").iterdir())
+    leftovers = [str(p.relative_to(tmp_path)) for p in (tmp_path / "work").rglob("*")]
     assert leftovers == [], f"work dir still holds {leftovers}"
+
+
+def test_the_restore_only_touches_its_own_directory(tmp_path):
+    """--work-dir can point anywhere the user likes, so emptying it is not ours to do."""
+    work = tmp_path / "work"
+    work.mkdir()
+    bystander = work / "something-the-user-put-here.txt"
+    bystander.write_text("mine")
+
+    baseline_import.import_baseline(**_wire(tmp_path))
+    assert bystander.exists(), "cleanup must be scoped to what this restore created"
 
 
 def test_a_failed_restore_keeps_its_scratch(tmp_path):
@@ -103,7 +126,7 @@ def test_a_failed_restore_keeps_its_scratch(tmp_path):
 
     with pytest.raises(RuntimeError):
         baseline_import.import_baseline(**_wire(tmp_path, restore_arango=explode))
-    assert sorted(p.name for p in (tmp_path / "work").iterdir())
+    assert list((tmp_path / "work").rglob("*.zst")), "a failed restore keeps its evidence"
 
 
 # --- diff bundles ----------------------------------------------------------
