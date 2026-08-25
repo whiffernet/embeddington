@@ -1,8 +1,6 @@
 """Claude wiring: optional, never fatal."""
 
 import io
-import os
-import stat
 import subprocess
 
 from rich.console import Console
@@ -70,67 +68,6 @@ def test_assume_yes_installs_by_default(tmp_path):
         console(), run, tmp_path, assume_yes=True, which=lambda n: "/usr/local/bin/claude"
     )
     assert got.deps == "installed"
-
-
-# --- mcp/.env generation (issue #85, Part B) --------------------------------
-# The server loads mcp/.env from its OWN directory, so this file is the only config
-# that survives a launch from another directory, a GUI launch, or a shell that never
-# sourced consumer/.env.
-
-
-def _consumer_env(tmp_path, password="s3cret-token-value"):
-    (tmp_path / "consumer").mkdir(parents=True, exist_ok=True)
-    (tmp_path / "consumer" / ".env").write_text(f"ARANGO_ROOT_PASSWORD={password}\n")
-    (tmp_path / "mcp").mkdir(parents=True, exist_ok=True)
-    return tmp_path / "mcp" / ".env"
-
-
-def test_creates_mcp_env_from_consumer_env(tmp_path):
-    target = _consumer_env(tmp_path)
-    assert claude_step.ensure_mcp_env(tmp_path) == "created"
-    body = target.read_text()
-    assert "ARANGO_PASSWORD=s3cret-token-value" in body
-    assert "ARANGO_DATABASE=technology_kg" in body
-    assert "QDRANT_URL=http://localhost:6333" in body
-
-
-def test_created_file_is_0600_from_birth(tmp_path):
-    target = _consumer_env(tmp_path)
-    claude_step.ensure_mcp_env(tmp_path)
-    assert stat.S_IMODE(os.stat(target).st_mode) == 0o600
-
-
-def test_never_overwrites_a_value_the_user_edited(tmp_path):
-    target = _consumer_env(tmp_path)
-    target.write_text("ARANGO_URL=http://elsewhere:8529\nARANGO_PASSWORD=mine\n")
-    claude_step.ensure_mcp_env(tmp_path)
-    body = target.read_text()
-    assert "http://elsewhere:8529" in body
-    assert "ARANGO_PASSWORD=mine" in body
-    assert "s3cret-token-value" not in body
-
-
-def test_fills_an_empty_password_left_by_copying_the_example(tmp_path):
-    """`cp .env.example .env` leaves ARANGO_PASSWORD= present but empty — a key that
-    merge-if-absent would skip, leaving the server unable to start."""
-    target = _consumer_env(tmp_path)
-    target.write_text("ARANGO_USER=root\nARANGO_PASSWORD=\n")
-    assert claude_step.ensure_mcp_env(tmp_path) == "filled"
-    assert "ARANGO_PASSWORD=s3cret-token-value" in target.read_text()
-
-
-def test_complete_file_is_left_alone(tmp_path):
-    target = _consumer_env(tmp_path)
-    claude_step.ensure_mcp_env(tmp_path)
-    before = target.read_text()
-    assert claude_step.ensure_mcp_env(tmp_path) == "unchanged"
-    assert target.read_text() == before
-
-
-def test_missing_consumer_env_is_reported_not_raised(tmp_path):
-    (tmp_path / "mcp").mkdir(parents=True)
-    assert claude_step.ensure_mcp_env(tmp_path) == "no-password"
-    assert not (tmp_path / "mcp" / ".env").exists()
 
 
 # --- startup verification (issue #85, Part D) -------------------------------
@@ -215,22 +152,19 @@ def test_every_failure_status_maps_to_a_registered_error(tmp_path):
 # --- reach beyond the clone (issue #85, Part C) -----------------------------
 
 
-def test_mcp_env_is_written_even_with_no_claude_cli(tmp_path):
-    """A Claude Desktop user has no CLI on PATH and needs mcp/.env MORE than anyone —
-    a GUI app inherits no shell exports at all."""
-    _consumer_env(tmp_path)
+def test_no_claude_cli_writes_no_configuration_at_all(tmp_path):
+    """A Desktop user is served by server.py reading consumer/.env itself — there is
+    nothing for the installer to write, and no second copy of the credential."""
     got = claude_step.offer_claude_wiring(
         console(), FakeRun(), tmp_path, assume_yes=False, which=lambda n: None
     )
     assert got.deps == "no-claude"
-    assert got.env == "created"
-    assert "ARANGO_PASSWORD=s3cret-token-value" in (tmp_path / "mcp" / ".env").read_text()
+    assert not (tmp_path / "mcp" / ".env").exists()
 
 
 def test_registration_is_not_offered_when_the_server_does_not_start(tmp_path):
     """Registering a server that cannot start just spreads the failure to every
     directory instead of one."""
-    _consumer_env(tmp_path)
     run = FakeRun([RunResult(0, "", ""), RunResult(1, "", "No module named 'fastmcp'")])
     got = claude_step.offer_claude_wiring(
         console(), run, tmp_path, assume_yes=True, which=lambda n: "/usr/local/bin/claude"
@@ -288,7 +222,6 @@ def test_update_path_refreshes_but_never_creates_a_registration(tmp_path):
 
 def test_update_path_does_not_probe_when_deps_were_never_installed(tmp_path):
     """A user who declined Claude wiring should not be warned about it every night."""
-    _consumer_env(tmp_path)
     run = FakeRun([RunResult(1, "", "No module named 'fastmcp'")])
     got = claude_step.ensure_claude_wiring(console(), run, tmp_path)
     assert got.deps == "absent"
@@ -296,42 +229,15 @@ def test_update_path_does_not_probe_when_deps_were_never_installed(tmp_path):
     assert not [c for c in run.calls if c["cmd"][-1] == "mcp/server.py"]
 
 
-def test_update_path_writes_a_missing_mcp_env(tmp_path):
-    """This is the line that repairs an install broken by the old configuration, with
-    nobody doing anything."""
-    _consumer_env(tmp_path)
-    got = claude_step.ensure_claude_wiring(console(), FakeRun(), tmp_path)
-    assert got.env == "created"
-    assert (tmp_path / "mcp" / ".env").exists()
+def test_update_path_writes_no_configuration(tmp_path):
+    """The repair now arrives with the code (.mcp.json's interpreter, server.py's
+    password fallback), so this step never has to author a file — let alone one holding
+    a credential."""
+    claude_step.ensure_claude_wiring(console(), FakeRun(), tmp_path)
+    assert not (tmp_path / "mcp" / ".env").exists()
 
 
 def test_uninstall_removes_the_registration(tmp_path):
     run = FakeRun([RunResult(0, "", ""), RunResult(1, "", "")])  # remove ok, then absent
     assert claude_step.remove_user_scope(run) is True
     assert run.calls[0]["cmd"][:4] == ["claude", "mcp", "remove", claude_step.USER_SCOPE_NAME]
-
-
-def test_supplies_a_password_key_that_is_missing_entirely(tmp_path):
-    """The other half of the same problem: a file with settings but no password line."""
-    target = _consumer_env(tmp_path)
-    target.write_text("ARANGO_USER=root\n")
-    assert claude_step.ensure_mcp_env(tmp_path) == "filled"
-    assert "ARANGO_PASSWORD=s3cret-token-value" in target.read_text()
-
-
-def test_the_secret_never_flows_through_the_shared_settings_helper(tmp_path, monkeypatch):
-    """merge_env_keys is for ordinary settings. Keeping the password out of it means the
-    only writers of a secret are the two paths in this module that own the 0600 handling
-    — which is also what CodeQL objected to when the dataflow first widened."""
-    seen = {}
-
-    def spy(env_file, additions):
-        seen.update(additions)
-        return []
-
-    monkeypatch.setattr(claude_step.stack, "merge_env_keys", spy)
-    target = _consumer_env(tmp_path)
-    target.write_text("ARANGO_PASSWORD=mine\n")
-    claude_step.ensure_mcp_env(tmp_path)
-    assert "ARANGO_PASSWORD" not in seen
-    assert "QDRANT_URL" in seen

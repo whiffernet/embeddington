@@ -392,10 +392,12 @@ stores. It shows up in Claude Code under **`/mcp`** as **embeddington** (its too
 `mcp__embeddington__…`). It is not a plugin and will never appear under `/plugin` — if
 that's where you went looking, nothing is broken.
 
-**The installer wires it for you.** It writes `mcp/.env` with the password from
-`consumer/.env`, points the config at the clone's own interpreter, then starts the server
-once to prove it works rather than assuming it does. Nothing depends on the environment
-you happen to launch from — no exported password, no activated venv:
+**The installer wires it for you.** It points the config at the clone's own interpreter,
+then starts the server once to prove it works rather than assuming it does. The password
+needs no wiring at all: the server reads `ARANGO_ROOT_PASSWORD` straight from
+`consumer/.env`, so the credential stays in the one 0600 file that already held it rather
+than being copied into a second one. Nothing depends on the environment you launch from —
+no exported password, no activated venv:
 
 ```bash
 # run from: repo root
@@ -417,8 +419,12 @@ claude mcp add embeddington-local --scope user -- "$PWD/.venv/bin/python" "$PWD/
 started at all from another directory.) `embeddington-setup --uninstall` removes the
 registration along with everything else.
 
-For Claude Desktop, the same `mcp/.env` the installer wrote is what `server.py` reads at
-startup; point Desktop's config at `mcp/server.py` and see `mcp/README.md`.
+Pointing the server somewhere else — a different store, a scoped read-only user, a Qdrant
+that needs an API key — is what `mcp/.env` is for: `cp mcp/.env.example mcp/.env` and set
+what you need. It takes precedence over `consumer/.env`, and an explicit environment
+variable takes precedence over both. Claude Desktop needs no extra wiring either: point it
+at `mcp/server.py` (see `mcp/README.md`) and the same resolution applies, which matters
+because a GUI app inherits none of your shell's exports.
 
 > _"This is a private residence, man."_ `.mcp.json` connects as `ARANGO_USER: root`. That's
 > **your own** ArangoDB container — the one `consumer/docker-compose.yml` started, with the
@@ -833,8 +839,9 @@ the clone's own interpreter (`.venv/bin/pip`) to see why.
 After wiring Claude, the installer starts the server once to prove it works, instead of
 assuming it does. This code means that probe failed, and the message names which of the
 few possible causes it was: the clone's `.venv` is missing, the server's dependencies
-aren't installed in it, `mcp/.env` has no `ARANGO_PASSWORD`, or the local stack isn't
-answering (which is the stack being down, not the wiring being wrong).
+aren't installed in it, no password is resolvable (`consumer/.env` is missing or empty and
+`mcp/.env` doesn't supply one), or the local stack isn't answering (which is the stack
+being down, not the wiring being wrong).
 
 Your knowledge graph is unaffected either way — this step only concerns querying it from
 Claude. To watch the failure yourself:

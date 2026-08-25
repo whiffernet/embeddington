@@ -230,8 +230,6 @@ def _update_receipt(did, points, entities, mcp_changed, cron_outcome, repo_root,
         heavy.append("  Auto-updates: enabled (daily 06:00)")
     if cron_outcome == "refreshed":
         heavy.append("  Auto-updates: cron refreshed to the current self-upgrading form")
-    if wiring is not None and wiring.env in ("created", "filled", "merged"):
-        heavy.append("  Claude:   mcp/.env written — Claude no longer needs an exported password")
     if wiring is not None and wiring.registration == "refreshed":
         heavy.append("  Claude:   registration repointed at this clone")
 
@@ -407,10 +405,10 @@ def _doctor(console, deps):
         ),
         (
             "mcp config",
-            st.mcp_env_present,
-            "mcp/.env has a password"
-            if st.mcp_env_present
-            else "mcp/.env missing a password — Claude can't authenticate",
+            st.mcp_password_resolvable,
+            "password resolvable (mcp/.env or consumer/.env)"
+            if st.mcp_password_resolvable
+            else "no password in mcp/.env or consumer/.env — Claude can't authenticate",
         ),
         (
             "mcp reach",

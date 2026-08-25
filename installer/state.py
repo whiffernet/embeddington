@@ -20,23 +20,28 @@ class InstallState:
     stores_populated: bool
     cursor_present: bool
     mcp_deps: bool  # importable by the interpreter that actually RUNS the server
-    mcp_env_present: bool = False  # mcp/.env carries a usable password
+    mcp_password_resolvable: bool = False  # from mcp/.env or the consumer stack's .env
     mcp_registered: bool = False  # reachable outside the clone
 
 
-def _mcp_env_has_password(repo_root):
-    """True iff mcp/.env exists and carries a non-empty ARANGO_PASSWORD.
+def _has_key(env_file, key):
+    """True iff env_file assigns key a non-empty value.
 
-    A present-but-empty key is the shape `cp .env.example .env` leaves behind, and it
-    fails exactly like a missing file — so it must not read as configured.
+    A present-but-empty assignment is the shape `cp .env.example .env` leaves behind, and
+    it fails exactly like a missing file — so it must not read as configured.
     """
-    env_file = repo_root / "mcp" / ".env"
     try:
         lines = env_file.read_text().splitlines()
     except OSError:
         return False
-    return any(
-        line.startswith("ARANGO_PASSWORD=") and line.split("=", 1)[1].strip() for line in lines
+    return any(line.startswith(f"{key}=") and line.split("=", 1)[1].strip() for line in lines)
+
+
+def _mcp_password_resolvable(repo_root):
+    """True iff the server can find a password, in the order server.py resolves them:
+    an explicit one in mcp/.env, else the consumer stack's own credential."""
+    return _has_key(repo_root / "mcp" / ".env", "ARANGO_PASSWORD") or _has_key(
+        repo_root / "consumer" / ".env", "ARANGO_ROOT_PASSWORD"
     )
 
 
@@ -89,6 +94,6 @@ def detect_state(repo_root, run, point_count, entity_count, *, env=None, home=No
         stores_populated,
         cursor_present,
         mcp_deps,
-        _mcp_env_has_password(repo_root),
+        _mcp_password_resolvable(repo_root),
         claude_step.user_scope_present(run),
     )

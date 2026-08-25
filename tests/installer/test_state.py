@@ -93,10 +93,18 @@ def test_mcp_config_row_rejects_an_empty_password(tmp_path):
     as configured."""
     (tmp_path / "mcp").mkdir()
     (tmp_path / "mcp" / ".env").write_text("ARANGO_USER=root\nARANGO_PASSWORD=\n")
-    assert not detect(tmp_path).mcp_env_present
+    assert not detect(tmp_path).mcp_password_resolvable
 
     (tmp_path / "mcp" / ".env").write_text("ARANGO_PASSWORD=actual-value\n")
-    assert detect(tmp_path).mcp_env_present
+    assert detect(tmp_path).mcp_password_resolvable
+
+
+def test_mcp_config_row_accepts_the_consumer_stack_password_alone(tmp_path):
+    """The standard install has no mcp/.env at all: server.py falls back to the
+    credential the consumer stack already holds, so this must read as configured."""
+    (tmp_path / "consumer").mkdir()
+    (tmp_path / "consumer" / ".env").write_text("ARANGO_ROOT_PASSWORD=x\n")
+    assert detect(tmp_path).mcp_password_resolvable
 
 
 def test_mcp_reach_row_reflects_the_user_scope_registration(tmp_path):
