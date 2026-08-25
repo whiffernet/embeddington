@@ -293,6 +293,24 @@ has the old line), it silently rewrites the crontab entry to the new self-upgrad
 no prompt, no action needed from you. If you want it upgraded right now instead of waiting
 for the next 06:00 run, just run the install one-liner again.
 
+**How to tell whether any of that is actually happening.** Every way a scheduled update can
+fail is silent — the cron daemon isn't running, macOS won't let a background job read the
+folder, the laptop was asleep at 06:00 (cron skips; it does not catch up), the WSL2 distro
+was shut down. So the install records each successful run, and tells you when they stop:
+
+```bash
+embeddington-setup --check
+```
+
+The `updates` row reads `last successful run 3d ago (v0.11.12)` on a healthy machine, and
+says how far behind you are when it isn't — along with the release you're on, which is the
+first thing worth knowing when something looks wrong. The wizard says the same thing when
+you start it after a long gap, and an install that has gone more than a month without
+updating gets mentioned once through Claude, since someone whose updates stopped is by
+definition not the person running the installer. Nothing is reported anywhere: the record
+is a local file, read locally, and `embeddington-setup --uninstall` removes it with the
+rest of the state directory.
+
 If you'd rather run the data-only piece by hand for some reason — diffs and the keyword
 index, no container/config/venv changes — `embeddington-consume update` is still there; see
 **Configuration** below for its flags.

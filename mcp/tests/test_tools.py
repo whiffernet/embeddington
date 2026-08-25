@@ -512,3 +512,63 @@ async def test_kg_path_description_carries_the_hub_caveat():
     doc = " ".join((fn.__doc__ or "").split())
     assert "hub" in doc.lower(), "kg_path must warn that hub-mediated paths are weak evidence"
     assert "no_path" in doc, "kg_path must present no_path as a legitimate answer"
+
+
+# --- staleness notice (see specs/2026-08-25-embeddington-update-staleness-design) ---
+
+
+@pytest.mark.asyncio
+async def test_a_very_stale_install_is_mentioned_once(monkeypatch):
+    """The person whose updates stopped is not running the installer — they are here.
+    This is the only surface that reaches them, so it fires; and it fires ONCE, because a
+    query response is not a notification bus."""
+    monkeypatch.setattr(srv, "_stale_notice", "unchecked")
+    monkeypatch.setattr(srv, "_startup_staleness_notice", lambda: "install is 47 days stale")
+    monkeypatch.setattr(srv, "_maybe_reprobe", _async_noop)
+
+    tool = await srv.mcp.get_tool("enrich")
+    first = await tool.fn(query="anything")
+    assert any("47 days stale" in w for w in first["warnings"])
+
+    second = await tool.fn(query="anything")
+    assert not any("47 days stale" in w for w in second["warnings"])
+
+
+@pytest.mark.asyncio
+async def test_a_current_install_is_never_mentioned(monkeypatch):
+    monkeypatch.setattr(srv, "_stale_notice", "unchecked")
+    monkeypatch.setattr(srv, "_startup_staleness_notice", lambda: None)
+    monkeypatch.setattr(srv, "_maybe_reprobe", _async_noop)
+
+    tool = await srv.mcp.get_tool("enrich")
+    result = await tool.fn(query="anything")
+    assert not any("stale" in w for w in result["warnings"])
+
+
+def test_a_broken_record_lookup_never_breaks_a_query(monkeypatch):
+    """An advisory line is never a reason for a tool call to fail — a missing, unreadable,
+    or corrupt state directory must degrade to silence, not to an error in the response."""
+    update_record = pytest.importorskip(
+        "installer.update_record",
+        reason="the MCP suite runs without the installer package installed, which is the "
+        "deployment shape test_a_server_without_the_installer_package_stays_quiet covers",
+    )
+
+    def boom():
+        raise RuntimeError("state dir on fire")
+
+    monkeypatch.setattr(update_record, "read_record", boom)
+    monkeypatch.setattr(srv, "_stale_notice", "unchecked")
+    assert srv._startup_staleness_notice() is None
+    assert srv._consume_stale_notice() is None
+
+
+def test_a_server_without_the_installer_package_stays_quiet(monkeypatch):
+    """The server can be deployed with only mcp/requirements.txt — CI's own unit-mcp job
+    is exactly that shape. With no installer package there is no record to read, and the
+    right behaviour is silence rather than an import error mid-query."""
+    import sys
+
+    monkeypatch.setitem(sys.modules, "installer", None)
+    monkeypatch.setattr(srv, "_stale_notice", "unchecked")
+    assert srv._startup_staleness_notice() is None
