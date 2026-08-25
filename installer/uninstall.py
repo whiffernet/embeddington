@@ -250,6 +250,14 @@ def run_uninstall(
     console.print()
 
     volumes = resolve_volume_names(run)
+    # [CRITIC] Look inside the stores BEFORE anything stops them. Inspection talks to
+    # Qdrant and Arango over their published ports, so running it after the `docker
+    # compose down` step below meant it could never succeed on a run that accepted that
+    # step — inspected came back False every time, foreign was always empty, and the
+    # guard that keeps volumes holding somebody else's collections was unreachable in
+    # exactly the runs it exists for. The EMB-61 warning still fired, so the failure
+    # announced itself; what was missing was the check it was warning about.
+    inspected, foreign = inspect_stores(http_get, list_databases)
     # [CRITIC] resolve_volume_names suffix-matches and can over-match a second compose
     # project's stopped volume; naming the resolved list at BOTH the prompt and the
     # receipt makes an over-match visible before and after, not just discoverable by
@@ -313,8 +321,8 @@ def run_uninstall(
         default=assume_yes,
     )
 
-    # 4. data volumes — inspection, acknowledgment, typed delete
-    inspected, foreign = inspect_stores(http_get, list_databases)
+    # 4. data volumes — acknowledgment, typed delete (inspected up front, while the
+    # stores were still answering)
     if not inspected:
         # EMB-61's registered condition, shown with its code (non-fatal warning).
         ui.show_error(
