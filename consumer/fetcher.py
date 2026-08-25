@@ -19,6 +19,32 @@ from pathlib import Path
 _CHUNK = 1 << 20  # 1 MiB
 
 
+def discard(path):
+    """Delete a consumed download. Never raises.
+
+    Downloads are single-use: `HttpFetcher.download` streams to `<dest>.part` and renames,
+    and it never checks whether `dest` already exists — so a retry re-fetches regardless.
+    Keeping a bundle after it has been applied therefore buys nothing at all; it is not a
+    cache, it is a copy of something already in the stores.
+
+    Cleanup must never turn a successful update into a failure, so every error here is
+    swallowed: a file we could not remove is a disk-space problem, not a correctness one.
+
+    Args:
+        path: A file or directory to remove.
+    """
+    import shutil
+
+    try:
+        p = Path(path)
+        if p.is_dir():
+            shutil.rmtree(p, ignore_errors=True)
+        else:
+            p.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
 class HttpFetcher:
     """Fetches release assets over HTTPS."""
 

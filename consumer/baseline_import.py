@@ -22,6 +22,8 @@ Plan-3b ops.
 
 from pathlib import Path
 
+from consumer.fetcher import discard
+
 GRAPH_NAME = "servicenow_graph_v2"
 
 
@@ -74,5 +76,12 @@ def import_baseline(
     restore_arango(dump_dir)
     ensure_graph()  # the named graph arangodump can't carry — required for embeddington
     chunk_text_status = ensure_lexical_index()  # warm it now, not at the first MCP request
+
+    # The archives and the expanded dump are now duplicates of what is in the stores —
+    # roughly a gigabyte of it. Nothing else ever removed them, so a state directory the
+    # user never looks at held the whole baseline forever. Deleted only after the restore
+    # has actually succeeded: on a failure they stay put as evidence.
+    for consumed in (q_zst, a_zst, dump_dir):
+        discard(consumed)
 
     return {"head_sha": baseline_entry["head_sha"], "chunk_text_status": chunk_text_status}
