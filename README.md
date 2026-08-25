@@ -280,12 +280,20 @@ resolves and, on a first-time migration, the old cursor in that clone gets found
 
 ```bash
 # crontab -e   — update daily at 06:00
-0 6 * * * cd $HOME/embeddington && set -a && . consumer/.env && set +a && .venv/bin/embeddington-setup --yes >> $HOME/embeddington-update.log 2>&1
+0 6 * * * PATH=/usr/local/bin:$PATH; cd $HOME/embeddington && set -a && . consumer/.env && set +a && .venv/bin/embeddington-setup --yes >> $HOME/embeddington-update.log 2>&1
 ```
 
+**That `PATH=` is not optional.** cron runs with a minimal path — roughly `/usr/bin:/bin` —
+and on macOS every container runtime lives outside it: Docker Desktop in `/usr/local/bin`,
+OrbStack in `~/.orbstack/bin`, Colima via Homebrew in `/opt/homebrew/bin`. Without it the
+nightly job finds no `docker` and fails every night into a log nobody reads. Set it to
+whichever directory holds your own `docker` (`dirname "$(command -v docker)"` prints it).
+Linux users mostly get away without it, since `/usr/bin/docker` is already on cron's path.
+
 That example line assumes `~/embeddington`; if you installed somewhere else, the wizard's
-receipt prints the crontab line for your actual install location — copy it from there
-instead of hand-editing the path above.
+receipt prints the crontab line for your actual install location, with the right `PATH`
+already filled in from where docker was found on your machine — copy it from there instead
+of hand-editing the path above.
 
 **Already have the old, data-only cron line?** You don't have to touch it by hand. The next
 time you run the wizard's **Update** (by hand or via an already-scheduled cron job that still

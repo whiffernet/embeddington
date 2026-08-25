@@ -6,7 +6,9 @@ other's module. cli.py and uninstall.py import these names.
 """
 
 import os
+import shlex
 import tempfile
+from pathlib import Path
 
 from installer import ui
 from installer.errors import SetupError
@@ -15,7 +17,32 @@ CRON_MARKER = "embeddington-consume"  # legacy name kept for back-compat imports
 CRON_MARKERS = ("embeddington-setup", "embeddington-consume")
 
 
-def cron_line(repo_root):
+def _cron_safe(path):
+    """Quote a path for a crontab line: shell-quoted, and `%` escaped.
+
+    Two separate hazards. The shell splits on spaces, so an unquoted path under a folder
+    like "My Files" makes `cd` receive two arguments and the whole nightly job dies before
+    it reaches the log redirect. Crontab itself then treats a bare `%` as a newline, which
+    truncates the command mid-line — quoting alone does not save that one.
+    """
+    return shlex.quote(str(path)).replace("%", r"\%")
+
+
+def _docker_dir(which):
+    """The directory holding the docker binary, or None.
+
+    Resolved at install time from the PATH the user actually has, rather than guessed from
+    a list of likely locations — the point is to record where docker really was found on
+    THIS machine.
+    """
+    import shutil
+
+    which = shutil.which if which is None else which
+    found = which("docker")
+    return str(Path(found).parent) if found else None
+
+
+def cron_line(repo_root, *, which=None):
     """The nightly full-update crontab line (self-upgrading — spec Component 4).
 
     [CRITIC] Built from the actual repo_root, never hardcoded to $HOME/embeddington —
@@ -25,14 +52,28 @@ def cron_line(repo_root):
     data-only `embeddington-consume update` — git pull + gated venv resync + idempotent
     compose + data, all non-blocking under --yes.
 
+    [CRITIC] The line must carry a PATH. cron runs with a minimal one — roughly
+    /usr/bin:/bin — and on macOS every container runtime lives outside it: Docker Desktop
+    in /usr/local/bin, OrbStack in ~/.orbstack/bin, Colima via Homebrew in
+    /opt/homebrew/bin. Without this the nightly job finds no `docker`, the ladder cannot
+    consent to installing one unattended, and every run dies at EMB-20 into a log nobody
+    reads — a machine that silently stops updating while reporting nothing. Linux hides
+    the bug because /usr/bin/docker is already on cron's PATH.
+
     Args:
         repo_root: the clone root the cron job cd's into.
+        which: shutil.which-compatible; injected in tests.
 
     Returns:
         A single crontab line (no trailing newline).
     """
+    prefix = ""
+    docker_dir = _docker_dir(which)
+    if docker_dir:
+        # Prepend, never replace: cron's own PATH still supplies sh, git and the rest.
+        prefix = f"PATH={_cron_safe(docker_dir)}:$PATH; "
     return (
-        f"0 6 * * * cd {repo_root} && set -a && . consumer/.env && set +a && "
+        f"0 6 * * * {prefix}cd {_cron_safe(repo_root)} && set -a && . consumer/.env && set +a && "
         f".venv/bin/embeddington-setup --yes >> $HOME/embeddington-update.log 2>&1"
     )
 

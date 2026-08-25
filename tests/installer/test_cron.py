@@ -11,14 +11,64 @@ from tests.installer.conftest import FakeRun
 
 
 def test_cron_line_built_from_repo_root():
-    line = cron.cron_line("/opt/emb")
+    line = cron.cron_line("/opt/emb", which=lambda n: None)
     assert line.startswith("0 6 * * * cd /opt/emb &&")
     assert ".venv/bin/embeddington-setup --yes" in line
     assert "$HOME/embeddington-update.log" in line
 
 
+NO_DOCKER = {"which": lambda n: None}
+BREW_DOCKER = {"which": lambda n: "/opt/homebrew/bin/docker"}
+
+
+def test_the_line_carries_a_path_to_the_container_runtime():
+    """cron runs with roughly /usr/bin:/bin, and on macOS every runtime lives outside it —
+    Docker Desktop in /usr/local/bin, OrbStack in ~/.orbstack/bin, Colima via Homebrew in
+    /opt/homebrew/bin. Without a PATH the nightly job finds no docker, cannot consent to
+    installing one unattended, and dies at EMB-20 into a log nobody reads."""
+    line = cron.cron_line("/opt/emb", **BREW_DOCKER)
+    assert "PATH=/opt/homebrew/bin:$PATH;" in line
+    assert line.index("PATH=") < line.index("cd /opt/emb"), "PATH must be set before the job"
+
+
+def test_the_path_is_prepended_never_replaced():
+    """cron's own PATH still has to supply sh, git and the rest."""
+    assert ":$PATH" in cron.cron_line("/opt/emb", **BREW_DOCKER)
+
+
+def test_no_docker_found_still_yields_a_usable_line():
+    line = cron.cron_line("/opt/emb", **NO_DOCKER)
+    assert "PATH=" not in line
+    assert line.startswith("0 6 * * * cd /opt/emb &&")
+
+
+def test_a_path_with_spaces_is_quoted():
+    """Unquoted, `cd /Users/me/My Files/embeddington` hands cd two arguments and the whole
+    job dies in /bin/sh before it reaches the log redirect — verified against a cron-like
+    minimal environment."""
+    line = cron.cron_line("/Users/me/My Files/embeddington", **NO_DOCKER)
+    assert "cd '/Users/me/My Files/embeddington'" in line
+
+
+def test_a_percent_in_the_path_is_escaped():
+    """crontab reads a bare % as a newline, which truncates the command mid-line. Shell
+    quoting does not save this one — it is crontab's own syntax, not the shell's."""
+    line = cron.cron_line("/opt/50%good/emb", **NO_DOCKER)
+    assert "%" in line and "50\\%good" in line.replace("\\\\", "\\")
+
+
+def test_an_existing_line_is_upgraded_in_place(tmp_path):
+    """Existing installs get the PATH fix on their next Update without being asked: the
+    refresh rewrites whatever embeddington line is there to the current form."""
+    stale = "0 6 * * * cd /opt/emb && .venv/bin/embeddington-setup --yes"
+    run = FakeRun([RunResult(0, stale + "\n", ""), RunResult(0, "", "")])
+    assert cron.refresh_cron_line(run, "/opt/emb") == "refreshed"
+    written = [c for c in run.calls if c["cmd"][0] == "crontab" and c["cmd"][1] != "-l"]
+    assert written, "the crontab must actually be rewritten"
+
+
 def test_cron_line_is_full_unattended_update():
-    line = cron.cron_line("/opt/emb")
+    line = cron.cron_line("/opt/emb", **NO_DOCKER)
     assert ".venv/bin/embeddington-setup --yes" in line
     assert "embeddington-consume" not in line
     assert line.startswith("0 6 * * * cd /opt/emb")
@@ -26,7 +76,7 @@ def test_cron_line_is_full_unattended_update():
 
 def test_markers_match_old_and_new_lines():
     old = "0 6 * * * cd /x && .venv/bin/embeddington-consume update >> log 2>&1"
-    new = cron.cron_line("/x")
+    new = cron.cron_line("/x", **NO_DOCKER)
     assert cron.cron_line_present(lambda c: RunResult(0, old + "\n", "")) is True
     assert cron.cron_line_present(lambda c: RunResult(0, new + "\n", "")) is True
     assert cron.strip_cron_lines(old + "\nkeep me\n" + new + "\n") == "keep me\n"
