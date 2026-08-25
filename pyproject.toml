@@ -10,7 +10,12 @@ requires-python = ">=3.12"
 # Everything `embeddington-consume` needs to restore and apply updates.
 dependencies = [
     "zstandard>=0.22",
-    "qdrant-client>=1.10",
+    # Bounded to the server's minor ON PURPOSE — see consumer/docker-compose.yml, which
+    # pins qdrant/qdrant to an exact patch because snapshot restore is version-sensitive.
+    # An unbounded client silently drifted several minors ahead of that server and warned
+    # about it on every run. tests/test_version_pins.py fails if this stops admitting the
+    # pinned server's minor, so the image and the client can only move together.
+    "qdrant-client>=1.16,<1.17",
     "python-arango>=8.0",
     "httpx>=0.28.1",
 ]

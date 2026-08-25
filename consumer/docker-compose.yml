@@ -7,7 +7,8 @@
 #
 # Image pins: Qdrant is pinned to v1.16.3 to EXACTLY match the version that produced the
 # shared snapshot — Qdrant snapshot restore is version-sensitive, so do not float this to
-# :latest. ArangoDB dump/restore is patch-tolerant within 3.12.x; 3.12.4 matches the source.
+# :latest. The Python client in pyproject.toml is bounded to this server's minor and moves
+# WITH it; tests/test_version_pins.py fails if the two drift apart. ArangoDB dump/restore is patch-tolerant within 3.12.x; 3.12.4 matches the source.
 #
 # The `embed` service is a local bge-m3 embedding server, built on your machine (so it runs
 # on x86_64 AND arm64). It powers vector_search: a search embeds your QUERY with the same
