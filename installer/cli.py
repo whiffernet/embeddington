@@ -16,6 +16,7 @@ from installer import (
     docker_ladder,
     errors,
     import_step,
+    install_record,
     preflight,
     runner,
     stack,
@@ -130,6 +131,7 @@ def _production_deps(repo_root, args):
             == "absent"
         ),
         "cron_present": lambda: cron.cron_line_present(runner.run),
+        "record_install_path": lambda: install_record.record_install_path(repo_root),
     }
 
 
@@ -368,6 +370,8 @@ def _update_flow(console, deps, args, input_fn):
         ui.rule(console, "Auto-updates")
         cron_outcome = deps["install_cron"](console, args.yes, input_fn)
 
+    deps["record_install_path"]()  # keeps the breadcrumb fresh if the clone ever moves
+
     ui.rule(console, "Receipt")
     console.print(
         _update_receipt(did, points, entities, mcp_changed, cron_outcome, _repo_root(), wiring)
@@ -491,6 +495,14 @@ def _install_flow(console, deps, st, args, input_fn):
 
     ui.rule(console, "Auto-updates")
     cron_outcome = deps["install_cron"](console, args.yes, input_fn)
+
+    # Breadcrumb for the next bootstrap: without it, install.sh has no way to know this
+    # clone exists and defaults its prompt to $HOME/embeddington.
+    if not deps["record_install_path"]():
+        console.print(
+            "[dim]note: couldn't record this install's location; the installer may ask "
+            "for the path again next time.[/dim]"
+        )
 
     ui.rule(console, "Receipt")
     console.print(
