@@ -37,10 +37,29 @@ class ArangoKGClient:
         database: Target database (default: technology_kg).
         username: Credentials for accessing the KG database.
         password: User's password.
+        timeout: Per-request timeout in seconds, covering connect and read. The other two
+            backends already take one; this one used to inherit the driver's 60s default.
     """
 
-    def __init__(self, url: str, database: str, username: str, password: str) -> None:
-        self._client = ArangoClient(hosts=url)
+    def __init__(
+        self,
+        url: str,
+        database: str,
+        username: str,
+        password: str,
+        timeout: float = 30.0,
+    ) -> None:
+        # [CRITIC] Without an explicit timeout this inherits python-arango's 60s default,
+        # and an Arango that accepts connections without answering — exactly what WAL
+        # replay after an unclean stop looks like, and what a disk-full or OOM-throttled
+        # container looks like — stalls every call for the full 60s. enrich makes several
+        # SERIAL calls (find_entities per hint, then neighbors_stratified per variant), so
+        # one tool call could hang for minutes.
+        #
+        # That matters because this module is built to DEGRADE: enrich catches ArangoError
+        # and returns the vector half with a grounding tier saying what is missing. A hang
+        # raises nothing, so instead of a degraded answer the caller just waits.
+        self._client = ArangoClient(hosts=url, request_timeout=timeout)
         self._db = self._client.db(database, username=username, password=password)
 
     def find_entities(self, text: str, limit: int = 10) -> list[dict[str, Any]]:

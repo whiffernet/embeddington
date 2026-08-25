@@ -200,6 +200,7 @@ def _get_arango() -> ArangoKGClient:
             database=config.ARANGO_DATABASE,
             username=config.ARANGO_USER,
             password=config.ARANGO_PASSWORD,
+            timeout=config.HTTP_TIMEOUT,
         )
     return _arango
 
