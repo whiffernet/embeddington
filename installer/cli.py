@@ -22,6 +22,7 @@ from installer import (
     stack,
     state,
     ui,
+    update_record,
 )
 from installer.cron import cron_line, install_cron, refresh_cron_line
 
@@ -132,6 +133,8 @@ def _production_deps(repo_root, args):
         ),
         "cron_present": lambda: cron.cron_line_present(runner.run),
         "record_install_path": lambda: install_record.record_install_path(repo_root),
+        "record_update": lambda mode: update_record.record_update(repo_root, mode, runner.run),
+        "read_update_record": lambda: update_record.read_record(),
     }
 
 
@@ -356,6 +359,7 @@ def _update_flow(console, deps, args, input_fn):
     password = deps["read_password"](console)
     result, points, entities = _import_with_readiness_retry(console, deps, args, password)
     did["data_mode"], did["applied"] = result.get("mode"), result.get("applied", 0)
+    deps["record_update"](did["data_mode"])
 
     # Prompt-free, and idempotent: this is the line that repairs an install wired by an
     # older installer without the user doing anything.
@@ -382,6 +386,41 @@ def _update_flow(console, deps, args, input_fn):
 # Said instead of "down" when the daemon never answered: claiming the containers are down
 # asserts evidence we do not have, and sends the user to debug the wrong layer.
 _UNKNOWN_CONTAINERS = "unknown — Docker isn't answering"
+
+
+def _staleness_row(record):
+    """Render the doctor's `updates` row from a record. Advisory: a machine that is behind
+    is not a machine that is broken, so this never changes the exit code."""
+    tier, days = update_record.staleness(record)
+    version = (record or {}).get("version", "unknown")
+    if tier == "unknown":
+        return ("updates", True, "no successful run recorded yet")
+    if tier == "fresh":
+        return ("updates", True, f"last successful run {days}d ago ({version})")
+    return ("updates", False, f"last successful run {days}d ago ({version}) — {tier}")
+
+
+def _notice_if_stale(console, deps):
+    """Say plainly, at the start of a run, when updates have not been happening.
+
+    Every way the nightly trigger fails is silent — no cron daemon, a macOS folder
+    background jobs cannot read, a laptop asleep at 06:00, a WSL2 distro shut down. The
+    cause is named from what can actually be checked (is a job even scheduled?) rather than
+    guessed at.
+    """
+    tier, days = update_record.staleness(deps["read_update_record"]())
+    if tier in ("unknown", "fresh"):
+        return
+    if deps["cron_present"]():
+        cause = (
+            "a nightly job is scheduled but hasn't been running — see the README's "
+            "auto-updates notes for your platform"
+        )
+    else:
+        cause = "automatic updates aren't set up on this machine"
+    console.print(
+        f"[yellow]This install last updated successfully {days} days ago — {cause}.[/yellow]"
+    )
 
 
 def _doctor(console, deps):
@@ -427,6 +466,7 @@ def _doctor(console, deps):
             if st.mcp_password_resolvable
             else "no password in mcp/.env or consumer/.env — Claude can't authenticate",
         ),
+        _staleness_row(deps["read_update_record"]()),
         (
             "mcp reach",
             st.mcp_registered,
@@ -489,6 +529,8 @@ def _install_flow(console, deps, st, args, input_fn):
     console.print(
         f"[green]✓[/green] {points:,} vectors · {entities:,} entities — she's a real graph, man."
     )
+
+    deps["record_update"](result.get("mode"))
 
     ui.rule(console, "Claude")
     wiring = deps["claude_wiring"](console, args.yes, input_fn)
@@ -599,6 +641,10 @@ def main(argv=None, *, console=None, deps=None, input_fn=input):
     try:
         if args.check:
             return _doctor(console, deps)
+        # Deliberately here and not in the receipt: by receipt time this run has just
+        # updated, so the record is always fresh and the line would never fire. The moment
+        # it is worth saying is when someone returns after a long gap.
+        _notice_if_stale(console, deps)
         st = deps["detect_state"](console)
         if args.uninstall:
             return deps["run_uninstall"](console, args.yes, args.really_delete_data, input_fn)

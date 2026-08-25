@@ -21,10 +21,13 @@ def console():
 class Recorder:
     """Stub step functions that record call order."""
 
-    def __init__(self, state=FRESH, fail_at=None):
+    def __init__(self, state=FRESH, fail_at=None, update_record=None):
         self.order = []
         self.state = state
         self.fail_at = fail_at
+        # What the staleness record says. None = nothing recorded, which is the state every
+        # install predating the feature is in.
+        self.update_record = update_record
 
     def step(self, name, ret=None):
         def _step(*args, **kwargs):
@@ -79,6 +82,8 @@ def make_deps(rec):
         "index_absent": lambda: rec._record("index_absent") or False,
         "cron_present": lambda: rec._record("cron_present") or False,
         "record_install_path": lambda: rec._record("record_install") or True,
+        "record_update": lambda mode: rec._record("record_update") or True,
+        "read_update_record": lambda: rec.update_record,
     }
 
 
@@ -99,6 +104,7 @@ def test_fresh_install_runs_steps_in_order():
         "wait",
         "import",
         "proof",
+        "record_update",
         "claude",
         "install_cron",
         "record_install",
@@ -633,3 +639,70 @@ def test_a_failed_recording_does_not_fail_the_install():
     con = Console(record=True, width=200)
     assert cli.main(["--yes"], console=con, deps=deps, input_fn=lambda: "") == 0
     assert "couldn't record" in con.export_text()
+
+
+# --- staleness: making a silent failure visible ----------------------------
+
+
+def test_both_flows_record_the_successful_run():
+    """A run that updated nothing still counts: the signal is that the machinery ran."""
+    fresh = Recorder(state=FRESH)
+    assert run_main(["--yes"], fresh) == 0
+    assert "record_update" in fresh.order
+
+    updating = Recorder(state=ALL_GOOD)
+    assert cli.main([], console=console(), deps=make_deps(updating), input_fn=lambda: "u") == 0
+    assert "record_update" in updating.order
+
+
+def test_a_returning_user_is_told_updates_stopped():
+    from datetime import datetime, timedelta, timezone
+
+    old = (datetime.now(timezone.utc) - timedelta(days=47)).isoformat()
+    rec = Recorder(state=ALL_GOOD, update_record={"at": old, "version": "v0.1.0"})
+    con = Console(record=True, width=200)
+    cli.main([], console=con, deps=make_deps(rec), input_fn=lambda: "q")
+    text = con.export_text()
+    assert "47 days ago" in text
+    assert "aren't set up" in text  # cron_present is False in the harness
+
+
+def test_a_healthy_install_says_nothing():
+    from datetime import datetime, timezone
+
+    rec = Recorder(
+        state=ALL_GOOD,
+        update_record={"at": datetime.now(timezone.utc).isoformat(), "version": "v1"},
+    )
+    con = Console(record=True, width=200)
+    cli.main([], console=con, deps=make_deps(rec), input_fn=lambda: "q")
+    assert "last updated successfully" not in con.export_text()
+
+
+def test_an_install_with_no_record_is_not_nagged():
+    """Every install predating this feature has no record; that is not a fault."""
+    rec = Recorder(state=ALL_GOOD, update_record=None)
+    con = Console(record=True, width=200)
+    cli.main([], console=con, deps=make_deps(rec), input_fn=lambda: "q")
+    assert "last updated successfully" not in con.export_text()
+
+
+def test_the_doctor_row_reports_age_and_version():
+    from datetime import datetime, timedelta, timezone
+
+    old = (datetime.now(timezone.utc) - timedelta(days=12)).isoformat()
+    name, ok, detail = cli._staleness_row({"at": old, "version": "v0.11.12"})
+    assert name == "updates" and ok is False
+    assert "12d ago" in detail and "v0.11.12" in detail and "stale" in detail
+
+    name, ok, detail = cli._staleness_row(None)
+    assert ok is True and "no successful run recorded" in detail
+
+
+def test_being_behind_never_fails_the_doctor():
+    """A machine that is behind is not a machine that is broken."""
+    from datetime import datetime, timedelta, timezone
+
+    old = (datetime.now(timezone.utc) - timedelta(days=99)).isoformat()
+    healthy_but_stale = Recorder(state=ALL_GOOD, update_record={"at": old, "version": "v0.1.0"})
+    assert run_main(["--check"], healthy_but_stale) == 0

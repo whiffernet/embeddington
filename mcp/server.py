@@ -320,6 +320,49 @@ async def _isolation_sanity_check() -> None:
         )
 
 
+# Staleness notice: set on first use, delivered once, then never again for this process.
+# "unchecked" means not yet looked up; None means nothing to say.
+_stale_notice: Any = "unchecked"
+
+
+def _startup_staleness_notice() -> Optional[str]:
+    """One line when this install has stopped updating, or None.
+
+    Every way the nightly trigger fails is silent, and the person it fails for is by
+    definition not running the installer — they are here, querying. This is the only
+    surface that reaches them. It is deliberately narrow: only past the loud threshold,
+    only on `enrich`, and only once per server process. A query response is not a
+    notification bus.
+
+    Reads the installer's own record; if the package isn't importable (a hand-assembled
+    deployment), there is simply nothing to say.
+    """
+    try:
+        from installer import update_record
+    except ImportError:
+        return None
+    try:
+        tier, days = update_record.staleness(update_record.read_record())
+    except Exception:  # noqa: BLE001 — an advisory line must never break a query
+        return None
+    if tier != "very-stale":
+        return None
+    return (
+        f"this embeddington install last updated {days} days ago — its automatic updates "
+        "are not running; re-run the installer to catch up"
+    )
+
+
+def _consume_stale_notice() -> Optional[str]:
+    """The staleness line, at most once per server process."""
+    global _stale_notice
+    if _stale_notice == "unchecked":
+        _stale_notice = _startup_staleness_notice()
+    notice = _stale_notice
+    _stale_notice = None
+    return notice
+
+
 async def _maybe_reprobe() -> None:
     """Refresh the lexical status READ-ONLY, at most once per 60s.
 
@@ -456,6 +499,9 @@ async def enrich(
         await _maybe_reprobe()
 
     server_warnings: list[str] = []
+    stale_notice = _consume_stale_notice()
+    if stale_notice:
+        server_warnings.append(stale_notice)
     norm_predicates: Optional[list[str]] = None
     if predicates:
         norm_predicates = [p.upper() for p in predicates]
