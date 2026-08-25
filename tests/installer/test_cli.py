@@ -29,6 +29,8 @@ class Recorder:
         # install predating the feature is in.
         self.update_record = update_record
         self.recorded_pull = []
+        # Whether this box has the MCP server's dependencies installed at all.
+        self.mcp_deps = True
 
     def step(self, name, ret=None):
         def _step(*args, **kwargs):
@@ -79,6 +81,8 @@ def make_deps(rec):
         "git_head": rec.step("git_head", "OLDSHA"),
         "git_changed_files": lambda _pre: rec._record("git_changed_files") or [],
         "resync_venv": rec.step("resync_venv", RunResult(0, "", "")),
+        "mcp_deps_installed": lambda: rec._record("mcp_deps_installed") or rec.mcp_deps,
+        "resync_mcp_deps": rec.step("resync_mcp_deps", RunResult(0, "", "")),
         "merge_env": rec.step("merge_env", []),
         "index_absent": lambda: rec._record("index_absent") or False,
         "cron_present": lambda: rec._record("cron_present") or False,
@@ -772,3 +776,60 @@ def test_the_receipt_names_the_resolved_state_dir(monkeypatch, tmp_path):
         == 0
     )
     assert str(tmp_path / "elsewhere") in con.export_text()
+
+
+# --- the MCP server's dependencies are a separate install ------------------
+
+
+def _updated_with(changed, **kw):
+    """Run an Update where `changed` came back from the pull."""
+    rec = Recorder(state=ALL_GOOD)
+    for key, value in kw.items():
+        setattr(rec, key, value)
+    deps = make_deps(rec)
+    deps["git_changed_files"] = lambda _pre: list(changed)
+    con = Console(record=True, width=200)
+    assert cli.main([], console=con, deps=deps, input_fn=lambda: "u") == 0
+    return rec, con.export_text()
+
+
+def test_an_mcp_requirements_bump_installs_mcp_requirements():
+    """It used to match the root re-sync's trigger and run `pip install -e .[setup]`, which
+    cannot install the MCP server's dependencies — then report success."""
+    rec, out = _updated_with(["mcp/requirements.txt"])
+    assert "resync_mcp_deps" in rec.order
+    assert "resync_venv" not in rec.order, "the root package did not change"
+    assert "Claude server dependencies updated" in out
+
+
+def test_a_pyproject_bump_still_resyncs_the_root_package():
+    rec, _ = _updated_with(["pyproject.toml"])
+    assert "resync_venv" in rec.order
+    assert "resync_mcp_deps" not in rec.order
+
+
+def test_both_files_changing_resyncs_both():
+    rec, _ = _updated_with(["pyproject.toml", "mcp/requirements.txt"])
+    assert "resync_venv" in rec.order and "resync_mcp_deps" in rec.order
+
+
+def test_a_user_without_mcp_deps_is_not_given_any():
+    """Installing dependencies for a component someone declined is a surprise, not an
+    upgrade."""
+    rec, out = _updated_with(["mcp/requirements.txt"], mcp_deps=False)
+    assert "resync_mcp_deps" not in rec.order
+    assert "Claude server dependencies" not in out
+
+
+def test_a_failed_mcp_resync_is_reported_and_not_claimed():
+    from installer.runner import RunResult
+
+    rec = Recorder(state=ALL_GOOD)
+    deps = make_deps(rec)
+    deps["git_changed_files"] = lambda _pre: ["mcp/requirements.txt"]
+    deps["resync_mcp_deps"] = lambda _c: RunResult(1, "", "resolver exploded")
+    con = Console(record=True, width=200)
+    assert cli.main([], console=con, deps=deps, input_fn=lambda: "u") == 0
+    text = con.export_text()
+    assert "Couldn't update the Claude server's dependencies" in text
+    assert "Claude server dependencies updated" not in text, "no success claim on a failure"

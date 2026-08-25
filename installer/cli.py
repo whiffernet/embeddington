@@ -115,6 +115,17 @@ def _production_deps(repo_root, args):
         "git_changed_files": lambda pre_sha: (lambda r: r.out.split() if r.rc == 0 else [])(
             runner.run(["git", "-C", str(repo_root), "diff", "--name-only", pre_sha, "HEAD"])
         ),
+        "mcp_deps_installed": lambda: claude_step.mcp_deps_installed(runner.run, repo_root),
+        "resync_mcp_deps": lambda _c: runner.run(
+            [
+                str(repo_root / ".venv" / "bin" / "pip"),
+                "install",
+                "-r",
+                str(repo_root / "mcp" / "requirements.txt"),
+            ],
+            cwd=repo_root,
+            stream=True,
+        ),
         "resync_venv": lambda _c: runner.run(
             [str(repo_root / ".venv" / "bin" / "pip"), "install", "-e", ".[setup]"],
             cwd=repo_root,
@@ -230,6 +241,8 @@ def _update_receipt(did, points, entities, mcp_changed, cron_outcome, repo_root,
     heavy = []
     if did.get("deps"):
         heavy.append("  Deps:     re-synced (dependencies changed in this update)")
+    if did.get("mcp_deps"):
+        heavy.append("  Deps:     Claude server dependencies updated — reopen Claude Desktop")
     if did.get("env"):
         heavy.append("  Config:   added new settings to consumer/.env")
     if mcp_changed:
@@ -327,8 +340,16 @@ def _update_flow(console, deps, args, input_fn):
     did = {}
     # Venv re-sync ONLY when packaging changed — avoids a multi-second re-resolve (and
     # silently pulling breaking dep majors) on unrelated data updates.
+    #
+    # mcp/requirements.txt is deliberately NOT part of this test. It used to match
+    # `endswith("requirements.txt")`, which fired the root re-sync — `pip install -e
+    # ".[setup]"`, which cannot install the MCP server's dependencies — and then reported
+    # "Deps: re-synced" in the receipt. The trigger was right, the action was for a
+    # different package, and the receipt claimed a success nobody had.
     if any(
-        f == "pyproject.toml" or f.endswith("requirements.txt") or f.startswith("requirements")
+        f == "pyproject.toml"
+        or (f.endswith("requirements.txt") and not f.startswith("mcp/"))
+        or f.startswith("requirements")
         for f in changed
     ):
         resync_result = deps["resync_venv"](console)
@@ -340,6 +361,17 @@ def _update_flow(console, deps, args, input_fn):
             did["deps"] = False
         else:
             did["deps"] = True
+
+    # The MCP server's own dependencies live in their own file and install into the same
+    # venv by a different command. Only for a user who has them: installing dependencies
+    # for a component someone declined is not an upgrade, it is a surprise.
+    if "mcp/requirements.txt" in changed and deps["mcp_deps_installed"]():
+        did["mcp_deps"] = deps["resync_mcp_deps"](console).rc == 0
+        if not did["mcp_deps"]:
+            console.print(
+                "[yellow]Couldn't update the Claude server's dependencies — the graph is "
+                "unaffected; re-run and choose Repair to retry.[/yellow]"
+            )
 
     try:
         did["env"] = bool(deps["merge_env"](console))
