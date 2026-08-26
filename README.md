@@ -89,15 +89,15 @@ you where to look. The docs are still the truth.
 
 > _"There's a lot of strands to keep in old Duder's head."_
 
-These are the counts of the current published baseline, **`baseline-2026-07b`** — and, with
+These are the counts of the current published baseline, **`baseline-2026-07c`** — and, with
 no diffs published on top of it yet, exactly what a fresh install restores today. They'll
 grow when the next baseline or diff batch is published.
 
 | Metric                                      | Count       |
 | ------------------------------------------- | ----------- |
-| Vectors (Qdrant chunks, `bge-m3`, 1024-dim) | **152,194** |
-| Entities (graph nodes)                      | **310,364** |
-| Relationships / triples (graph edges)       | **683,651** |
+| Vectors (Qdrant chunks, `bge-m3`, 1024-dim) | **171,733** |
+| Entities (graph nodes)                      | **338,804** |
+| Relationships / triples (graph edges)       | **759,923** |
 | Entity types                                | 14          |
 | Relationship predicates                     | 14          |
 | Avg. relationships per entity               | ~2.2        |
@@ -374,8 +374,8 @@ whole graph:
 
 ```
 Embeddington update complete.
-  Action:  restored full baseline (baseline-2026-07b)
-  Loaded:  152,194 vectors · 310,364 entities · 683,651 edges
+  Action:  restored full baseline (baseline-2026-07c)
+  Loaded:  171,733 vectors · 338,804 entities · 759,923 edges
   Version: fd852b53bb07998ddc8e385971c25b94028fdf62
   Diffs:   0 applied on top of the baseline
   Note:    a one-time full re-download is expected after a compaction — existing
@@ -406,8 +406,8 @@ it just loaded was already current. Nothing more to fetch, man.
 > _"Sometimes there's a man... sometimes, there's a man."_
 
 Same command, or `embeddington-setup --uninstall` from the clone. It shows everything
-embeddington owns (containers, volumes, state dir, cron line, the clone), asks about
-each item separately — every default is **No** — and looks _inside_ the stores first:
+embeddington owns (containers, volumes, state dir, cron line, the Claude MCP registration,
+the clone), asks about each item separately — every default is **No** — and looks _inside_ the stores first:
 if it finds collections or databases you created, it names them and refuses to offer
 volume deletion until you acknowledge. The knowledge-graph volumes require typing
 `delete`; a plain `y` won't do it. Shared infrastructure (Docker, OrbStack, Colima,
@@ -666,7 +666,7 @@ vector count over `baseline-2026-06`, and the disk figures moved with it.
 | `--repo`            | `whiffernet/embeddington` | `owner/name` of this releases repo                           |
 | `--cursor`          | `<state dir>/.cursor`     | Local cursor file                                            |
 | `--work-dir`        | `<state dir>/work`        | Scratch dir for downloads                                    |
-| `--force-baseline`  | off                       | Ignore the cursor and re-restore the full baseline (~828 MB) |
+| `--force-baseline`  | off                       | Ignore the cursor and re-restore the full baseline (~1 GB) |
 | `--qdrant-url`      | `http://localhost:6333`   | Local Qdrant                                                 |
 | `--collection`      | `technology`              | Qdrant collection name                                       |
 | `--arango-url`      | `http://localhost:8529`   | Local ArangoDB                                               |
@@ -716,7 +716,7 @@ Two more upgrade housekeeping notes:
   | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
   | `0`  | Success (restored, applied diffs, or already up to date)                                                                                                                                                                                                |
   | `1`  | Unhandled error                                                                                                                                                                                                                                         |
-  | `3`  | **Refused**: a baseline was needed, but the stores already hold data and no cursor was found. Nothing was downloaded. Copy your old cursor into the state dir (above) and re-run, or pass `--force-baseline` if you really want the ~828 MB re-restore. |
+  | `3`  | **Refused**: a baseline was needed, but the stores already hold data and no cursor was found. Nothing was downloaded. Copy your old cursor into the state dir (above) and re-run, or pass `--force-baseline` if you really want the ~1 GB re-restore. |
 
   (There is no `2`: it's reserved for `BaselineRequired`, which only the library can raise —
   the CLI always supplies a baseline importer.)

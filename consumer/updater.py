@@ -12,7 +12,7 @@ baseline route:
   * ADOPTION -- when the cursor file is absent, a pre-v0.2 ``data/.cursor`` is adopted
     rather than treating the install as fresh. Existing users migrate without re-downloading.
   * THE GUARD -- when no cursor is found anywhere AND both stores already hold data, refuse
-    instead of silently re-downloading ~828 MB over data that is already present. A restore
+    instead of silently re-downloading ~1 GB over data that is already present. A restore
     we started ourselves and never finished is exempted via a ``<cursor>.restoring`` sentinel,
     so an interrupted baseline stays re-runnable.
 
@@ -239,7 +239,7 @@ def update(
             # A cursor is known-good, so no restore is in flight: any sentinel is an ORPHAN
             # left by an earlier crash that the user then recovered from some other way. Left
             # alone it would sit there forever silently disabling the guard, and the next
-            # missing cursor (cron / $XDG_DATA_HOME) would re-download 828 MB over live data.
+            # missing cursor (cron / $XDG_DATA_HOME) would re-download ~1 GB over live data.
             _clear_restore_sentinel(cursor_path)
 
     plan = plan_update(cursor, manifest, supported_major)
@@ -269,13 +269,13 @@ def update(
                     f"and ArangoDB already holds entities, but no cursor was found at "
                     f"{cursor_path}.\n\n"
                     "  Your data is there; only the file recording its version is missing.\n"
-                    "  Restoring now would re-download the full baseline (~828 MB) for nothing.\n\n"
+                    "  Restoring now would re-download the full baseline (~1 GB) for nothing.\n\n"
                     "  - cursor elsewhere?  If an older install left a cursor in some other\n"
                     "                       directory, COPY it into place and re-run:\n"
                     f"                         mkdir -p {cursor_path.parent}\n"
                     f"                         cp /path/to/data/.cursor {cursor_path}\n"
                     "  - really want it?    Re-run with --force-baseline to discard the local\n"
-                    "                       version and re-restore the full baseline (~828 MB)."
+                    "                       version and re-restore the full baseline (~1 GB)."
                 )
         if baseline_importer is None:
             raise BaselineRequired(f"baseline {plan.baseline['tag']} required; run import-baseline")

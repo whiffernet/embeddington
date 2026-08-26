@@ -93,7 +93,7 @@ def run_import(
 
     try:
         with console.status(
-            "[cyan]Rolling the graph forward... first run pulls ~828 MB — the Dude abides.[/cyan]"
+            "[cyan]Rolling the graph forward... first run pulls ~1 GB — the Dude abides.[/cyan]"
         ):
             return update_fn(
                 rc,
