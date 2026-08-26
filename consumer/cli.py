@@ -101,7 +101,7 @@ def _preflight(args):
 
     ``writers.*.connect`` are lazy (python-arango defers auth to the first
     request), so without this check a wrong password surfaces only AFTER the
-    828 MB baseline has been pulled, inside a subprocess whose stderr is
+    ~1 GB baseline has been pulled, inside a subprocess whose stderr is
     captured. Ten seconds of checking saves that.
 
     Args:
@@ -318,7 +318,7 @@ def _build_parser():
     p_up.add_argument(
         "--force-baseline",
         action="store_true",
-        help="ignore the local cursor and re-restore the full baseline (~828 MB)",
+        help="ignore the local cursor and re-restore the full baseline (~1 GB)",
     )
     p_up.add_argument("--qdrant-url", default="http://localhost:6333")
     p_up.add_argument("--collection", default="technology")

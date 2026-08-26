@@ -134,7 +134,7 @@ def build_manifest(repo_root, run, *, env=None, home=None, crontab_text=None):
         ManifestItem(
             "data_volumes",
             "qdrant_storage + arango_data volumes (THE knowledge graph)",
-            "re-import costs ~828 MB",
+            "re-import costs ~1 GB",
             "data",
         )
     )

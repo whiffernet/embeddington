@@ -67,7 +67,7 @@ class QdrantConsumerWriter:
         """Return how many points the collection holds.
 
         The updater uses this to refuse a baseline restore into a store that already has
-        the data (which would re-download ~828 MB for nothing). A collection that does not
+        the data (which would re-download ~1 GB for nothing). A collection that does not
         exist yet counts as 0, so a genuinely fresh install is never blocked.
 
         Returns:
@@ -210,7 +210,7 @@ class ArangoConsumerWriter:
 
         ONLY a genuine absence becomes 0. A 401 (per-database ACL), a 403, a 500, or a 503 from
         a server still recovering must propagate: reporting those as 0 would tell the guard the
-        graph is empty when it is merely unreachable, and 828 MB would land on a live store.
+        graph is empty when it is merely unreachable, and ~1 GB would land on a live store.
 
         Returns:
             The number of documents in entities_v2, or 0 if the collection (or the whole

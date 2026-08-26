@@ -406,8 +406,8 @@ it just loaded was already current. Nothing more to fetch, man.
 > _"Sometimes there's a man... sometimes, there's a man."_
 
 Same command, or `embeddington-setup --uninstall` from the clone. It shows everything
-embeddington owns (containers, volumes, state dir, cron line, the clone), asks about
-each item separately — every default is **No** — and looks _inside_ the stores first:
+embeddington owns (containers, volumes, state dir, cron line, the Claude MCP registration,
+the clone), asks about each item separately — every default is **No** — and looks _inside_ the stores first:
 if it finds collections or databases you created, it names them and refuses to offer
 volume deletion until you acknowledge. The knowledge-graph volumes require typing
 `delete`; a plain `y` won't do it. Shared infrastructure (Docker, OrbStack, Colima,
@@ -666,7 +666,7 @@ vector count over `baseline-2026-06`, and the disk figures moved with it.
 | `--repo`            | `whiffernet/embeddington` | `owner/name` of this releases repo                           |
 | `--cursor`          | `<state dir>/.cursor`     | Local cursor file                                            |
 | `--work-dir`        | `<state dir>/work`        | Scratch dir for downloads                                    |
-| `--force-baseline`  | off                       | Ignore the cursor and re-restore the full baseline (~828 MB) |
+| `--force-baseline`  | off                       | Ignore the cursor and re-restore the full baseline (~1 GB) |
 | `--qdrant-url`      | `http://localhost:6333`   | Local Qdrant                                                 |
 | `--collection`      | `technology`              | Qdrant collection name                                       |
 | `--arango-url`      | `http://localhost:8529`   | Local ArangoDB                                               |
@@ -716,7 +716,7 @@ Two more upgrade housekeeping notes:
   | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
   | `0`  | Success (restored, applied diffs, or already up to date)                                                                                                                                                                                                |
   | `1`  | Unhandled error                                                                                                                                                                                                                                         |
-  | `3`  | **Refused**: a baseline was needed, but the stores already hold data and no cursor was found. Nothing was downloaded. Copy your old cursor into the state dir (above) and re-run, or pass `--force-baseline` if you really want the ~828 MB re-restore. |
+  | `3`  | **Refused**: a baseline was needed, but the stores already hold data and no cursor was found. Nothing was downloaded. Copy your old cursor into the state dir (above) and re-run, or pass `--force-baseline` if you really want the ~1 GB re-restore. |
 
   (There is no `2`: it's reserved for `BaselineRequired`, which only the library can raise —
   the CLI always supplies a baseline importer.)
