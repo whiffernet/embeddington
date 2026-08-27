@@ -367,9 +367,7 @@ async def test_can_read_collection_retries_on_connection_failure_then_succeeds(m
 
     monkeypatch.setattr(qdrant_client_module.asyncio, "sleep", fake_sleep)
 
-    c = QdrantSearchClient(
-        "http://x:6333", "technology", transport=httpx.MockTransport(handler)
-    )
+    c = QdrantSearchClient("http://x:6333", "technology", transport=httpx.MockTransport(handler))
     assert await c.can_read_collection("technology", retries=3, backoff=1.0) is True
     assert calls["n"] == 3
     assert sleeps == [1.0, 2.0]
@@ -385,9 +383,7 @@ async def test_can_read_collection_gives_up_after_retries_exhausted(monkeypatch)
 
     monkeypatch.setattr(qdrant_client_module.asyncio, "sleep", fake_sleep)
 
-    c = QdrantSearchClient(
-        "http://x:6333", "technology", transport=httpx.MockTransport(handler)
-    )
+    c = QdrantSearchClient("http://x:6333", "technology", transport=httpx.MockTransport(handler))
     assert await c.can_read_collection("technology", retries=2, backoff=0.1) is False
 
 
@@ -406,11 +402,98 @@ async def test_can_read_collection_does_not_retry_a_real_rejection(monkeypatch):
 
     monkeypatch.setattr(qdrant_client_module.asyncio, "sleep", fail_if_called)
 
-    c = QdrantSearchClient(
-        "http://x:6333", "technology", transport=httpx.MockTransport(handler)
-    )
+    c = QdrantSearchClient("http://x:6333", "technology", transport=httpx.MockTransport(handler))
     assert await c.can_read_collection("technology", retries=3, backoff=1.0) is False
     assert calls["n"] == 1
+
+
+@pytest.mark.asyncio
+async def test_probe_does_not_retry_a_permanent_transport_error(monkeypatch):
+    """A typo'd URL scheme raises UnsupportedProtocol — an httpx.HTTPError,
+    but NOT a transient one. Retrying it can never succeed, so it must be
+    reported on the first attempt instead of burning the startup budget."""
+
+    async def fail_if_called(seconds):
+        raise AssertionError("must not retry a permanent transport error")
+
+    monkeypatch.setattr(qdrant_client_module.asyncio, "sleep", fail_if_called)
+
+    c = QdrantSearchClient("htp://x:6333", "technology")
+    ok, detail = await c.probe_collection("technology", retries=3, backoff=1.0)
+    assert ok is False
+    assert "cannot be retried" in detail
+    assert "QDRANT_URL" in detail
+
+
+@pytest.mark.asyncio
+async def test_probe_deadline_stops_retrying_before_the_budget_is_spent(monkeypatch):
+    """`retries` alone does not bound wall-clock: each attempt can burn the
+    full per-attempt timeout. The deadline is what keeps startup inside the
+    MCP client's own initialization timeout."""
+
+    def handler(request):
+        raise httpx.ConnectError("connection refused")
+
+    elapsed = {"t": 0.0}
+
+    async def fake_sleep(seconds):
+        elapsed["t"] += seconds
+
+    monkeypatch.setattr(qdrant_client_module.asyncio, "sleep", fake_sleep)
+
+    class FakeLoop:
+        def time(self):
+            return elapsed["t"]
+
+    monkeypatch.setattr(qdrant_client_module.asyncio, "get_running_loop", lambda: FakeLoop())
+
+    c = QdrantSearchClient("http://x:6333", "technology", transport=httpx.MockTransport(handler))
+    # retries=10 would sleep 1+2+4+8+16+... — the 5s deadline must cut it off
+    # after 1s and 2s, before the 4s wait would cross the line.
+    ok, detail = await c.probe_collection("technology", retries=10, backoff=1.0, deadline=5.0)
+    assert ok is False
+    assert elapsed["t"] == 3.0
+    assert "no response" in detail
+
+
+@pytest.mark.asyncio
+async def test_probe_detail_distinguishes_outage_from_rejection():
+    """The whole point of the detail string: an operator must not have to
+    guess whether the host was down or the credential was rejected."""
+
+    def refuse(request):
+        raise httpx.ConnectError("connection refused")
+
+    down = QdrantSearchClient("http://x:6333", "technology", transport=httpx.MockTransport(refuse))
+    ok, detail = await down.probe_collection("technology")
+    assert ok is False
+    assert "no response" in detail and "down" in detail
+
+    rejected = QdrantSearchClient(
+        "http://x:6333",
+        "technology",
+        transport=httpx.MockTransport(lambda r: httpx.Response(401)),
+    )
+    ok, detail = await rejected.probe_collection("technology")
+    assert ok is False
+    assert "HTTP 401" in detail and "QDRANT_API_KEY" in detail
+
+
+@pytest.mark.asyncio
+async def test_probe_uses_the_short_probe_timeout_not_the_query_timeout():
+    """An unreachable host burns the full per-attempt timeout before raising,
+    so the probe must not inherit the 30s timeout sized for real queries."""
+    seen = {}
+
+    def handler(request):
+        seen["timeout"] = request.extensions.get("timeout", {})
+        return httpx.Response(200, json={"result": []})
+
+    c = QdrantSearchClient(
+        "http://x:6333", "technology", timeout=30.0, transport=httpx.MockTransport(handler)
+    )
+    assert await c.probe_collection("technology", timeout=5.0) == (True, "")
+    assert seen["timeout"]["connect"] == 5.0
 
 
 @pytest.mark.asyncio

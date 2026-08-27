@@ -107,7 +107,7 @@ async def test_isolation_check_sets_lexical_status_via_chunk_text_status(monkeyp
     monkeypatch.setattr(srv, "_lexical_status", "absent")  # revert to this after the test
 
     fake_qdrant = AsyncMock()
-    fake_qdrant.can_read_collection = AsyncMock(return_value=True)
+    fake_qdrant.probe_collection = AsyncMock(return_value=(True, ""))
     fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
     monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
 
@@ -133,7 +133,7 @@ async def test_isolation_check_survives_chunk_text_status_failure(monkeypatch):
     monkeypatch.setattr(srv, "_lexical_status", "absent")  # revert to this after the test
 
     fake_qdrant = AsyncMock()
-    fake_qdrant.can_read_collection = AsyncMock(return_value=True)
+    fake_qdrant.probe_collection = AsyncMock(return_value=(True, ""))
     fake_qdrant.chunk_text_status = AsyncMock(side_effect=RuntimeError("boom"))
     monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
 
@@ -150,6 +150,50 @@ async def test_isolation_check_survives_chunk_text_status_failure(monkeypatch):
     assert srv._lexical_status == "unavailable"
 
 
+@pytest.mark.asyncio
+async def test_isolation_check_passes_retry_config_to_the_probe(monkeypatch):
+    """Guards the wiring, not the retry logic: without this, a refactor that
+    drops the kwargs silently restores single-shot fail-fast behaviour and
+    every other test still passes."""
+    fake_qdrant = AsyncMock()
+    fake_qdrant.probe_collection = AsyncMock(return_value=(True, ""))
+    fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
+    monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
+
+    fake_arango = MagicMock()
+    fake_arango.probe_read = MagicMock(return_value=None)
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
+
+    fake_embed = AsyncMock()
+    fake_embed.embed = AsyncMock(return_value=[0.0] * 1024)
+    monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
+
+    await srv._isolation_sanity_check()
+
+    kwargs = fake_qdrant.probe_collection.await_args.kwargs
+    assert kwargs["retries"] == srv.config.QDRANT_STARTUP_RETRIES
+    assert kwargs["backoff"] == srv.config.QDRANT_STARTUP_RETRY_BACKOFF
+    assert kwargs["timeout"] == srv.config.QDRANT_STARTUP_PROBE_TIMEOUT
+    assert kwargs["deadline"] == srv.config.QDRANT_STARTUP_DEADLINE
+
+
+@pytest.mark.asyncio
+async def test_isolation_check_surfaces_the_probe_detail_in_the_refusal(monkeypatch):
+    """The refusal must carry the probe's diagnosis. The generic message this
+    replaces pointed at QDRANT_URL during what was actually a host outage."""
+    fake_qdrant = AsyncMock()
+    fake_qdrant.probe_collection = AsyncMock(
+        return_value=(False, "no response from http://x:6333 after 4 attempt(s)")
+    )
+    fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
+    monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
+
+    with pytest.raises(SystemExit) as exc:
+        await srv._isolation_sanity_check()
+
+    assert "no response from http://x:6333" in str(exc.value)
+
+
 # --- Arango / embed startup probes (warn-only) ------------------------------
 
 
@@ -160,7 +204,7 @@ async def test_isolation_check_warns_on_arango_probe_failure(monkeypatch, caplog
     raise. This is what turns a misconfigured BYO-prod store into a loud
     boot-time signal instead of silent empty KG results."""
     fake_qdrant = AsyncMock()
-    fake_qdrant.can_read_collection = AsyncMock(return_value=True)
+    fake_qdrant.probe_collection = AsyncMock(return_value=(True, ""))
     fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
     monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
 
@@ -185,7 +229,7 @@ async def test_isolation_check_warns_on_arango_probe_failure(monkeypatch, caplog
 async def test_isolation_check_logs_arango_probe_pass(monkeypatch, caplog):
     """Happy path: a working Arango probe logs a pass, not a warning."""
     fake_qdrant = AsyncMock()
-    fake_qdrant.can_read_collection = AsyncMock(return_value=True)
+    fake_qdrant.probe_collection = AsyncMock(return_value=(True, ""))
     fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
     monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
 
@@ -209,7 +253,7 @@ async def test_isolation_check_warns_on_embed_probe_failure(monkeypatch, caplog)
     client raises on both, no separate dim branch) must log a warning and
     let startup complete — never raise."""
     fake_qdrant = AsyncMock()
-    fake_qdrant.can_read_collection = AsyncMock(return_value=True)
+    fake_qdrant.probe_collection = AsyncMock(return_value=(True, ""))
     fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
     monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
 
@@ -231,7 +275,7 @@ async def test_isolation_check_warns_on_embed_probe_failure(monkeypatch, caplog)
 async def test_isolation_check_logs_embed_probe_pass(monkeypatch, caplog):
     """Happy path: a working embed probe logs a pass, not a warning."""
     fake_qdrant = AsyncMock()
-    fake_qdrant.can_read_collection = AsyncMock(return_value=True)
+    fake_qdrant.probe_collection = AsyncMock(return_value=(True, ""))
     fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
     monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
 

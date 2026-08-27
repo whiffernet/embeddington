@@ -22,6 +22,16 @@ import httpx
 
 logger = logging.getLogger("embeddington.qdrant")
 
+# Transport failures worth retrying: the request either never reached a server
+# or the server never answered, so a later attempt can legitimately succeed.
+#
+# Deliberately NARROWER than httpx.HTTPError, which also covers permanent
+# misconfigurations that no amount of retrying can fix — UnsupportedProtocol
+# (a typo'd scheme such as `htp://host:6333`), TooManyRedirects, DecodingError
+# and ProtocolError. Retrying those would only burn the startup budget before
+# reporting a failure that was knowable on the first attempt.
+RETRYABLE_TRANSPORT_ERRORS = (httpx.TimeoutException, httpx.NetworkError)
+
 
 class QdrantError(Exception):
     """Raised on any Qdrant HTTP failure."""
@@ -166,55 +176,128 @@ class QdrantSearchClient:
             )
         return chunks
 
-    async def can_read_collection(
-        self, collection: str, retries: int = 0, backoff: float = 1.0
-    ) -> bool:
+    async def probe_collection(
+        self,
+        collection: str,
+        retries: int = 0,
+        backoff: float = 1.0,
+        timeout: Optional[float] = None,
+        deadline: Optional[float] = None,
+    ) -> tuple[bool, str]:
         """Probe whether the configured Qdrant URL can serve this collection.
 
-        Used by the startup positive-reachability check in `_isolation_sanity_check`. Returns True
-        iff a /search call returns 200. In a future JWT-enabled version,
-        this also serves as the isolation deny-check.
+        Backs the startup positive-reachability check in
+        `_isolation_sanity_check`. The probe succeeds iff a /search call
+        returns 200. In a future JWT-enabled version, it also serves as the
+        isolation deny-check.
 
-        Retries (with exponential backoff) only apply when a request never
-        gets a response at all — connection refused, timeout, DNS failure —
-        the fingerprint of a Qdrant host that's mid-reboot (2026-08-27
-        embeddington-prod incident: no httpx response logged before the
-        server refused to start). A request that DID get a response, even a
-        401/404, is a real rejection, not a transient outage, and is never
-        retried.
+        Retries (with exponential backoff) apply ONLY to
+        `RETRYABLE_TRANSPORT_ERRORS` — the request never reached a server or
+        the server never answered, the fingerprint of a Qdrant host that is
+        down or still starting up. Anything that produced a response, or that
+        failed for a permanent reason (a typo'd URL scheme, a redirect loop),
+        is reported on the first attempt: retrying cannot change the outcome
+        and would only delay the error.
+
+        The returned detail names the actual failure so an operator is not
+        left guessing between "the host was down" and "the credential was
+        rejected" — the two were indistinguishable in the 2026-08-27
+        embeddington-prod incident, which is what made it expensive to
+        diagnose.
 
         Args:
             collection: Collection name to probe.
-            retries: Number of additional attempts after a connection-level
-                failure. 0 (default) preserves the original single-shot
-                behavior.
+            retries: Additional attempts after a retryable transport failure.
+                0 (default) preserves single-shot behavior.
             backoff: Seconds to wait before the first retry; doubles on each
                 subsequent attempt.
+            timeout: Per-attempt timeout override. Defaults to the client's
+                own timeout, which is sized for real queries and is usually
+                far too long for a liveness probe.
+            deadline: Total seconds to spend across all attempts. Retrying
+                stops once the next backoff would exceed this, bounding the
+                worst case regardless of `retries` — startup must not outlast
+                the MCP client's own initialization timeout.
+
+        Returns:
+            ``(ok, detail)``. ``detail`` is an operator-facing explanation of
+            the failure, and is empty when ``ok`` is True.
         """
         client = await self._http()
         path = f"/collections/{collection}/points/search"
+        request_timeout = self.timeout if timeout is None else timeout
+        loop = asyncio.get_running_loop()
+        started = loop.time()
         attempt = 0
         while True:
             try:
                 resp = await client.post(
                     f"{self.url}{path}",
                     json={"vector": [0.0] * 1024, "limit": 1},
+                    timeout=request_timeout,
                 )
-            except httpx.HTTPError:
-                if attempt >= retries:
-                    return False
+            except RETRYABLE_TRANSPORT_ERRORS as exc:
+                reason = f"{type(exc).__name__}: {exc}" if str(exc) else type(exc).__name__
                 wait = backoff * (2**attempt)
+                elapsed = loop.time() - started
+                out_of_budget = deadline is not None and elapsed + wait >= deadline
+                if attempt >= retries or out_of_budget:
+                    return False, (
+                        f"no response from {self.url} after {attempt + 1} attempt(s) "
+                        f"in {elapsed:.1f}s — last error: {reason}. The host is down, "
+                        f"still starting, or unreachable from here"
+                    )
                 logger.warning(
-                    "Qdrant unreachable probing '%s' (attempt %d/%d) — retrying in %.1fs",
+                    "Qdrant unreachable probing '%s' (attempt %d/%d, %s) — retrying in %.1fs",
                     collection,
                     attempt + 1,
                     retries + 1,
+                    reason,
                     wait,
                 )
                 await asyncio.sleep(wait)
                 attempt += 1
                 continue
-            return resp.status_code == 200
+            except httpx.HTTPError as exc:
+                return False, (
+                    f"request to {self.url} failed and cannot be retried "
+                    f"({type(exc).__name__}: {exc}) — check QDRANT_URL"
+                )
+            if resp.status_code == 200:
+                return True, ""
+            return False, (
+                f"{self.url} answered HTTP {resp.status_code} — the collection is "
+                f"missing, or the credential was rejected (check QDRANT_API_KEY)"
+            )
+
+    async def can_read_collection(
+        self,
+        collection: str,
+        retries: int = 0,
+        backoff: float = 1.0,
+        timeout: Optional[float] = None,
+        deadline: Optional[float] = None,
+    ) -> bool:
+        """Boolean form of `probe_collection`, for callers that want no detail.
+
+        Args:
+            collection: Collection name to probe.
+            retries: See `probe_collection`.
+            backoff: See `probe_collection`.
+            timeout: See `probe_collection`.
+            deadline: See `probe_collection`.
+
+        Returns:
+            True iff the collection is readable.
+        """
+        ok, _ = await self.probe_collection(
+            collection,
+            retries=retries,
+            backoff=backoff,
+            timeout=timeout,
+            deadline=deadline,
+        )
+        return ok
 
     async def chunk_text_status(self) -> str:
         """State of the consumer-local chunk_text full-text index.
