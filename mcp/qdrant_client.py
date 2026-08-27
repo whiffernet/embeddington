@@ -13,6 +13,7 @@ never by this client — this module issues no Qdrant writes.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from typing import Any, Optional
@@ -165,26 +166,55 @@ class QdrantSearchClient:
             )
         return chunks
 
-    async def can_read_collection(self, collection: str) -> bool:
+    async def can_read_collection(
+        self, collection: str, retries: int = 0, backoff: float = 1.0
+    ) -> bool:
         """Probe whether the configured Qdrant URL can serve this collection.
 
         Used by the startup positive-reachability check in `_isolation_sanity_check`. Returns True
         iff a /search call returns 200. In a future JWT-enabled version,
         this also serves as the isolation deny-check.
 
+        Retries (with exponential backoff) only apply when a request never
+        gets a response at all — connection refused, timeout, DNS failure —
+        the fingerprint of a Qdrant host that's mid-reboot (2026-08-27
+        embeddington-prod incident: no httpx response logged before the
+        server refused to start). A request that DID get a response, even a
+        401/404, is a real rejection, not a transient outage, and is never
+        retried.
+
         Args:
             collection: Collection name to probe.
+            retries: Number of additional attempts after a connection-level
+                failure. 0 (default) preserves the original single-shot
+                behavior.
+            backoff: Seconds to wait before the first retry; doubles on each
+                subsequent attempt.
         """
         client = await self._http()
         path = f"/collections/{collection}/points/search"
-        try:
-            resp = await client.post(
-                f"{self.url}{path}",
-                json={"vector": [0.0] * 1024, "limit": 1},
-            )
-        except httpx.HTTPError:
-            return False
-        return resp.status_code == 200
+        attempt = 0
+        while True:
+            try:
+                resp = await client.post(
+                    f"{self.url}{path}",
+                    json={"vector": [0.0] * 1024, "limit": 1},
+                )
+            except httpx.HTTPError:
+                if attempt >= retries:
+                    return False
+                wait = backoff * (2**attempt)
+                logger.warning(
+                    "Qdrant unreachable probing '%s' (attempt %d/%d) — retrying in %.1fs",
+                    collection,
+                    attempt + 1,
+                    retries + 1,
+                    wait,
+                )
+                await asyncio.sleep(wait)
+                attempt += 1
+                continue
+            return resp.status_code == 200
 
     async def chunk_text_status(self) -> str:
         """State of the consumer-local chunk_text full-text index.

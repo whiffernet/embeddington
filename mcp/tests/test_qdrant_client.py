@@ -4,6 +4,7 @@ import json
 
 import httpx
 import pytest
+import qdrant_client as qdrant_client_module
 from qdrant_client import (
     QdrantError,
     QdrantSearchClient,
@@ -345,6 +346,71 @@ async def test_request_shape_is_unchanged_when_credential_absent():
     assert seen["method"] == "POST"
     assert seen["url"] == "http://x:6333/collections/technology/points/search"
     assert b'"limit": 7' in seen["body"] or b'"limit":7' in seen["body"]
+
+
+@pytest.mark.asyncio
+async def test_can_read_collection_retries_on_connection_failure_then_succeeds(monkeypatch):
+    """A host mid-reboot (2026-08-27 embeddington-prod incident): the first
+    attempts get no response at all, then Qdrant comes back up."""
+    calls = {"n": 0}
+
+    def handler(request):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise httpx.ConnectError("connection refused")
+        return httpx.Response(200, json={"result": [], "status": "ok"})
+
+    sleeps = []
+
+    async def fake_sleep(seconds):
+        sleeps.append(seconds)
+
+    monkeypatch.setattr(qdrant_client_module.asyncio, "sleep", fake_sleep)
+
+    c = QdrantSearchClient(
+        "http://x:6333", "technology", transport=httpx.MockTransport(handler)
+    )
+    assert await c.can_read_collection("technology", retries=3, backoff=1.0) is True
+    assert calls["n"] == 3
+    assert sleeps == [1.0, 2.0]
+
+
+@pytest.mark.asyncio
+async def test_can_read_collection_gives_up_after_retries_exhausted(monkeypatch):
+    def handler(request):
+        raise httpx.ConnectError("connection refused")
+
+    async def fake_sleep(seconds):
+        pass
+
+    monkeypatch.setattr(qdrant_client_module.asyncio, "sleep", fake_sleep)
+
+    c = QdrantSearchClient(
+        "http://x:6333", "technology", transport=httpx.MockTransport(handler)
+    )
+    assert await c.can_read_collection("technology", retries=2, backoff=0.1) is False
+
+
+@pytest.mark.asyncio
+async def test_can_read_collection_does_not_retry_a_real_rejection(monkeypatch):
+    """A 401/404 got an actual response — retrying it would just waste
+    startup time on a misconfiguration retries can't fix."""
+    calls = {"n": 0}
+
+    def handler(request):
+        calls["n"] += 1
+        return httpx.Response(401)
+
+    async def fail_if_called(seconds):
+        raise AssertionError("must not sleep/retry on a real HTTP rejection")
+
+    monkeypatch.setattr(qdrant_client_module.asyncio, "sleep", fail_if_called)
+
+    c = QdrantSearchClient(
+        "http://x:6333", "technology", transport=httpx.MockTransport(handler)
+    )
+    assert await c.can_read_collection("technology", retries=3, backoff=1.0) is False
+    assert calls["n"] == 1
 
 
 @pytest.mark.asyncio

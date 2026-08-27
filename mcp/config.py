@@ -28,6 +28,16 @@ EMBED_URL = os.environ.get("EMBED_URL", "http://localhost:8100/embed")
 
 HTTP_TIMEOUT = float(os.environ.get("EMBEDDINGTON_TIMEOUT", "30"))
 
+# Retries for the startup Qdrant reachability probe (_isolation_sanity_check).
+# Only applies to connection-level failures (host mid-reboot, DNS not up yet)
+# — a real rejection (401/404) still fails the probe on the first attempt.
+# Defaults to 3 retries with 2s/4s/8s backoff (~14s total) — long enough to
+# ride out a Docker Compose restart, short enough not to hang startup.
+QDRANT_STARTUP_RETRIES = int(os.environ.get("EMBEDDINGTON_QDRANT_STARTUP_RETRIES", "3"))
+QDRANT_STARTUP_RETRY_BACKOFF = float(
+    os.environ.get("EMBEDDINGTON_QDRANT_STARTUP_RETRY_BACKOFF", "2")
+)
+
 # --- Hardcoded scope (defense-in-depth) -----------------------------------
 # The default configuration uses the consumer's own container root user for
 # both Qdrant and Arango. A scoped read-only user is optional hardening an

@@ -219,7 +219,11 @@ async def _isolation_sanity_check() -> None:
     leaks: list[str] = []
 
     for collection in config.ALLOWED_QDRANT_COLLECTIONS:
-        if not await qdrant.can_read_collection(collection):
+        if not await qdrant.can_read_collection(
+            collection,
+            retries=config.QDRANT_STARTUP_RETRIES,
+            backoff=config.QDRANT_STARTUP_RETRY_BACKOFF,
+        ):
             leaks.append(
                 f"Qdrant collection '{collection}' is unreachable "
                 f"(check QDRANT_URL and that the collection exists)"
