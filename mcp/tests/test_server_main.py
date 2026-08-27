@@ -116,7 +116,7 @@ async def test_isolation_check_sets_lexical_status_via_chunk_text_status(monkeyp
     monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
 
     fake_embed = AsyncMock()
-    fake_embed.embed = AsyncMock(return_value=[0.0] * 1024)
+    fake_embed.probe = AsyncMock(return_value=(True, ""))
     monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
 
     await srv._isolation_sanity_check()
@@ -142,7 +142,7 @@ async def test_isolation_check_survives_chunk_text_status_failure(monkeypatch):
     monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
 
     fake_embed = AsyncMock()
-    fake_embed.embed = AsyncMock(return_value=[0.0] * 1024)
+    fake_embed.probe = AsyncMock(return_value=(True, ""))
     monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
 
     await srv._isolation_sanity_check()  # must not raise
@@ -165,16 +165,18 @@ async def test_isolation_check_passes_retry_config_to_the_probe(monkeypatch):
     monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
 
     fake_embed = AsyncMock()
-    fake_embed.embed = AsyncMock(return_value=[0.0] * 1024)
+    fake_embed.probe = AsyncMock(return_value=(True, ""))
     monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
 
     await srv._isolation_sanity_check()
 
-    kwargs = fake_qdrant.probe_collection.await_args.kwargs
-    assert kwargs["retries"] == srv.config.QDRANT_STARTUP_RETRIES
-    assert kwargs["backoff"] == srv.config.QDRANT_STARTUP_RETRY_BACKOFF
-    assert kwargs["timeout"] == srv.config.QDRANT_STARTUP_PROBE_TIMEOUT
-    assert kwargs["deadline"] == srv.config.QDRANT_STARTUP_DEADLINE
+    # Both fatal probes must receive the shared policy, not just Qdrant.
+    for probe in (fake_qdrant.probe_collection, fake_embed.probe):
+        kwargs = probe.await_args.kwargs
+        assert kwargs["retries"] == srv.config.STARTUP_PROBE_RETRIES
+        assert kwargs["backoff"] == srv.config.STARTUP_PROBE_RETRY_BACKOFF
+        assert kwargs["timeout"] == srv.config.STARTUP_PROBE_TIMEOUT
+        assert kwargs["deadline"] == srv.config.STARTUP_PROBE_DEADLINE
 
 
 @pytest.mark.asyncio
@@ -188,10 +190,72 @@ async def test_isolation_check_surfaces_the_probe_detail_in_the_refusal(monkeypa
     fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
     monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
 
+    fake_embed = AsyncMock()
+    fake_embed.probe = AsyncMock(return_value=(True, ""))
+    monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
+
     with pytest.raises(SystemExit) as exc:
         await srv._isolation_sanity_check()
 
     assert "no response from http://x:6333" in str(exc.value)
+
+
+@pytest.mark.asyncio
+async def test_isolation_check_refuses_to_start_on_embed_probe_failure(monkeypatch):
+    """Every vector query embeds its input first, so an unusable embedder makes
+    the server as useless as an unreachable Qdrant. It used to boot clean and
+    fail on each individual call instead."""
+    fake_qdrant = AsyncMock()
+    fake_qdrant.probe_collection = AsyncMock(return_value=(True, ""))
+    fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
+    monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
+
+    fake_embed = AsyncMock()
+    fake_embed.probe = AsyncMock(return_value=(False, "returned 768 dims, expected 1024"))
+    monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
+
+    with pytest.raises(SystemExit) as exc:
+        await srv._isolation_sanity_check()
+
+    assert "Embedding endpoint is not usable" in str(exc.value)
+    assert "768 dims" in str(exc.value)
+
+
+@pytest.mark.asyncio
+async def test_isolation_check_runs_the_fatal_probes_concurrently(monkeypatch):
+    """Sequential probes would make the worst case the SUM of their deadlines,
+    which is what pushes startup past the MCP client's own init timeout."""
+    order: list[str] = []
+
+    async def slow_qdrant(collection, **kwargs):
+        order.append("qdrant:start")
+        await asyncio.sleep(0)
+        order.append("qdrant:end")
+        return True, ""
+
+    async def slow_embed(**kwargs):
+        order.append("embed:start")
+        await asyncio.sleep(0)
+        order.append("embed:end")
+        return True, ""
+
+    fake_qdrant = AsyncMock()
+    fake_qdrant.probe_collection = slow_qdrant
+    fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
+    monkeypatch.setattr(srv, "_get_qdrant", lambda collection=None: fake_qdrant)
+
+    fake_arango = MagicMock()
+    fake_arango.probe_read = MagicMock(return_value=None)
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
+
+    fake_embed = AsyncMock()
+    fake_embed.probe = slow_embed
+    monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
+
+    await srv._isolation_sanity_check()
+
+    # Interleaved, not "qdrant:start, qdrant:end, embed:start, embed:end".
+    assert order.index("embed:start") < order.index("qdrant:end")
 
 
 # --- Arango / embed startup probes (warn-only) ------------------------------
@@ -213,7 +277,7 @@ async def test_isolation_check_warns_on_arango_probe_failure(monkeypatch, caplog
     monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
 
     fake_embed = AsyncMock()
-    fake_embed.embed = AsyncMock(return_value=[0.0] * 1024)
+    fake_embed.probe = AsyncMock(return_value=(True, ""))
     monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
 
     with caplog.at_level("WARNING"):
@@ -238,7 +302,7 @@ async def test_isolation_check_logs_arango_probe_pass(monkeypatch, caplog):
     monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
 
     fake_embed = AsyncMock()
-    fake_embed.embed = AsyncMock(return_value=[0.0] * 1024)
+    fake_embed.probe = AsyncMock(return_value=(True, ""))
     monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
 
     with caplog.at_level("INFO"):
@@ -249,9 +313,9 @@ async def test_isolation_check_logs_arango_probe_pass(monkeypatch, caplog):
 
 @pytest.mark.asyncio
 async def test_isolation_check_warns_on_embed_probe_failure(monkeypatch, caplog):
-    """A failing embed probe (unreachable EMBED_URL or wrong dims — the
-    client raises on both, no separate dim branch) must log a warning and
-    let startup complete — never raise."""
+    """A failing embed probe is now FATAL, not warn-only: every vector query
+    embeds its input first, so booting without a usable embedder only defers
+    the same failure to each individual call."""
     fake_qdrant = AsyncMock()
     fake_qdrant.probe_collection = AsyncMock(return_value=(True, ""))
     fake_qdrant.chunk_text_status = AsyncMock(return_value="ready")
@@ -262,13 +326,13 @@ async def test_isolation_check_warns_on_embed_probe_failure(monkeypatch, caplog)
     monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
 
     fake_embed = AsyncMock()
-    fake_embed.embed = AsyncMock(side_effect=RuntimeError("unreachable"))
+    fake_embed.probe = AsyncMock(return_value=(False, "no response from http://e:8100"))
     monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
 
-    with caplog.at_level("WARNING"):
-        await srv._isolation_sanity_check()  # must not raise
+    with pytest.raises(SystemExit) as exc:
+        await srv._isolation_sanity_check()
 
-    assert any("Embed probe FAILED" in r.message for r in caplog.records)
+    assert "Embedding endpoint is not usable" in str(exc.value)
 
 
 @pytest.mark.asyncio
@@ -284,7 +348,7 @@ async def test_isolation_check_logs_embed_probe_pass(monkeypatch, caplog):
     monkeypatch.setattr(srv, "_get_arango", lambda: fake_arango)
 
     fake_embed = AsyncMock()
-    fake_embed.embed = AsyncMock(return_value=[0.0] * 1024)
+    fake_embed.probe = AsyncMock(return_value=(True, ""))
     monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
 
     with caplog.at_level("INFO"):
@@ -462,6 +526,7 @@ async def test_mcp_is_write_free_across_startup_and_tools(monkeypatch):
     monkeypatch.setattr(srv, "_get_qdrant", lambda *a, **k: real)
     fake_embed = AsyncMock()
     fake_embed.embed.return_value = [0.0] * 1024
+    fake_embed.probe = AsyncMock(return_value=(True, ""))
     monkeypatch.setattr(srv, "_get_embed", lambda *a, **k: fake_embed)
     monkeypatch.setattr(srv, "_get_arango", lambda *a, **k: MagicMock())
 

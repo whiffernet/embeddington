@@ -3,8 +3,8 @@
 import json
 
 import httpx
+import probe as probe_module
 import pytest
-import qdrant_client as qdrant_client_module
 from qdrant_client import (
     QdrantError,
     QdrantSearchClient,
@@ -365,7 +365,7 @@ async def test_can_read_collection_retries_on_connection_failure_then_succeeds(m
     async def fake_sleep(seconds):
         sleeps.append(seconds)
 
-    monkeypatch.setattr(qdrant_client_module.asyncio, "sleep", fake_sleep)
+    monkeypatch.setattr(probe_module.asyncio, "sleep", fake_sleep)
 
     c = QdrantSearchClient("http://x:6333", "technology", transport=httpx.MockTransport(handler))
     assert await c.can_read_collection("technology", retries=3, backoff=1.0) is True
@@ -381,7 +381,7 @@ async def test_can_read_collection_gives_up_after_retries_exhausted(monkeypatch)
     async def fake_sleep(seconds):
         pass
 
-    monkeypatch.setattr(qdrant_client_module.asyncio, "sleep", fake_sleep)
+    monkeypatch.setattr(probe_module.asyncio, "sleep", fake_sleep)
 
     c = QdrantSearchClient("http://x:6333", "technology", transport=httpx.MockTransport(handler))
     assert await c.can_read_collection("technology", retries=2, backoff=0.1) is False
@@ -400,7 +400,7 @@ async def test_can_read_collection_does_not_retry_a_real_rejection(monkeypatch):
     async def fail_if_called(seconds):
         raise AssertionError("must not sleep/retry on a real HTTP rejection")
 
-    monkeypatch.setattr(qdrant_client_module.asyncio, "sleep", fail_if_called)
+    monkeypatch.setattr(probe_module.asyncio, "sleep", fail_if_called)
 
     c = QdrantSearchClient("http://x:6333", "technology", transport=httpx.MockTransport(handler))
     assert await c.can_read_collection("technology", retries=3, backoff=1.0) is False
@@ -416,13 +416,13 @@ async def test_probe_does_not_retry_a_permanent_transport_error(monkeypatch):
     async def fail_if_called(seconds):
         raise AssertionError("must not retry a permanent transport error")
 
-    monkeypatch.setattr(qdrant_client_module.asyncio, "sleep", fail_if_called)
+    monkeypatch.setattr(probe_module.asyncio, "sleep", fail_if_called)
 
     c = QdrantSearchClient("htp://x:6333", "technology")
     ok, detail = await c.probe_collection("technology", retries=3, backoff=1.0)
     assert ok is False
     assert "cannot be retried" in detail
-    assert "QDRANT_URL" in detail
+    assert "check the configured URL" in detail
 
 
 @pytest.mark.asyncio
@@ -439,13 +439,13 @@ async def test_probe_deadline_stops_retrying_before_the_budget_is_spent(monkeypa
     async def fake_sleep(seconds):
         elapsed["t"] += seconds
 
-    monkeypatch.setattr(qdrant_client_module.asyncio, "sleep", fake_sleep)
+    monkeypatch.setattr(probe_module.asyncio, "sleep", fake_sleep)
 
     class FakeLoop:
         def time(self):
             return elapsed["t"]
 
-    monkeypatch.setattr(qdrant_client_module.asyncio, "get_running_loop", lambda: FakeLoop())
+    monkeypatch.setattr(probe_module.asyncio, "get_running_loop", lambda: FakeLoop())
 
     c = QdrantSearchClient("http://x:6333", "technology", transport=httpx.MockTransport(handler))
     # retries=10 would sleep 1+2+4+8+16+... — the 5s deadline must cut it off

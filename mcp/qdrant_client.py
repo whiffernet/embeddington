@@ -13,24 +13,27 @@ never by this client — this module issues no Qdrant writes.
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from typing import Any, Optional
 
 import httpx
 
+try:
+    from .probe import RETRYABLE_TRANSPORT_ERRORS, probe_with_retry
+except ImportError:  # pragma: no cover — flat-layout import fallback
+    from probe import (  # type: ignore[no-redef] # noqa: F401
+        RETRYABLE_TRANSPORT_ERRORS,
+        probe_with_retry,
+    )
+
 logger = logging.getLogger("embeddington.qdrant")
 
-# Transport failures worth retrying: the request either never reached a server
-# or the server never answered, so a later attempt can legitimately succeed.
-#
-# Deliberately NARROWER than httpx.HTTPError, which also covers permanent
-# misconfigurations that no amount of retrying can fix — UnsupportedProtocol
-# (a typo'd scheme such as `htp://host:6333`), TooManyRedirects, DecodingError
-# and ProtocolError. Retrying those would only burn the startup budget before
-# reporting a failure that was knowable on the first attempt.
-RETRYABLE_TRANSPORT_ERRORS = (httpx.TimeoutException, httpx.NetworkError)
+__all__ = [
+    "QdrantError",
+    "QdrantSearchClient",
+    "RETRYABLE_TRANSPORT_ERRORS",
+]
 
 
 class QdrantError(Exception):
@@ -226,49 +229,29 @@ class QdrantSearchClient:
         client = await self._http()
         path = f"/collections/{collection}/points/search"
         request_timeout = self.timeout if timeout is None else timeout
-        loop = asyncio.get_running_loop()
-        started = loop.time()
-        attempt = 0
-        while True:
-            try:
-                resp = await client.post(
-                    f"{self.url}{path}",
-                    json={"vector": [0.0] * 1024, "limit": 1},
-                    timeout=request_timeout,
-                )
-            except RETRYABLE_TRANSPORT_ERRORS as exc:
-                reason = f"{type(exc).__name__}: {exc}" if str(exc) else type(exc).__name__
-                wait = backoff * (2**attempt)
-                elapsed = loop.time() - started
-                out_of_budget = deadline is not None and elapsed + wait >= deadline
-                if attempt >= retries or out_of_budget:
-                    return False, (
-                        f"no response from {self.url} after {attempt + 1} attempt(s) "
-                        f"in {elapsed:.1f}s — last error: {reason}. The host is down, "
-                        f"still starting, or unreachable from here"
-                    )
-                logger.warning(
-                    "Qdrant unreachable probing '%s' (attempt %d/%d, %s) — retrying in %.1fs",
-                    collection,
-                    attempt + 1,
-                    retries + 1,
-                    reason,
-                    wait,
-                )
-                await asyncio.sleep(wait)
-                attempt += 1
-                continue
-            except httpx.HTTPError as exc:
-                return False, (
-                    f"request to {self.url} failed and cannot be retried "
-                    f"({type(exc).__name__}: {exc}) — check QDRANT_URL"
-                )
+
+        async def attempt() -> tuple[bool, str]:
+            resp = await client.post(
+                f"{self.url}{path}",
+                json={"vector": [0.0] * 1024, "limit": 1},
+                timeout=request_timeout,
+            )
             if resp.status_code == 200:
                 return True, ""
             return False, (
-                f"{self.url} answered HTTP {resp.status_code} — the collection is "
-                f"missing, or the credential was rejected (check QDRANT_API_KEY)"
+                f"{self.url} answered HTTP {resp.status_code} — collection "
+                f"'{collection}' is missing, or the credential was rejected "
+                f"(check QDRANT_API_KEY)"
             )
+
+        return await probe_with_retry(
+            attempt,
+            target=self.url,
+            what="Qdrant",
+            retries=retries,
+            backoff=backoff,
+            deadline=deadline,
+        )
 
     async def can_read_collection(
         self,

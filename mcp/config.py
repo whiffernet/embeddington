@@ -28,35 +28,37 @@ EMBED_URL = os.environ.get("EMBED_URL", "http://localhost:8100/embed")
 
 HTTP_TIMEOUT = float(os.environ.get("EMBEDDINGTON_TIMEOUT", "30"))
 
-# --- Startup Qdrant reachability probe (_isolation_sanity_check) ----------
+# --- Fatal startup reachability probes (_isolation_sanity_check) ----------
+# Shared by BOTH fatal probes — Qdrant and /embed. They are usually the same
+# host, so a restart takes both down together; tuning only one would leave the
+# other aborting startup on the first attempt.
+#
 # Retries only cover transport failures — the host is down, still starting, or
-# unreachable. A real rejection (401/404) or a permanent misconfiguration (a
-# typo'd URL scheme) still fails on the first attempt; see
-# RETRYABLE_TRANSPORT_ERRORS in qdrant_client.py.
+# unreachable. A real rejection (401/404), a wrong embedding dimension, or a
+# permanent misconfiguration (a typo'd URL scheme) still fails on the first
+# attempt; see RETRYABLE_TRANSPORT_ERRORS in probe.py.
 #
 # Scope, honestly stated: this rides out a restart measured in seconds (a
 # `docker compose restart`, a container that lost its dependency briefly). It
 # does NOT cover a host that is down for minutes — no bounded startup retry
 # can, and attempting it would hang startup past the MCP client's own
 # initialization timeout. A long outage is the reconnect path's problem.
-QDRANT_STARTUP_RETRIES = int(os.environ.get("EMBEDDINGTON_QDRANT_STARTUP_RETRIES", "3"))
-QDRANT_STARTUP_RETRY_BACKOFF = float(
-    os.environ.get("EMBEDDINGTON_QDRANT_STARTUP_RETRY_BACKOFF", "2")
-)
-# Per-attempt timeout for the probe. Deliberately much shorter than
-# HTTP_TIMEOUT (sized for real queries): an unreachable host can burn the FULL
-# timeout per attempt before raising, so inheriting 30s here would make the
-# worst case 4x30s + backoff. A liveness probe that has not answered in a few
-# seconds is not going to.
-QDRANT_STARTUP_PROBE_TIMEOUT = float(
-    os.environ.get("EMBEDDINGTON_QDRANT_STARTUP_PROBE_TIMEOUT", "5")
-)
-# Hard ceiling on total time spent retrying, across all attempts. This is the
-# number that actually matters: startup must finish well inside the MCP
-# client's initialization timeout, or a clear "Refusing to start" message is
-# replaced by an opaque client-side disconnect with no diagnostic at all.
-# Worst case is roughly this value plus one probe timeout.
-QDRANT_STARTUP_DEADLINE = float(os.environ.get("EMBEDDINGTON_QDRANT_STARTUP_DEADLINE", "15"))
+STARTUP_PROBE_RETRIES = int(os.environ.get("EMBEDDINGTON_STARTUP_RETRIES", "3"))
+STARTUP_PROBE_RETRY_BACKOFF = float(os.environ.get("EMBEDDINGTON_STARTUP_RETRY_BACKOFF", "2"))
+# Per-attempt timeout. Deliberately much shorter than HTTP_TIMEOUT (sized for
+# real queries): an unreachable host can burn the FULL timeout per attempt
+# before raising, so inheriting 30s would make the worst case 4x30s + backoff.
+# A liveness probe that has not answered in a few seconds is not going to.
+STARTUP_PROBE_TIMEOUT = float(os.environ.get("EMBEDDINGTON_STARTUP_PROBE_TIMEOUT", "5"))
+# Hard ceiling on total time spent retrying, per probe. This is the number that
+# actually matters: startup must finish well inside the MCP client's
+# initialization timeout, or a clear "Refusing to start" message is replaced by
+# an opaque client-side disconnect with no diagnostic at all.
+#
+# The fatal probes run CONCURRENTLY, so the worst case is roughly this value
+# plus one probe timeout — not the sum across probes. Adding a third fatal
+# probe must preserve that, or the ceiling silently becomes a floor.
+STARTUP_PROBE_DEADLINE = float(os.environ.get("EMBEDDINGTON_STARTUP_DEADLINE", "15"))
 
 # --- Hardcoded scope (defense-in-depth) -----------------------------------
 # The default configuration uses the consumer's own container root user for
