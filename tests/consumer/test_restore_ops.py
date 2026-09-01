@@ -36,7 +36,7 @@ def test_decompress_tar_zst_returns_dump_dir(tmp_path):
     assert (out / "entities.data.json").exists()  # unwrapped the single inner dir
 
 
-def test_restore_qdrant_bundle_creates_then_streams(tmp_path, monkeypatch):
+def test_restore_qdrant_bundle_replaces_then_streams(tmp_path, monkeypatch):
     from embeddington.format import bundle, records
 
     path = tmp_path / "base.jsonl.zst"
@@ -51,8 +51,13 @@ def test_restore_qdrant_bundle_creates_then_streams(tmp_path, monkeypatch):
     calls = []
 
     class W:
-        def create_collection(self, **cfg):
-            calls.append(("create", cfg))
+        def recreate_collection(self, **cfg):
+            calls.append(("recreate", cfg))
+
+        def create_collection(self, **cfg):  # pragma: no cover — must NOT be used
+            raise AssertionError(
+                "baseline restore must REPLACE the collection, not create-if-absent"
+            )
 
         def upsert_points(self, pts, batch=256):
             calls.append(("upsert", [p[0] for p in pts]))
@@ -69,7 +74,7 @@ def test_restore_qdrant_bundle_creates_then_streams(tmp_path, monkeypatch):
         {"size": 1024, "distance": "Cosine", "hnsw_m": 16, "hnsw_ef_construct": 100},
     )
     assert calls[0] == (
-        "create",
+        "recreate",
         {"size": 1024, "distance": "Cosine", "hnsw_m": 16, "hnsw_ef_construct": 100},
     )
     assert calls[1] == ("upsert", ["p1", "p2"])
@@ -225,3 +230,50 @@ def test_make_baseline_importer_prints_the_chunk_text_status(tmp_path, monkeypat
     importer(entry)
 
     assert "chunk_text index: building" in capsys.readouterr().out
+
+
+def test_restore_qdrant_bundle_replaces_a_populated_collection(tmp_path, monkeypatch):
+    """A baseline applied to a populated install must REPLACE, not merge.
+
+    The measured failure this pins: ``create_collection`` is a no-op when the
+    collection exists and the restore path was create+upsert only, so restoring
+    the v2 baseline into an existing install left the previous generation's
+    points beside the new ones -- two generations of every document, which is
+    the exact disease a corpus rebuild exists to cure.
+    """
+    from consumer import writers
+    from embeddington.format import bundle, records
+
+    path = tmp_path / "base.jsonl.zst"
+    bundle.write_bundle(
+        path,
+        [
+            records.header("3.0.0", None, "aa", 2, 0, 0),
+            records.point_upsert("new-1", [0.1], {"file_name": "f"}),
+            records.point_upsert("new-2", [0.2], {"file_name": "g"}),
+        ],
+    )
+
+    from tests.consumer.conftest import FakeQdrantClient
+
+    client = FakeQdrantClient()
+    # A pre-existing install: one point already stored, collection present.
+    client.points["stale-legacy-id"] = {"vector": [9.9], "payload": {"file_name": "old"}}
+    client.exists = True
+
+    monkeypatch.setattr(
+        restore_ops.writers.QdrantConsumerWriter,
+        "connect",
+        classmethod(lambda cls, url, coll: writers.QdrantConsumerWriter(client, coll)),
+    )
+    restore_ops.restore_qdrant_bundle(
+        "http://q",
+        "technology",
+        path,
+        {"size": 1024, "distance": "Cosine", "hnsw_m": 16, "hnsw_ef_construct": 100},
+    )
+
+    assert client.deleted is True, "the collection was never dropped"
+    assert "stale-legacy-id" not in client.points, "a pre-existing point survived"
+    assert set(client.points) == {"new-1", "new-2"}
+    assert len(client.points) == 2, "final count must equal the bundle's exactly"

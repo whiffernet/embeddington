@@ -68,17 +68,28 @@ def test_unreachable_cursor_falls_back_to_baseline():
 
 def test_schema_major_bump_is_gated():
     with pytest.raises(errors.SchemaVersionError):
-        cursor.plan_update("e5f6", _manifest(schema_version="3.0"))
+        cursor.plan_update("e5f6", _manifest(schema_version="4.0"))
 
 
-def test_supported_major_is_2_and_major2_passes():
-    assert cursor.SUPPORTED_SCHEMA_MAJOR == 2
-    cursor.plan_update(None, _manifest(schema_version="2.0"))
+def test_supported_major_is_3_and_major3_passes():
+    assert cursor.SUPPORTED_SCHEMA_MAJOR == 3
+    cursor.plan_update(None, _manifest(schema_version="3.0"))
 
 
-def test_major3_still_refused():
+def test_major4_still_refused():
     with pytest.raises(errors.SchemaVersionError):
-        cursor.plan_update(None, _manifest(schema_version="3.0"))
+        cursor.plan_update(None, _manifest(schema_version="4.0"))
+
+
+def test_an_older_major_is_still_accepted():
+    """The gate is `major > supported`, so a schema-2 manifest still applies.
+
+    Deliberate: a newer consumer reading an older chain is forward
+    compatibility, and the replace-semantics baseline restore this release adds
+    is correct for a 2.x baseline too -- merging was a bug under both schemas.
+    Only a manifest NEWER than this consumer understands is refused.
+    """
+    cursor.plan_update(None, _manifest(schema_version="2.0"))
 
 
 def test_chain_gap_raises():
