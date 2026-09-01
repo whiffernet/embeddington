@@ -46,11 +46,19 @@ class FakeQdrantClient:
         self.exists = True  # flip to False to simulate a missing collection
         self.created = None  # captures the config passed to create_collection
         self.upsert_batches = []  # each upsert() call's points list, in call order
+        self.deleted = False  # True once delete_collection has been called
 
     def collection_exists(self, collection_name):
         return self.exists
 
+    def delete_collection(self, collection_name):
+        """Drop the collection and everything in it, as Qdrant does."""
+        self.points = {}
+        self.exists = False
+        self.deleted = True
+
     def create_collection(self, collection_name, vectors_config, hnsw_config):
+        self.exists = True
         self.created = {
             "size": vectors_config.size,
             "distance": str(vectors_config.distance),

@@ -44,6 +44,50 @@ HTTP_TIMEOUT = float(os.environ.get("EMBEDDINGTON_TIMEOUT", "30"))
 ALLOWED_QDRANT_COLLECTIONS = {
     "technology": "technology",  # bge-m3 — ServiceNow MD corpus
 }
+
+
+def _parse_extra_collections(raw):
+    """Parse ``EXTRA_QDRANT_COLLECTIONS`` into ``{collection: embed_index}``.
+
+    Deployments that hold corpora beyond the shipped one need to name them
+    without a code change, and the default MUST stay empty: ``server.py``
+    probes every allowlisted collection at startup and ``SystemExit``s on any
+    it cannot read, so a collection hardcoded here would hard-fail every
+    install that does not happen to have it.
+
+    Format: ``name:embed_index`` pairs, comma-separated. Whitespace around any
+    element is ignored.
+
+        EXTRA_QDRANT_COLLECTIONS=technology_v2:technology
+
+    Args:
+        raw: The raw environment value, possibly empty or None.
+
+    Returns:
+        Mapping of collection name to embed-index token. Empty when unset.
+
+    Raises:
+        ValueError: On a malformed entry. A typo must not silently drop a
+            collection -- the failure would surface much later as an
+            unexplained empty search.
+    """
+    pairs = {}
+    for chunk in (raw or "").split(","):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        name, sep, index = chunk.partition(":")
+        name, index = name.strip(), index.strip()
+        if not sep or not name or not index:
+            raise ValueError(f"EXTRA_QDRANT_COLLECTIONS entry {chunk!r} is not 'name:embed_index'")
+        pairs[name] = index
+    return pairs
+
+
+ALLOWED_QDRANT_COLLECTIONS.update(
+    _parse_extra_collections(os.environ.get("EXTRA_QDRANT_COLLECTIONS"))
+)
+
 DEFAULT_QDRANT_COLLECTION = os.environ.get("DEFAULT_QDRANT_COLLECTION", "technology")
 if DEFAULT_QDRANT_COLLECTION not in ALLOWED_QDRANT_COLLECTIONS:
     raise ValueError(

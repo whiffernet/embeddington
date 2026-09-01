@@ -95,6 +95,33 @@ class QdrantConsumerWriter:
         """
         if self._client.collection_exists(self._collection):
             return
+        self._create(size, distance, hnsw_m, hnsw_ef_construct)
+
+    def recreate_collection(self, size, distance, hnsw_m, hnsw_ef_construct):
+        """DROP the local collection if present, then create it empty.
+
+        Baseline semantics are replace, not merge: a baseline is a complete
+        statement of the corpus at a point in time. ``create_collection`` is
+        idempotent and returns early when the collection exists, so a baseline
+        applied through it lands BESIDE whatever is already stored -- two
+        generations of every document, which is precisely the disease a
+        baseline exists to cure.
+
+        Args:
+            size: Vector dimensionality from the manifest.
+            distance: Distance metric name from the manifest.
+            hnsw_m: HNSW graph degree (m) parameter.
+            hnsw_ef_construct: HNSW ef_construct parameter.
+
+        Raises:
+            ValueError: If ``distance`` is not a recognized metric.
+        """
+        if self._client.collection_exists(self._collection):
+            self._client.delete_collection(self._collection)
+        self._create(size, distance, hnsw_m, hnsw_ef_construct)
+
+    def _create(self, size, distance, hnsw_m, hnsw_ef_construct):
+        """Create the collection unconditionally. Callers own existence."""
         dist = self._DISTANCES.get(str(distance).lower())
         if dist is None:
             raise ValueError(f"unknown distance {distance!r}")

@@ -88,9 +88,13 @@ def restore_qdrant_snapshot(qdrant_url, collection, snapshot_path):
 
 
 def restore_qdrant_bundle(qdrant_url, collection, bundle_path, coll_cfg):
-    """Restore a full-export (schema-2) baseline: create the collection from the
+    """Restore a full-export baseline: DROP and recreate the collection from the
     manifest's config, then stream-upsert every point record. Never buffers the
     bundle; skips the header and non-point records defensively.
+
+    The drop is what makes this a baseline rather than a bulk upsert. Without
+    it a baseline applied to an existing install adds its points beside the
+    ones already stored, leaving two generations of every document live.
 
     Args:
         qdrant_url: Base URL of the local Qdrant (e.g. http://localhost:6333).
@@ -99,7 +103,11 @@ def restore_qdrant_bundle(qdrant_url, collection, bundle_path, coll_cfg):
         coll_cfg: The manifest's ``qdrant_collection`` dict (size/distance/hnsw_*).
     """
     writer = writers.QdrantConsumerWriter.connect(qdrant_url, collection)
-    writer.create_collection(
+    # REPLACE, not merge. A baseline is a complete statement of the corpus, so
+    # applying one into a populated install must not leave the previous
+    # generation beside it -- create_collection is a no-op when the collection
+    # exists, which would do exactly that.
+    writer.recreate_collection(
         size=coll_cfg["size"],
         distance=coll_cfg["distance"],
         hnsw_m=coll_cfg["hnsw_m"],
