@@ -19,6 +19,7 @@ from installer import (
     import_step,
     install_record,
     preflight,
+    runlog,
     runner,
     stack,
     state,
@@ -28,14 +29,30 @@ from installer import (
 from installer.cron import cron_line, install_cron, refresh_cron_line
 
 
+def _state_dir():
+    """The machine-global state directory — where the run journal lives."""
+    return state_paths.resolve_state_dir(os.environ, Path.home())
+
+
 def _repo_root():
     """The clone root: this file lives at <root>/installer/cli.py."""
     return Path(__file__).resolve().parent.parent
 
 
-def _production_deps(repo_root, args):
-    """The real step functions, partially applied with production wiring."""
+def _production_deps(repo_root, args, run=None):
+    """The real step functions, partially applied with production wiring.
+
+    Args:
+        repo_root: the clone root.
+        args: parsed CLI args.
+        run: the subprocess callable every step should use (default: runner.run).
+            main() passes a journaled wrapper here — runner.run is the installer's only
+            subprocess chokepoint, so threading it through this one parameter puts every
+            command the wizard fires into the run log.
+    """
     from consumer import writers
+
+    run = runner.run if run is None else run
 
     def counters():
         password = stack.read_password(repo_root / "consumer" / ".env")
@@ -52,7 +69,7 @@ def _production_deps(repo_root, args):
             points, entities = counters()
         except Exception:
             points, entities = (lambda: 0), (lambda: 0)
-        return state.detect_state(repo_root, runner.run, points, entities)
+        return state.detect_state(repo_root, run, points, entities)
 
     def proof(_console):
         try:
@@ -72,7 +89,7 @@ def _production_deps(repo_root, args):
 
         return uninstall.run_uninstall(
             console,
-            runner.run,
+            run,
             repo_root,
             assume_yes=assume_yes,
             really_delete_data=really,
@@ -82,41 +99,39 @@ def _production_deps(repo_root, args):
     return {
         "detect_state": detect,
         "run_preflight": lambda _c: preflight.run_preflight(
-            runner.run, runner.http_get, disk_path=str(repo_root)
+            run, runner.http_get, disk_path=str(repo_root)
         ),
-        "git_pull": lambda _c: runner.run(["git", "-C", str(repo_root), "pull", "--ff-only"]),
+        "git_pull": lambda _c: run(["git", "-C", str(repo_root), "pull", "--ff-only"]),
         "ensure_docker": lambda console, assume_yes, input_fn: docker_ladder.ensure_docker(
             console,
-            runner.run,
+            run,
             platform=docker_ladder.detect_platform(),
             assume_yes=assume_yes,
             input_fn=input_fn,
         ),
         "ensure_env": lambda _c: stack.ensure_env_file(repo_root / "consumer"),
         "read_password": lambda _c: stack.read_password(repo_root / "consumer" / ".env"),
-        "compose_up": lambda _c: stack.compose_up(runner.run, repo_root / "consumer"),
+        "compose_up": lambda _c: stack.compose_up(run, repo_root / "consumer"),
         "wait_for_services": lambda console: stack.wait_for_services(console, runner.http_get),
         "run_import": import_step.run_import,
         "proof_of_life": proof,
         "claude_wiring": lambda console, assume_yes, input_fn: claude_step.offer_claude_wiring(
-            console, runner.run, repo_root, assume_yes=assume_yes, input_fn=input_fn
+            console, run, repo_root, assume_yes=assume_yes, input_fn=input_fn
         ),
         "ensure_claude_wiring": lambda console: claude_step.ensure_claude_wiring(
-            console, runner.run, repo_root
+            console, run, repo_root
         ),
         "install_cron": lambda console, assume_yes, input_fn: install_cron(
-            console, runner.run, repo_root, assume_yes=assume_yes, input_fn=input_fn
+            console, run, repo_root, assume_yes=assume_yes, input_fn=input_fn
         ),
-        "refresh_cron": lambda _c: refresh_cron_line(runner.run, repo_root),
+        "refresh_cron": lambda _c: refresh_cron_line(run, repo_root),
         "run_uninstall": run_uninstall_dep,
-        "git_head": lambda: runner.run(
-            ["git", "-C", str(repo_root), "rev-parse", "HEAD"]
-        ).out.strip(),
+        "git_head": lambda: run(["git", "-C", str(repo_root), "rev-parse", "HEAD"]).out.strip(),
         "git_changed_files": lambda pre_sha: (lambda r: r.out.split() if r.rc == 0 else [])(
-            runner.run(["git", "-C", str(repo_root), "diff", "--name-only", pre_sha, "HEAD"])
+            run(["git", "-C", str(repo_root), "diff", "--name-only", pre_sha, "HEAD"])
         ),
-        "mcp_deps_installed": lambda: claude_step.mcp_deps_installed(runner.run, repo_root),
-        "resync_mcp_deps": lambda _c: runner.run(
+        "mcp_deps_installed": lambda: claude_step.mcp_deps_installed(run, repo_root),
+        "resync_mcp_deps": lambda _c: run(
             [
                 str(repo_root / ".venv" / "bin" / "pip"),
                 "install",
@@ -126,27 +141,23 @@ def _production_deps(repo_root, args):
             cwd=repo_root,
             stream=True,
         ),
-        "resync_venv": lambda _c: runner.run(
+        "resync_venv": lambda _c: run(
             [str(repo_root / ".venv" / "bin" / "pip"), "install", "-e", ".[setup]"],
             cwd=repo_root,
             stream=True,
         ),
         "merge_env": lambda _c: stack.merge_env_keys(
             repo_root / "consumer" / ".env",
-            {
-                "ARANGO_MEMORY_CAP": stack.adaptive_memory_cap(
-                    stack.detect_total_ram_bytes(runner.run)
-                )
-            },
+            {"ARANGO_MEMORY_CAP": stack.adaptive_memory_cap(stack.detect_total_ram_bytes(run))},
         ),
         "index_absent": lambda: (
             lexical_index.chunk_text_status(import_step.QDRANT_URL, import_step.COLLECTION)
             == "absent"
         ),
-        "cron_present": lambda: cron.cron_line_present(runner.run),
+        "cron_present": lambda: cron.cron_line_present(run),
         "record_install_path": lambda: install_record.record_install_path(repo_root),
         "record_update": lambda mode, pull_ok=None: update_record.record_update(
-            repo_root, mode, runner.run, pull_ok=pull_ok
+            repo_root, mode, run, pull_ok=pull_ok
         ),
         "read_update_record": lambda: update_record.read_record(),
     }
@@ -680,7 +691,13 @@ def main(argv=None, *, console=None, deps=None, input_fn=input):
     args = _build_parser().parse_args(argv)
     console = ui.make_console() if console is None else console
     repo_root = _repo_root()
-    deps = _production_deps(repo_root, args) if deps is None else deps
+    # Opened before any step runs, so a failure in the very first one is already on
+    # disk. Journaling is skipped entirely when deps are injected: a test supplying its
+    # own steps has no runner to wrap, and should not write to the real state dir.
+    log = None
+    if deps is None:
+        log = runlog.open_log(_state_dir())
+        deps = _production_deps(repo_root, args, runlog.wrap(runner.run, log))
 
     ui.show_banner(console)
     try:
@@ -713,7 +730,16 @@ def main(argv=None, *, console=None, deps=None, input_fn=input):
             return _menu(console, deps, st, args, input_fn)
         return _install_flow(console, deps, st, args, input_fn)
     except errors.SetupError as err:
+        runlog.note(log, f"{err.code} {err.friendly}")
         ui.show_error(console, err)
+        # Only promise a log that exists: open_log degrades to a no-op journal when the
+        # state dir is unwritable, and pointing a stuck user at a missing file is worse
+        # than saying nothing.
+        if log is not None and log.enabled:
+            console.print(
+                f"[dim]A log of this run is at {runlog.log_path(_state_dir())} — "
+                "send it along if you need a hand.[/dim]"
+            )
         return 1
 
 
