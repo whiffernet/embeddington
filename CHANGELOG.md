@@ -1,5 +1,45 @@
 # Changelog
 
+## v0.11.26 — 2026-09-02
+
+Schema **3.0.0**. Baseline `baseline-2026-09` re-roots the diff chain.
+
+- **BREAKING: a baseline restore now REPLACES the local collection.** It drops
+  and recreates before applying. Previously `create_collection` was a no-op when
+  the collection already existed and the restore path was create+upsert only, so
+  a baseline applied to a populated install landed *beside* what was already
+  stored — two generations of every document. A fresh-scratch restore could
+  never surface this, because the no-op branch only runs when the collection
+  exists.
+- **BREAKING: `SUPPORTED_SCHEMA_MAJOR` 2 → 3.** An install still on schema 2
+  stops with `SchemaVersionError` rather than applying a 3.0.0 baseline under
+  merge semantics. Fix is `embeddington-setup --yes`. The gate is
+  `major > supported`, so older manifests still apply.
+- **The diff chain was re-rooted.** `baseline-2026-09` is the new root with zero
+  diffs. The eight diffs that chained onto the previous baselines were dropped,
+  not compacted — they described the corpus this baseline replaces, and applying
+  them on top would have layered old deltas onto new content.
+- **Corpus counts** (`baseline-2026-07c` → `baseline-2026-09`):
+
+  | | 07c | 09 |
+  |---|---:|---:|
+  | vectors | 171,733 | 70,102 |
+  | entities | 338,804 | 355,523 |
+  | edges | 759,923 | 809,806 |
+
+  The vector count falls because the previous corpus carried multiple
+  generations of the same document — 37 of 40 sampled documents held more than
+  one version of their content (producer-side issue). The 2026-09 corpus uses
+  deterministic chunk ids plus a post-ingest prune, so each document is present
+  exactly once. Measured on the frozen query set, stale-citation rate went
+  0.7963 → 0.0000 and duplicate generations within a `top_k` went 35 → 0.
+- **NEW: `EXTRA_QDRANT_COLLECTIONS`** (`mcp/config.py`), empty by default so
+  consumers are unaffected. Adds `collection:embed_index` pairs to the allowlist
+  for deployments holding the corpus under a different name. The two halves are
+  different things — the right is the `/embed` index token that selects the
+  encoder — and a mismatch raises nothing, since both encoders are 1024-dim.
+  A score collapse is the only symptom.
+
 ## v0.9.0 — 2026-07-20
 
 Closes #44 (response-ceiling gate re-tune) and delivers issue #37's

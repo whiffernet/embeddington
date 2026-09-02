@@ -105,13 +105,10 @@ grow when the next baseline or diff batch is published.
 Each edge is one subject–predicate–object triple, so "relationships" and "triples" are the
 same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
 
-**The vector count went down, and that is the point.** The previous baseline reported 171,733
-vectors; this one reports 70,102. Nothing was lost. The old corpus carried *multiple
-generations of the same document* — a re-ingest wrote new chunks without removing the previous
-ones, so 37 of 40 sampled documents held more than one version of their content. The 2026-09
-corpus was rebuilt with deterministic chunk ids and a post-ingest prune, so each document
-appears exactly once. Same documents, one copy each, ~59% fewer vectors — and a search no
-longer returns two versions of the same page.
+Every chunk is **one current version of one document** — no superseded copies, so a search
+never returns two versions of the same page. Chunk ids are derived from the document path and
+release, which is what lets a re-ingest replace a document's chunks instead of accumulating
+alongside them.
 
 ---
 
