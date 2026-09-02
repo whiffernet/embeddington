@@ -98,9 +98,13 @@ except ImportError:
     import config  # type: ignore[no-redef,import-not-found]
     from arango_client import ArangoError, ArangoKGClient  # type: ignore[no-redef,import-not-found]
     from embedding_client import EmbeddingClient  # type: ignore[no-redef,import-not-found]
-    from enrich import _vector_side as _hybrid_vector_side  # type: ignore[no-redef,import-not-found]
+    from enrich import (  # type: ignore[no-redef,import-not-found]
+        _vector_side as _hybrid_vector_side,
+    )
     from enrich import enrich as _enrich_impl  # type: ignore[no-redef,import-not-found]
-    from qdrant_client import QdrantSearchClient  # type: ignore[no-redef,attr-defined,import-not-found]
+    from qdrant_client import (  # type: ignore[no-redef,attr-defined,import-not-found]
+        QdrantSearchClient,
+    )
 
 # --- Logging — stderr only (stdout reserved for MCP stdio) ----------------
 logging.basicConfig(

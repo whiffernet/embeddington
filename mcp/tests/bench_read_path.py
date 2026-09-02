@@ -142,7 +142,10 @@ def _resolve(client: ArangoKGClient, label: str) -> dict[str, Any] | None:
 
 
 def bench_path(client: ArangoKGClient, reps: int) -> None:
-    """kg_path on fixed name pairs: outcome + median ms. Before = SHORTEST_PATH, after = K_SHORTEST_PATHS."""
+    """kg_path on fixed name pairs: outcome + median ms.
+
+    Before = SHORTEST_PATH, after = K_SHORTEST_PATHS.
+    """
     print("\n### kg_path (median ms, outcome)\n")
     print("| from | to | outcome | hops | hubs named | ms |")
     print("|---|---|---|---|---|---|")
@@ -168,10 +171,14 @@ def bench_path(client: ArangoKGClient, reps: int) -> None:
 
 
 def bench_neighbors(client: ArangoKGClient, reps: int) -> None:
-    """kg_neighbors on the biggest hub and on a mid-size entity: ms + predicate spread in the cap."""
+    """kg_neighbors on the biggest hub and on a mid-size entity.
+
+    Reports ms + predicate spread in the cap.
+    """
     print("\n### kg_neighbors depth=1 limit=100 (median ms, distinct predicates in the top band)\n")
     print(
-        "| entity | degree | ms | distinct predicates returned | distinct predicates in top confidence band |"
+        "| entity | degree | ms | distinct predicates returned"
+        " | distinct predicates in top confidence band |"
     )
     print("|---|---|---|---|---|")
     for needle in ("admin", "incident", "Discovery"):
