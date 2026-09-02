@@ -100,7 +100,7 @@ grow when the next baseline or diff batch is published.
 | Relationships / triples (graph edges)       | **809,806** |
 | Entity types                                | 14          |
 | Relationship predicates                     | 14          |
-| Avg. relationships per entity               | ~2.2        |
+| Avg. relationships per entity               | ~2.3        |
 
 Each edge is one subject–predicate–object triple, so "relationships" and "triples" are the
 same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
