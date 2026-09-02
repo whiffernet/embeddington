@@ -1070,3 +1070,84 @@ async def test_grounding_reflects_post_trim_not_pre_trim_content():
     assert any("sn_ci_relationship" in r for r in res["grounding"]["reasons"])
     payload = str(res["vector_chunks"]) + str(res["kg_matches"])
     assert "sn_ci_relationship" not in payload
+
+
+# --- /embed batching (spec §6: >100 texts silently degraded to confidence order) -----
+
+
+class _CountingEmbedder:
+    """Fake embedder that rejects >100 texts like the real /embed and records batch sizes."""
+
+    def __init__(self):
+        self.batches: list[int] = []
+
+    async def embed(self, text):
+        return [1.0] + [0.0] * 1023
+
+    async def embed_batch(self, texts):
+        if len(texts) > 100:
+            raise RuntimeError("embedding endpoint returned 400: Maximum 100 texts per request")
+        self.batches.append(len(texts))
+        return [[float(i % 7)] + [0.0] * 1023 for i in range(len(texts))]
+
+
+@pytest.mark.asyncio
+async def test_embed_in_batches_chunks_at_100_and_preserves_order():
+    from enrich import EMBED_BATCH_LIMIT, _embed_in_batches
+
+    emb = _CountingEmbedder()
+    out = await _embed_in_batches(emb, [f"q{i}" for i in range(250)])
+    assert EMBED_BATCH_LIMIT == 100
+    assert emb.batches == [100, 100, 50]
+    assert (
+        len(out) == 250 and out[7][0] == 0.0 and out[6][0] == 6.0
+    )  # position i -> i % 7 within its chunk
+
+
+@pytest.mark.asyncio
+async def test_embed_in_batches_exactly_100_is_one_call():
+    from enrich import _embed_in_batches
+
+    emb = _CountingEmbedder()
+    await _embed_in_batches(emb, [f"q{i}" for i in range(100)])
+    assert emb.batches == [100]
+
+
+@pytest.mark.asyncio
+async def test_embed_in_batches_rejects_count_mismatch():
+    from enrich import _embed_in_batches
+
+    class Short:
+        async def embed_batch(self, texts):
+            return [[0.0] * 1024] * (len(texts) - 1)
+
+    with pytest.raises(ValueError, match="returned 1 vectors for 2 texts"):
+        await _embed_in_batches(Short(), ["a", "b"])
+
+
+@pytest.mark.asyncio
+async def test_enrich_with_250_quotes_no_longer_degrades():
+    """The regression: a pool of >100 distinct quotes must be relevance-scored, not degraded."""
+    emb = _CountingEmbedder()
+    qdrant = AsyncMock()
+    qdrant.search = AsyncMock(return_value=[])
+    arango = _mock_arango()
+    arango.find_entities = MagicMock(return_value=[_entity("hub", "CMDB", degree=5000)])
+    edges = [_edge(str(i), "hub", f"n{i}") for i in range(250)]
+    for i, e in enumerate(edges):
+        e["source_quote"] = f"distinct quote {i}"
+    arango.neighbors_stratified = MagicMock(return_value=_stratified(edges))
+    res = await enrich(
+        query="CMDB",
+        entity_hints=["CMDB"],
+        top_k=3,
+        edge_budget=10,
+        embedding_client=emb,
+        qdrant_client=qdrant,
+        arango_client=arango,
+    )
+    assert (
+        "relevance scoring unavailable — selection degraded to confidence order"
+        not in res["warnings"]
+    )
+    assert emb.batches == [100, 100, 50]

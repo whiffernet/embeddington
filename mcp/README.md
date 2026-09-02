@@ -136,7 +136,7 @@ headed.
 | `kg_find_entities(text, limit)`           | Fuzzy-match entity names; relevance-ranked, hub entities win.                                                         | No                   |
 | `kg_get_entity(entity_id)`                | Fetch one full entity document by its `_id`.                                                                          | No                   |
 | `kg_neighbors(entity_id, depth, types)`   | Traverse connected entities + edges around a node (depth 1–3).                                                        | No                   |
-| `kg_path(from_id, to_id, max_hops)`       | Shortest path between two known entities.                                                                             | No                   |
+| `kg_path(from_id, to_id, max_hops)`       | Shortest usable path between two entities; suppresses release-mediated paths and abstains (with the hub named) instead of returning a hub-mediated one. | No                   |
 | `kg_schema()`                             | List the entity types and relationship predicates in the graph.                                                       | No                   |
 
 `vector_search` and `enrich` embed the query first, so they need `EMBED_URL`

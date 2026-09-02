@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.12.0 — 2026-09-02
+
+Read-path Track 1 (KG v3 spec §6; whiffernet/llamaindex #117), re-synced from upstream
+claudegraph. `sync_mcp.sh` is now the only way `mcp/` changes.
+
+- BEHAVIORAL: `kg_path` may now return `{nodes: [], edges: [], abstained: true, reason, hubs}`
+  — release-mediated candidates are suppressed and hub-mediated ones (an intermediate
+  vertex above degree 1000) are refused instead of narrated. `no_path` unchanged.
+- `kg_find_entities` seeds from the `entities_v2_search` view when it exists (prod:
+  522 ms full scan → tens of ms); consumer installs without the view keep the scan.
+- `kg_neighbors` tie-breaks within a confidence band by provenance count then
+  per-predicate rank before the row cap.
+- `enrich` chunks its `/embed` call at 100 quotes; large pools no longer degrade to
+  confidence order.
+- Measurement apparatus: `fetch_paths()` records `abstained` as its own outcome.
+
 ## v0.11.26 — 2026-09-02
 
 Schema **3.0.0**. Baseline `baseline-2026-09` re-roots the diff chain.

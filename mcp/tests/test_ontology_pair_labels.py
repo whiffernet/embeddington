@@ -38,6 +38,8 @@ def test_fetch_paths_renders_a_real_path():
         {
             "n": 1,
             "no_path": False,
+            "abstained": False,
+            "reason": "",
             "path_text": "From1 (Feature)  --[CONTAINS]-->  To1 (Product)",
             "hop_count": 1,
         }
@@ -49,7 +51,16 @@ def test_fetch_paths_records_no_path():
     fake_arango = MagicMock()
     fake_arango.shortest_path.return_value = None
     result = O.fetch_paths([_pair(1)], fake_arango)
-    assert result == [{"n": 1, "no_path": True, "path_text": "", "hop_count": None}]
+    assert result == [
+        {
+            "n": 1,
+            "no_path": True,
+            "abstained": False,
+            "reason": "",
+            "path_text": "",
+            "hop_count": None,
+        }
+    ]
 
 
 def test_fetch_paths_preserves_pair_order_for_multiple_pairs():
@@ -228,3 +239,50 @@ def test_finalize_stage_noise_floor_comparable_count_matches_flip_rate_denominat
     # Pair 2 is comparable to pair 1 (both labeled); pair 4 is pre_fix_no_path
     # so it has no label and is excluded -- only one comparable duplicate.
     assert snapshot["noise_floor_comparable_count"] == 1
+
+
+def test_fetch_paths_records_abstention_as_its_own_outcome():
+    from ontology_pair_labels import fetch_paths
+
+    class _Arango:
+        def shortest_path(self, from_id, to_id, max_hops):
+            if from_id.endswith("hubby"):
+                return {
+                    "nodes": [],
+                    "edges": [],
+                    "abstained": True,
+                    "reason": "3 candidate path(s) within 4 hops, none usable: ...",
+                    "hubs": [
+                        {
+                            "id": "entities_v2/role__admin",
+                            "name": "admin",
+                            "type": "Role",
+                            "degree": 26602,
+                        }
+                    ],
+                }
+            return None
+
+    rows = fetch_paths(
+        [
+            {"n": 1, "from_id": "entities_v2/hubby", "to_id": "entities_v2/b"},
+            {"n": 2, "from_id": "entities_v2/a", "to_id": "entities_v2/b"},
+        ],
+        _Arango(),
+    )
+    assert rows[0] == {
+        "n": 1,
+        "no_path": False,
+        "abstained": True,
+        "reason": "3 candidate path(s) within 4 hops, none usable: ...",
+        "path_text": "",
+        "hop_count": None,
+    }
+    assert rows[1] == {
+        "n": 2,
+        "no_path": True,
+        "abstained": False,
+        "reason": "",
+        "path_text": "",
+        "hop_count": None,
+    }
