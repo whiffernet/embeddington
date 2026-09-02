@@ -78,6 +78,33 @@ information is welcome to come to light here:
 | `ARANGO_USER`     | `root`                        | The Arango user the server authenticates as.                                |
 | `ARANGO_PASSWORD` | _(required)_                  | That user's password. No default — the server refuses to start without it.  |
 | `EMBED_URL`       | `http://localhost:8100/embed` | The local embedding service, producing 1024-dim `bge-m3` vectors.           |
+| `EXTRA_QDRANT_COLLECTIONS` | _(unset)_            | Optional. Additional collections to allow, as `name:embed_index` pairs.     |
+
+### Serving a differently-named collection
+
+> _"Over the line!"_ — the allowlist, on a collection name it was never told about.
+
+`EXTRA_QDRANT_COLLECTIONS` is empty by default, and a normal install never needs it — your
+local collection is called `technology` and that name is already allowed.
+
+It exists for deployments whose Qdrant holds the corpus under a different name. The value is a
+comma-separated list of `collection:embed_index` pairs:
+
+```
+EXTRA_QDRANT_COLLECTIONS=technology_v2:technology
+DEFAULT_QDRANT_COLLECTION=technology_v2
+```
+
+**The two halves of a pair are different things.** The left is the Qdrant *collection*; the
+right is the `/embed` *index token* that selects the encoder. They are usually the same string,
+which is why the distinction is easy to miss — but if the embed index does not resolve to the
+model that produced the stored vectors, queries are embedded by the wrong encoder. bge-large and
+bge-m3 are both 1024-dim, so **nothing raises**. No error, no warning, just answers that have
+wandered off. A score collapse is the only symptom — you are not wrong, you are just
+un-encoded.
+
+Set the collection in the allowlist before pointing `DEFAULT_QDRANT_COLLECTION` at it — the
+server refuses to start if its default names a collection that is not allowed.
 
 Use LAN hostnames instead of `localhost` if Claude runs on a different machine
 than the data services.

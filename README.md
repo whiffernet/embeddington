@@ -89,21 +89,28 @@ you where to look. The docs are still the truth.
 
 > _"There's a lot of strands to keep in old Duder's head."_
 
-These are the counts of the current published baseline, **`baseline-2026-07c`** — and, with
+These are the counts of the current published baseline, **`baseline-2026-09`** — and, with
 no diffs published on top of it yet, exactly what a fresh install restores today. They'll
 grow when the next baseline or diff batch is published.
 
 | Metric                                      | Count       |
 | ------------------------------------------- | ----------- |
-| Vectors (Qdrant chunks, `bge-m3`, 1024-dim) | **171,733** |
-| Entities (graph nodes)                      | **338,804** |
-| Relationships / triples (graph edges)       | **759,923** |
+| Vectors (Qdrant chunks, `bge-m3`, 1024-dim) | **70,102**  |
+| Entities (graph nodes)                      | **355,523** |
+| Relationships / triples (graph edges)       | **809,806** |
 | Entity types                                | 14          |
 | Relationship predicates                     | 14          |
 | Avg. relationships per entity               | ~2.2        |
 
 Each edge is one subject–predicate–object triple, so "relationships" and "triples" are the
 same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
+
+> _"I'm the Dude. So that's what you call me."_ — one document, one id, every time.
+
+Every chunk is **one current version of one document** — no superseded copies, so a search
+never hands you back two versions of the same page. Chunk ids are derived from the document
+path and release, so when a document changes, its new chunks take the old ones' place instead
+of piling up beside them. One rug, not a stack of them.
 
 ---
 
@@ -363,10 +370,17 @@ after an update on a low-RAM box, that's the first knob to turn.
 </details>
 
 Most runs are tiny — just the newer diffs. The exception is a **re-baseline**: after the
-publisher compacts history, the next update does a full restore — it rebuilds the Qdrant
-collection from the baseline's manifest config and streams every point back in, then
-restores the Arango dump on top (several minutes; the same few-hundred-MB download as any
-other baseline). That's expected, not an error. Run it on whatever schedule you like — a
+publisher compacts history, the next update does a full restore — it **drops and recreates**
+the local Qdrant collection from the baseline's manifest config, streams every point back in,
+then restores the Arango dump on top (several minutes; the same few-hundred-MB download as any
+other baseline). That's expected, not an error.
+
+> _"This aggression will not stand, man."_ — your old chunks, overruled. A baseline is a
+> complete statement of the corpus, not a suggestion.
+
+A baseline restore **replaces** your local collection rather than merging into it — anything
+already stored is cleared first. Merging would leave the previous generation sitting alongside
+the new one, two copies of every document, and nobody wants that in their rug. Run it on whatever schedule you like — a
 daily cron, say — to stay current.
 
 What it prints. **First run** (or the first run after a new baseline is cut) restores the
@@ -374,9 +388,9 @@ whole graph:
 
 ```
 Embeddington update complete.
-  Action:  restored full baseline (baseline-2026-07c)
-  Loaded:  171,733 vectors · 338,804 entities · 759,923 edges
-  Version: fd852b53bb07998ddc8e385971c25b94028fdf62
+  Action:  restored full baseline (baseline-2026-09)
+  Loaded:  70,102 vectors · 355,523 entities · 809,806 edges
+  Version: ts-161fc74e847211ad
   Diffs:   0 applied on top of the baseline
   Note:    a one-time full re-download is expected after a compaction — existing
            installs re-restore the latest baseline in a single step.
@@ -398,6 +412,12 @@ Embeddington update complete.
 
 A baseline restore reporting `Diffs: 0` is a **success**, not a no-op — it means the baseline
 it just loaded was already current. Nothing more to fetch, man.
+
+`baseline-2026-09` **re-rooted the chain**: it is the new root, and the diffs that chained onto
+the previous baselines were dropped rather than carried forward. Those described the old corpus,
+which this baseline replaces wholesale — applying them on top would have layered yesterday's
+deltas onto today's content, and that's a whole new can of worms. So `Diffs: 0` is expected here
+for a while, until daily publishing appends new ones.
 
 ---
 
@@ -770,6 +790,25 @@ with a per-issue adversarial audit; the full record lives in
 Every installer *failure* prints an `[EMB-nn]` code with a fix line already attached — find
 yours below for the full story. The first entry has no code at all, because it happens after
 an install that worked.
+
+#### `SchemaVersionError: manifest schema major 3 exceeds supported 2`
+
+> _"You're out of your element."_ — your client, politely, about a manifest it doesn't speak.
+
+Your install predates the schema-3 release (2026-09-01) and the published manifest is now
+3.0.0. **This is the update refusing to run rather than applying a baseline it does not
+understand** — a deliberate stop, not corruption. Nothing local is damaged, man.
+
+The fix is the ordinary update, which pulls the newer code and then applies the baseline:
+
+```bash
+# run from: your clone
+embeddington-setup --yes
+```
+
+Schema 3 is where baseline restores became **replace** rather than merge. An older client
+applying a 3.0.0 baseline would have merged it into your existing collection, leaving two
+generations of every document — which is precisely what the version gate exists to prevent.
 
 #### "I installed it, but I don't see embeddington in Claude"
 
