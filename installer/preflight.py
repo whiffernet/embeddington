@@ -8,6 +8,8 @@ import socket
 import sys
 from dataclasses import dataclass
 
+from installer import docker_probe
+
 
 @dataclass(frozen=True)
 class CheckResult:
@@ -103,12 +105,11 @@ def run_preflight(run, http_get, *, disk_path, version_info=None, disk_usage=Non
                 )
             )
 
-    docker = run(["docker", "info"])
-    results.append(
-        CheckResult(
-            "docker",
-            docker.rc == 0,
-            "daemon reachable" if docker.rc == 0 else "not reachable",
-        )
-    )
+    # Bounded, and diagnosed: an unreachable daemon reports the reason docker gave
+    # (a dead socket, a stale context, no answer in time) rather than the bare
+    # "not reachable" that sent users to debug the wrong layer. Costs two extra
+    # read-only calls, and only on the failure path.
+    info = docker_probe.docker_info(run)
+    diag = docker_probe.diagnose(run, info)
+    results.append(CheckResult("docker", info.rc == 0, docker_probe.short_detail(diag)))
     return results

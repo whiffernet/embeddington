@@ -6,14 +6,29 @@ never conflated ([CRITIC]: a missing package must not be reported as the user sa
 no); the ladder never uninstalls or reconfigures an existing runtime; and success means
 BOTH `docker info` and `docker compose version` work, because several install routes
 ship without the compose v2 plugin and every later step runs `docker compose <cmd>`.
+
+Finding a runtime that is already here comes BEFORE offering to install one. A docker
+that exists on disk but isn't on this shell's PATH used to read as "no container runtime
+found", and the user was offered an install of the runtime they already had — the
+reported shape being OrbStack, whose CLI lives in ~/.orbstack/bin and reaches PATH only
+through a shell-init edit that a non-login shell never reads. When such a binary is found
+(sensed, or pointed at by the user) its directory goes on this PROCESS's PATH: every
+later `docker compose` call resolves, and cron._docker_dir() records the right directory
+for the nightly job. The user's shell profile is never touched — the ladder reconfigures
+nothing on their behalf, it just uses what is there for the duration of the run.
+
+Diagnosis happens exactly once, on the first failing `docker info`, and the result is
+threaded down. Probing inside the poll loop would spend two subprocess calls every five
+seconds to re-learn the same fact.
 """
 
 import getpass
+import os
 import sys
 import time
 from pathlib import Path
 
-from installer import ui
+from installer import docker_probe, ui
 from installer.errors import SetupError
 
 POLL_SECONDS = 5
@@ -35,7 +50,84 @@ def detect_platform(*, sys_platform=None, proc_version_text=None):
 
 
 def _docker_ok(run):
+    """Cheap liveness check for the poll loop — rc only, never a diagnosis."""
     return run(["docker", "info"]).rc == 0
+
+
+def _put_on_path(console, env, path):
+    """Make an off-PATH docker usable for this process and everything it spawns.
+
+    Process-local by design: children inherit os.environ, so `docker compose` in
+    stack.py and `shutil.which("docker")` in cron.py both start working, while the
+    user's shell profile is left exactly as they had it.
+    """
+    directory = str(Path(path).parent)
+    env["PATH"] = directory + os.pathsep + env.get("PATH", "")
+    console.print(
+        f"[green]Found docker at [bold]{path}[/bold][/green] — it isn't on this shell's "
+        "PATH, so I'll use it for this run and record its location in the nightly job.\n"
+        "  [dim]To make it permanent, add its directory to your shell profile.[/dim]"
+    )
+
+
+def _adopt_sensed(console, exists, env, home):
+    """Look for a docker binary on disk and adopt it. Returns the Path, or None.
+
+    Only locations that were actually stat'd are ever named — nothing is suggested on
+    the strength of being a likely spot (see docker_probe).
+    """
+    found = docker_probe.find_docker_binary(exists=exists, home=home, env=env)
+    if found is None:
+        return None
+    _put_on_path(console, env, found)
+    return found
+
+
+def _adopt_from_user(console, run, exists, env, input_fn):
+    """Ask where an existing runtime lives, validate it, adopt it.
+
+    Reached only from the macOS menu, and only when sensing found nothing: on Linux
+    a distro docker lands in /usr/bin, which is on every PATH worth the name, so the
+    prompt would be a tax on the common "genuinely nothing installed" case.
+
+    Raises:
+        SetupError: EMB-22 when the path is empty, absent, or doesn't run as a client.
+            Not EMB-20 — the user did not decline anything, they aimed and missed.
+    """
+    console.print("Where is it? Full path to the docker binary, e.g. ~/.orbstack/bin/docker")
+    console.print("> ", end="")
+    raw = input_fn().strip()
+    path = Path(raw).expanduser() if raw else None
+    if path is None or not exists(path):
+        raise SetupError(
+            "EMB-22",
+            f"There's no docker binary at {raw or '(nothing entered)'}.",
+            "In a shell where docker works, `which docker` prints the path — use that, "
+            "or set EMBEDDINGTON_DOCKER_BIN to it, then re-run the installer.",
+        )
+    # `--version` is client-side: it confirms this is a working docker CLI without
+    # requiring a live daemon, which is very often exactly what is missing here.
+    if run([str(path), "--version"]).rc != 0:
+        raise SetupError(
+            "EMB-22",
+            f"{path} exists but doesn't run as a docker client.",
+            "Point me at the docker CLI itself (not a wrapper or an app bundle), "
+            "then re-run the installer.",
+        )
+    _put_on_path(console, env, path)
+    return path
+
+
+def _report_diagnosis(console, diag):
+    """Show what could be established about a daemon that isn't answering.
+
+    Silent when there was nothing to establish — an empty block would only pad the
+    failure with unknowns.
+    """
+    if diag is None:
+        return
+    for line in docker_probe.summary_lines(diag):
+        console.print(f"  [dim]{line}[/dim]")
 
 
 def _start_cmd(which):
@@ -45,8 +137,14 @@ def _start_cmd(which):
     return ["sudo", "service", "docker", "start"]
 
 
-def _wait_for_daemon(console, run, sleep, wait_seconds):
-    """Poll `docker info` until success or timeout (EMB-21)."""
+def _wait_for_daemon(console, run, sleep, wait_seconds, diag=None):
+    """Poll `docker info` until success or timeout (EMB-21).
+
+    Args:
+        diag: the DockerDiagnosis from the first failing info call, when there was one.
+            Its detail is folded into the error so the user isn't told to start a daemon
+            that has been running the whole time — they're shown the socket we dialed.
+    """
     waited = 0
     with console.status("[cyan]Waiting for the Docker daemon... The Dude abides.[/cyan]"):
         while waited < wait_seconds:
@@ -54,15 +152,21 @@ def _wait_for_daemon(console, run, sleep, wait_seconds):
                 return
             sleep(POLL_SECONDS)
             waited += POLL_SECONDS
+    detail = "\n".join(docker_probe.summary_lines(diag)) if diag else ""
+    hint = docker_probe.context_hint(diag) if diag else ""
+    headline = f"The Docker daemon didn't answer within {wait_seconds} seconds."
     raise SetupError(
         "EMB-21",
-        f"The Docker daemon didn't come up within {wait_seconds} seconds.",
-        "Start it manually (open OrbStack/Docker Desktop, or `colima start`, or "
-        "`sudo systemctl start docker`), then re-run the installer.",
+        f"{headline}\n\n{detail}" if detail else headline,
+        (
+            "Start it manually (open OrbStack/Docker Desktop, or `colima start`, or "
+            "`sudo systemctl start docker`), then re-run the installer."
+            + (f" {hint}" if hint else "")
+        ),
     )
 
 
-def _wait_with_group_check(console, run, *, assume_yes, input_fn, sleep, wait_seconds):
+def _wait_with_group_check(console, run, *, assume_yes, input_fn, sleep, wait_seconds, diag=None):
     """_wait_for_daemon, but a socket-permission denial gets the docker-group fix.
 
     [CRITIC] On a fresh Linux install the invoking user is NOT in the docker group, so
@@ -74,7 +178,7 @@ def _wait_with_group_check(console, run, *, assume_yes, input_fn, sleep, wait_se
     a decline (or a failure) re-raises the original wait error unchanged.
     """
     try:
-        _wait_for_daemon(console, run, sleep, wait_seconds)
+        _wait_for_daemon(console, run, sleep, wait_seconds, diag)
     except SetupError:
         console.print(
             "[yellow]The daemon may be up but unreachable as your user — a read-only "
@@ -131,19 +235,27 @@ def _consented(console, run, cmd, *, assume_yes, input_fn, sudo_note=False):
     return "ok" if run(cmd, stream=True).rc == 0 else "failed"
 
 
-def _manual_start_wait(console, run, assume_yes, input_fn, sleep, wait_seconds):
-    """Advise how to start an installed-but-down daemon, then poll for it."""
+def _manual_start_wait(console, run, assume_yes, input_fn, sleep, wait_seconds, diag=None):
+    """Advise how to start an installed-but-down daemon, then poll for it.
+
+    The diagnosis is shown BEFORE the prompt, not after the timeout: a user whose client
+    is dialing a socket left behind by an uninstalled Docker Desktop would otherwise
+    stare at a perfectly healthy OrbStack for the whole wait before learning anything.
+    """
     console.print(
         "[yellow]Docker is installed but the daemon isn't answering.[/yellow] "
         "Start it (open OrbStack/Docker Desktop, `colima start`, or "
         "`sudo systemctl start docker`) — I'll wait. Press Enter when you've kicked it."
     )
+    _report_diagnosis(console, diag)
+    if diag and docker_probe.context_hint(diag):
+        console.print(f"  [yellow]{docker_probe.context_hint(diag)}[/yellow]")
     if not assume_yes:
         input_fn()
-    _wait_for_daemon(console, run, sleep, wait_seconds)
+    _wait_for_daemon(console, run, sleep, wait_seconds, diag)
 
 
-def _macos_ladder(console, run, *, assume_yes, which, input_fn, sleep, wait_seconds):
+def _macos_ladder(console, run, *, assume_yes, which, input_fn, sleep, wait_seconds, exists, env):
     if which("brew") is None:
         raise SetupError(
             "EMB-22",
@@ -153,17 +265,24 @@ def _macos_ladder(console, run, *, assume_yes, which, input_fn, sleep, wait_seco
         )
     choice = ui.choose(
         console,
-        "No container runtime found. Which one shall we set up?",
+        "I couldn't find a container runtime on your PATH or in the usual places. "
+        "Which one shall we set up?",
         [
             ("o", "OrbStack — fast, native, free for personal use (I can install this one)"),
             ("c", "Colima — open source (manual: two commands + one config line)"),
             ("d", "Docker Desktop — the classic (manual download)"),
+            ("p", "I already have one — it's just not on my PATH (I'll ask where)"),
             ("n", "none of these — I'll handle it myself"),
         ],
         default_key="o",
         assume_yes=assume_yes,
         input_fn=input_fn,
     )
+    if choice == "p":
+        _adopt_from_user(console, run, exists, env, input_fn)
+        if not _docker_ok(run):
+            _manual_start_wait(console, run, assume_yes, input_fn, sleep, wait_seconds)
+        return
     if choice == "o":
         outcome = _consented(
             console,
@@ -309,6 +428,9 @@ def ensure_docker(
     input_fn=input,
     sleep=None,
     wait_seconds=120,
+    exists=None,
+    env=None,
+    home=None,
 ):
     """Return once `docker info` AND `docker compose version` succeed; else EMB-20/21/22/23.
 
@@ -322,14 +444,34 @@ def ensure_docker(
         os_release_text: /etc/os-release contents; injected in tests.
         input_fn: prompt reader.
         sleep / wait_seconds: daemon-poll knobs.
+        exists: callable(Path) -> bool for sensing an off-PATH runtime; injected in tests
+            so the suite never stats the real filesystem.
+        env: the environment to read PATH/DOCKER_HOST from and to extend when an
+            off-PATH docker is adopted (default: os.environ).
+        home: home directory for the "~"-relative candidates; injected in tests.
     """
     import shutil
 
     which = shutil.which if which is None else which
     sleep = time.sleep if sleep is None else sleep
+    exists = Path.exists if exists is None else exists
+    env = os.environ if env is None else env
+    home = Path.home() if home is None else Path(home)
 
-    if not _docker_ok(run):
-        if which("docker") is not None:
+    info = docker_probe.docker_info(run)
+
+    # Before offering to install anything: is one already here, just not on PATH?
+    adopted = None
+    if info.rc != 0 and which("docker") is None:
+        adopted = _adopt_sensed(console, exists, env, home)
+        if adopted is not None:
+            info = docker_probe.docker_info(run)
+
+    if info.rc != 0:
+        # One diagnosis per run, taken here and threaded down. rc 127 short-circuits
+        # inside diagnose(), so an absent binary costs no extra subprocess calls.
+        diag = docker_probe.diagnose(run, info, env=env)
+        if which("docker") is not None or adopted is not None:
             # Installed but the daemon is down.
             if platform in ("linux", "wsl2"):
                 outcome = _consented(
@@ -348,11 +490,14 @@ def ensure_docker(
                         input_fn=input_fn,
                         sleep=sleep,
                         wait_seconds=wait_seconds,
+                        diag=diag,
                     )
                 else:
-                    _manual_start_wait(console, run, assume_yes, input_fn, sleep, wait_seconds)
+                    _manual_start_wait(
+                        console, run, assume_yes, input_fn, sleep, wait_seconds, diag
+                    )
             else:
-                _manual_start_wait(console, run, assume_yes, input_fn, sleep, wait_seconds)
+                _manual_start_wait(console, run, assume_yes, input_fn, sleep, wait_seconds, diag)
         elif assume_yes:
             raise SetupError(
                 "EMB-20",
@@ -369,6 +514,8 @@ def ensure_docker(
                 input_fn=input_fn,
                 sleep=sleep,
                 wait_seconds=wait_seconds,
+                exists=exists,
+                env=env,
             )
         else:
             _linux_ladder(
