@@ -4,6 +4,8 @@
 
 Schema **3.0.0**. Baseline `baseline-2026-09` re-roots the diff chain.
 
+> _"New shit has come to light."_ Two breaking changes here — read them before you update.
+
 - **BREAKING: a baseline restore now REPLACES the local collection.** It drops
   and recreates before applying. Previously `create_collection` was a no-op when
   the collection already existed and the restore path was create+upsert only, so
@@ -29,7 +31,8 @@ Schema **3.0.0**. Baseline `baseline-2026-09` re-roots the diff chain.
 
   The vector count falls because the previous corpus carried multiple
   generations of the same document — 37 of 40 sampled documents held more than
-  one version of their content (producer-side issue). The 2026-09 corpus uses
+  one version of their content (producer-side issue). Fewer vectors, same
+  documents: the corpus lost the duplicates, not the content. The 2026-09 corpus uses
   deterministic chunk ids plus a post-ingest prune, so each document is present
   exactly once. Measured on the frozen query set, stale-citation rate went
   0.7963 → 0.0000 and duplicate generations within a `top_k` went 35 → 0.

@@ -82,6 +82,8 @@ information is welcome to come to light here:
 
 ### Serving a differently-named collection
 
+> _"That's, like, your opinion, man."_ — the allowlist, on what your collection is called.
+
 `EXTRA_QDRANT_COLLECTIONS` is empty by default, and a normal install never needs it — your
 local collection is called `technology` and that name is already allowed.
 
@@ -97,8 +99,9 @@ DEFAULT_QDRANT_COLLECTION=technology_v2
 right is the `/embed` *index token* that selects the encoder. They are usually the same string,
 which is why the distinction is easy to miss — but if the embed index does not resolve to the
 model that produced the stored vectors, queries are embedded by the wrong encoder. bge-large and
-bge-m3 are both 1024-dim, so **nothing raises**: you simply get near-orthogonal results, and a
-score collapse is the only symptom.
+bge-m3 are both 1024-dim, so **nothing raises**. No error, no warning, just answers that have
+wandered off. A score collapse is the only symptom — you are not wrong, you are just
+un-encoded.
 
 Set the collection in the allowlist before pointing `DEFAULT_QDRANT_COLLECTION` at it — the
 server refuses to start if its default names a collection that is not allowed.

@@ -105,10 +105,12 @@ grow when the next baseline or diff batch is published.
 Each edge is one subject–predicate–object triple, so "relationships" and "triples" are the
 same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
 
+> _"It really tied the room together."_
+
 Every chunk is **one current version of one document** — no superseded copies, so a search
-never returns two versions of the same page. Chunk ids are derived from the document path and
-release, which is what lets a re-ingest replace a document's chunks instead of accumulating
-alongside them.
+never hands you back two versions of the same page. Chunk ids are derived from the document
+path and release, so when a document changes, its new chunks take the old ones' place instead
+of piling up beside them. One rug, not a stack of them.
 
 ---
 
@@ -373,11 +375,12 @@ the local Qdrant collection from the baseline's manifest config, streams every p
 then restores the Arango dump on top (several minutes; the same few-hundred-MB download as any
 other baseline). That's expected, not an error.
 
-A baseline restore **replaces** your local collection rather than merging into it. That is
-deliberate: a baseline is a complete statement of the corpus, so anything already stored is
-removed first. Merging would leave the previous generation's points sitting alongside the new
-ones — two copies of every document, which is exactly the condition the 2026-09 corpus rebuild
-existed to remove. Run it on whatever schedule you like — a
+> _"Life does not start and stop at your convenience, you miserable piece of shit."_ Neither
+> does a baseline. It is a complete statement of the corpus, not a suggestion.
+
+A baseline restore **replaces** your local collection rather than merging into it — anything
+already stored is cleared first. Merging would leave the previous generation sitting alongside
+the new one, two copies of every document, and nobody wants that in their rug. Run it on whatever schedule you like — a
 daily cron, say — to stay current.
 
 What it prints. **First run** (or the first run after a new baseline is cut) restores the
@@ -412,8 +415,9 @@ it just loaded was already current. Nothing more to fetch, man.
 
 `baseline-2026-09` **re-rooted the chain**: it is the new root, and the diffs that chained onto
 the previous baselines were dropped rather than carried forward. Those described the old corpus,
-which this baseline replaces wholesale — applying them on top would have layered v1 deltas onto
-v2 content. So `Diffs: 0` is expected here for a while, until daily publishing appends new ones.
+which this baseline replaces wholesale — applying them on top would have layered yesterday's
+deltas onto today's content, and that's a whole new can of worms. So `Diffs: 0` is expected here
+for a while, until daily publishing appends new ones.
 
 ---
 
@@ -789,9 +793,11 @@ an install that worked.
 
 #### `SchemaVersionError: manifest schema major 3 exceeds supported 2`
 
+> _"You're out of your element."_ — your client, politely, about a manifest it doesn't speak.
+
 Your install predates the schema-3 release (2026-09-01) and the published manifest is now
 3.0.0. **This is the update refusing to run rather than applying a baseline it does not
-understand** — a deliberate stop, not corruption. Nothing local is damaged.
+understand** — a deliberate stop, not corruption. Nothing local is damaged, man.
 
 The fix is the ordinary update, which pulls the newer code and then applies the baseline:
 
