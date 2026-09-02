@@ -82,7 +82,7 @@ information is welcome to come to light here:
 
 ### Serving a differently-named collection
 
-> _"That's, like, your opinion, man."_ — the allowlist, on what your collection is called.
+> _"Nobody calls me Lebowski."_ — the allowlist, on what your collection may be called.
 
 `EXTRA_QDRANT_COLLECTIONS` is empty by default, and a normal install never needs it — your
 local collection is called `technology` and that name is already allowed.

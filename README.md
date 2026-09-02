@@ -105,7 +105,7 @@ grow when the next baseline or diff batch is published.
 Each edge is one subject–predicate–object triple, so "relationships" and "triples" are the
 same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
 
-> _"It really tied the room together."_
+> _"I'm the Dude. So that's what you call me."_ — one document, one id, every time.
 
 Every chunk is **one current version of one document** — no superseded copies, so a search
 never hands you back two versions of the same page. Chunk ids are derived from the document

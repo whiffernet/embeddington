@@ -4,7 +4,7 @@
 
 Schema **3.0.0**. Baseline `baseline-2026-09` re-roots the diff chain.
 
-> _"New shit has come to light."_ Two breaking changes here — read them before you update.
+> _"Strikes and gutters, ups and downs."_ Two breaking changes here — read them before you update.
 
 - **BREAKING: a baseline restore now REPLACES the local collection.** It drops
   and recreates before applying. Previously `create_collection` was a no-op when
