@@ -375,8 +375,8 @@ the local Qdrant collection from the baseline's manifest config, streams every p
 then restores the Arango dump on top (several minutes; the same few-hundred-MB download as any
 other baseline). That's expected, not an error.
 
-> _"Life does not start and stop at your convenience, you miserable piece of shit."_ Neither
-> does a baseline. It is a complete statement of the corpus, not a suggestion.
+> _"This aggression will not stand, man."_ — your old chunks, overruled. A baseline is a
+> complete statement of the corpus, not a suggestion.
 
 A baseline restore **replaces** your local collection rather than merging into it — anything
 already stored is cleared first. Merging would leave the previous generation sitting alongside
