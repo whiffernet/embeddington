@@ -38,6 +38,8 @@ def test_fetch_paths_renders_a_real_path():
         {
             "n": 1,
             "no_path": False,
+            "abstained": False,
+            "reason": "",
             "path_text": "From1 (Feature)  --[CONTAINS]-->  To1 (Product)",
             "hop_count": 1,
         }
@@ -49,7 +51,16 @@ def test_fetch_paths_records_no_path():
     fake_arango = MagicMock()
     fake_arango.shortest_path.return_value = None
     result = O.fetch_paths([_pair(1)], fake_arango)
-    assert result == [{"n": 1, "no_path": True, "path_text": "", "hop_count": None}]
+    assert result == [
+        {
+            "n": 1,
+            "no_path": True,
+            "abstained": False,
+            "reason": "",
+            "path_text": "",
+            "hop_count": None,
+        }
+    ]
 
 
 def test_fetch_paths_preserves_pair_order_for_multiple_pairs():
@@ -68,6 +79,30 @@ def test_build_score_marks_pre_fix_no_path_pairs_separately():
         "label": None,
         "no_path": True,
     }
+
+
+def test_build_score_marks_abstained_pairs_separately():
+    # Abstained (Track 1 kg_path: every candidate suppressed) has no embedding
+    # score or judge label -- it must not fall through to embedding_scores[n]
+    # or judge_labels[n] (KeyError) like a normal pathed pair would.
+    paths = [
+        {
+            "n": 1,
+            "no_path": False,
+            "abstained": True,
+            "reason": "1 candidate path(s) within 4 hops, none usable: 1 release-mediated",
+            "path_text": "",
+            "hop_count": None,
+        }
+    ]
+    result = O.build_score(paths, embedding_scores={}, judge_labels={})
+    assert result["pairs"][0] == {
+        "n": 1,
+        "status": "abstained",
+        "label": None,
+        "no_path": False,
+    }
+    assert result["escalated"] == []
 
 
 def test_build_score_routes_a_pathed_pair_through_consensus():
@@ -228,3 +263,111 @@ def test_finalize_stage_noise_floor_comparable_count_matches_flip_rate_denominat
     # Pair 2 is comparable to pair 1 (both labeled); pair 4 is pre_fix_no_path
     # so it has no label and is excluded -- only one comparable duplicate.
     assert snapshot["noise_floor_comparable_count"] == 1
+
+
+def test_fetch_paths_records_abstention_as_its_own_outcome():
+    from ontology_pair_labels import fetch_paths
+
+    class _Arango:
+        def shortest_path(self, from_id, to_id, max_hops):
+            if from_id.endswith("hubby"):
+                return {
+                    "nodes": [],
+                    "edges": [],
+                    "abstained": True,
+                    "reason": "3 candidate path(s) within 4 hops, none usable: ...",
+                    "hubs": [
+                        {
+                            "id": "entities_v2/role__admin",
+                            "name": "admin",
+                            "type": "Role",
+                            "degree": 26602,
+                        }
+                    ],
+                }
+            return None
+
+    rows = fetch_paths(
+        [
+            {"n": 1, "from_id": "entities_v2/hubby", "to_id": "entities_v2/b"},
+            {"n": 2, "from_id": "entities_v2/a", "to_id": "entities_v2/b"},
+        ],
+        _Arango(),
+    )
+    assert rows[0] == {
+        "n": 1,
+        "no_path": False,
+        "abstained": True,
+        "reason": "3 candidate path(s) within 4 hops, none usable: ...",
+        "path_text": "",
+        "hop_count": None,
+    }
+    assert rows[1] == {
+        "n": 2,
+        "no_path": True,
+        "abstained": False,
+        "reason": "",
+        "path_text": "",
+        "hop_count": None,
+    }
+
+
+def test_score_stage_excludes_abstained_pairs_from_judge_and_embedding_input(tmp_path, monkeypatch):
+    """_score_stage's pathed_ns must exclude abstained pairs, matching
+    _fetch_paths_stage's judge_input.json exclusion -- else
+    read_judge_output(expected_ns=pathed_ns) raises "missing labels" for the
+    abstained pair (never judged), and build_score raises KeyError routing it
+    through embedding_scores/judge_labels like a normal pathed pair.
+    """
+    monkeypatch.setattr(O, "ONTOLOGY_DIR", tmp_path)
+
+    extrinsic = {"pairs": [_pair(1), _pair(2)]}
+    (tmp_path / "extrinsic-pairs.json").write_text(json.dumps(extrinsic))
+
+    paths = [
+        {
+            "n": 1,
+            "no_path": False,
+            "abstained": False,
+            "reason": "",
+            "path_text": "A --[X]--> B",
+            "hop_count": 1,
+        },
+        {
+            "n": 2,
+            "no_path": False,
+            "abstained": True,
+            "reason": "1 candidate path(s) within 4 hops, none usable: 1 release-mediated",
+            "path_text": "",
+            "hop_count": None,
+        },
+    ]
+    (tmp_path / "pair-paths.json").write_text(json.dumps(paths))
+
+    import ontology_embedding_signal as S
+    import ontology_judge_io as J
+
+    seen_expected_ns = {}
+
+    def fake_read_judge_output(path, expected_ns):
+        seen_expected_ns["value"] = set(expected_ns)
+        return {n: "meaningful" for n in expected_ns}
+
+    async def fake_score_pairs(pairs, pool_names, client):
+        return {p["n"]: {"sim": 0.9, "pct": 0.95, "vote": "good"} for p in pairs}
+
+    monkeypatch.setattr(J, "read_judge_output", fake_read_judge_output)
+    monkeypatch.setattr(S, "score_pairs", fake_score_pairs)
+
+    O._score_stage(write=True)
+
+    # pathed_ns handed to read_judge_output (and to score_pairs via
+    # pathed_pairs) excludes the abstained pair -- it was never sent to the
+    # judge in the first place.
+    assert seen_expected_ns["value"] == {1}
+
+    scored = json.loads((tmp_path / "scored-pairs.json").read_text())
+    by_n = {p["n"]: p for p in scored["pairs"]}
+    assert by_n[1]["status"] == "auto"
+    assert by_n[2] == {"n": 2, "status": "abstained", "label": None, "no_path": False}
+    assert scored["escalated"] == []

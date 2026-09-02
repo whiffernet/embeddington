@@ -95,12 +95,16 @@ try:
     from .qdrant_client import QdrantSearchClient
 except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    import config  # type: ignore[no-redef]
-    from arango_client import ArangoError, ArangoKGClient  # type: ignore[no-redef]
-    from embedding_client import EmbeddingClient  # type: ignore[no-redef]
-    from enrich import _vector_side as _hybrid_vector_side  # type: ignore[no-redef]
-    from enrich import enrich as _enrich_impl  # type: ignore[no-redef]
-    from qdrant_client import QdrantSearchClient  # type: ignore[no-redef,attr-defined]
+    import config  # type: ignore[no-redef,import-not-found]
+    from arango_client import ArangoError, ArangoKGClient  # type: ignore[no-redef,import-not-found]
+    from embedding_client import EmbeddingClient  # type: ignore[no-redef,import-not-found]
+    from enrich import (  # type: ignore[no-redef,import-not-found]
+        _vector_side as _hybrid_vector_side,
+    )
+    from enrich import enrich as _enrich_impl  # type: ignore[no-redef,import-not-found]
+    from qdrant_client import (  # type: ignore[no-redef,attr-defined,import-not-found]
+        QdrantSearchClient,
+    )
 
 # --- Logging — stderr only (stdout reserved for MCP stdio) ----------------
 logging.basicConfig(
@@ -339,7 +343,10 @@ def _startup_staleness_notice() -> Optional[str]:
     deployment), there is simply nothing to say.
     """
     try:
-        from installer import update_record
+        # The installer package ships alongside mcp/ in embeddington; claudeGraph
+        # is a standalone repo with no such package, so this is unresolvable to
+        # mypy here (not just absent at runtime) — suppressed accordingly.
+        from installer import update_record  # type: ignore[import-not-found]
     except ImportError:
         return None
     try:
@@ -755,16 +762,16 @@ async def kg_path(
     open-ended neighborhood exploration use ``kg_neighbors`` instead.
     Returns ``{nodes:[], edges:[]}`` if no path exists within ``max_hops``.
 
-    Hub caveat — apply this before describing any path as a relationship. A path routed
-    through a very high-degree node usually means both endpoints touch something popular,
-    not that they are related to each other. Measured on this graph: the large majority of
-    paths between arbitrary entities are hub-mediated, and for most such pairs there is no
-    hub-free route at all within 4 hops — the hub IS the only connection. So: a short path
-    over specific, meaningful predicates is a real relationship, and worth stating as one;
-    a path that hops through an obvious hub is weak evidence, and saying so (naming the
-    node doing the connecting) is more useful than narrating a story around it. ``no_path``
-    is a legitimate answer — report it rather than raising ``max_hops`` until something
-    appears.
+    Abstention (measured, not advisory): the server now enumerates candidate
+    paths, drops any routed through a Release node (release co-occurrence is
+    not a relationship — labeled bad 5/5), and refuses to return a path whose
+    intermediate vertices include a hub above degree 1000 (hub-mediated paths
+    were labeled bad ~86%). When every candidate is suppressed the response is
+    ``{nodes: [], edges: [], abstained: true, reason, hubs}`` — report that as
+    the answer, naming the hub(s) in ``hubs`` if useful; do not retry with a
+    larger ``max_hops`` to make something appear. ``no_path`` is likewise a
+    legitimate answer. A returned path is one over specific predicates with no
+    hub in the middle, so it is worth stating as a relationship.
 
     Grounding: path edges carry `source_quote` (verbatim, citable),
     `extraction_type`, and `releases` (but not `confidence`). Cite the quote,
@@ -776,7 +783,8 @@ async def kg_path(
         max_hops: Maximum number of hops to search (1-6).
 
     Returns:
-        dict with keys nodes, edges, optional no_path flag, and optional error.
+        dict with keys nodes, edges, optional no_path flag, optional
+        abstained/reason/hubs, and optional error.
     """
     try:
         result = _get_arango().shortest_path(from_id, to_id, max_hops=max_hops)

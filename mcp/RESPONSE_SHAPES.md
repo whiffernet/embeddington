@@ -5,7 +5,7 @@ consume embeddington (as a registered MCP, by importing the modules, or by
 hand-rolling clients against the same data), diff your assumptions against this
 file. It is versioned with the code, so `git pull` keeps it current.
 
-- **Current as of:** `v0.10.0` (embeddington repo line — see `CHANGELOG.md` at
+- **Current as of:** `v0.12.0` (embeddington repo line — see `CHANGELOG.md` at
   the repo root, which is now the git-tag-synced authority going forward).
 - Version tags sprinkled through this doc's body (`upstream v0.3.4`,
   `upstream v0.3.5`, `upstream v0.3.7`) predate embeddington's own version
@@ -130,7 +130,7 @@ guard for missing keys).
 | `kg_find_entities(text, limit=10)`                                   | `{entities: [entity], count}`                                                                                                                         |
 | `kg_get_entity(entity_id)`                                           | `{entity: <full doc> \| null}`                                                                                                                        |
 | `kg_neighbors(entity_id, depth=1, types?, limit=100)`                | `{nodes: [node], edges: [edge], truncation: {truncated, available, returned}}`                                                                        |
-| `kg_path(from_id, to_id, max_hops=4)`                                | `{nodes: [node], edges: [path_edge]}`                                                                                                                 |
+| `kg_path(from_id, to_id, max_hops=4)`                                | `{nodes: [node], edges: [path_edge]}` — or the abstention envelope below                                                                              |
 | `kg_schema()`                                                        | `{entity_types: [str], predicates: [str]}`                                                                                                            |
 
 `enrich`'s `predicates` param (v0.3.0) is an optional relationship-predicate
@@ -215,6 +215,7 @@ PR 4's review).
 - `enrich` `errors` is a **dict keyed by side** (`qdrant` / `arango`), `{}` on full success. The two sides run in parallel and fail independently — you can get `vector_chunks` with an `arango` error present. Total-KG-failure (e.g. `find_entities` itself unreachable) sets `errors.arango`; a single concept's expansion failing does not — see the `match.error` field instead, which scopes to that concept only.
 - `kg_get_entity` not found → `{entity: null, error: "entity not found"}`.
 - `kg_path` no path → `{nodes: [], edges: [], no_path: true}` (distinct from `error`).
+- `kg_path` abstention → `{nodes: [], edges: [], abstained: true, reason: "<n> candidate path(s) within <max_hops> hops, none usable: <r> release-mediated (suppressed), <s> cross an intermediate vertex above degree 1000", hubs: [{id, name, type, degree}, ...]}`. Distinct from `no_path` (no candidate at all) and from `error`. `hubs` lists the over-ceiling intermediate vertices, highest degree first; it is empty when only release suppression fired.
 - `kg_neighbors` / `kg_path` / `kg_find_entities` failure → same keys + `error` (for `kg_neighbors` this includes a stub `truncation: {truncated: false, available: null, returned: 0}`).
 
 ---
@@ -252,7 +253,7 @@ PR 4's review).
 ```
 
 - ⚠️ The legacy `description` key was **removed in upstream v0.3.5** (it was empty corpus-wide).
-- **Ordering (upstream v0.3.7):** `find_entities` results are relevance-ranked — exact name match, then prefix, then substring; ties broken by graph degree (descending). So `entities[0]` is the core hub entity, not an arbitrary peripheral match. This is what `enrich` seeds KG traversal from.
+- **Ordering (upstream v0.3.7):** `find_entities` results are relevance-ranked — exact name match, then prefix, then substring; ties broken by graph degree (descending). So `entities[0]` is the core hub entity, not an arbitrary peripheral match. This is what `enrich` seeds KG traversal from. Since the view-seeded query (Track 1, 2026-09): the ranking is exact > prefix > substring > prose-token match, and the degree tie-break is applied over at most the top 200 BM25-ranked candidates rather than every substring match, so the ordering among low-rank substring hits beyond that cap can differ from the scan; the top hits for exact and prefix needles are unchanged. Installs without the `entities_v2_search` view keep the scan query.
 - **`degree` (v0.3.0):** graph degree (1-hop edge count, any direction), computed once at `find_entities` time and carried through to `enrich`'s `match.variants[]`. It's the ranking tiebreaker for `find_entities` and, when an `enrich` call has no `predicates` filter, the estimate basis for `match.truncation.available` (see the `match` sub-shape below).
 - `kg_get_entity` returns the **full doc** instead — richer: `{id, canonical_key, name, type, source_documents, schema_version, updated_at, releases}` (no `degree` — that field is only computed by `find_entities`'s ranking traversal).
 
@@ -344,7 +345,7 @@ block below reflects `kg_neighbors`/`match.nodes[]`.
 } // verbatim, <=240 chars
 ```
 
-**Ordering (upstream v0.3.7):** `kg_neighbors` edges come back **highest-`confidence` first**, so when `limit` truncates a large (hub) neighborhood it keeps the most-reliable edges rather than an arbitrary slice. `match.edges[]` (enrich) is selected differently, and changed again in `v0.6.0` (#36): quotes from every candidate edge are batch-embedded once per call (`embed_batch`, in-process LRU-cached — repeated quotes across concepts or calls cost nothing extra) and cosine-scored against the query vector. Selection is then two-phase per concept: pass 1 spends a **diversity quota** — `EMBEDDINGTON_DIVERSITY_QUOTA` fraction of that concept's slots (default `0.40`) — walking predicates in relevance order and taking the best edge per distinct predicate, so a minority predicate's most-relevant edge still survives; pass 2 fills the remaining slots by relevance rank. Quota picks are emitted first, so if the response-ceiling trim later pops tail edges it sacrifices diversity last, not first. **Degradation:** if the batched embed call fails for any reason, selection falls back loudly to the pre-`v0.6.0` order (predicate-floor pass, then confidence-desc fill — byte-identical to `v0.5.1`) and `warnings` gets the exact string `"relevance scoring unavailable — selection degraded to confidence order"`; it is never a silent fallback. `enrich` stays depth-1 (a real hub already yields hundreds–thousands of depth-1 edges); for true multi-hop "how does A connect to B", use `kg_path`.
+**Ordering (upstream v0.3.7):** `kg_neighbors` edges come back ordered by **`confidence` desc, then provenance count desc (`LENGTH(releases)` on v2 — the graph has no provenance array yet; v3 sorts on `LENGTH(provenance)`), then per-predicate rank asc** (Track 1, 2026-09), so when `limit` truncates a hub the cap keeps the most-reliable, best-attested edges and interleaves predicates within a tied confidence band instead of returning one predicate's slice. On hubs whose depth-N neighborhood exceeds 5,000 candidate rows, the ranking is computed over the top 5,000 by confidence/provenance (`NEIGHBORS_POOL_CAP`) rather than the full traversal, to keep hub memory bounded at any depth. `match.edges[]` (enrich) is selected differently, and changed again in `v0.6.0` (#36): quotes from every candidate edge are batch-embedded once per call (`embed_batch`, in-process LRU-cached — repeated quotes across concepts or calls cost nothing extra) and cosine-scored against the query vector. Selection is then two-phase per concept: pass 1 spends a **diversity quota** — `EMBEDDINGTON_DIVERSITY_QUOTA` fraction of that concept's slots (default `0.40`) — walking predicates in relevance order and taking the best edge per distinct predicate, so a minority predicate's most-relevant edge still survives; pass 2 fills the remaining slots by relevance rank. Quota picks are emitted first, so if the response-ceiling trim later pops tail edges it sacrifices diversity last, not first. **Degradation:** if the batched embed call fails for any reason, selection falls back loudly to the pre-`v0.6.0` order (predicate-floor pass, then confidence-desc fill — byte-identical to `v0.5.1`) and `warnings` gets the exact string `"relevance scoring unavailable — selection degraded to confidence order"`; it is never a silent fallback. `enrich` stays depth-1 (a real hub already yields hundreds–thousands of depth-1 edges); for true multi-hop "how does A connect to B", use `kg_path`.
 
 ### `path_edge` (kg_path `edges[]`) — leaner than `edge`
 
@@ -359,6 +360,17 @@ block below reflects `kg_neighbors`/`match.nodes[]`.
   "source_quote": "...",
 } // NO id, NO confidence
 ```
+
+### `kg_path` abstention (Track 1, 2026-09)
+
+`kg_path` no longer returns the raw shortest path. It enumerates up to 20 candidate paths
+in ascending length, drops any longer than `max_hops`, suppresses any whose intermediate
+vertices include a `Release` node, and returns the first whose intermediates are all at or
+below degree **1000** (`PATH_HUB_DEGREE_CEILING`; derived from the prod degree distribution
+— median 1, p999 236, max 26,602 — so only the top few dozen vertices count as hubs).
+Endpoints may be hubs. If candidates exist but none survive, the response is the abstention
+envelope above. Consumers should present `abstained` as the answer ("these connect only
+through `role__admin`") rather than retrying with a larger `max_hops`.
 
 ---
 

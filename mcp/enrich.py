@@ -20,18 +20,24 @@ try:
     from .arango_client import ArangoError
     from .qdrant_client import QdrantError
 except ImportError:
-    from arango_client import ArangoError  # type: ignore[no-redef]
-    from qdrant_client import QdrantError  # type: ignore[no-redef,attr-defined]
+    from arango_client import ArangoError  # type: ignore[no-redef,import-not-found]
+    from qdrant_client import QdrantError  # type: ignore[no-redef,attr-defined,import-not-found]
 
 try:
     from . import budget as _budget
     from . import grounding, hybrid
 except ImportError:
-    import budget as _budget  # type: ignore[no-redef]
-    import grounding  # type: ignore[no-redef]
-    import hybrid  # type: ignore[no-redef]
+    import budget as _budget  # type: ignore[no-redef,import-not-found]
+    import grounding  # type: ignore[no-redef,import-not-found]
+    import hybrid  # type: ignore[no-redef,import-not-found]
 
 logger = logging.getLogger("embeddington.enrich")
+
+# The llamaindex /embed endpoint's own cap (app.py: HTTP 400 "Maximum 100 texts per
+# request") — a fixed server limit, not a tunable. A pool of a few concepts' quotes exceeds
+# it routinely; before this, the whole call failed and selection silently fell back to
+# confidence order (35x per arm in the corpus bakeoff).
+EMBED_BATCH_LIMIT = 100
 
 # Multi-word capitalized phrase: "Hardware Asset Management"
 _REGEX_CAPITALIZED_SEQ = re.compile(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b")
@@ -159,6 +165,33 @@ class _Arango(Protocol):
     def count_edges(self, entity_id: str, predicates: Optional[list[str]] = None) -> int: ...
 
 
+async def _embed_in_batches(
+    embedding_client: _Embed, texts: list[str], batch: int = EMBED_BATCH_LIMIT
+) -> list[list[float]]:
+    """Embed ``texts`` in input order using requests of at most ``batch`` texts.
+
+    Args:
+        embedding_client: Client with async ``embed_batch``.
+        texts: Strings to embed; may exceed the endpoint's per-request cap.
+        batch: Per-request cap (the /embed endpoint rejects more than 100).
+
+    Returns:
+        One vector per input text, in input order.
+
+    Raises:
+        ValueError: If a request returns a different number of vectors than it was sent.
+        EmbeddingError: Propagated from the client on HTTP failure.
+    """
+    out: list[list[float]] = []
+    for i in range(0, len(texts), batch):
+        chunk = texts[i : i + batch]
+        vecs = await embedding_client.embed_batch(chunk)
+        if len(vecs) != len(chunk):
+            raise ValueError(f"embed_batch returned {len(vecs)} vectors for {len(chunk)} texts")
+        out.extend(vecs)
+    return out
+
+
 async def enrich(
     query: str,
     entity_hints: Optional[list[str]],
@@ -202,7 +235,8 @@ async def enrich(
         top_k: Number of vector chunks to retrieve.
         edge_budget: Total KG edge slots to split across matched concepts.
         predicates: Optional predicate allowlist to scope KG expansion.
-        embedding_client: Client with async embed() and embed_batch() methods.
+        embedding_client: Client with async embed() and embed_batch() methods;
+            embed_batch is called in chunks of EMBED_BATCH_LIMIT.
         qdrant_client: Client with async search() method.
         arango_client: Client with sync find_entities(), neighbors_stratified(),
             and count_edges() methods.
@@ -270,7 +304,7 @@ async def enrich(
             q_vec = vector_result.get("vector")
             if q_vec is None:
                 q_vec = await embedding_client.embed(query)
-            quote_vecs = await embedding_client.embed_batch(quotes)
+            quote_vecs = await _embed_in_batches(embedding_client, quotes)
             relevance = {}
             for sq, v in zip(quotes, quote_vecs):
                 score = _cosine(q_vec, v)

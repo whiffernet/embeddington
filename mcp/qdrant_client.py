@@ -78,7 +78,7 @@ class QdrantSearchClient:
         collection: str,
         timeout: float = 30.0,
         api_key: Optional[str] = None,
-        transport: Optional[httpx.BaseTransport] = None,
+        transport: Optional[httpx.AsyncBaseTransport] = None,
     ) -> None:
         self.url = url.rstrip("/")
         self.collection = collection

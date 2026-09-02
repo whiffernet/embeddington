@@ -187,7 +187,36 @@ async def test_kg_neighbors_forwards_explicit_limit(monkeypatch):
 async def test_kg_path_returns_path():
     fn = await _fn("kg_path")
     result = await fn(from_id="entities_v2/x", to_id="entities_v2/y")
-    assert "nodes" in result
+    assert "nodes" in result and "abstained" not in result
+
+
+@pytest.mark.asyncio
+async def test_kg_path_passes_abstention_through(monkeypatch):
+    fake = MagicMock()
+    fake.shortest_path = MagicMock(
+        return_value={
+            "nodes": [],
+            "edges": [],
+            "abstained": True,
+            "reason": "2 candidate path(s) within 4 hops, none usable: ...",
+            "hubs": [
+                {"id": "entities_v2/role__admin", "name": "admin", "type": "Role", "degree": 26602}
+            ],
+        }
+    )
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake)
+    fn = await _fn("kg_path")
+    result = await fn(from_id="entities_v2/x", to_id="entities_v2/y")
+    assert result["abstained"] is True and "no_path" not in result
+    assert result["hubs"][0]["id"] == "entities_v2/role__admin"
+
+
+@pytest.mark.asyncio
+async def test_kg_path_description_mentions_abstention():
+    from server import kg_path as tool
+
+    doc = (getattr(tool, "description", None) or tool.__doc__ or "").lower()
+    assert "abstain" in doc
 
 
 @pytest.mark.asyncio

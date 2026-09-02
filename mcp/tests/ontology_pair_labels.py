@@ -37,23 +37,32 @@ def fetch_paths(pairs: list[dict], arango: Any) -> list[dict]:
         arango: An ArangoKGClient (or compatible fake) with shortest_path(from_id, to_id, max_hops).
 
     Returns:
-        One dict per pair, in input order: ``{"n", "no_path", "path_text", "hop_count"}``.
-        ``hop_count`` is the number of edges in the path, or None when there is no path.
+        One dict per pair, in input order: ``{"n", "no_path", "abstained", "reason", "path_text",
+        "hop_count"}``. ``abstained`` is the Track 1 kg_path outcome (every candidate
+        suppressed); ``hop_count`` is the edge count of a returned path, else None.
     """
     results = []
     for pair in pairs:
         path = arango.shortest_path(pair["from_id"], pair["to_id"], max_hops=4)
+        row = {
+            "n": pair["n"],
+            "no_path": False,
+            "abstained": False,
+            "reason": "",
+            "path_text": "",
+            "hop_count": None,
+        }
         if path is None:
-            results.append({"n": pair["n"], "no_path": True, "path_text": "", "hop_count": None})
+            row["no_path"] = True
+        elif path.get("abstained"):
+            # Track 1 kg_path: candidates existed but every one was hub- or release-mediated.
+            # Scored as its own status — it is neither a path to judge nor a pre-fix no_path.
+            row["abstained"] = True
+            row["reason"] = path.get("reason", "")
         else:
-            results.append(
-                {
-                    "n": pair["n"],
-                    "no_path": False,
-                    "path_text": R.render_path(path),
-                    "hop_count": len(path["edges"]),
-                }
-            )
+            row["path_text"] = R.render_path(path)
+            row["hop_count"] = len(path["edges"])
+        results.append(row)
     return results
 
 
@@ -77,7 +86,10 @@ def build_score(
 
     Returns:
         ``{"pairs": [{"n", "status", "label", "no_path"}, ...], "escalated": [n, ...]}``.
-        ``status`` is one of "pre_fix_no_path", "auto", "escalate".
+        ``status`` is one of "pre_fix_no_path", "abstained", "auto", "escalate".
+        An abstained pair (Track 1 kg_path: every candidate suppressed) has no
+        embedding score or judge label to route -- like pre_fix_no_path, it is
+        recorded as its own status rather than falling through to consensus.
     """
     result_pairs = []
     escalated = []
@@ -87,6 +99,9 @@ def build_score(
             result_pairs.append(
                 {"n": n, "status": "pre_fix_no_path", "label": None, "no_path": True}
             )
+            continue
+        if path.get("abstained"):
+            result_pairs.append({"n": n, "status": "abstained", "label": None, "no_path": False})
             continue
         vote = embedding_scores[n]["vote"]
         judge_label = judge_labels[n]
@@ -285,12 +300,16 @@ def _fetch_paths_stage(write: bool) -> None:
         out = ONTOLOGY_DIR / "pair-paths.json"
         out.write_text(json.dumps(paths, indent=2) + "\n")
         no_path_count = sum(1 for p in paths if p["no_path"])
-        print(f"wrote {out}: {len(paths)} pairs, {no_path_count} pre-fix no_path")
+        abstained_count = sum(1 for p in paths if p["abstained"])
+        print(
+            f"wrote {out}: {len(paths)} pairs, {no_path_count} pre-fix no_path, "
+            f"{abstained_count} abstained"
+        )
 
         judge_entries = []
         pairs_by_n = {p["n"]: p for p in extrinsic["pairs"]}
         for path in paths:
-            if path["no_path"]:
+            if path["no_path"] or path["abstained"]:
                 continue
             pair = pairs_by_n[path["n"]]
             judge_entries.append(
@@ -319,7 +338,7 @@ def _score_stage(write: bool) -> None:
     extrinsic = _load_json(ONTOLOGY_DIR / "extrinsic-pairs.json")
     paths = _load_json(ONTOLOGY_DIR / "pair-paths.json")
     pairs_by_n = {p["n"]: p for p in extrinsic["pairs"]}
-    pathed_ns = {p["n"] for p in paths if not p["no_path"]}
+    pathed_ns = {p["n"] for p in paths if not p["no_path"] and not p["abstained"]}
     judge_labels = J.read_judge_output(ONTOLOGY_DIR / "judge_output.json", expected_ns=pathed_ns)
 
     import config

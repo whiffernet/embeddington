@@ -47,7 +47,7 @@ class EmbeddingClient:
         url: str,
         index: Optional[str] = None,
         timeout: float = 30.0,
-        transport: Optional[httpx.BaseTransport] = None,
+        transport: Optional[httpx.AsyncBaseTransport] = None,
         cache_size: int = 4096,
     ) -> None:
         self.url = url
