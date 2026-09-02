@@ -86,7 +86,10 @@ def build_score(
 
     Returns:
         ``{"pairs": [{"n", "status", "label", "no_path"}, ...], "escalated": [n, ...]}``.
-        ``status`` is one of "pre_fix_no_path", "auto", "escalate".
+        ``status`` is one of "pre_fix_no_path", "abstained", "auto", "escalate".
+        An abstained pair (Track 1 kg_path: every candidate suppressed) has no
+        embedding score or judge label to route -- like pre_fix_no_path, it is
+        recorded as its own status rather than falling through to consensus.
     """
     result_pairs = []
     escalated = []
@@ -96,6 +99,9 @@ def build_score(
             result_pairs.append(
                 {"n": n, "status": "pre_fix_no_path", "label": None, "no_path": True}
             )
+            continue
+        if path.get("abstained"):
+            result_pairs.append({"n": n, "status": "abstained", "label": None, "no_path": False})
             continue
         vote = embedding_scores[n]["vote"]
         judge_label = judge_labels[n]
@@ -332,7 +338,7 @@ def _score_stage(write: bool) -> None:
     extrinsic = _load_json(ONTOLOGY_DIR / "extrinsic-pairs.json")
     paths = _load_json(ONTOLOGY_DIR / "pair-paths.json")
     pairs_by_n = {p["n"]: p for p in extrinsic["pairs"]}
-    pathed_ns = {p["n"] for p in paths if not p["no_path"]}
+    pathed_ns = {p["n"] for p in paths if not p["no_path"] and not p["abstained"]}
     judge_labels = J.read_judge_output(ONTOLOGY_DIR / "judge_output.json", expected_ns=pathed_ns)
 
     import config
