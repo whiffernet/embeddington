@@ -271,12 +271,37 @@ async def _isolation_sanity_check() -> None:
 
     leaks: list[str] = []
 
-    for collection in config.ALLOWED_QDRANT_COLLECTIONS:
-        if not await qdrant.can_read_collection(collection):
-            leaks.append(
-                f"Qdrant collection '{collection}' is unreachable "
-                f"(check QDRANT_URL and that the collection exists)"
-            )
+    probe_kwargs = {
+        "retries": config.STARTUP_PROBE_RETRIES,
+        "backoff": config.STARTUP_PROBE_RETRY_BACKOFF,
+        "timeout": config.STARTUP_PROBE_TIMEOUT,
+        "deadline": config.STARTUP_PROBE_DEADLINE,
+    }
+
+    # Run the fatal probes CONCURRENTLY. They are independent, and on the usual
+    # single-host deployment a restart takes them down together — running them
+    # in sequence would make the worst case the SUM of their deadlines, which
+    # is what pushes startup past the MCP client's own init timeout.
+    collections = sorted(config.ALLOWED_QDRANT_COLLECTIONS)
+    qdrant_results, embed_result = await asyncio.gather(
+        asyncio.gather(*(qdrant.probe_collection(c, **probe_kwargs) for c in collections)),
+        _get_embed().probe(**probe_kwargs),
+    )
+
+    for collection, (ok, detail) in zip(collections, qdrant_results):
+        if not ok:
+            # Carry the probe's own diagnosis into the fatal message. The
+            # generic "check QDRANT_URL and that the collection exists" this
+            # replaces sent an operator hunting a config bug during what was
+            # actually a host outage.
+            leaks.append(f"Qdrant collection '{collection}' is not readable — {detail}")
+
+    # Every vector query embeds its input first, so an unreachable or misrouted
+    # embedder leaves the server as useless as an unreachable Qdrant — and used
+    # to boot clean, failing only later on each individual query.
+    embed_ok, embed_detail = embed_result
+    if not embed_ok:
+        leaks.append(f"Embedding endpoint is not usable — {embed_detail}")
 
     if leaks:
         msg = "Refusing to start:\n  " + "\n  ".join(leaks)
@@ -284,8 +309,8 @@ async def _isolation_sanity_check() -> None:
         raise SystemExit(msg)
 
     logger.info(
-        "Sanity check passed: Qdrant collections %s reachable",
-        sorted(config.ALLOWED_QDRANT_COLLECTIONS),
+        "Sanity check passed: Qdrant collections %s reachable, embed endpoint usable",
+        collections,
     )
 
     try:
@@ -315,14 +340,7 @@ async def _isolation_sanity_check() -> None:
             exc,
         )
 
-    try:
-        await _get_embed().embed("startup probe")  # raises on unreachable OR wrong dims
-        logger.info("Embed probe passed")
-    except Exception as exc:  # noqa: BLE001 — probe must never block startup
-        logger.warning(
-            "Embed probe FAILED: %s — vector search will fail until EMBED_URL is reachable/correct",
-            exc,
-        )
+    logger.info("Embed probe passed")
 
 
 # Staleness notice: set on first use, delivered once, then never again for this process.

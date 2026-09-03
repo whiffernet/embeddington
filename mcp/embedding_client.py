@@ -16,6 +16,11 @@ from typing import Optional
 
 import httpx
 
+try:
+    from .probe import probe_with_retry
+except ImportError:  # pragma: no cover — flat-layout import fallback
+    from probe import probe_with_retry  # type: ignore[no-redef] # noqa: F401
+
 logger = logging.getLogger("embeddington.embedding")
 
 EXPECTED_DIM = 1024
@@ -62,6 +67,68 @@ class EmbeddingClient:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(timeout=self.timeout, transport=self._transport)
         return self._client
+
+    async def probe(
+        self,
+        retries: int = 0,
+        backoff: float = 1.0,
+        timeout: Optional[float] = None,
+        deadline: Optional[float] = None,
+    ) -> tuple[bool, str]:
+        """Probe whether the /embed endpoint is reachable and well-configured.
+
+        Backs the fatal startup check in `_isolation_sanity_check`. Every
+        vector query embeds its input first, so an unreachable or misrouted
+        embedder makes the server as useless as an unreachable Qdrant — it is
+        checked, and fails startup, on the same terms.
+
+        Verifies the response dimension too: an endpoint that answers with the
+        wrong-size vector is serving a different model than the one that built
+        the collection, which yields orthogonal garbage rather than an error.
+
+        Args:
+            retries: Additional attempts after a retryable transport failure.
+            backoff: Seconds before the first retry; doubles each attempt.
+            timeout: Per-attempt timeout override.
+            deadline: Total seconds to spend across all attempts.
+
+        Returns:
+            ``(ok, detail)``. ``detail`` explains the failure, empty when ok.
+        """
+        client = await self._http()
+        body: dict[str, object] = {"texts": ["startup probe"]}
+        if self.index is not None:
+            body["index"] = self.index
+        request_timeout = self.timeout if timeout is None else timeout
+
+        async def attempt() -> tuple[bool, str]:
+            resp = await client.post(self.url, json=body, timeout=request_timeout)
+            if resp.status_code != 200:
+                return False, (
+                    f"{self.url} answered HTTP {resp.status_code}: "
+                    f"{resp.text[:200]} — check EMBED_URL and that index "
+                    f"{self.index!r} exists"
+                )
+            try:
+                vec = resp.json()["embeddings"][0]
+            except (KeyError, IndexError, ValueError) as exc:
+                return False, f"{self.url} returned a malformed response: {exc}"
+            if len(vec) != EXPECTED_DIM:
+                return False, (
+                    f"{self.url} returned {len(vec)} dims, expected {EXPECTED_DIM} "
+                    f"— index {self.index!r} is served by a different model than "
+                    f"the one that built the collection"
+                )
+            return True, ""
+
+        return await probe_with_retry(
+            attempt,
+            target=self.url,
+            what="Embed endpoint",
+            retries=retries,
+            backoff=backoff,
+            deadline=deadline,
+        )
 
     async def embed(self, text: str) -> list[float]:
         """Embed a single text and return its vector.
