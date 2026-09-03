@@ -799,7 +799,17 @@ with a per-issue adversarial audit; the full record lives in
 Every command the wizard runs — and the error from any that fails — is appended to
 `~/.local/share/embeddington/run.log` (or `$EMBEDDINGTON_HOME/run.log`). So is the
 Python environment bootstrap from `install.sh`, so a failed install and a failed run
-land in one place. The nightly update job writes there too, which is usually the only
+land in one place. Each run opens with the revision it is about to run and whether the
+code update succeeded, so the log answers "which version was this?" without anyone
+having to ask:
+
+```
+=== embeddington run 2026-09-03T14:17:07-0700 ===
+2026-09-03T14:17:07-0700  clone /Users/you/embeddington at v0.12.6 — code update: ok
+```
+
+A `code update: failed` there means the clone could not fast-forward and the run used
+older code than you were expecting — `git -C <clone> status` shows what is in the way. The nightly update job writes there too, which is usually the only
 way to find out that it has been failing quietly. It's trimmed to its last megabyte
 each run, so it won't grow on you.
 
