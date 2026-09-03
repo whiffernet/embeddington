@@ -59,10 +59,26 @@ def _put_on_path(console, env, path):
 
     Process-local by design: children inherit os.environ, so `docker compose` in
     stack.py and `shutil.which("docker")` in cron.py both start working, while the
-    user's shell profile is left exactly as they had it.
+    user's shell profile is left exactly as they had it. cron.py reading the mutated
+    environment is what gets the right directory into the nightly job's PATH= prefix —
+    a chain that depends on ensure_docker running before install_cron, and is pinned by
+    test_adopted_directory_reaches_the_cron_line.
+
+    APPENDED, not prepended. We only get here when shutil.which("docker") already came
+    back empty, so there is no competing docker to order against and appending resolves
+    the same binary — while prepending would put a directory we do not own ahead of every
+    one of the user's for the rest of the process, shadowing whatever else it contains.
+    It is also what the runtime's own vendor does; OrbStack's shell init, read from a
+    reporting user's machine, is exactly:
+
+        export PATH="$PATH":/Users/<user>/.orbstack/bin
+        fpath+=/Users/<user>/.orbstack/shell/completions/zsh
+
+    That is also the evidence for adopting PATH and nothing else: no DOCKER_HOST, no
+    context override, so there is no socket to fix up alongside it. Checked, not assumed.
     """
     directory = str(Path(path).parent)
-    env["PATH"] = directory + os.pathsep + env.get("PATH", "")
+    env["PATH"] = env.get("PATH", "") + os.pathsep + directory
     console.print(
         f"[green]Found docker at [bold]{path}[/bold][/green] — it isn't on this shell's "
         "PATH, so I'll use it for this run and record its location in the nightly job.\n"
