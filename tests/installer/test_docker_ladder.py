@@ -5,6 +5,7 @@ that needs "docker stays down" must queue enough DOWN results explicitly.
 """
 
 import io
+from pathlib import Path
 
 import pytest
 from rich.console import Console
@@ -409,7 +410,7 @@ def test_adopting_puts_the_binarys_directory_on_path_for_children():
     """stack.py's `docker compose` and cron.py's which() both depend on this."""
     env = {"PATH": "/usr/bin"}
     ensure(FakeRun([DOWN, UP, OK]), which=lambda n: None, exists=only_orbstack, env=env)
-    assert env["PATH"].split(":")[0] == "/home/tester/.orbstack/bin"
+    assert env["PATH"].split(":")[-1] == "/home/tester/.orbstack/bin"
 
 
 def test_env_override_is_adopted_by_the_ladder():
@@ -420,7 +421,7 @@ def test_env_override_is_adopted_by_the_ladder():
         exists=lambda p: str(p) == "/opt/weird/docker",
         env=env,
     )
-    assert env["PATH"].split(":")[0] == "/opt/weird"
+    assert env["PATH"].split(":")[-1] == "/opt/weird"
 
 
 def test_adopted_runtime_with_a_down_daemon_starts_the_wait_not_the_menu():
@@ -445,7 +446,7 @@ def test_pointing_at_a_valid_binary_adopts_it_and_installs_nothing():
     assert err is None
     assert f"{CUSTOM} --version" in joined(run)
     assert not any("brew" in c for c in joined(run))
-    assert env["PATH"].split(":")[0] == "/opt/custom/bin"
+    assert env["PATH"].split(":")[-1] == "/opt/custom/bin"
 
 
 def test_pointing_at_nothing_is_emb22_and_names_the_path():
@@ -516,3 +517,44 @@ def test_a_hung_daemon_reads_as_a_timeout_not_a_missing_runtime():
     )
     assert "no answer within the timeout" in out
     assert "Which one shall we set up?" not in out
+
+
+# --- the adopted directory must survive all the way into the nightly job (#129) ---
+
+
+def test_adopted_directory_reaches_the_cron_line():
+    """[CRITIC] #120 claimed adoption "records its location in the nightly job" and
+    nothing pinned it. The chain holds only because ensure_docker (cli.py) runs BEFORE
+    install_cron, and because cron._docker_dir resolves through shutil.which — which
+    reads os.environ live rather than a PATH captured at import. Reorder those, or
+    capture the PATH, and the nightly job silently stops finding docker: it then fails
+    every night into a log nobody reads, which is the exact failure class #119 was about.
+    """
+    from installer import cron
+
+    env = {"PATH": "/usr/bin:/bin"}
+    ensure(FakeRun([DOWN, UP, OK]), which=lambda n: None, exists=only_orbstack, env=env)
+
+    # Stand in for shutil.which reading the environment ensure_docker just mutated.
+    def which_from(name):
+        for directory in env["PATH"].split(":"):
+            if directory == "/home/tester/.orbstack/bin" and name == "docker":
+                return ORB
+        return None
+
+    line = cron.cron_line(Path("/home/tester/embeddington"), which=which_from)
+    assert "PATH=/home/tester/.orbstack/bin:$PATH" in line
+
+
+def test_adoption_appends_rather_than_shadowing_the_users_own_tools():
+    """OrbStack's own shell init appends (`export PATH="$PATH":~/.orbstack/bin`), and so
+    should we. Adoption only happens when which("docker") already returned None, so there
+    is no competing docker to order against — and prepending would put a directory we do
+    not own ahead of every one of the user's for the rest of the process.
+    """
+    env = {"PATH": "/usr/bin:/bin"}
+    ensure(FakeRun([DOWN, UP, OK]), which=lambda n: None, exists=only_orbstack, env=env)
+
+    entries = env["PATH"].split(":")
+    assert entries[0] == "/usr/bin", entries
+    assert entries[-1] == "/home/tester/.orbstack/bin", entries
