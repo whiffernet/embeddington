@@ -169,3 +169,49 @@ def test_main_journals_the_commands_its_steps_run(tmp_path, monkeypatch):
 
     body = (tmp_path / "state" / runlog.LOG_NAME).read_text()
     assert "git" in body and "rev-parse" in body
+
+
+def test_compose_failure_diagnostics_reach_the_journal(tmp_path):
+    """The wiring, end to end: stack.compose_up hands its stdout-only evidence to note,
+    cli._production_deps points note at the journal, and it lands in the file."""
+    from installer import cli
+
+    log = runlog.open_log(tmp_path / "state")
+    run = FakeRun(
+        [
+            RunResult(17, "", ""),
+            RunResult(0, "arango   Exited (1)\n", ""),
+            RunResult(0, "arango | FATAL cannot allocate memory\n", ""),
+        ]
+    )
+    deps = cli._production_deps(tmp_path, object(), run, lambda text: runlog.note(log, text))
+    try:
+        deps["compose_up"](None)
+    except Exception as exc:
+        assert getattr(exc, "code", None) == "EMB-31"
+
+    body = (tmp_path / "state" / runlog.LOG_NAME).read_text()
+    assert "EMB-31 diagnostics" in body
+    assert "cannot allocate memory" in body
+
+
+def test_stack_module_does_not_import_the_journal():
+    """stack.py takes a note callable precisely so it stays free of this layer.
+
+    Checked against the import graph, not the text: the docstring names runlog.note as
+    the production wiring, and that reference is the point.
+    """
+    import ast
+    import inspect
+
+    from installer import stack
+
+    tree = ast.parse(inspect.getsource(stack))
+    imported = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            imported.add(node.module or "")
+            imported.update(f"{node.module}.{a.name}" for a in node.names)
+    assert not any("runlog" in name for name in imported), imported

@@ -964,6 +964,13 @@ or Qdrant/ArangoDB didn't answer within the store timeout. Fix what compose
 complained about (ports, disk, daemon) — or check `docker compose ps` and
 `docker compose logs` in `consumer/` — then re-run; it picks up where it left off.
 
+You don't have to catch it live. When compose fails, the service states and the last
+100 lines of container output are written to the run log, so a container that started
+and then died leaves its reason behind — the low-RAM case where arango won't stay up
+being the common one. **That's the file to send if you want a hand.** (An *image build*
+failure is the exception: it happens before any container exists, so only the terminal
+output above has it.)
+
 **Not the same as `unknown`.** If `embeddington-setup --check` reports the containers (or
 `embed`) as **`unknown — Docker isn't answering`**, that is not this error: the daemon never
 replied, so nothing could be asked about the containers at all. Start Docker — open

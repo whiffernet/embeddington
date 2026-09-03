@@ -39,7 +39,7 @@ def _repo_root():
     return Path(__file__).resolve().parent.parent
 
 
-def _production_deps(repo_root, args, run=None):
+def _production_deps(repo_root, args, run=None, note=None):
     """The real step functions, partially applied with production wiring.
 
     Args:
@@ -49,10 +49,14 @@ def _production_deps(repo_root, args, run=None):
             main() passes a journaled wrapper here — runner.run is the installer's only
             subprocess chokepoint, so threading it through this one parameter puts every
             command the wizard fires into the run log.
+        note: callable(str) recording a free line in that same log (default: a no-op).
+            Steps whose evidence arrives on stdout — compose's own failure diagnostics —
+            have to hand it over explicitly; the run wrapper only keeps a stderr tail.
     """
     from consumer import writers
 
     run = runner.run if run is None else run
+    note = (lambda _text: None) if note is None else note
 
     def counters():
         password = stack.read_password(repo_root / "consumer" / ".env")
@@ -111,7 +115,7 @@ def _production_deps(repo_root, args, run=None):
         ),
         "ensure_env": lambda _c: stack.ensure_env_file(repo_root / "consumer"),
         "read_password": lambda _c: stack.read_password(repo_root / "consumer" / ".env"),
-        "compose_up": lambda _c: stack.compose_up(run, repo_root / "consumer"),
+        "compose_up": lambda _c: stack.compose_up(run, repo_root / "consumer", note=note),
         "wait_for_services": lambda console: stack.wait_for_services(console, runner.http_get),
         "run_import": import_step.run_import,
         "proof_of_life": proof,
@@ -697,7 +701,9 @@ def main(argv=None, *, console=None, deps=None, input_fn=input):
     log = None
     if deps is None:
         log = runlog.open_log(_state_dir())
-        deps = _production_deps(repo_root, args, runlog.wrap(runner.run, log))
+        deps = _production_deps(
+            repo_root, args, runlog.wrap(runner.run, log), lambda text: runlog.note(log, text)
+        )
 
     ui.show_banner(console)
     try:

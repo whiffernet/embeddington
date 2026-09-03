@@ -2,7 +2,8 @@
 
 Password hygiene rules (Global Constraints): generated with secrets.token_urlsafe(24),
 file mode 0o600, an existing .env is never overwritten, and the value is never printed
-or logged anywhere in this module.
+or logged anywhere in this module — including out of container output this module
+captures on a failure, which is redacted against the known value before it is recorded.
 """
 
 import os
@@ -79,18 +80,94 @@ def read_password(env_file):
     )
 
 
-def compose_up(run, consumer_dir):
+LOG_TAIL_LINES = 100
+
+
+def _redact(text, secrets_):
+    """Blank every known secret value out of captured output.
+
+    Belt and braces. Nothing arangod prints today carries its root password, but the run
+    journal is documented as safe to share, and that promise should not rest on a
+    third-party container never echoing its own startup arguments.
+    """
+    for secret in secrets_:
+        if secret:
+            text = text.replace(secret, "***REDACTED***")
+    return text
+
+
+def _failure_diagnostics(run, consumer_dir):
+    """Ask compose what actually happened, read-only. Returns a text block, never raises.
+
+    `docker compose up` streams (see runner.run), so its output reaches the terminal and
+    nothing else — a container that started and then died leaves no trace at all. These
+    two answer the question after the fact.
+
+    [CRITIC] Deliberately NOT `docker compose config`: it interpolates the env file and
+    would print ARANGO_ROOT_PASSWORD straight into the journal.
+    """
+    block = []
+    for label, cmd in (
+        ("docker compose ps", ["docker", "compose", "ps"]),
+        (
+            f"docker compose logs --tail={LOG_TAIL_LINES}",
+            ["docker", "compose", "logs", f"--tail={LOG_TAIL_LINES}"],
+        ),
+    ):
+        try:
+            res = run(cmd, cwd=consumer_dir)
+        except OSError:
+            continue
+        # A diagnostic that fails is itself worth knowing (a daemon that died mid-build
+        # answers neither), but it must never displace the EMB-31 the user is waiting on.
+        body = (res.out or res.err).strip()
+        if body:
+            block.append(f"--- {label} (rc={res.rc}) ---\n{body}")
+    return "\n".join(block)
+
+
+def _known_passwords(consumer_dir, env=None):
+    """Every value the container could actually have been given. Never raises.
+
+    [CRITIC] BOTH sources, not just the file. `docker compose` resolves ${VAR} from the
+    SHELL ENVIRONMENT first and falls back to the .env file, so on a box where
+    ARANGO_ROOT_PASSWORD is exported the live value is not the one in consumer/.env —
+    redacting only the file would miss the value that is genuinely at risk. Found by
+    running this path against a real failing container, where compose interpolated an
+    exported value the file knew nothing about.
+    """
+    env = os.environ if env is None else env
+    found = [(env.get("ARANGO_ROOT_PASSWORD") or "").strip()]
+    try:
+        found.append(read_password(consumer_dir / ".env"))
+    except (SetupError, OSError):
+        pass
+    return [value for value in found if value]
+
+
+def compose_up(run, consumer_dir, *, note=None):
     """docker compose up -d --build, streamed live (the embed build takes 10-20 min).
 
     Args:
         run: Callable that executes a subprocess command (injected for testing).
         consumer_dir: Path where docker-compose.yml is located.
+        note: Callable(str) that records a line where support can read it (production:
+            runlog.note, partially applied in cli._production_deps). Optional, so this
+            module stays free of any import of the logging layer.
 
     Raises:
         SetupError: If docker compose exits with non-zero status (EMB-31).
     """
     result = run(["docker", "compose", "up", "-d", "--build"], cwd=consumer_dir, stream=True)
     if result.rc != 0:
+        if note is not None:
+            # The wrapper in runlog records a stderr tail for a FAILING call; these two
+            # succeed with their content on stdout, so it has to be handed over here.
+            detail = _redact(
+                _failure_diagnostics(run, consumer_dir), _known_passwords(consumer_dir)
+            )
+            if detail:
+                note(f"EMB-31 diagnostics\n{detail}")
         raise SetupError(
             "EMB-31",
             "docker compose up failed — the error is in the output just above.",
@@ -98,7 +175,9 @@ def compose_up(run, consumer_dir):
             "installer; it picks up where it left off — your existing data is untouched and, "
             "if the containers were already running, still queryable. If this box has under "
             "~5 GB RAM and arango won't stay up, lower ARANGO_MEMORY_CAP in consumer/.env "
-            "(e.g. 1G) and re-run.",
+            "(e.g. 1G) and re-run. What the containers themselves said is in the run log "
+            "(see the README's troubleshooting section) — that's the file to send if you "
+            "need a hand.",
         )
 
 
