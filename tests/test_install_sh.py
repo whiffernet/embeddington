@@ -285,3 +285,128 @@ def test_the_banner_is_the_first_thing_the_script_does():
     text = _INSTALL_SH.read_text()
     assert text.index("\nshow_banner\n") < text.index("command -v git")
     assert text.index("\nshow_banner\n") < text.index("Checking prerequisites")
+
+
+# --- the bootstrap journal: one log file, not two (#128) --------------------
+
+_RUNLOG = _ROOT / "installer" / "runlog.py"
+
+
+def _constants(*names):
+    """The named top-level assignments, verbatim from install.sh.
+
+    _extract() only lifts functions, and journal_append reads two module-level constants
+    — unbound under `set -u`. Taking them from the real file keeps the test honest rather
+    than restating values that could drift.
+    """
+    text = _INSTALL_SH.read_text()
+    lines = []
+    for name in names:
+        found = re.search(rf"^{name}=.*$", text, re.M)
+        assert found, f"install.sh no longer defines {name}"
+        lines.append(found.group(0))
+    return "\n".join(lines)
+
+
+def _journal(script, env=None):
+    """Run `script` with the journal functions from install.sh in scope."""
+    return _bash(
+        ["state_dir", "redact_secrets", "journal_append"],
+        script,
+        env=env,
+        prelude=_constants("JOURNAL_MARKER", "JOURNAL_MAX_BYTES"),
+    )
+
+
+def _env(state_dir, **extra):
+    return {
+        "HOME": "/home/someone",
+        "PATH": "/usr/bin:/bin",
+        "EMBEDDINGTON_HOME": str(state_dir),
+        **extra,
+    }
+
+
+def test_session_marker_matches_the_python_journal():
+    """install.sh appends to the same file installer/runlog.py writes, so the two must
+    agree on the session header — otherwise a shared log stops reading as one timeline.
+    Same class of duplication as the state-dir ladder above, pinned the same way."""
+    from installer import runlog
+
+    marker = re.search(r'^JOURNAL_MARKER="([^"]+)"', _INSTALL_SH.read_text(), re.M)
+    assert marker, "install.sh no longer defines JOURNAL_MARKER"
+    assert marker.group(1) == runlog.SESSION_MARKER
+
+
+def test_journal_append_writes_into_the_state_dir(tmp_path):
+    src = tmp_path / "boot.log"
+    src.write_text("Successfully installed embeddington\n")
+    out = _journal(
+        f'journal_append "{src}" "python environment bootstrap"; cat "$(state_dir)/run.log"',
+        env=_env(tmp_path / "state"),
+    )
+    assert "Successfully installed embeddington" in out
+    assert "python environment bootstrap" in out
+
+
+def test_journal_append_redacts_credentials_embedded_in_urls(tmp_path):
+    """[CRITIC] run.log is documented as safe to share and users are told to send it. pip
+    echoes its index URL on failure, and a corporate PIP_INDEX_URL routinely carries
+    basic-auth — so this content cannot be appended raw. Must happen shell-side: the
+    wizard's Python redaction does not exist yet at this point in the run."""
+    src = tmp_path / "boot.log"
+    src.write_text(
+        "Looking in indexes: https://svc-account:hunter2@pypi.internal.example/simple\n"
+        "ERROR: Could not find a version that satisfies the requirement\n"
+    )
+    out = _journal(
+        f'journal_append "{src}" "bootstrap"; cat "$(state_dir)/run.log"',
+        env=_env(tmp_path / "state"),
+    )
+    assert "hunter2" not in out
+    assert "svc-account" not in out
+    assert "REDACTED" in out
+    assert "pypi.internal.example" in out  # the host still has to be diagnosable
+
+
+def test_journal_append_never_aborts_the_install(tmp_path):
+    """install.sh runs under `set -euo pipefail`. An unwritable state dir must cost the
+    journal, never the install — runlog.py's first rule, honoured on the shell side."""
+    blocker = tmp_path / "state"
+    blocker.write_text("i am a file, not a directory")
+    src = tmp_path / "boot.log"
+    src.write_text("whatever\n")
+    assert _journal(f'journal_append "{src}" "x"; echo SURVIVED', env=_env(blocker)) == "SURVIVED"
+
+
+def test_journal_append_bounds_what_it_writes(tmp_path):
+    """A pathological pip failure must not evict the journal's history on its own."""
+    src = tmp_path / "boot.log"
+    src.write_text("".join(f"noise line {i}\n" for i in range(200_000)))
+    out = _journal(
+        f'journal_append "{src}" "bootstrap"; wc -c < "$(state_dir)/run.log"',
+        env=_env(tmp_path / "state"),
+    )
+    assert int(out) < 400_000, out
+
+
+def test_the_clone_no_longer_collects_its_own_log_file():
+    """The whole point of #128: one file to ask a user for, in a place that survives a
+    re-clone. A stray `>> install.log` would quietly restore the second one.
+
+    Comments are stripped first — the block explaining why the file went away naturally
+    names it, and an assertion that forbids discussing the change is not a useful one.
+    """
+    code = "\n".join(
+        line for line in _INSTALL_SH.read_text().splitlines() if not line.lstrip().startswith("#")
+    )
+    assert "install.log" not in code
+
+
+def test_the_ensurepip_probe_reads_only_this_run(tmp_path):
+    """Pre-existing bug this fixes: the old log was appended to across runs with `>>`, so
+    the ensurepip grep matched a venv failure the user had already fixed months ago and
+    misdiagnosed an unrelated pip error as a missing python3-venv."""
+    text = _INSTALL_SH.read_text()
+    assert re.search(r'grep -qi "ensurepip" "\$BOOTSTRAP_LOG"', text), text[-2000:]
+    assert re.search(r'\} > "\$BOOTSTRAP_LOG" 2>&1', text), "bootstrap log must be truncated"
