@@ -162,3 +162,121 @@ def test_detect_total_ram_uses_sysctl_on_macos(monkeypatch):
     monkeypatch.setattr(stack.os, "sysconf", lambda name: (_ for _ in ()).throw(ValueError()))
     ram = stack.detect_total_ram_bytes(lambda cmd, **k: RunResult(0, "17179869184\n", ""))
     assert ram == 17179869184
+
+
+# --- EMB-31 leaves evidence behind (#124) ---------------------------------------
+
+PS_OUT = "NAME      STATUS\nqdrant    Up 3 seconds\narango    Exited (1) 2 seconds ago\n"
+LOGS_OUT = "arango  | FATAL cannot allocate memory for the cache\narango  | exiting\n"
+
+
+def notes():
+    """A note sink standing in for runlog.note; returns (sink, collected)."""
+    collected = []
+    return collected.append, collected
+
+
+def fail_then_diagnose():
+    """compose up fails; the two read-only diagnostics answer."""
+    return FakeRun([RunResult(17, "", ""), RunResult(0, PS_OUT, ""), RunResult(0, LOGS_OUT, "")])
+
+
+def test_compose_failure_journals_service_state_and_container_logs(tmp_path):
+    """Today EMB-31 says "the error is in the output just above" — and above is the only
+    place it exists. A crash-looping container must leave its tail somewhere we can read."""
+    run = fail_then_diagnose()
+    note, collected = notes()
+    with pytest.raises(errors.SetupError):
+        stack.compose_up(run, tmp_path, note=note)
+
+    body = "\n".join(collected)
+    assert "Exited (1)" in body
+    assert "cannot allocate memory" in body
+
+
+def test_compose_failure_asks_compose_the_two_read_only_questions(tmp_path):
+    run = fail_then_diagnose()
+    with pytest.raises(errors.SetupError):
+        stack.compose_up(run, tmp_path, note=lambda _: None)
+
+    issued = [" ".join(c["cmd"]) for c in run.calls]
+    assert "docker compose ps" in issued
+    assert any(c.startswith("docker compose logs") for c in issued)
+    # [CRITIC] `docker compose config` interpolates and prints ARANGO_ROOT_PASSWORD.
+    assert not any("config" in c for c in issued), issued
+
+
+def test_diagnostics_run_in_the_compose_directory(tmp_path):
+    run = fail_then_diagnose()
+    with pytest.raises(errors.SetupError):
+        stack.compose_up(run, tmp_path, note=lambda _: None)
+    assert all(c["cwd"] == tmp_path for c in run.calls)
+
+
+def test_a_successful_compose_up_asks_nothing_extra(tmp_path):
+    run = FakeRun([RunResult(0, "", "")])
+    note, collected = notes()
+    stack.compose_up(run, tmp_path, note=note)
+    assert len(run.calls) == 1
+    assert collected == []
+
+
+def test_the_password_never_reaches_the_journal(tmp_path):
+    """[CRITIC] The run log is documented as safe to share. That promise must not rest on
+    arangod never echoing its own startup arguments."""
+    (tmp_path / ".env").write_text("ARANGO_ROOT_PASSWORD=sekrit-token\n")
+    leaky = RunResult(0, "arango | starting with --server.password sekrit-token\n", "")
+    run = FakeRun([RunResult(17, "", ""), RunResult(0, PS_OUT, ""), leaky])
+    note, collected = notes()
+
+    with pytest.raises(errors.SetupError):
+        stack.compose_up(run, tmp_path, note=note)
+
+    body = "\n".join(collected)
+    assert "sekrit-token" not in body
+    assert "REDACTED" in body
+
+
+def test_diagnostics_that_fail_do_not_replace_the_real_error(tmp_path):
+    """A daemon that died mid-build answers nothing; EMB-31 must still be what surfaces."""
+    run = FakeRun([RunResult(17, "", ""), RunResult(1, "", "cannot connect"), RunResult(1, "", "")])
+    with pytest.raises(errors.SetupError) as exc:
+        stack.compose_up(run, tmp_path, note=lambda _: None)
+    assert exc.value.code == "EMB-31"
+
+
+def test_note_is_optional(tmp_path):
+    """stack.py must stay usable without the journal — and without importing it."""
+    run = fail_then_diagnose()
+    with pytest.raises(errors.SetupError) as exc:
+        stack.compose_up(run, tmp_path)
+    assert exc.value.code == "EMB-31"
+
+
+def test_an_exported_password_is_redacted_even_when_the_file_differs(monkeypatch, tmp_path):
+    """[CRITIC] Regression for a hole found by running this against a real failing
+    container: `docker compose` resolves ${VAR} from the SHELL ENVIRONMENT first and only
+    falls back to .env, so the value actually handed to the container is not necessarily
+    the one in consumer/.env. Redacting just the file misses the value at risk."""
+    (tmp_path / ".env").write_text("ARANGO_ROOT_PASSWORD=file-value\n")
+    monkeypatch.setenv("ARANGO_ROOT_PASSWORD", "exported-value")
+    leaky = RunResult(0, "arango | started with --server.password exported-value\n", "")
+    run = FakeRun([RunResult(17, "", ""), RunResult(0, PS_OUT, ""), leaky])
+    note, collected = notes()
+
+    with pytest.raises(errors.SetupError):
+        stack.compose_up(run, tmp_path, note=note)
+
+    body = "\n".join(collected)
+    assert "exported-value" not in body
+    assert "REDACTED" in body
+
+
+def test_both_password_sources_are_collected(tmp_path, monkeypatch):
+    (tmp_path / ".env").write_text("ARANGO_ROOT_PASSWORD=file-value\n")
+    monkeypatch.setenv("ARANGO_ROOT_PASSWORD", "exported-value")
+    assert set(stack._known_passwords(tmp_path)) == {"file-value", "exported-value"}
+
+
+def test_missing_sources_yield_no_secrets_and_no_crash(tmp_path):
+    assert stack._known_passwords(tmp_path, env={}) == []
