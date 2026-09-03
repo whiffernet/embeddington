@@ -410,3 +410,97 @@ def test_the_ensurepip_probe_reads_only_this_run(tmp_path):
     text = _INSTALL_SH.read_text()
     assert re.search(r'grep -qi "ensurepip" "\$BOOTSTRAP_LOG"', text), text[-2000:]
     assert re.search(r'\} > "\$BOOTSTRAP_LOG" 2>&1', text), "bootstrap log must be truncated"
+
+
+# --- recording which revision actually ran (#130) ---------------------------
+
+
+def _revision(script, env=None):
+    return _bash(
+        ["state_dir", "clone_revision", "journal_session", "journal_note", "journal_clone_state"],
+        script,
+        env=env,
+        prelude=_constants("JOURNAL_MARKER"),
+    )
+
+
+def _repo(tmp_path, tag=None):
+    """A real git repo, so clone_revision is exercised against git rather than a stub."""
+    repo = tmp_path / "clone"
+    repo.mkdir()
+    env = {
+        "HOME": str(tmp_path),
+        "PATH": "/usr/bin:/bin",
+        "GIT_AUTHOR_NAME": "t",
+        "GIT_AUTHOR_EMAIL": "t@e",
+        "GIT_COMMITTER_NAME": "t",
+        "GIT_COMMITTER_EMAIL": "t@e",
+    }
+    (repo / "f").write_text("x")
+    for cmd in (["git", "init", "-q"], ["git", "add", "f"], ["git", "commit", "-qm", "c"]):
+        subprocess.run(cmd, cwd=repo, env=env, check=True, capture_output=True)
+    if tag:
+        subprocess.run(["git", "tag", tag], cwd=repo, env=env, check=True, capture_output=True)
+    return repo
+
+
+def test_clone_revision_reports_the_release_tag(tmp_path):
+    repo = _repo(tmp_path, tag="v0.12.6")
+    assert _revision(f'clone_revision "{repo}"', env=_env(tmp_path / "state")) == "v0.12.6"
+
+
+def test_clone_revision_degrades_to_a_sha_then_to_unknown(tmp_path):
+    """`--always` keeps an untagged clone diagnosable; a directory that isn't a repo at
+    all must not abort the install under `set -e`."""
+    untagged = _revision(f'clone_revision "{_repo(tmp_path)}"', env=_env(tmp_path / "state"))
+    assert re.fullmatch(r"[0-9a-f]{7,40}", untagged), untagged
+    assert _revision('clone_revision "/not/a/repo"', env=_env(tmp_path / "state")) == "unknown"
+
+
+def test_the_revision_and_the_pull_outcome_are_both_recorded(tmp_path):
+    """[CRITIC] The point of #130. A support report has to answer "what were they running?"
+    on its own — this session established a user's clone was stale by diffing an error
+    string against main, which worked but is not a method."""
+    repo = _repo(tmp_path, tag="v0.11.0")
+    out = _revision(
+        f'journal_clone_state "{repo}" failed; cat "$(state_dir)/run.log"',
+        env=_env(tmp_path / "state"),
+    )
+    assert "v0.11.0" in out
+    assert "failed" in out
+
+
+def test_journal_note_adds_a_line_without_starting_a_new_session(tmp_path):
+    """One session header per run. journal_note is for lines inside it."""
+    out = _revision(
+        'journal_session; journal_note "one"; journal_note "two"; cat "$(state_dir)/run.log"',
+        env=_env(tmp_path / "state"),
+    )
+    assert out.count("=== embeddington run") == 1, out
+    assert "one" in out and "two" in out
+
+
+def test_journal_helpers_never_abort_the_install(tmp_path):
+    blocker = tmp_path / "state"
+    blocker.write_text("a file, not a directory")
+    script = 'journal_session; journal_note "x"; journal_clone_state "/nope" ok; echo SURVIVED'
+    assert _revision(script, env=_env(blocker)) == "SURVIVED"
+
+
+def test_a_failed_pull_states_the_consequence_not_just_the_symptom():
+    """The old text was `warning: git pull failed (local changes?) — continuing`, which
+    says what happened and not what it means. Vocabulary matches
+    update_record.code_is_stuck / cli._notice_if_stale rather than inventing a second way
+    to say the same thing."""
+    text = _INSTALL_SH.read_text()
+    assert "git pull failed (local changes?)" not in text, "the old wording is still there"
+    assert "could not pull new code" in text.lower()
+    assert "git -C" in text and "status" in text
+
+
+def test_the_loud_warning_fires_only_on_the_failure_path():
+    """Alarm fatigue would make it worthless exactly when it matters."""
+    text = _INSTALL_SH.read_text()
+    block = re.search(r"# --- Clone or refresh.*?^cd \"\$DIR\"", text, re.S | re.M)
+    assert block, "the clone/refresh block moved"
+    assert block.group(0).lower().count("could not pull new code") == 1

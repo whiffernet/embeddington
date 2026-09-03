@@ -129,19 +129,58 @@ redact_secrets() {
   sed -E 's#([a-zA-Z][a-zA-Z0-9+.-]*://)[^/@[:space:]]+:[^/@[:space:]]+@#\1***REDACTED***@#g'
 }
 
-# journal_append <file> <label> — record a file's tail in the run log.
-#
-# Never fails the run. This script is `set -euo pipefail`, so an unwritable state dir
-# would otherwise abort an install over a log nobody had asked for; losing the journal is
-# acceptable, losing the install is not (installer/runlog.py holds the same rule).
+# All three helpers below never fail the run. This script is `set -euo pipefail`, so an
+# unwritable state dir would otherwise abort an install over a log nobody had asked for;
+# losing the journal is acceptable, losing the install is not (installer/runlog.py holds
+# the same rule).
+
+# journal_session — open this run's section. Once per run: the wizard writes its own
+# header when it starts, and a header per line would make the file unreadable.
+journal_session() {
+  _jdir="$(state_dir)"
+  mkdir -p "$_jdir" 2>/dev/null || return 0
+  printf '\n%s %s ===\n' "$JOURNAL_MARKER" "$(date +%Y-%m-%dT%H:%M:%S%z)" \
+    >> "$_jdir/run.log" 2>/dev/null || return 0
+}
+
+# journal_note <text> — one line inside the current session. Same shape as runlog.note().
+journal_note() {
+  _jdir="$(state_dir)"
+  mkdir -p "$_jdir" 2>/dev/null || return 0
+  printf '%s  %s\n' "$(date +%Y-%m-%dT%H:%M:%S%z)" "$1" \
+    >> "$_jdir/run.log" 2>/dev/null || return 0
+}
+
+# journal_append <file> <label> — record a file's tail under a labelled heading.
 journal_append() {
   _jdir="$(state_dir)"
   mkdir -p "$_jdir" 2>/dev/null || return 0
   {
-    printf '\n%s %s ===\n--- %s ---\n' \
-      "$JOURNAL_MARKER" "$(date +%Y-%m-%dT%H:%M:%S%z)" "$2"
+    printf '%s\n' "--- $2 ---"
     tail -c "$JOURNAL_MAX_BYTES" "$1" | redact_secrets
   } >> "$_jdir/run.log" 2>/dev/null || return 0
+}
+
+# clone_revision <dir> — the release this clone is on, a short SHA, or "unknown".
+#
+# Mirrors installer/update_record.clone_version(): `git describe --tags --always`, and
+# deliberately not package metadata, which reports pyproject's version rather than the
+# shipped release. `--depth 1` still fetches the tag pointing at HEAD, so a fresh clone
+# describes as a real release rather than a bare SHA.
+clone_revision() {
+  _rev="$(git -C "$1" describe --tags --always 2>/dev/null || true)"
+  _rev="$(printf '%s' "$_rev" | tr -d '\r\n')"
+  if [ -n "$_rev" ]; then printf '%s' "$_rev"; else printf 'unknown'; fi
+}
+
+# journal_clone_state <dir> <pull-outcome> — record WHICH CODE this run is about to run.
+#
+# The gap this closes: a support report could not answer "what version were they
+# running?" on its own. A stale clone was established by diffing an error string in the
+# user's paste against main — which worked, and is not a method. Every report now
+# identifies its own revision, whether or not anything went wrong.
+journal_clone_state() {
+  journal_note "clone $1 at $(clone_revision "$1") — code update: $2"
 }
 
 # The clone root of an existing install, or empty. Never fails the run.
@@ -239,9 +278,29 @@ if is_protected_macos_path "$DIR"; then
 fi
 
 # --- Clone or refresh ----------------------------------------------------------
+PULL_OUTCOME="cloned"
 if [ -d "$DIR/.git" ]; then
   say "Existing install found at $DIR — refreshing (the wizard will offer update/repair/uninstall)."
-  git -C "$DIR" pull --ff-only || say "warning: git pull failed (local changes?) — continuing."
+  if git -C "$DIR" pull --ff-only; then
+    PULL_OUTCOME="ok"
+  else
+    # Continuing is right — a clone that cannot fast-forward still installs and still
+    # runs, and hard-stopping someone mid-debug is worse. But the old text said only
+    # what happened, not what it MEANS, in one line that scrolls past inside a much
+    # longer transcript. The consequence is that this run is not the code they think
+    # they are getting: they re-run the documented fix, hit the identical bug, and
+    # reasonably conclude it was never fixed. Wording tracks
+    # update_record.code_is_stuck / cli._notice_if_stale, which say this for the
+    # nightly path, rather than inventing a second vocabulary for one condition.
+    PULL_OUTCOME="failed"
+    say ""
+    say "  !  Could not pull new code — this run uses the code already in $DIR,"
+    say "     which is NOT the latest. Whatever is in the way (a local edit, a"
+    say "     detached HEAD, a diverged branch) shows up in:"
+    say ""
+    say "         git -C $DIR status"
+    say ""
+  fi
 elif [ -e "$DIR" ] && [ -n "$(ls -A "$DIR" 2>/dev/null)" ]; then
   fail EMB-16 "$DIR already exists, isn't empty, and isn't an embeddington clone." \
     "Pick a different location (EMBEDDINGTON_INSTALL_DIR=...), or move that directory aside."
@@ -250,6 +309,10 @@ else
   git clone --depth 1 "$CLONE_URL" "$DIR"
 fi
 cd "$DIR"
+
+# Open this run's journal section and state, first thing, exactly which code follows.
+journal_session
+journal_clone_state "$DIR" "$PULL_OUTCOME"
 
 # --- Venv + install -------------------------------------------------------------
 say "Setting up the Python environment (a minute or two) ..."
