@@ -19,6 +19,12 @@ OK = RunResult(0, "", "")
 FAILED = RunResult(100, "", "E: Unable to locate package")
 ABSENT = RunResult(127, "", "command not found: docker")
 
+# The two read-only probes diagnose() fires after a failing `docker info`
+# (`docker context inspect`, then `docker context ls`). Splice these in wherever the
+# first info result is DOWN, so a queue meant for the ladder's own calls isn't silently
+# consumed by the diagnosis — an exhausted FakeRun returns rc=0 and would mask the rest.
+NO_CONTEXT = [RunResult(1, "", "unknown command"), RunResult(1, "", "unknown command")]
+
 
 def console():
     return Console(file=io.StringIO(), force_terminal=False, width=100)
@@ -41,6 +47,8 @@ def ensure(
     answers=(),
     os_release="",
     wait_seconds=10,
+    exists=lambda path: False,
+    env=None,
 ):
     it = iter(answers)
     docker_ladder.ensure_docker(
@@ -53,6 +61,9 @@ def ensure(
         input_fn=lambda: next(it),
         sleep=lambda s: None,
         wait_seconds=wait_seconds,
+        exists=exists,
+        env={"PATH": "/usr/bin"} if env is None else env,
+        home="/home/tester",
     )
 
 
@@ -69,6 +80,8 @@ def ensure_with_console(
     answers=(),
     os_release="",
     wait_seconds=10,
+    exists=lambda path: False,
+    env=None,
 ):
     """Like ensure(), but also returns the console's captured output text and any
     SetupError raised (instead of letting it propagate) so callers can assert on both.
@@ -87,6 +100,9 @@ def ensure_with_console(
             input_fn=lambda: next(it),
             sleep=lambda s: None,
             wait_seconds=wait_seconds,
+            exists=exists,
+            env={"PATH": "/usr/bin"} if env is None else env,
+            home="/home/tester",
         )
     except errors.SetupError as exc:
         err = exc
@@ -131,7 +147,7 @@ def test_daemon_up_but_compose_plugin_missing_is_emb23():
 
 def test_daemon_down_macos_enter_then_recovers():
     # installed, down; user presses Enter after starting it; two polls then up.
-    run = FakeRun([DOWN, DOWN, UP, OK])
+    run = FakeRun([DOWN, *NO_CONTEXT, DOWN, UP, OK])
     ensure(
         run,
         platform="macos",
@@ -142,7 +158,7 @@ def test_daemon_down_macos_enter_then_recovers():
 
 
 def test_daemon_down_linux_offers_consented_start():
-    run = FakeRun([DOWN, OK, UP, OK])  # info, sudo systemctl start, info poll, compose
+    run = FakeRun([DOWN, *NO_CONTEXT, OK, UP, OK])  # info, diag, start, poll, compose
     ensure(run, platform="linux", which=docker_and_systemctl, answers=("y",))
     assert "sudo systemctl start docker" in joined(run)
 
@@ -151,13 +167,13 @@ def test_daemon_down_wsl2_without_systemd_uses_service():
     def no_systemd(n):
         return "/usr/bin/docker" if n == "docker" else None
 
-    run = FakeRun([DOWN, OK, UP, OK])
+    run = FakeRun([DOWN, *NO_CONTEXT, OK, UP, OK])
     ensure(run, platform="wsl2", which=no_systemd, answers=("y",))
     assert "sudo service docker start" in joined(run)
 
 
 def test_daemon_down_times_out_as_emb21():
-    run = FakeRun([DOWN] * 50)
+    run = FakeRun([DOWN, *NO_CONTEXT] + [DOWN] * 50)
     with pytest.raises(errors.SetupError) as exc:
         ensure(
             run,
@@ -333,7 +349,7 @@ def test_an_installed_but_stopped_runtime_is_never_an_install_path():
     macOS is where it would hurt: the install path here brew-installs OrbStack or guides
     Colima. With the binary present, none of that may happen — only "start it, I'll wait".
     """
-    run = FakeRun([DOWN, DOWN, UP, OK])
+    run = FakeRun([DOWN, *NO_CONTEXT, DOWN, UP, OK])
     ensure(
         run,
         platform="macos",
@@ -348,6 +364,155 @@ def test_an_installed_but_stopped_runtime_is_never_an_install_path():
 def test_an_absent_binary_still_reaches_the_install_ladder():
     """The other half of the same agreement: with no binary, cli.main() deliberately does
     NOT pre-run this ladder, because this is the path that installs things."""
-    run = FakeRun([DOWN])
+    run = FakeRun([DOWN, *NO_CONTEXT])
     with pytest.raises(errors.SetupError):
         ensure(run, platform="macos", which=lambda n: None, answers=("x",))
+
+
+# --- finding a runtime that is already here, before offering to install one (#119) ---
+
+ORB = "/home/tester/.orbstack/bin/docker"
+CTX_INSPECT = RunResult(
+    0,
+    '[{"Name": "desktop-linux", "Endpoints": {"docker": '
+    '{"Host": "unix:///Users/u/.docker/run/docker.sock"}}}]',
+    "",
+)
+CTX_LS = RunResult(0, "default\ndesktop-linux\norbstack\n", "")
+
+
+# A location NOT in docker_probe.CANDIDATE_PATHS: sensing cannot find it, so the menu
+# is reached and the "point me at it" option is the only way through — which is the
+# whole case that option exists for.
+CUSTOM = "/opt/custom/bin/docker"
+
+
+def only_orbstack(path):
+    return str(path) == ORB
+
+
+def only_custom(path):
+    return str(path) == CUSTOM
+
+
+def test_offpath_runtime_is_adopted_instead_of_offering_an_install():
+    """The reported OrbStack shape: installed, daemon fine, simply not on this PATH."""
+    run = FakeRun([DOWN, UP, OK])  # info (no PATH docker), info (adopted), compose
+    out, err = ensure_with_console(run, which=lambda n: None, exists=only_orbstack)
+    assert err is None
+    assert not any("brew" in c for c in joined(run)), joined(run)
+    assert "Which one shall we set up?" not in out
+    assert ORB in out
+
+
+def test_adopting_puts_the_binarys_directory_on_path_for_children():
+    """stack.py's `docker compose` and cron.py's which() both depend on this."""
+    env = {"PATH": "/usr/bin"}
+    ensure(FakeRun([DOWN, UP, OK]), which=lambda n: None, exists=only_orbstack, env=env)
+    assert env["PATH"].split(":")[0] == "/home/tester/.orbstack/bin"
+
+
+def test_env_override_is_adopted_by_the_ladder():
+    env = {"PATH": "/usr/bin", "EMBEDDINGTON_DOCKER_BIN": "/opt/weird/docker"}
+    ensure(
+        FakeRun([DOWN, UP, OK]),
+        which=lambda n: None,
+        exists=lambda p: str(p) == "/opt/weird/docker",
+        env=env,
+    )
+    assert env["PATH"].split(":")[0] == "/opt/weird"
+
+
+def test_adopted_runtime_with_a_down_daemon_starts_the_wait_not_the_menu():
+    run = FakeRun([DOWN, DOWN, *NO_CONTEXT, UP, OK])
+    out, err = ensure_with_console(run, which=lambda n: None, exists=only_orbstack, answers=("",))
+    assert err is None
+    assert "daemon isn't answering" in out
+    assert not any("brew" in c for c in joined(run))
+
+
+def test_menu_offers_pointing_at_an_existing_runtime():
+    out, _ = ensure_with_console(FakeRun([ABSENT]), which=brew_only, answers=("n",))
+    assert "not on my PATH" in out
+
+
+def test_pointing_at_a_valid_binary_adopts_it_and_installs_nothing():
+    run = FakeRun([ABSENT, OK, UP, OK])  # info, <path> --version, info, compose
+    env = {"PATH": "/usr/bin"}
+    out, err = ensure_with_console(
+        run, which=brew_only, exists=only_custom, env=env, answers=("p", CUSTOM)
+    )
+    assert err is None
+    assert f"{CUSTOM} --version" in joined(run)
+    assert not any("brew" in c for c in joined(run))
+    assert env["PATH"].split(":")[0] == "/opt/custom/bin"
+
+
+def test_pointing_at_nothing_is_emb22_and_names_the_path():
+    """[CRITIC] EMB-22, not EMB-20: the user aimed and missed, they didn't decline."""
+    _, err = ensure_with_console(
+        FakeRun([ABSENT]), which=brew_only, exists=lambda p: False, answers=("p", "/nope/docker")
+    )
+    assert err.code == "EMB-22"
+    assert "/nope/docker" in err.friendly
+
+
+def test_pointing_at_something_that_isnt_a_docker_client_is_emb22():
+    run = FakeRun([ABSENT, RunResult(1, "", "not an executable")])
+    _, err = ensure_with_console(run, which=brew_only, exists=only_custom, answers=("p", CUSTOM))
+    assert err.code == "EMB-22"
+    assert "docker client" in err.friendly
+
+
+# --- saying WHY the daemon isn't answering (#119) ---
+
+
+def test_stale_context_is_named_before_the_user_is_told_to_wait():
+    """The Docker-Desktop-to-OrbStack migration shape: the daemon is up, the client is
+    dialing a socket that no longer exists. Telling them to start it wastes the wait."""
+    run = FakeRun([DOWN, CTX_INSPECT, CTX_LS, UP, OK])
+    out, err = ensure_with_console(
+        run, which=lambda n: "/usr/local/bin/docker" if n == "docker" else None, answers=("",)
+    )
+    assert err is None
+    assert "unix:///Users/u/.docker/run/docker.sock" in out
+    assert "desktop-linux" in out
+    assert "docker context use orbstack" in out
+
+
+def test_emb21_carries_the_endpoint_and_the_context_hint():
+    run = FakeRun([DOWN, CTX_INSPECT, CTX_LS] + [DOWN] * 20)
+    _, err = ensure_with_console(
+        run,
+        which=lambda n: "/usr/local/bin/docker" if n == "docker" else None,
+        answers=("",),
+        wait_seconds=10,
+    )
+    assert err.code == "EMB-21"
+    assert "unix:///Users/u/.docker/run/docker.sock" in err.friendly
+    assert "docker context use orbstack" in err.fix
+
+
+def test_a_hung_daemon_reads_as_a_timeout_not_a_missing_runtime():
+    """An unbounded `docker info` made a cold-starting daemon look like a frozen
+    installer; it must now come back as its own, stated, outcome."""
+    import subprocess
+
+    inner = FakeRun([UP, UP, DOWN, DOWN, DOWN, DOWN, DOWN])
+    calls = {"n": 0}
+
+    def hangs_once(cmd, **kwargs):
+        if list(cmd) == ["docker", "info"] and calls["n"] == 0:
+            calls["n"] += 1
+            raise subprocess.TimeoutExpired(cmd, 20)
+        return inner(cmd, **kwargs)
+
+    hangs_once.calls = inner.calls
+    out, err = ensure_with_console(
+        hangs_once,
+        which=lambda n: "/usr/local/bin/docker" if n == "docker" else None,
+        answers=("",),
+        wait_seconds=10,
+    )
+    assert "no answer within the timeout" in out
+    assert "Which one shall we set up?" not in out

@@ -124,6 +124,12 @@ of piling up beside them. One rug, not a stack of them.
   don't have to install it yourself first: if it's absent, the one-liner installer detects
   that and offers to set it up for you (OrbStack/Colima on macOS, apt/dnf on Linux), all
   consent-gated. So you can start from the one command either way.
+  **Already have one?** It's found first — before any install is offered — even when it
+  isn't on your `PATH`. OrbStack in particular puts its CLI in `~/.orbstack/bin` and gets
+  it onto `PATH` through a shell-init edit, which a non-login shell (a VS Code integrated
+  terminal, say) never reads. The wizard checks the usual homes, uses whatever it finds
+  for that run, and if yours lives somewhere unusual it asks rather than guessing —
+  `EMBEDDINGTON_DOCKER_BIN=/path/to/docker` skips the question entirely.
 
 No account, no token, no access request — the download is a plain HTTPS GET.
 
@@ -677,6 +683,7 @@ vector count over `baseline-2026-06`, and the disk figures moved with it.
 | `EMBEDDINGTON_YES`         | unset                                            | `1` for a fully unattended install (never installs Docker, never deletes data) |
 | `EMBEDDINGTON_INSTALL_DIR` | remembered install, else `~/embeddington`         | Where to clone and install. Overrides the remembered location; skips the prompt |
 | `EMBEDDINGTON_CLONE_URL`   | `https://github.com/whiffernet/embeddington.git` | Clone source override (CI, forks)                                              |
+| `EMBEDDINGTON_DOCKER_BIN`  | unset                                            | Full path to your `docker` CLI, for a runtime installed somewhere the wizard doesn't look                    |
 
 `embeddington-consume update` flags (all optional — `--repo` defaults to
 `whiffernet/embeddington`; override it only if you've forked):
@@ -787,6 +794,18 @@ with a per-issue adversarial audit; the full record lives in
 
 > _"This is a very complicated case."_
 
+### The run log
+
+Every command the wizard runs — and the error from any that fails — is appended to
+`~/.local/share/embeddington/run.log` (or `$EMBEDDINGTON_HOME/run.log`). The nightly
+update job writes there too, which is usually the only way to find out that it has been
+failing quietly. It's trimmed to its last megabyte each run, so it won't grow on you.
+
+Nothing secret goes in it: no installer command carries a password on its command line,
+and the generated ArangoDB root password never leaves `consumer/.env`. **If you're
+reporting a problem, this is the file to send.**
+
+
 Every installer *failure* prints an `[EMB-nn]` code with a fix line already attached — find
 yours below for the full story. The first entry has no code at all, because it happens after
 an install that worked.
@@ -894,11 +913,28 @@ or Docker Engine yourself, then re-run — or run interactively without
 
 #### EMB-21 — docker daemon not reachable
 
-The daemon didn't come up within the wait window, or it's up but your user can't
+The daemon didn't answer within the wait window, or it's up but your user can't
 reach its socket yet (fresh Linux installs aren't in the `docker` group by default —
 the wizard offers `usermod -aG docker`, but that only takes effect after you log out
 and back in, or run `newgrp docker`). Start the daemon manually (OrbStack/Docker
 Desktop, `colima start`, or `sudo systemctl start docker`) or re-login, then re-run.
+
+The error now carries what the client was actually doing — the socket it dialed, the
+active docker context, and the other contexts you have configured:
+
+```
+  dialed: unix:///Users/you/.docker/run/docker.sock
+  context: desktop-linux (active)
+  also configured: default, orbstack
+  docker said: Cannot connect to the Docker daemon. Is the docker daemon running?
+```
+
+**If your runtime is plainly running and you still see this, read the context line.**
+Migrating from Docker Desktop to OrbStack (or Colima, or Rancher) leaves the old
+context selected, so the client keeps dialing a socket nothing owns any more while
+your actual daemon sits there healthy. `docker context use orbstack` — or whichever
+one the error lists — fixes it. A `DOCKER_HOST` exported in your shell profile beats
+the context entirely, and is reported on its own line when set.
 
 #### EMB-22 — manual runtime install required
 

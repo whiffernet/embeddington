@@ -80,3 +80,22 @@ def test_docker_check_reflects_docker_info_rc():
     bad_run = FakeRun([RunResult(1, "", "Cannot connect to the Docker daemon")])
     assert by_name(run_all(run=ok_run), "docker").ok
     assert not by_name(run_all(run=bad_run), "docker").ok
+
+
+def test_docker_row_carries_the_reason_the_daemon_was_unreachable():
+    """The row the doctor prints is one of the two places a user reads this, so it
+    must say why — "not reachable" is what sent people to debug the wrong layer."""
+    run = FakeRun(
+        [
+            RunResult(1, "", "Cannot connect to the Docker daemon at unix:///var/run/docker.sock."),
+            RunResult(1, "", ""),
+            RunResult(1, "", ""),
+        ]
+    )
+    assert "Cannot connect to the Docker daemon" in by_name(run_all(run=run), "docker").detail
+
+
+def test_healthy_docker_row_costs_no_extra_probes():
+    run = FakeRun([RunResult(0, "", "")])
+    assert by_name(run_all(run=run), "docker").detail == "daemon reachable"
+    assert [c["cmd"] for c in run.calls] == [["docker", "info"]]
