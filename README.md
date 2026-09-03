@@ -797,12 +797,18 @@ with a per-issue adversarial audit; the full record lives in
 ### The run log
 
 Every command the wizard runs — and the error from any that fails — is appended to
-`~/.local/share/embeddington/run.log` (or `$EMBEDDINGTON_HOME/run.log`). The nightly
-update job writes there too, which is usually the only way to find out that it has been
-failing quietly. It's trimmed to its last megabyte each run, so it won't grow on you.
+`~/.local/share/embeddington/run.log` (or `$EMBEDDINGTON_HOME/run.log`). So is the
+Python environment bootstrap from `install.sh`, so a failed install and a failed run
+land in one place. The nightly update job writes there too, which is usually the only
+way to find out that it has been failing quietly. It's trimmed to its last megabyte
+each run, so it won't grow on you.
+
+It lives outside the clone deliberately: reinstalling is the first thing people try, and
+a log that a re-clone destroys is a log that is never there when you need it.
 
 Nothing secret goes in it: no installer command carries a password on its command line,
-and the generated ArangoDB root password never leaves `consumer/.env`. **If you're
+the generated ArangoDB root password never leaves `consumer/.env`, and credentials
+embedded in a `PIP_INDEX_URL` are stripped before anything is recorded. **If you're
 reporting a problem, this is the file to send.**
 
 
@@ -887,8 +893,9 @@ Check your connection, then re-run.
 
 Three distinct causes share this code, and `install.sh` tells you which: the
 `python3-venv` package is missing (`sudo apt install python3-venv`, or
-`python3.12-venv`, then re-run); a `pip install` step failed (the last 20 lines of
-`install.log` print above the error — fix what it complains about, then re-run); or
+`python3.12-venv`, then re-run); a `pip install` step failed (the last 20 lines print
+above the error, and the whole thing is in the run log — fix what it complains about,
+then re-run); or
 the clone is stale and `embeddington-setup` never landed (`cd` into the install dir,
 `git stash && git pull --ff-only`, then re-run).
 

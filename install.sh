@@ -104,6 +104,46 @@ state_dir() {
   printf '%s/.local/share/embeddington' "$HOME"
 }
 
+# --- The bootstrap journal ------------------------------------------------------
+# This script's output used to go to <clone>/install.log while everything after it went
+# to the wizard's own <state dir>/run.log (installer/runlog.py). Two files, in two
+# places, written in two languages: a re-clone destroyed the first, EMB-14 named only
+# the first, and asking a user for "the log" meant asking twice and usually getting the
+# wrong one. There is now one file, and it lives where the nightly job writes and where
+# a re-clone cannot reach it.
+#
+# Must match installer/runlog.py's SESSION_MARKER — tests/test_install_sh.py pins the
+# two against each other, exactly as it does for the state_dir ladder above.
+JOURNAL_MARKER="=== embeddington run"
+JOURNAL_MAX_BYTES=200000
+
+# Strip credentials embedded in URLs.
+#
+# [CRITIC] run.log is documented as safe to share and users are told to send it when
+# reporting a problem. pip echoes the index URL it was using when a resolve fails, and a
+# corporate PIP_INDEX_URL / PIP_EXTRA_INDEX_URL routinely carries basic-auth — so this
+# content cannot be appended raw. It has to happen here rather than in runlog.py: the
+# wizard's Python does not exist yet at this point in the run. `sed -E` is the portable
+# spelling across BSD (macOS) and GNU.
+redact_secrets() {
+  sed -E 's#([a-zA-Z][a-zA-Z0-9+.-]*://)[^/@[:space:]]+:[^/@[:space:]]+@#\1***REDACTED***@#g'
+}
+
+# journal_append <file> <label> — record a file's tail in the run log.
+#
+# Never fails the run. This script is `set -euo pipefail`, so an unwritable state dir
+# would otherwise abort an install over a log nobody had asked for; losing the journal is
+# acceptable, losing the install is not (installer/runlog.py holds the same rule).
+journal_append() {
+  _jdir="$(state_dir)"
+  mkdir -p "$_jdir" 2>/dev/null || return 0
+  {
+    printf '\n%s %s ===\n--- %s ---\n' \
+      "$JOURNAL_MARKER" "$(date +%Y-%m-%dT%H:%M:%S%z)" "$2"
+    tail -c "$JOURNAL_MAX_BYTES" "$1" | redact_secrets
+  } >> "$_jdir/run.log" 2>/dev/null || return 0
+}
+
 # The clone root of an existing install, or empty. Never fails the run.
 recorded_install_dir() {
   pointer="$(state_dir)/install_path"
@@ -213,18 +253,27 @@ cd "$DIR"
 
 # --- Venv + install -------------------------------------------------------------
 say "Setting up the Python environment (a minute or two) ..."
+# TRUNCATED per run, deliberately. The old log was appended to across runs, and the
+# ensurepip probe below grepped the whole thing — so a venv failure the user had already
+# fixed kept matching, and any later pip error was misdiagnosed as a missing
+# python3-venv forever after. Scoping the probe to this run's output is the fix.
+# The template is required: bare `mktemp` is a usage error on BSD (macOS).
+BOOTSTRAP_LOG="$(mktemp "${TMPDIR:-/tmp}/embeddington-bootstrap.XXXXXX")"
+trap 'rm -f "$BOOTSTRAP_LOG"' EXIT
 if ! { "$PY" -m venv .venv \
        && .venv/bin/pip install --quiet --upgrade pip \
-       && .venv/bin/pip install --quiet -e ".[setup]"; } >> install.log 2>&1; then
-  tail -n 20 install.log >&2
+       && .venv/bin/pip install --quiet -e ".[setup]"; } > "$BOOTSTRAP_LOG" 2>&1; then
+  journal_append "$BOOTSTRAP_LOG" "python environment bootstrap (failed)"
+  tail -n 20 "$BOOTSTRAP_LOG" | redact_secrets >&2
   # Debian/Ubuntu/WSL2 ship python without the venv module — name the real fix.
-  if grep -qi "ensurepip" install.log; then
+  if grep -qi "ensurepip" "$BOOTSTRAP_LOG"; then
     fail EMB-14 "Python can't create a venv here — the python3-venv package is missing." \
       "sudo apt install python3-venv   (or python3.12-venv), then re-run the installer."
   fi
-  fail EMB-14 "Python environment setup failed (last lines above; full log: $DIR/install.log)." \
+  fail EMB-14 "Python environment setup failed (last lines above; full log: $(state_dir)/run.log)." \
     "Fix the pip error shown, then re-run the installer."
 fi
+journal_append /dev/null "python environment bootstrap: ok"
 
 # pip exits 0 even when the [setup] extra doesn't exist (stale clone after a failed
 # pull) — verify the wizard actually landed before exec'ing into nothing.
@@ -241,6 +290,10 @@ fi
 # Exported only into the exec'd process — a piped install leaves nothing behind in the
 # user's interactive shell.
 export EMBEDDINGTON_BANNER_SHOWN=1
+# exec REPLACES this process, so the EXIT trap never runs — clean up by hand or the
+# bootstrap temp file leaks on every successful install.
+rm -f "$BOOTSTRAP_LOG"
+trap - EXIT
 if [ -z "$YES" ] && [ "$INTERACTIVE" -eq 1 ]; then
   exec .venv/bin/embeddington-setup < /dev/tty
 else
