@@ -1,5 +1,65 @@
 # Changelog
 
+## v0.12.2 — 2026-09-02
+
+The fatal startup probes are now bounded, retried only where retrying can help, and say
+what actually failed (PR #110). The prompting incident: the MCP refused to start while
+Qdrant was still coming up, and the message named neither the host nor the reason.
+
+- BEHAVIORAL: the `/embed` probe is now **fatal**, alongside Qdrant — it was warn-only.
+  Both dependencies live on the same host in the common deployment, so a host restart
+  takes them down together; giving only one of them a retry would make that retry
+  pointless. An unreachable `/embed` now refuses startup rather than exposing an
+  `enrich` that cannot work.
+- Startup wall-clock is bounded. The per-attempt timeout is 5s
+  (`STARTUP_PROBE_TIMEOUT`), no longer inherited from `HTTP_TIMEOUT` (30s, sized for
+  real queries), and total retry time per probe is capped at 15s
+  (`STARTUP_PROBE_DEADLINE`). Measured against an unresponsive host, the worst case
+  fell from ~134s to **12.1s**. That is the number that matters: MCP clients enforce an
+  initialization timeout, and exceeding it replaces a clear `Refusing to start` with an
+  opaque client-side disconnect carrying no diagnostic at all. The fatal probes run
+  concurrently, so the worst case is the deadline plus one probe timeout — not the sum
+  across probes.
+- Only transport failures are retried. `RETRYABLE_TRANSPORT_ERRORS` is
+  `(httpx.TimeoutException, httpx.NetworkError)`; a typo'd scheme, a redirect loop or a
+  decoding error fails on the first attempt, because no number of retries fixes them.
+- The refusal carries its own diagnosis — `no response from … after 2 attempt(s) in
+  12.0s — last error: ConnectTimeout` for an outage, `answered HTTP 401 — the collection
+  is missing, or the credential was rejected` for a rejection, and `failed and cannot be
+  retried (UnsupportedProtocol: …)` for a bad URL.
+- NEW: `mcp/probe.py`, the shared retry policy both fatal probes use.
+- The four `EMBEDDINGTON_STARTUP_*` knobs are documented in `mcp/.env.example`. The one
+  trade-off: a genuine misconfiguration against an unreachable host now surfaces in ~12s
+  instead of instantly. Set `EMBEDDINGTON_STARTUP_RETRIES=0` to restore fail-on-first.
+
+## v0.12.1 — 2026-09-02
+
+Installer: find a container runtime that is already installed, say why a daemon will not
+answer, and keep a log of the run. Closes #119 (OrbStack report).
+
+- Runtime sensing runs **before** any install offer. A `docker` that exists but is not on
+  this shell's `PATH` read as "no container runtime found", and the user was offered an
+  install of the runtime they already had. OrbStack is the case that bites: its CLI lives
+  in `~/.orbstack/bin` and reaches `PATH` through a shell-init edit that a non-login shell
+  never reads. A binary found — via `EMBEDDINGTON_DOCKER_BIN`, a known location, or typed
+  at the new menu option — has its directory prepended to *this process's* `PATH`. The
+  user's shell profile is never touched.
+- An unreachable daemon now reports the endpoint it dialed, the active context, the other
+  configured contexts, and docker's own message — shown **before** the wait rather than
+  after it times out. A Docker-Desktop-to-OrbStack migration leaves a `desktop-linux`
+  context dialing a socket nothing owns, and telling that user to start their
+  already-running daemon burned the full 120s for nothing. `docker info` is bounded at
+  20s, so a cold-starting daemon reads as a timeout rather than as a frozen installer.
+- NEW: a run journal at `<state dir>/run.log`, wrapping `runner.run` — the installer's
+  only subprocess chokepoint. The nightly update job runs through the same entry point,
+  so it previously failed silently by construction. Trimmed to its trailing 1 MB on open,
+  and it degrades to a no-op rather than failing an install when the state dir is
+  unwritable. argv is recorded verbatim, which is only acceptable because no installer
+  subprocess carries a secret on its command line; a test pins that so it cannot regress.
+- EMB-20/21/22/23 keep their exact meanings. No new error code was needed: once a sensed
+  binary is adopted rather than dead-ended, the "installed but unreachable" terminal
+  state no longer exists.
+
 ## v0.12.0 — 2026-09-02
 
 Read-path Track 1 (KG v3 spec §6; whiffernet/llamaindex #117), re-synced from upstream
