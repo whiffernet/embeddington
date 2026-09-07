@@ -167,6 +167,18 @@ def test_foreign_arango_database_is_named(tmp_path):
     assert foreign == ["arango db: secret_side_project"]
 
 
+def test_a_v3_schema_technology_kg_is_not_foreign(tmp_path):
+    """Arango foreign-data detection is DATABASE-scoped (KNOWN_ARANGO_DBS), not
+    collection-scoped -- it never enumerates entities_v2 vs entities_v3 inside
+    technology_kg, so a v3-cutover install (Task 5) must not need, and does not
+    get, a code change here to keep passing this check."""
+    _, foreign = uninstall.inspect_stores(
+        FakeHttp({":6333/collections": KNOWN_QDRANT}),
+        lambda: ["technology_kg", "_system"],
+    )
+    assert foreign == []
+
+
 def test_uninspectable_stores_show_emb61_but_still_gate(tmp_path):
     run = MapRun()
     _, _, out = drive(tmp_path, ["n", "n", "delete", "n", "n"], qdrant=(500, ""), run=run)
