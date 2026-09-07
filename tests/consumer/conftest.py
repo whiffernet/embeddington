@@ -137,7 +137,14 @@ class FakeArangoDb:
     """
 
     def __init__(self):
-        self.collections = {"entities_v2": {}, "relationships_v2": {}}
+        # Both schema generations pre-seeded so a test can construct an
+        # ArangoConsumerWriter against either without extra fixture wiring.
+        self.collections = {
+            "entities_v2": {},
+            "relationships_v2": {},
+            "entities_v3": {},
+            "relationships_v3": {},
+        }
         self.db_exists = True  # flip to False to simulate "database not found"
         self.server_error = None  # (error_code, message, status_code) to raise on any access
 

@@ -79,6 +79,75 @@ def test_collection_property_exposes_name(fake_qdrant_client):
     assert writers.QdrantConsumerWriter(fake_qdrant_client, "technology").collection == "technology"
 
 
+def test_arango_writer_defaults_to_v2_collections_byte_identical(fake_arango_db):
+    """Absent kg_schema -> v2, and that default must be exactly today's behavior:
+    no entities/relationships kwargs at all still lands in entities_v2/relationships_v2."""
+    w = writers.ArangoConsumerWriter(fake_arango_db)
+    w.upsert_entity("E1", {"name": "CMDB"})
+    assert fake_arango_db.collections["entities_v2"]["E1"]["name"] == "CMDB"
+    assert "E1" not in fake_arango_db.collections["entities_v3"]
+
+
+def test_arango_writer_targets_resolved_v3_collections(fake_arango_db):
+    from embeddington.apply import schema_names
+
+    names = schema_names.resolve_schema_names("v3")
+    w = writers.ArangoConsumerWriter(
+        fake_arango_db, entities=names["entities"], relationships=names["relationships"]
+    )
+    w.upsert_entity("E1", {"name": "CMDB"})
+    w.upsert_edge(
+        "R1", "entities_v3/E1", "entities_v3/E2", {"predicate": "USES", "source_document": "a.md"}
+    )
+    assert fake_arango_db.collections["entities_v3"]["E1"]["name"] == "CMDB"
+    assert fake_arango_db.collections["relationships_v3"]["R1"]["predicate"] == "USES"
+    # never touches the v2 collections
+    assert "E1" not in fake_arango_db.collections["entities_v2"]
+    assert "R1" not in fake_arango_db.collections["relationships_v2"]
+
+
+def test_entity_count_uses_the_resolved_collection_name(fake_arango_db):
+    w = writers.ArangoConsumerWriter(
+        fake_arango_db, entities="entities_v3", relationships="relationships_v3"
+    )
+    assert w.entity_count() == 0
+    w.upsert_entity("e1", {"name": "ServiceNow"})
+    assert w.entity_count() == 1
+    # the v2 collection (also present in the fixture) is untouched and uncounted
+    assert fake_arango_db.collections["entities_v2"] == {}
+
+
+def test_connect_forwards_resolved_collection_names(monkeypatch):
+    """connect() must not silently drop the entities/relationships kwargs."""
+    captured = {}
+
+    class _FakeDb:
+        def collection(self, name):
+            captured.setdefault("collection_calls", []).append(name)
+            return object()
+
+    class _FakeClient:
+        def __init__(self, hosts):
+            captured["hosts"] = hosts
+
+        def db(self, name, username, password):
+            captured["db_args"] = (name, username, password)
+            return _FakeDb()
+
+    import arango
+
+    monkeypatch.setattr(arango, "ArangoClient", _FakeClient)
+    writers.ArangoConsumerWriter.connect(
+        "http://a",
+        "technology_kg",
+        "root",
+        "pw",
+        entities="entities_v3",
+        relationships="relationships_v3",
+    )
+    assert captured["collection_calls"] == ["entities_v3", "relationships_v3"]
+
+
 def test_entity_count_counts_entities(fake_arango_db):
     aw = writers.ArangoConsumerWriter(fake_arango_db)
     assert aw.entity_count() == 0
