@@ -84,6 +84,115 @@ def test_repo_defaults_so_update_needs_no_arguments():
     assert ns.repo == "whiffernet/embeddington"
 
 
+def test_kg_schema_flag_defaults_to_the_env_var(monkeypatch):
+    monkeypatch.setenv("EMBEDDINGTON_KG_SCHEMA", "v3")
+    ns = cli._build_parser().parse_args(["update"])
+    assert ns.kg_schema == "v3"
+
+
+def test_kg_schema_flag_defaults_to_none_when_env_unset(monkeypatch):
+    monkeypatch.delenv("EMBEDDINGTON_KG_SCHEMA", raising=False)
+    ns = cli._build_parser().parse_args(["update"])
+    assert ns.kg_schema is None
+
+
+def test_kg_schema_flag_is_explicitly_settable():
+    ns = cli._build_parser().parse_args(["update", "--kg-schema", "v3"])
+    assert ns.kg_schema == "v3"
+
+
+def test_cmd_update_resolves_arango_writer_names_from_kg_schema(monkeypatch):
+    """The Arango writer used for diff-apply must target the resolved v3 collections
+    when --kg-schema v3 (or $EMBEDDINGTON_KG_SCHEMA) says the local stores are v3."""
+    built = {}
+    _fake_modules(monkeypatch, built)
+    captured = {}
+    monkeypatch.setattr(
+        cli.writers,
+        "ArangoConsumerWriter",
+        types.SimpleNamespace(connect=lambda *a, **k: captured.update(k) or MagicMock()),
+    )
+
+    assert cli.main(["update", "--kg-schema", "v3"]) == 0
+    assert captured == {"entities": "entities_v3", "relationships": "relationships_v3"}
+
+
+def test_cmd_update_defaults_arango_writer_names_to_v2(monkeypatch):
+    built = {}
+    _fake_modules(monkeypatch, built)
+    captured = {}
+    monkeypatch.setattr(
+        cli.writers,
+        "ArangoConsumerWriter",
+        types.SimpleNamespace(connect=lambda *a, **k: captured.update(k) or MagicMock()),
+    )
+
+    assert cli.main(["update"]) == 0
+    assert captured == {"entities": "entities_v2", "relationships": "relationships_v2"}
+
+
+def test_cmd_update_persists_kg_schema_when_local_env_present(monkeypatch, tmp_path):
+    consumer_dir = tmp_path / "consumer"
+    consumer_dir.mkdir()
+    (consumer_dir / ".env").write_text("ARANGO_ROOT_PASSWORD=x\n")
+    monkeypatch.chdir(tmp_path)
+
+    built = {}
+    _fake_modules(monkeypatch, built)
+    monkeypatch.setattr(
+        cli,
+        "updater",
+        types.SimpleNamespace(
+            update=lambda *a, **k: {
+                "mode": "baseline",
+                "applied": 0,
+                "cursor": "x",
+                "baseline": {
+                    "tag": "baseline-2026-09", "kg_schema": "v3",
+                    "points": 1, "entities": 1, "edges": 1,
+                },
+                "adopted_from": None,
+            },
+            BaselineRequired=type("BaselineRequired", (Exception,), {}),
+            BaselineRefused=type("BaselineRefused", (Exception,), {}),
+        ),
+    )
+
+    assert cli.main(["update"]) == 0
+    assert (consumer_dir / ".env").read_text() == (
+        "ARANGO_ROOT_PASSWORD=x\nEMBEDDINGTON_KG_SCHEMA=v3\n"
+    )
+
+
+def test_cmd_update_never_persists_when_local_env_absent(monkeypatch, tmp_path):
+    """Standalone usage (no clone, no consumer/.env): the best-effort write must be
+    skipped, not create a file nobody asked for."""
+    monkeypatch.chdir(tmp_path)
+    built = {}
+    _fake_modules(monkeypatch, built)
+    monkeypatch.setattr(
+        cli,
+        "updater",
+        types.SimpleNamespace(
+            update=lambda *a, **k: {
+                "mode": "baseline",
+                "applied": 0,
+                "cursor": "x",
+                "baseline": {
+                    "tag": "baseline-2026-09", "kg_schema": "v3",
+                    "points": 1, "entities": 1, "edges": 1,
+                },
+                "adopted_from": None,
+            },
+            BaselineRequired=type("BaselineRequired", (Exception,), {}),
+            BaselineRefused=type("BaselineRefused", (Exception,), {}),
+        ),
+    )
+
+    assert cli.main(["update"]) == 0
+    assert not (tmp_path / "consumer").exists()
+
+
 def test_preflight_runs_before_any_release_fetch(monkeypatch):
     """The 828 MB mistake: v1 pulled the whole baseline before ever checking the
     Arango password. Preflight must fire before ReleaseClient is even built."""

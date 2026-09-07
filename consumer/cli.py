@@ -15,9 +15,18 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from consumer import lexical_index, release_client, restore_ops, state_paths, updater, writers
+from consumer import (
+    env_file,
+    lexical_index,
+    release_client,
+    restore_ops,
+    state_paths,
+    updater,
+    writers,
+)
 from consumer.fetcher import HttpFetcher
 from embeddington import SchemaVersionError
+from embeddington.apply import schema_names
 
 PROG = "embeddington-consume"
 
@@ -177,14 +186,51 @@ def _resolve_paths(args, env=None, home=None, cwd=None, install_root_dir=None):
     return args
 
 
+def _persist_kg_schema_if_local_env_present(cwd, kg_schema):
+    """Best-effort: remember the active schema in ./consumer/.env for the next run.
+
+    `embeddington-consume` is also invoked standalone against arbitrary stores (no
+    clone, no consumer/.env) via --arango-url et al., so this is skipped entirely
+    when that file isn't there -- never fatal, and never creates the file itself.
+    The shipped deployment always has it: cron already runs from the clone root
+    (`cd {clone} && ... embeddington-consume update`, see installer/cron.py), which
+    is exactly the cwd this looks under.
+
+    Args:
+        cwd: The current working directory (production: Path.cwd()).
+        kg_schema: The value to persist (a baseline entry's kg_schema, or "v2").
+    """
+    env_path = Path(cwd) / "consumer" / ".env"
+    if not env_path.exists():
+        return
+    try:
+        env_file.set_key(env_path, "EMBEDDINGTON_KG_SCHEMA", kg_schema)
+    except OSError as exc:
+        print(
+            f"warning: could not record EMBEDDINGTON_KG_SCHEMA={kg_schema} in {env_path} ({exc}).",
+            file=sys.stderr,
+        )
+
+
 def _cmd_update(args):
     args = _resolve_paths(args)
     _preflight(args)
     fetcher = HttpFetcher()
     rc = release_client.ReleaseClient(fetcher, repo=args.repo)
     qdrant = writers.QdrantConsumerWriter.connect(args.qdrant_url, args.collection)
+    # Which collections a DIFF apply targets is whichever schema this install's stores
+    # are CURRENTLY named for -- args.kg_schema defaults to $EMBEDDINGTON_KG_SCHEMA,
+    # the same var _persist_kg_schema_if_local_env_present writes after a baseline
+    # restore, and the same file the cron line already sources into the environment
+    # (`set -a && . consumer/.env && set +a`, see installer/cron.py).
+    names = schema_names.resolve_schema_names(args.kg_schema)
     arango = writers.ArangoConsumerWriter.connect(
-        args.arango_url, args.arango_db, args.arango_user, args.arango_password
+        args.arango_url,
+        args.arango_db,
+        args.arango_user,
+        args.arango_password,
+        entities=names["entities"],
+        relationships=names["relationships"],
     )
     baseline_importer = restore_ops.make_baseline_importer(
         rc,
@@ -225,6 +271,10 @@ def _cmd_update(args):
     except updater.BaselineRefused as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 3
+    if result.get("baseline") is not None:
+        _persist_kg_schema_if_local_env_present(
+            Path.cwd(), result["baseline"].get("kg_schema") or "v2"
+        )
     print(_format_update(result))
     return 0
 
@@ -329,6 +379,16 @@ def _build_parser():
         "--arango-password",
         # Same var the consumer docker-compose uses, so one .env serves both.
         default=os.environ.get("ARANGO_ROOT_PASSWORD") or os.environ.get("ARANGO_PASSWORD", ""),
+    )
+    p_up.add_argument(
+        "--kg-schema",
+        default=os.environ.get("EMBEDDINGTON_KG_SCHEMA"),
+        help=(
+            "which KG schema generation this install's Arango collections are named "
+            "for (default: $EMBEDDINGTON_KG_SCHEMA, else v2 -- the pre-v3-cutover "
+            "default). A successful baseline restore updates ./consumer/.env "
+            "automatically; you should not normally need to pass this by hand."
+        ),
     )
     p_up.set_defaults(func=_cmd_update)
 
