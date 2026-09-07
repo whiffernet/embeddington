@@ -7,14 +7,31 @@ consumer/cli.py builds), a status spinner, and translating exceptions to EMB cod
 The spec asks for "Rich progress" here; per the non-goal of never modifying the
 updater, that is realized as an indeterminate status spinner with elapsed time, not
 per-byte progress bars (which would require callbacks the updater doesn't have).
+
+Schema-generation wiring (Task 5's ``kg_schema`` manifest field): the Arango writer
+built here for DIFF application must target whichever collections this install's
+stores are CURRENTLY named for -- which a baseline restore may have just changed. That
+fact is recorded in ``consumer/.env`` as ``EMBEDDINGTON_KG_SCHEMA`` (read before
+wiring, written after a baseline lands), the same file ``mcp/server.py`` already falls
+back to for the Arango password -- one install-owned fact, one place on disk.
 """
 
 import os
+import sys
 import urllib.error
 from pathlib import Path
 
-from consumer import lexical_index, release_client, restore_ops, state_paths, updater, writers
+from consumer import (
+    env_file,
+    lexical_index,
+    release_client,
+    restore_ops,
+    state_paths,
+    updater,
+    writers,
+)
 from consumer.fetcher import HttpFetcher
+from embeddington.apply import schema_names
 from embeddington.errors import ChecksumError, EmbeddingtonError, SchemaVersionError
 from installer.errors import SetupError
 
@@ -23,12 +40,64 @@ ARANGO_URL = "http://localhost:8529"
 COLLECTION = "technology"
 ARANGO_DB = "technology_kg"
 
+KG_SCHEMA_ENV_KEY = "EMBEDDINGTON_KG_SCHEMA"
+
+
+def installed_kg_schema(consumer_dir):
+    """The kg_schema this install's local Arango collections are currently named for.
+
+    Args:
+        consumer_dir: The clone's ``consumer/`` directory.
+
+    Returns:
+        The persisted value from ``consumer/.env``, or ``None`` when absent -- which
+        ``schema_names.resolve_schema_names`` treats identically to ``"v2"``.
+    """
+    return env_file.read_key(Path(consumer_dir) / ".env", KG_SCHEMA_ENV_KEY)
+
+
+def _persist_kg_schema(consumer_dir, kg_schema):
+    """Best-effort: record the now-active schema so the NEXT run's wiring sees it.
+
+    Never fatal -- a successful data update must not fail (or look like it failed)
+    over a bookkeeping write. ``consumer/.env`` is created well before this ever runs
+    (installer/stack.ensure_env_file), so a failure here means a genuinely unusual
+    filesystem problem, worth a line on stderr but not worth losing the update over.
+
+    Args:
+        consumer_dir: The clone's ``consumer/`` directory.
+        kg_schema: The value to persist (a baseline entry's ``kg_schema``, or "v2").
+    """
+    try:
+        env_file.set_key(Path(consumer_dir) / ".env", KG_SCHEMA_ENV_KEY, kg_schema)
+    except OSError as exc:
+        print(
+            f"warning: could not record {KG_SCHEMA_ENV_KEY}={kg_schema} in "
+            f"{consumer_dir}/.env ({exc}). The next update run re-derives it from "
+            "the manifest, so this is not itself a failure.",
+            file=sys.stderr,
+        )
+
 
 def _production_wiring(repo_root, password, repo):
-    """Build the exact objects consumer/cli.py's _cmd_update builds."""
+    """Build the exact objects consumer/cli.py's _cmd_update builds.
+
+    The Arango writer is schema-aware: its entities/relationships collections are
+    resolved from this install's PERSISTED ``kg_schema`` (see ``installed_kg_schema``),
+    not hardcoded to v2 -- a diff applied after a v3 re-baseline must land in
+    ``entities_v3``/``relationships_v3``, not the (about to be dropped) v2 pair.
+    """
     rc = release_client.ReleaseClient(HttpFetcher(), repo=repo)
     qdrant = writers.QdrantConsumerWriter.connect(QDRANT_URL, COLLECTION)
-    arango = writers.ArangoConsumerWriter.connect(ARANGO_URL, ARANGO_DB, "root", password)
+    names = schema_names.resolve_schema_names(installed_kg_schema(Path(repo_root) / "consumer"))
+    arango = writers.ArangoConsumerWriter.connect(
+        ARANGO_URL,
+        ARANGO_DB,
+        "root",
+        password,
+        entities=names["entities"],
+        relationships=names["relationships"],
+    )
     return rc, qdrant, arango
 
 
@@ -95,7 +164,7 @@ def run_import(
         with console.status(
             "[cyan]Rolling the graph forward... first run pulls ~1 GB — the Dude abides.[/cyan]"
         ):
-            return update_fn(
+            result = update_fn(
                 rc,
                 qdrant,
                 arango,
@@ -108,6 +177,14 @@ def run_import(
                     QDRANT_URL, COLLECTION
                 ),
             )
+        # A baseline just landed (result["baseline"] is only set in that mode) --
+        # remember which schema it used so the NEXT run's wiring (this run's `arango`
+        # writer is already built) resolves the right collections without re-deriving
+        # it from the manifest.
+        baseline = result.get("baseline")
+        if baseline is not None:
+            _persist_kg_schema(Path(repo_root) / "consumer", baseline.get("kg_schema") or "v2")
+        return result
     except updater.BaselineRefused as exc:
         raise SetupError(
             "EMB-43",

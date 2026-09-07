@@ -3,6 +3,7 @@
 import io
 from dataclasses import replace
 from pathlib import Path
+from unittest.mock import MagicMock
 
 from rich.console import Console
 
@@ -427,6 +428,57 @@ def test_update_flow_surfaces_resync_venv_failure_without_claiming_resynced():
     out = con.export_text()
     assert "re-sync" in out.lower() and "fail" in out.lower()
     assert "re-synced" not in out
+
+
+def test_production_counters_resolve_v3_names_from_the_persisted_kg_schema(tmp_path, monkeypatch):
+    """detect_state / proof_of_life's Arango counter must target the collections
+    this install's stores are CURRENTLY named for -- counting entities_v2 on a v3
+    install would report a healthy graph as empty."""
+    import types
+
+    from consumer import writers
+
+    (tmp_path / "consumer").mkdir()
+    (tmp_path / "consumer" / ".env").write_text(
+        "ARANGO_ROOT_PASSWORD=secret\nEMBEDDINGTON_KG_SCHEMA=v3\n"
+    )
+    captured = {}
+    monkeypatch.setattr(
+        writers.ArangoConsumerWriter,
+        "connect",
+        classmethod(lambda cls, *a, **k: captured.update(k) or MagicMock()),
+    )
+    monkeypatch.setattr(
+        writers.QdrantConsumerWriter, "connect", classmethod(lambda cls, *a: MagicMock())
+    )
+
+    deps = cli._production_deps(tmp_path, types.SimpleNamespace())
+    deps["detect_state"](None)
+
+    assert captured == {"entities": "entities_v3", "relationships": "relationships_v3"}
+
+
+def test_production_counters_default_to_v2_names(tmp_path, monkeypatch):
+    import types
+
+    from consumer import writers
+
+    (tmp_path / "consumer").mkdir()
+    (tmp_path / "consumer" / ".env").write_text("ARANGO_ROOT_PASSWORD=secret\n")
+    captured = {}
+    monkeypatch.setattr(
+        writers.ArangoConsumerWriter,
+        "connect",
+        classmethod(lambda cls, *a, **k: captured.update(k) or MagicMock()),
+    )
+    monkeypatch.setattr(
+        writers.QdrantConsumerWriter, "connect", classmethod(lambda cls, *a: MagicMock())
+    )
+
+    deps = cli._production_deps(tmp_path, types.SimpleNamespace())
+    deps["detect_state"](None)
+
+    assert captured == {"entities": "entities_v2", "relationships": "relationships_v2"}
 
 
 def test_production_merge_env_writes_memory_cap(tmp_path):

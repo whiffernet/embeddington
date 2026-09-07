@@ -186,6 +186,164 @@ def test_emb43_carries_the_guards_own_message():
     assert "152,194" in exc.value.friendly
 
 
+def test_installed_kg_schema_defaults_to_none_when_env_absent(tmp_path):
+    assert import_step.installed_kg_schema(tmp_path / "consumer") is None
+
+
+def test_installed_kg_schema_reads_the_persisted_value(tmp_path):
+    consumer_dir = tmp_path / "consumer"
+    consumer_dir.mkdir()
+    (consumer_dir / ".env").write_text("EMBEDDINGTON_KG_SCHEMA=v3\n")
+    assert import_step.installed_kg_schema(consumer_dir) == "v3"
+
+
+def test_production_wiring_resolves_v2_names_when_env_says_nothing(tmp_path, monkeypatch):
+    consumer_dir = tmp_path / "consumer"
+    consumer_dir.mkdir()
+    (consumer_dir / ".env").write_text("ARANGO_ROOT_PASSWORD=x\n")
+    captured = {}
+    monkeypatch.setattr(
+        import_step.writers.ArangoConsumerWriter,
+        "connect",
+        classmethod(lambda cls, *a, **k: captured.update(k) or object()),
+    )
+    monkeypatch.setattr(
+        import_step.writers.QdrantConsumerWriter, "connect", classmethod(lambda cls, *a: object())
+    )
+    import_step._production_wiring(tmp_path, "pw", "whiffernet/embeddington")
+    assert captured == {"entities": "entities_v2", "relationships": "relationships_v2"}
+
+
+def test_production_wiring_resolves_v3_names_when_env_says_so(tmp_path, monkeypatch):
+    consumer_dir = tmp_path / "consumer"
+    consumer_dir.mkdir()
+    (consumer_dir / ".env").write_text("EMBEDDINGTON_KG_SCHEMA=v3\n")
+    captured = {}
+    monkeypatch.setattr(
+        import_step.writers.ArangoConsumerWriter,
+        "connect",
+        classmethod(lambda cls, *a, **k: captured.update(k) or object()),
+    )
+    monkeypatch.setattr(
+        import_step.writers.QdrantConsumerWriter, "connect", classmethod(lambda cls, *a: object())
+    )
+    import_step._production_wiring(tmp_path, "pw", "whiffernet/embeddington")
+    assert captured == {"entities": "entities_v3", "relationships": "relationships_v3"}
+
+
+def test_run_import_persists_kg_schema_after_a_v3_baseline_restore(tmp_path):
+    consumer_dir = tmp_path / "consumer"
+    consumer_dir.mkdir()
+    (consumer_dir / ".env").write_text("ARANGO_ROOT_PASSWORD=x\n")
+
+    def update_fn(*a, **k):
+        return {
+            "mode": "baseline",
+            "applied": 0,
+            "cursor": "abc",
+            "baseline": {"tag": "baseline-2026-09", "kg_schema": "v3"},
+            "adopted_from": None,
+        }
+
+    import_step.run_import(
+        console(),
+        tmp_path,
+        "pw",
+        env={"EMBEDDINGTON_HOME": str(tmp_path / "state")},
+        home=tmp_path,
+        cwd=tmp_path,
+        update_fn=update_fn,
+        wiring_fn=lambda *a: ("rc", "qdrant", "arango", "importer"),
+    )
+    assert (
+        consumer_dir / ".env"
+    ).read_text() == "ARANGO_ROOT_PASSWORD=x\nEMBEDDINGTON_KG_SCHEMA=v3\n"
+
+
+def test_run_import_persists_v2_when_baseline_carries_no_kg_schema(tmp_path):
+    """A pre-cutover baseline entry (no kg_schema field) still records the fact
+    explicitly, so a later doctor/wiring read never has to guess "absent env key"
+    apart from "absent because nothing has ever restored a baseline here"."""
+    consumer_dir = tmp_path / "consumer"
+    consumer_dir.mkdir()
+    (consumer_dir / ".env").write_text("ARANGO_ROOT_PASSWORD=x\n")
+
+    def update_fn(*a, **k):
+        return {
+            "mode": "baseline",
+            "applied": 0,
+            "cursor": "abc",
+            "baseline": {"tag": "baseline-2026-06"},
+            "adopted_from": None,
+        }
+
+    import_step.run_import(
+        console(),
+        tmp_path,
+        "pw",
+        env={"EMBEDDINGTON_HOME": str(tmp_path / "state")},
+        home=tmp_path,
+        cwd=tmp_path,
+        update_fn=update_fn,
+        wiring_fn=lambda *a: ("rc", "qdrant", "arango", "importer"),
+    )
+    assert "EMBEDDINGTON_KG_SCHEMA=v2" in (consumer_dir / ".env").read_text()
+
+
+def test_run_import_does_not_touch_the_env_when_no_baseline_ran(tmp_path):
+    consumer_dir = tmp_path / "consumer"
+    consumer_dir.mkdir()
+    (consumer_dir / ".env").write_text("ARANGO_ROOT_PASSWORD=x\n")
+
+    def update_fn(*a, **k):
+        return {
+            "mode": "diffs",
+            "applied": 2,
+            "cursor": "abc",
+            "baseline": None,
+            "adopted_from": None,
+        }
+
+    import_step.run_import(
+        console(),
+        tmp_path,
+        "pw",
+        env={"EMBEDDINGTON_HOME": str(tmp_path / "state")},
+        home=tmp_path,
+        cwd=tmp_path,
+        update_fn=update_fn,
+        wiring_fn=lambda *a: ("rc", "qdrant", "arango", "importer"),
+    )
+    assert (consumer_dir / ".env").read_text() == "ARANGO_ROOT_PASSWORD=x\n"
+
+
+def test_run_import_persist_failure_is_non_fatal(tmp_path, capsys):
+    """repo_root/consumer doesn't even exist here -- the write must fail silently
+    (a warning on stderr), never raise past a successful update."""
+
+    def update_fn(*a, **k):
+        return {
+            "mode": "baseline",
+            "applied": 0,
+            "cursor": "abc",
+            "baseline": {"kg_schema": "v3"},
+            "adopted_from": None,
+        }
+
+    result = import_step.run_import(
+        console(),
+        tmp_path / "no-such-clone",
+        "pw",
+        env={"EMBEDDINGTON_HOME": str(tmp_path / "state")},
+        home=tmp_path,
+        cwd=tmp_path,
+        update_fn=update_fn,
+        wiring_fn=lambda *a: ("rc", "qdrant", "arango", "importer"),
+    )
+    assert result["mode"] == "baseline"
+    assert "warning" in capsys.readouterr().err
+
+
 def test_proof_of_life_returns_counts():
     assert import_step.proof_of_life(lambda: 152_194, lambda: 41_000) == (152_194, 41_000)
 

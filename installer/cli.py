@@ -54,6 +54,7 @@ def _production_deps(repo_root, args, run=None, note=None):
             have to hand it over explicitly; the run wrapper only keeps a stderr tail.
     """
     from consumer import writers
+    from embeddington.apply import schema_names
 
     run = runner.run if run is None else run
     note = (lambda _text: None) if note is None else note
@@ -63,8 +64,19 @@ def _production_deps(repo_root, args, run=None, note=None):
         qdrant = writers.QdrantConsumerWriter.connect(
             import_step.QDRANT_URL, import_step.COLLECTION
         )
+        # Doctor/proof-of-life must count the collections this install's stores are
+        # CURRENTLY named for -- a v3 install's entities live in entities_v3, and
+        # counting entities_v2 there would report a healthy graph as empty.
+        names = schema_names.resolve_schema_names(
+            import_step.installed_kg_schema(repo_root / "consumer")
+        )
         arango = writers.ArangoConsumerWriter.connect(
-            import_step.ARANGO_URL, import_step.ARANGO_DB, "root", password
+            import_step.ARANGO_URL,
+            import_step.ARANGO_DB,
+            "root",
+            password,
+            entities=names["entities"],
+            relationships=names["relationships"],
         )
         return qdrant.point_count, arango.entity_count
 
