@@ -907,17 +907,24 @@ class ArangoKGClient:
         # coverage_only excludes the WHOLE path if any single edge on it is
         # pdf-legacy-only -- same per-edge test as COVERAGE_ONLY_EDGE_FILTER,
         # applied across p.edges instead of a single-edge FOR variable.
-        query = """
+        # Split across two adjacent literals (implicit concatenation) so the
+        # over-100-char FILTER line fits ruff's E501 line-length gate without
+        # changing a single character of the emitted query text -- the split
+        # falls between "RETURN 1)" and " == 0", both otherwise untouched.
+        query = (
+            """
         FOR p IN ANY K_SHORTEST_PATHS @from TO @to GRAPH @graph
             FILTER !@coverage_only OR LENGTH(
                 FOR e IN p.edges
                     FILTER LENGTH(e.origins || []) > 0
-                        AND LENGTH(FOR o IN (e.origins || []) FILTER o != "pdf-legacy" RETURN 1) == 0
+                        AND LENGTH(FOR o IN (e.origins || []) FILTER o != "pdf-legacy" RETURN 1)"""
+            """ == 0
                     RETURN 1
             ) == 0
             LIMIT @cap
             RETURN {vertices: p.vertices, edges: p.edges}
         """
+        )
         bind_vars: dict[str, Any] = {
             "from": from_id,
             "to": to_id,
