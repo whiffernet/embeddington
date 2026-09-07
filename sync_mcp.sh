@@ -16,12 +16,12 @@ DEST="$HERE/mcp"
 
 SYNCED=(
   arango_client.py budget.py config.py embedding_client.py enrich.py grounding.py hybrid.py
-  qdrant_client.py server.py requirements.txt
+  probe.py qdrant_client.py server.py requirements.txt
   tests/conftest.py tests/test_arango_client.py tests/test_budget.py tests/test_client_timeouts.py
   tests/test_config.py tests/test_config_allowlist.py tests/test_embedding_client.py
   tests/test_enrich.py tests/test_grounding.py tests/test_hybrid.py tests/test_integration.py
-  tests/test_password_resolution.py tests/test_qdrant_client.py tests/test_registry.py
-  tests/test_server_main.py tests/test_tools.py tests/bench_read_path.py
+  tests/test_no_collection_literals.py tests/test_password_resolution.py tests/test_qdrant_client.py
+  tests/test_registry.py tests/test_server_main.py tests/test_tools.py tests/bench_read_path.py
 )
 
 transform() {  # upstream identifiers -> embeddington identifiers, in place
