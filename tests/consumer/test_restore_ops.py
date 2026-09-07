@@ -97,7 +97,9 @@ def test_make_baseline_importer_wires_ops_in_order(tmp_path, monkeypatch):
         restore_ops, "restore_qdrant_snapshot", lambda *a: calls.append(("qdrant", a))
     )
     monkeypatch.setattr(restore_ops, "restore_arango_dump", lambda *a: calls.append(("arango", a)))
-    monkeypatch.setattr(restore_ops, "ensure_named_graph", lambda *a: calls.append(("graph", a)))
+    monkeypatch.setattr(
+        restore_ops, "ensure_named_graph", lambda *a, **k: calls.append(("graph", a))
+    )
     monkeypatch.setattr(
         restore_ops.lexical_index,
         "ensure_chunk_text_index",
@@ -168,7 +170,9 @@ def test_make_baseline_importer_routes_bundle_format_without_decompressing_qdran
         restore_ops, "restore_qdrant_snapshot", lambda *a: calls.append(("snapshot", a))
     )
     monkeypatch.setattr(restore_ops, "restore_arango_dump", lambda *a: calls.append(("arango", a)))
-    monkeypatch.setattr(restore_ops, "ensure_named_graph", lambda *a: calls.append(("graph", a)))
+    monkeypatch.setattr(
+        restore_ops, "ensure_named_graph", lambda *a, **k: calls.append(("graph", a))
+    )
     monkeypatch.setattr(
         restore_ops.lexical_index,
         "ensure_chunk_text_index",
@@ -212,7 +216,7 @@ def test_make_baseline_importer_prints_the_chunk_text_status(tmp_path, monkeypat
     monkeypatch.setattr(restore_ops, "decompress", lambda p: f"{p}.out")
     monkeypatch.setattr(restore_ops, "restore_qdrant_snapshot", lambda *a: None)
     monkeypatch.setattr(restore_ops, "restore_arango_dump", lambda *a: None)
-    monkeypatch.setattr(restore_ops, "ensure_named_graph", lambda *a: None)
+    monkeypatch.setattr(restore_ops, "ensure_named_graph", lambda *a, **k: None)
     monkeypatch.setattr(
         restore_ops.lexical_index, "ensure_chunk_text_index", lambda *a, **k: "building"
     )
@@ -230,6 +234,222 @@ def test_make_baseline_importer_prints_the_chunk_text_status(tmp_path, monkeypat
     importer(entry)
 
     assert "chunk_text index: building" in capsys.readouterr().out
+
+
+class _FakeGraphDb:
+    """Minimal fake of a python-arango StandardDatabase for graph/collection ops."""
+
+    def __init__(self):
+        self.graphs = set()
+        self.collections = set()
+        self.edge_defs = {}  # graph_name -> (edge_collection, from_, to_)
+        self.deleted_graphs = []
+        self.deleted_collections = []
+
+    def has_graph(self, name):
+        return name in self.graphs
+
+    def create_graph(self, name):
+        self.graphs.add(name)
+        db = self
+
+        class _Graph:
+            def create_edge_definition(
+                self, edge_collection, from_vertex_collections, to_vertex_collections
+            ):
+                db.edge_defs[name] = (
+                    edge_collection,
+                    from_vertex_collections,
+                    to_vertex_collections,
+                )
+
+        return _Graph()
+
+    def delete_graph(self, name, ignore_missing=False, drop_collections=None):
+        self.deleted_graphs.append((name, ignore_missing, drop_collections))
+        self.graphs.discard(name)
+
+    def delete_collection(self, name, ignore_missing=False):
+        self.deleted_collections.append((name, ignore_missing))
+        self.collections.discard(name)
+
+
+def _patch_arango_client(monkeypatch, fake_db):
+    import arango
+
+    class _FakeClient:
+        def __init__(self, hosts):
+            pass
+
+        def db(self, name, username, password):
+            return fake_db
+
+    monkeypatch.setattr(arango, "ArangoClient", _FakeClient)
+
+
+def test_ensure_named_graph_defaults_to_v2_names_byte_identical(monkeypatch):
+    db = _FakeGraphDb()
+    _patch_arango_client(monkeypatch, db)
+    restore_ops.ensure_named_graph("http://a", "technology_kg", "root", "pw")
+    assert db.graphs == {"servicenow_graph_v2"}
+    assert db.edge_defs["servicenow_graph_v2"] == (
+        "relationships_v2",
+        ["entities_v2"],
+        ["entities_v2"],
+    )
+
+
+def test_ensure_named_graph_uses_resolved_v3_names(monkeypatch):
+    db = _FakeGraphDb()
+    _patch_arango_client(monkeypatch, db)
+    restore_ops.ensure_named_graph(
+        "http://a",
+        "technology_kg",
+        "root",
+        "pw",
+        graph_name="servicenow_graph_v3",
+        entities="entities_v3",
+        relationships="relationships_v3",
+    )
+    assert db.graphs == {"servicenow_graph_v3"}
+    assert db.edge_defs["servicenow_graph_v3"] == (
+        "relationships_v3",
+        ["entities_v3"],
+        ["entities_v3"],
+    )
+
+
+def test_ensure_named_graph_is_idempotent_when_already_present(monkeypatch):
+    db = _FakeGraphDb()
+    db.graphs.add("servicenow_graph_v3")
+    _patch_arango_client(monkeypatch, db)
+    restore_ops.ensure_named_graph(
+        "http://a",
+        "technology_kg",
+        "root",
+        "pw",
+        graph_name="servicenow_graph_v3",
+        entities="entities_v3",
+        relationships="relationships_v3",
+    )
+    assert "servicenow_graph_v3" not in db.edge_defs  # create_graph never called
+
+
+def test_drop_old_schema_collections_removes_graph_and_collections(monkeypatch):
+    from embeddington.apply import schema_names
+
+    db = _FakeGraphDb()
+    db.graphs.add("servicenow_graph_v2")
+    db.collections.update({"entities_v2", "relationships_v2"})
+    _patch_arango_client(monkeypatch, db)
+
+    restore_ops.drop_old_schema_collections(
+        "http://a", "technology_kg", "root", "pw", schema_names.resolve_schema_names("v2")
+    )
+
+    assert db.deleted_graphs == [("servicenow_graph_v2", True, False)]
+    assert ("entities_v2", True) in db.deleted_collections
+    assert ("relationships_v2", True) in db.deleted_collections
+    assert db.graphs == set()
+    assert db.collections == set()
+
+
+def test_drop_old_schema_collections_is_a_noop_when_already_absent(monkeypatch):
+    """A second v3 restore in a row (or --force-baseline): nothing left of v2 to
+    drop, and that must not raise."""
+    from embeddington.apply import schema_names
+
+    db = _FakeGraphDb()  # nothing pre-seeded
+    _patch_arango_client(monkeypatch, db)
+
+    restore_ops.drop_old_schema_collections(
+        "http://a", "technology_kg", "root", "pw", schema_names.resolve_schema_names("v2")
+    )  # must not raise
+
+    assert db.deleted_graphs == [("servicenow_graph_v2", True, False)]
+
+
+def test_make_baseline_importer_v3_entry_resolves_graph_names_and_drops_v2(tmp_path, monkeypatch):
+    """The kg_schema field drives ensure_named_graph's names, and a v3 restore drops
+    the now-orphaned v2 collections/graph."""
+    calls = []
+
+    class _RC:
+        def download_asset(self, tag, asset, dest, sha):
+            return str(dest)
+
+    monkeypatch.setattr(restore_ops, "decompress", lambda p: f"{p}.out")
+    monkeypatch.setattr(restore_ops, "restore_qdrant_snapshot", lambda *a: None)
+    monkeypatch.setattr(restore_ops, "restore_arango_dump", lambda *a: None)
+    monkeypatch.setattr(
+        restore_ops, "ensure_named_graph", lambda *a, **k: calls.append(("graph", k))
+    )
+    monkeypatch.setattr(
+        restore_ops,
+        "drop_old_schema_collections",
+        lambda *a: calls.append(("drop", a[-1])),
+    )
+    monkeypatch.setattr(
+        restore_ops.lexical_index, "ensure_chunk_text_index", lambda *a, **k: "ready"
+    )
+
+    importer = restore_ops.make_baseline_importer(
+        _RC(), tmp_path, "http://q", "technology", "http://a", "technology_kg", "root", "pw"
+    )
+    entry = {
+        "tag": "baseline-2026-09",
+        "head_sha": "abc123",
+        "kg_schema": "v3",
+        "assets": {"qdrant": "technology.snapshot.zst", "arango": "arango-dump.tar.zst"},
+        "sha256": {"qdrant": "qs", "arango": "as"},
+    }
+    importer(entry)
+
+    graph_call = next(c for c in calls if c[0] == "graph")
+    assert graph_call[1] == {
+        "graph_name": "servicenow_graph_v3",
+        "entities": "entities_v3",
+        "relationships": "relationships_v3",
+    }
+    drop_call = next(c for c in calls if c[0] == "drop")
+    assert drop_call[1] == {
+        "entities": "entities_v2",
+        "relationships": "relationships_v2",
+        "graph": "servicenow_graph_v2",
+        "search_view": "entities_v2_search",
+    }
+
+
+def test_make_baseline_importer_v2_entry_never_drops_anything(tmp_path, monkeypatch):
+    """A same-generation restore (kg_schema absent, or explicitly "v2") must not call
+    drop_old_schema_collections at all -- there is nothing orphaned to remove."""
+    calls = []
+
+    class _RC:
+        def download_asset(self, tag, asset, dest, sha):
+            return str(dest)
+
+    monkeypatch.setattr(restore_ops, "decompress", lambda p: f"{p}.out")
+    monkeypatch.setattr(restore_ops, "restore_qdrant_snapshot", lambda *a: None)
+    monkeypatch.setattr(restore_ops, "restore_arango_dump", lambda *a: None)
+    monkeypatch.setattr(restore_ops, "ensure_named_graph", lambda *a, **k: None)
+    monkeypatch.setattr(restore_ops, "drop_old_schema_collections", lambda *a: calls.append("drop"))
+    monkeypatch.setattr(
+        restore_ops.lexical_index, "ensure_chunk_text_index", lambda *a, **k: "ready"
+    )
+
+    importer = restore_ops.make_baseline_importer(
+        _RC(), tmp_path, "http://q", "technology", "http://a", "technology_kg", "root", "pw"
+    )
+    entry = {
+        "tag": "baseline-2026-06",
+        "head_sha": "abc123",
+        "assets": {"qdrant": "technology.snapshot.zst", "arango": "arango-dump.tar.zst"},
+        "sha256": {"qdrant": "qs", "arango": "as"},
+    }
+    importer(entry)
+
+    assert calls == []
 
 
 def test_restore_qdrant_bundle_replaces_a_populated_collection(tmp_path, monkeypatch):

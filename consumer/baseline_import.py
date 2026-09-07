@@ -2,12 +2,18 @@
 
 The first-run path (Plan 3b): download the baseline assets (checksum-verified by the
 release client), decompress the Arango dump, restore Qdrant + the Arango dump into the
-user's local stores, create the named graph ``servicenow_graph_v2`` — which
-``arangodump`` does NOT capture but embeddington's traversal tools require — and
-finally warm the consumer-local ``chunk_text`` lexical index (a bare vector snapshot
-restore always drops it; see ``consumer/lexical_index.py``). Returns the baseline's
-head_sha and the lexical index's resulting status so the caller can seed the cursor
-and report it.
+user's local stores, create the KG's named graph -- which ``arangodump`` does NOT
+capture but embeddington's traversal tools require -- and finally warm the
+consumer-local ``chunk_text`` lexical index (a bare vector snapshot restore always
+drops it; see ``consumer/lexical_index.py``). Returns the baseline's head_sha and the
+lexical index's resulting status so the caller can seed the cursor and report it.
+
+Which collections/graph name the entities/relationships actually live under (the
+pre-cutover v2 names, or their v3 successors -- see Task 5's manifest ``kg_schema``
+field and ``embeddington.apply.schema_names``) is entirely the CALLER's concern: the
+injected ``restore_arango``/``ensure_graph`` callables already close over the resolved
+names before they ever reach this module, so this orchestration stays schema-agnostic.
+``GRAPH_NAME`` below is only the pre-cutover default used where no schema is resolved.
 
 The Qdrant leg is format-dependent (snapshot vs. export bundle, see Task 5's manifest
 ``format`` field), so ``restore_qdrant`` receives the DOWNLOADED (still-compressed)
@@ -50,7 +56,7 @@ def import_baseline(
         restore_qdrant: callable(q_zst) -> restores the Qdrant collection from the
             downloaded (compressed) asset; owns its own decompress/stream interpretation.
         restore_arango: callable(dump_dir) -> arangorestore into the local db.
-        ensure_graph: callable() -> create the ``servicenow_graph_v2`` named graph if absent.
+        ensure_graph: callable() -> create the resolved named graph if absent.
         ensure_lexical_index: callable() -> str, warms the chunk_text field + full-text
             index and returns its resulting status ("ready"/"building"/"absent"/
             "unavailable"). Run LAST, after the graph, since it reads the collection
