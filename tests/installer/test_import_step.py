@@ -231,75 +231,81 @@ def test_production_wiring_resolves_v3_names_when_env_says_so(tmp_path, monkeypa
     assert captured == {"entities": "entities_v3", "relationships": "relationships_v3"}
 
 
-def test_run_import_persists_kg_schema_after_a_v3_baseline_restore(tmp_path):
-    consumer_dir = tmp_path / "consumer"
-    consumer_dir.mkdir()
-    (consumer_dir / ".env").write_text("ARANGO_ROOT_PASSWORD=x\n")
+def test_persist_kg_schema_writes_both_consumer_and_mcp_env(tmp_path):
+    """C1/I1 fix: persistence moved inside make_baseline_importer's importer (see
+    tests/consumer/test_updater.py's C1 regression and test_restore_ops.py for the
+    wiring-order tests) -- this pins _persist_kg_schema's own two-file contract in
+    isolation. mcp/.env doesn't exist yet in a typical install; it must be CREATED."""
+    (tmp_path / "consumer").mkdir()
+    (tmp_path / "consumer" / ".env").write_text("ARANGO_ROOT_PASSWORD=x\n")
+    (tmp_path / "mcp").mkdir()
 
-    def update_fn(*a, **k):
-        return {
-            "mode": "baseline",
-            "applied": 0,
-            "cursor": "abc",
-            "baseline": {"tag": "baseline-2026-09", "kg_schema": "v3"},
-            "adopted_from": None,
-        }
+    import_step._persist_kg_schema(tmp_path, "v3")
 
-    import_step.run_import(
-        console(),
-        tmp_path,
-        "pw",
-        env={"EMBEDDINGTON_HOME": str(tmp_path / "state")},
-        home=tmp_path,
-        cwd=tmp_path,
-        update_fn=update_fn,
-        wiring_fn=lambda *a: ("rc", "qdrant", "arango", "importer"),
+    assert (tmp_path / "consumer" / ".env").read_text() == (
+        "ARANGO_ROOT_PASSWORD=x\nEMBEDDINGTON_KG_SCHEMA=v3\n"
     )
-    assert (
-        consumer_dir / ".env"
-    ).read_text() == "ARANGO_ROOT_PASSWORD=x\nEMBEDDINGTON_KG_SCHEMA=v3\n"
+    assert (tmp_path / "mcp" / ".env").read_text() == "EMBEDDINGTON_KG_SCHEMA=v3\n"
 
 
-def test_run_import_persists_v2_when_baseline_carries_no_kg_schema(tmp_path):
-    """A pre-cutover baseline entry (no kg_schema field) still records the fact
-    explicitly, so a later doctor/wiring read never has to guess "absent env key"
-    apart from "absent because nothing has ever restored a baseline here"."""
-    consumer_dir = tmp_path / "consumer"
-    consumer_dir.mkdir()
-    (consumer_dir / ".env").write_text("ARANGO_ROOT_PASSWORD=x\n")
+def test_persist_kg_schema_replaces_an_existing_value_in_both_files(tmp_path):
+    (tmp_path / "consumer").mkdir()
+    (tmp_path / "consumer" / ".env").write_text("EMBEDDINGTON_KG_SCHEMA=v2\n")
+    (tmp_path / "mcp").mkdir()
+    (tmp_path / "mcp" / ".env").write_text("QDRANT_URL=http://x\nEMBEDDINGTON_KG_SCHEMA=v2\n")
 
-    def update_fn(*a, **k):
-        return {
-            "mode": "baseline",
-            "applied": 0,
-            "cursor": "abc",
-            "baseline": {"tag": "baseline-2026-06"},
-            "adopted_from": None,
-        }
+    import_step._persist_kg_schema(tmp_path, "v3")
 
-    import_step.run_import(
-        console(),
-        tmp_path,
-        "pw",
-        env={"EMBEDDINGTON_HOME": str(tmp_path / "state")},
-        home=tmp_path,
-        cwd=tmp_path,
-        update_fn=update_fn,
-        wiring_fn=lambda *a: ("rc", "qdrant", "arango", "importer"),
+    assert (tmp_path / "consumer" / ".env").read_text() == "EMBEDDINGTON_KG_SCHEMA=v3\n"
+    assert (tmp_path / "mcp" / ".env").read_text() == (
+        "QDRANT_URL=http://x\nEMBEDDINGTON_KG_SCHEMA=v3\n"
     )
-    assert "EMBEDDINGTON_KG_SCHEMA=v2" in (consumer_dir / ".env").read_text()
 
 
-def test_run_import_does_not_touch_the_env_when_no_baseline_ran(tmp_path):
-    consumer_dir = tmp_path / "consumer"
-    consumer_dir.mkdir()
-    (consumer_dir / ".env").write_text("ARANGO_ROOT_PASSWORD=x\n")
+def test_persist_kg_schema_one_file_failing_does_not_stop_the_other(tmp_path, capsys):
+    """Neither file's directory exists -- both writes fail, both are warned about
+    independently, and neither raises."""
+    import_step._persist_kg_schema(tmp_path / "no-such-clone", "v3")
+    err = capsys.readouterr().err
+    assert err.count("warning") == 2
+    assert "consumer" in err and "mcp" in err
 
-    def update_fn(*a, **k):
+
+def test_production_wiring_threads_the_arango_writer_and_persist_into_the_importer(
+    tmp_path, monkeypatch
+):
+    """C1 fix: make_baseline_importer must receive the SAME arango writer run_import
+    threads into updater.update (so a v3 restore's retarget takes effect on the
+    writer the trailing diff-apply loop actually uses), plus a persist_kg_schema
+    callable wired to _persist_kg_schema."""
+    (tmp_path / "consumer").mkdir()
+    (tmp_path / "consumer" / ".env").write_text("ARANGO_ROOT_PASSWORD=x\n")
+    (tmp_path / "mcp").mkdir()
+
+    sentinel_arango = object()
+    monkeypatch.setattr(
+        import_step.writers.ArangoConsumerWriter,
+        "connect",
+        classmethod(lambda cls, *a, **k: sentinel_arango),
+    )
+    monkeypatch.setattr(
+        import_step.writers.QdrantConsumerWriter, "connect", classmethod(lambda cls, *a: object())
+    )
+    captured = {}
+
+    def fake_make_baseline_importer(*a, **k):
+        captured.update(k)
+        return "importer"
+
+    monkeypatch.setattr(
+        import_step.restore_ops, "make_baseline_importer", fake_make_baseline_importer
+    )
+
+    def fake_update(*a, **k):
         return {
-            "mode": "diffs",
-            "applied": 2,
-            "cursor": "abc",
+            "mode": "up_to_date",
+            "applied": 0,
+            "cursor": "x",
             "baseline": None,
             "adopted_from": None,
         }
@@ -311,37 +317,18 @@ def test_run_import_does_not_touch_the_env_when_no_baseline_ran(tmp_path):
         env={"EMBEDDINGTON_HOME": str(tmp_path / "state")},
         home=tmp_path,
         cwd=tmp_path,
-        update_fn=update_fn,
-        wiring_fn=lambda *a: ("rc", "qdrant", "arango", "importer"),
+        update_fn=fake_update,
     )
-    assert (consumer_dir / ".env").read_text() == "ARANGO_ROOT_PASSWORD=x\n"
 
+    assert captured["arango_writer"] is sentinel_arango
+    assert callable(captured["persist_kg_schema"])
 
-def test_run_import_persist_failure_is_non_fatal(tmp_path, capsys):
-    """repo_root/consumer doesn't even exist here -- the write must fail silently
-    (a warning on stderr), never raise past a successful update."""
-
-    def update_fn(*a, **k):
-        return {
-            "mode": "baseline",
-            "applied": 0,
-            "cursor": "abc",
-            "baseline": {"kg_schema": "v3"},
-            "adopted_from": None,
-        }
-
-    result = import_step.run_import(
-        console(),
-        tmp_path / "no-such-clone",
-        "pw",
-        env={"EMBEDDINGTON_HOME": str(tmp_path / "state")},
-        home=tmp_path,
-        cwd=tmp_path,
-        update_fn=update_fn,
-        wiring_fn=lambda *a: ("rc", "qdrant", "arango", "importer"),
-    )
-    assert result["mode"] == "baseline"
-    assert "warning" in capsys.readouterr().err
+    # Exercise the captured closure for real (no network): prove it resolves the
+    # module-level _persist_kg_schema and repo_root, rather than being some callable
+    # that would NameError on first real use.
+    captured["persist_kg_schema"]("v3")
+    assert "EMBEDDINGTON_KG_SCHEMA=v3" in (tmp_path / "consumer" / ".env").read_text()
+    assert "EMBEDDINGTON_KG_SCHEMA=v3" in (tmp_path / "mcp" / ".env").read_text()
 
 
 def test_proof_of_life_returns_counts():

@@ -148,6 +148,31 @@ def test_connect_forwards_resolved_collection_names(monkeypatch):
     assert captured["collection_calls"] == ["entities_v3", "relationships_v3"]
 
 
+def test_retarget_moves_subsequent_writes_to_the_new_collections(fake_arango_db):
+    """The same writer instance, mid-flight: a baseline restore that just switched
+    schema generations retargets it in place rather than requiring a new writer."""
+    w = writers.ArangoConsumerWriter(fake_arango_db)  # starts on v2
+    w.upsert_entity("before", {"name": "still-v2"})
+    assert "before" in fake_arango_db.collections["entities_v2"]
+
+    w.retarget(entities="entities_v3", relationships="relationships_v3")
+    w.upsert_entity("after", {"name": "now-v3"})
+    w.upsert_edge("R1", "entities_v3/after", "entities_v3/after", {"predicate": "USES"})
+
+    assert "after" in fake_arango_db.collections["entities_v3"]
+    assert "R1" in fake_arango_db.collections["relationships_v3"]
+    assert "after" not in fake_arango_db.collections["entities_v2"]  # never touched v2 again
+
+
+def test_retarget_updates_entity_count_target(fake_arango_db):
+    w = writers.ArangoConsumerWriter(fake_arango_db)
+    w.retarget(entities="entities_v3", relationships="relationships_v3")
+    assert w.entity_count() == 0
+    w.upsert_entity("e1", {"name": "ServiceNow"})
+    assert w.entity_count() == 1
+    assert fake_arango_db.collections["entities_v2"] == {}
+
+
 def test_entity_count_counts_entities(fake_arango_db):
     aw = writers.ArangoConsumerWriter(fake_arango_db)
     assert aw.entity_count() == 0

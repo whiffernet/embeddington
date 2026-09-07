@@ -217,6 +217,26 @@ class ArangoConsumerWriter:
         self._entities = db.collection(entities)
         self._edges = db.collection(relationships)
 
+    def retarget(self, *, entities, relationships):
+        """Re-bind this SAME writer instance to a different collection pair.
+
+        A baseline restore that lands a NEW KG schema generation happens mid
+        ``consumer.updater.update()``: the writer passed into that call is the one the
+        diff-apply loop AFTER the baseline uses, in the same call, so it must be
+        updated in place rather than requiring a second writer to be constructed and
+        re-threaded through code (``updater.py``) this project does not otherwise
+        touch. See ``consumer.restore_ops.make_baseline_importer``'s ``arango_writer``
+        parameter, which calls this right after a restore lands.
+
+        Args:
+            entities: New entities collection name.
+            relationships: New relationships collection name.
+        """
+        self._entities_name = entities
+        self._relationships_name = relationships
+        self._entities = self._db.collection(entities)
+        self._edges = self._db.collection(relationships)
+
     @classmethod
     def connect(
         cls,

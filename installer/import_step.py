@@ -11,9 +11,23 @@ per-byte progress bars (which would require callbacks the updater doesn't have).
 Schema-generation wiring (Task 5's ``kg_schema`` manifest field): the Arango writer
 built here for DIFF application must target whichever collections this install's
 stores are CURRENTLY named for -- which a baseline restore may have just changed. That
-fact is recorded in ``consumer/.env`` as ``EMBEDDINGTON_KG_SCHEMA`` (read before
-wiring, written after a baseline lands), the same file ``mcp/server.py`` already falls
-back to for the Arango password -- one install-owned fact, one place on disk.
+fact is recorded as ``EMBEDDINGTON_KG_SCHEMA``, read here before wiring the writer used
+for THIS run, but recorded (both here and for the next run) from inside
+``consumer.restore_ops.make_baseline_importer``'s importer, at the moment a restore
+lands -- never after ``updater.update()`` returns, since a v3 baseline immediately
+followed by trailing diffs (the common case: `cursor.plan_update` returns baseline +
+every diff published after it in one shot) applies those diffs, in the SAME call,
+before this function ever gets a result back. The importer both retargets the very
+writer object that diff-apply loop uses (``ArangoConsumerWriter.retarget``) and
+persists the schema, at that same point -- see ``restore_ops.make_baseline_importer``'s
+docstring.
+
+The value is written to two files: ``consumer/.env`` (which this module reads back on
+the NEXT run) and ``mcp/.env`` (which the installed MCP server itself loads --
+``mcp/server.py`` loads only ``mcp/.env`` plus a single hardcoded scan of
+``consumer/.env`` for the Arango password specifically, so ``consumer/.env`` alone is
+invisible to the server process; a schema-aware ``mcp/config.py`` has nowhere else to
+read this from).
 """
 
 import os
@@ -56,27 +70,35 @@ def installed_kg_schema(consumer_dir):
     return env_file.read_key(Path(consumer_dir) / ".env", KG_SCHEMA_ENV_KEY)
 
 
-def _persist_kg_schema(consumer_dir, kg_schema):
-    """Best-effort: record the now-active schema so the NEXT run's wiring sees it.
+def _persist_kg_schema(repo_root, kg_schema):
+    """Best-effort: record the now-active schema where the NEXT run and the MCP see it.
 
-    Never fatal -- a successful data update must not fail (or look like it failed)
-    over a bookkeeping write. ``consumer/.env`` is created well before this ever runs
-    (installer/stack.ensure_env_file), so a failure here means a genuinely unusual
-    filesystem problem, worth a line on stderr but not worth losing the update over.
+    Writes ``EMBEDDINGTON_KG_SCHEMA`` to both ``consumer/.env`` (read back by
+    ``installed_kg_schema`` before the next run's writer is built) and ``mcp/.env``
+    (the installed MCP server's only general-purpose env source -- see the module
+    docstring). Each file is attempted independently, so one failing does not stop
+    the other. Never fatal -- a successful data update must not fail (or look like it
+    failed) over a bookkeeping write.
+
+    Called from inside ``restore_ops.make_baseline_importer``'s importer, at the
+    moment a restore lands -- not after ``updater.update()`` returns (see the module
+    docstring for why that was too late).
 
     Args:
-        consumer_dir: The clone's ``consumer/`` directory.
+        repo_root: The clone root (``consumer/`` and ``mcp/`` live beneath it).
         kg_schema: The value to persist (a baseline entry's ``kg_schema``, or "v2").
     """
-    try:
-        env_file.set_key(Path(consumer_dir) / ".env", KG_SCHEMA_ENV_KEY, kg_schema)
-    except OSError as exc:
-        print(
-            f"warning: could not record {KG_SCHEMA_ENV_KEY}={kg_schema} in "
-            f"{consumer_dir}/.env ({exc}). The next update run re-derives it from "
-            "the manifest, so this is not itself a failure.",
-            file=sys.stderr,
-        )
+    repo_root = Path(repo_root)
+    for env_path in (repo_root / "consumer" / ".env", repo_root / "mcp" / ".env"):
+        try:
+            env_file.set_key(env_path, KG_SCHEMA_ENV_KEY, kg_schema)
+        except OSError as exc:
+            print(
+                f"warning: could not record {KG_SCHEMA_ENV_KEY}={kg_schema} in "
+                f"{env_path} ({exc}). The next update run re-derives it from the "
+                "manifest, so this is not itself a failure.",
+                file=sys.stderr,
+            )
 
 
 def _production_wiring(repo_root, password, repo):
@@ -156,6 +178,8 @@ def run_import(
             ARANGO_DB,
             "root",
             password,
+            arango_writer=arango,
+            persist_kg_schema=lambda schema: _persist_kg_schema(repo_root, schema),
         )
     else:
         rc, qdrant, arango, importer = wiring_fn(repo_root, password, repo)
@@ -164,7 +188,7 @@ def run_import(
         with console.status(
             "[cyan]Rolling the graph forward... first run pulls ~1 GB — the Dude abides.[/cyan]"
         ):
-            result = update_fn(
+            return update_fn(
                 rc,
                 qdrant,
                 arango,
@@ -177,14 +201,6 @@ def run_import(
                     QDRANT_URL, COLLECTION
                 ),
             )
-        # A baseline just landed (result["baseline"] is only set in that mode) --
-        # remember which schema it used so the NEXT run's wiring (this run's `arango`
-        # writer is already built) resolves the right collections without re-deriving
-        # it from the manifest.
-        baseline = result.get("baseline")
-        if baseline is not None:
-            _persist_kg_schema(Path(repo_root) / "consumer", baseline.get("kg_schema") or "v2")
-        return result
     except updater.BaselineRefused as exc:
         raise SetupError(
             "EMB-43",

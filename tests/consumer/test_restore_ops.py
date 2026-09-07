@@ -420,6 +420,136 @@ def test_make_baseline_importer_v3_entry_resolves_graph_names_and_drops_v2(tmp_p
     }
 
 
+def test_make_baseline_importer_retargets_writer_and_persists_before_the_drop(
+    tmp_path, monkeypatch
+):
+    """C1 fix: the writer used for the diff-apply loop that follows this call (in the
+    SAME updater.update() invocation) must be retargeted, and the schema persisted,
+    BEFORE the old-schema drop -- not after this function returns, which a failing
+    diff apply would never reach."""
+    calls = []
+
+    class _RC:
+        def download_asset(self, tag, asset, dest, sha):
+            return str(dest)
+
+    class _FakeWriter:
+        def retarget(self, *, entities, relationships):
+            calls.append(("retarget", entities, relationships))
+
+    monkeypatch.setattr(restore_ops, "decompress", lambda p: f"{p}.out")
+    monkeypatch.setattr(restore_ops, "restore_qdrant_snapshot", lambda *a: None)
+    monkeypatch.setattr(restore_ops, "restore_arango_dump", lambda *a: None)
+    monkeypatch.setattr(restore_ops, "ensure_named_graph", lambda *a, **k: None)
+    monkeypatch.setattr(
+        restore_ops, "drop_old_schema_collections", lambda *a: calls.append(("drop",))
+    )
+    monkeypatch.setattr(
+        restore_ops.lexical_index, "ensure_chunk_text_index", lambda *a, **k: "ready"
+    )
+
+    importer = restore_ops.make_baseline_importer(
+        _RC(),
+        tmp_path,
+        "http://q",
+        "technology",
+        "http://a",
+        "technology_kg",
+        "root",
+        "pw",
+        arango_writer=_FakeWriter(),
+        persist_kg_schema=lambda schema: calls.append(("persist", schema)),
+    )
+    entry = {
+        "tag": "baseline-2026-09",
+        "head_sha": "abc123",
+        "kg_schema": "v3",
+        "assets": {"qdrant": "technology.snapshot.zst", "arango": "arango-dump.tar.zst"},
+        "sha256": {"qdrant": "qs", "arango": "as"},
+    }
+    importer(entry)
+
+    assert calls == [
+        ("retarget", "entities_v3", "relationships_v3"),
+        ("persist", "v3"),
+        ("drop",),
+    ]
+
+
+def test_make_baseline_importer_persists_v2_for_a_no_kg_schema_entry(tmp_path, monkeypatch):
+    calls = []
+
+    class _RC:
+        def download_asset(self, tag, asset, dest, sha):
+            return str(dest)
+
+    class _FakeWriter:
+        def retarget(self, *, entities, relationships):
+            calls.append(("retarget", entities, relationships))
+
+    monkeypatch.setattr(restore_ops, "decompress", lambda p: f"{p}.out")
+    monkeypatch.setattr(restore_ops, "restore_qdrant_snapshot", lambda *a: None)
+    monkeypatch.setattr(restore_ops, "restore_arango_dump", lambda *a: None)
+    monkeypatch.setattr(restore_ops, "ensure_named_graph", lambda *a, **k: None)
+    monkeypatch.setattr(
+        restore_ops, "drop_old_schema_collections", lambda *a: calls.append(("drop",))
+    )
+    monkeypatch.setattr(
+        restore_ops.lexical_index, "ensure_chunk_text_index", lambda *a, **k: "ready"
+    )
+
+    importer = restore_ops.make_baseline_importer(
+        _RC(),
+        tmp_path,
+        "http://q",
+        "technology",
+        "http://a",
+        "technology_kg",
+        "root",
+        "pw",
+        arango_writer=_FakeWriter(),
+        persist_kg_schema=lambda schema: calls.append(("persist", schema)),
+    )
+    entry = {
+        "tag": "baseline-2026-06",
+        "head_sha": "abc123",
+        "assets": {"qdrant": "technology.snapshot.zst", "arango": "arango-dump.tar.zst"},
+        "sha256": {"qdrant": "qs", "arango": "as"},
+    }
+    importer(entry)
+
+    assert calls == [("retarget", "entities_v2", "relationships_v2"), ("persist", "v2")]
+    # no ("drop",) -- same-generation restore skips it entirely
+
+
+def test_make_baseline_importer_without_arango_writer_or_persist_still_works(tmp_path, monkeypatch):
+    """Existing/simple callers that don't need retarget or persistence (most tests in
+    this file) must keep working with neither kwarg passed."""
+    monkeypatch.setattr(restore_ops, "decompress", lambda p: f"{p}.out")
+    monkeypatch.setattr(restore_ops, "restore_qdrant_snapshot", lambda *a: None)
+    monkeypatch.setattr(restore_ops, "restore_arango_dump", lambda *a: None)
+    monkeypatch.setattr(restore_ops, "ensure_named_graph", lambda *a, **k: None)
+    monkeypatch.setattr(
+        restore_ops.lexical_index, "ensure_chunk_text_index", lambda *a, **k: "ready"
+    )
+
+    class _RC:
+        def download_asset(self, tag, asset, dest, sha):
+            return str(dest)
+
+    importer = restore_ops.make_baseline_importer(
+        _RC(), tmp_path, "http://q", "technology", "http://a", "technology_kg", "root", "pw"
+    )
+    entry = {
+        "tag": "baseline-2026-06",
+        "head_sha": "abc123",
+        "assets": {"qdrant": "technology.snapshot.zst", "arango": "arango-dump.tar.zst"},
+        "sha256": {"qdrant": "qs", "arango": "as"},
+    }
+    result = importer(entry)
+    assert result == {"head_sha": "abc123", "chunk_text_status": "ready"}
+
+
 def test_make_baseline_importer_v2_entry_never_drops_anything(tmp_path, monkeypatch):
     """A same-generation restore (kg_schema absent, or explicitly "v2") must not call
     drop_old_schema_collections at all -- there is nothing orphaned to remove."""

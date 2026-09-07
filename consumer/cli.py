@@ -187,29 +187,40 @@ def _resolve_paths(args, env=None, home=None, cwd=None, install_root_dir=None):
 
 
 def _persist_kg_schema_if_local_env_present(cwd, kg_schema):
-    """Best-effort: remember the active schema in ./consumer/.env for the next run.
+    """Best-effort: remember the active schema for the next run and for the MCP.
 
-    `embeddington-consume` is also invoked standalone against arbitrary stores (no
-    clone, no consumer/.env) via --arango-url et al., so this is skipped entirely
-    when that file isn't there -- never fatal, and never creates the file itself.
-    The shipped deployment always has it: cron already runs from the clone root
-    (`cd {clone} && ... embeddington-consume update`, see installer/cron.py), which
-    is exactly the cwd this looks under.
+    Called from INSIDE make_baseline_importer's importer, at the moment a restore
+    lands -- not after updater.update() returns. A v3 baseline immediately followed
+    by trailing diffs (the common case: cursor.plan_update returns baseline + every
+    diff published after it in one shot) applies those diffs, in the SAME update()
+    call, before this command would otherwise get a result back -- see
+    restore_ops.make_baseline_importer's docstring.
+
+    Writes ./consumer/.env (read back via --kg-schema/$EMBEDDINGTON_KG_SCHEMA on the
+    next run) and ./mcp/.env (the installed MCP server's only general-purpose env
+    source -- mcp/server.py loads only mcp/.env plus one hardcoded scan of
+    consumer/.env for the Arango password specifically). Skipped entirely when
+    ./consumer/.env doesn't exist: `embeddington-consume` is also invoked standalone
+    against arbitrary stores (no clone) via --arango-url et al. The shipped
+    unattended path is `embeddington-setup --yes` (installer/import_step.py), not
+    this command (see installer/cron.py) -- this exists for direct/manual use.
 
     Args:
         cwd: The current working directory (production: Path.cwd()).
         kg_schema: The value to persist (a baseline entry's kg_schema, or "v2").
     """
-    env_path = Path(cwd) / "consumer" / ".env"
-    if not env_path.exists():
+    cwd = Path(cwd)
+    if not (cwd / "consumer" / ".env").exists():
         return
-    try:
-        env_file.set_key(env_path, "EMBEDDINGTON_KG_SCHEMA", kg_schema)
-    except OSError as exc:
-        print(
-            f"warning: could not record EMBEDDINGTON_KG_SCHEMA={kg_schema} in {env_path} ({exc}).",
-            file=sys.stderr,
-        )
+    for env_path in (cwd / "consumer" / ".env", cwd / "mcp" / ".env"):
+        try:
+            env_file.set_key(env_path, "EMBEDDINGTON_KG_SCHEMA", kg_schema)
+        except OSError as exc:
+            print(
+                f"warning: could not record EMBEDDINGTON_KG_SCHEMA={kg_schema} in "
+                f"{env_path} ({exc}).",
+                file=sys.stderr,
+            )
 
 
 def _cmd_update(args):
@@ -241,6 +252,10 @@ def _cmd_update(args):
         args.arango_db,
         args.arango_user,
         args.arango_password,
+        arango_writer=arango,
+        persist_kg_schema=lambda schema: _persist_kg_schema_if_local_env_present(
+            Path.cwd(), schema
+        ),
     )
     try:
         result = updater.update(
@@ -271,10 +286,6 @@ def _cmd_update(args):
     except updater.BaselineRefused as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 3
-    if result.get("baseline") is not None:
-        _persist_kg_schema_if_local_env_present(
-            Path.cwd(), result["baseline"].get("kg_schema") or "v2"
-        )
     print(_format_update(result))
     return 0
 

@@ -301,7 +301,17 @@ def drop_old_schema_collections(arango_url, db, username, password, names):
 
 
 def make_baseline_importer(
-    release_client, work_dir, qdrant_url, collection, arango_url, db, username, password
+    release_client,
+    work_dir,
+    qdrant_url,
+    collection,
+    arango_url,
+    db,
+    username,
+    password,
+    *,
+    arango_writer=None,
+    persist_kg_schema=None,
 ):
     """Build the ``baseline_importer`` callable that ``updater.update`` calls on first run.
 
@@ -309,6 +319,37 @@ def make_baseline_importer(
     named-graph creation + the lexical-index warm-up into a single
     ``callable(baseline_entry) -> {"head_sha", "chunk_text_status"}`` via
     ``consumer.baseline_import.import_baseline``.
+
+    ``updater.update`` calls this importer, then -- in the SAME call, without
+    returning in between -- applies any diffs published after the restored baseline
+    using the writers it was given up front (spec: ``consumer/updater.py``'s
+    baseline-then-diffs fallthrough; this project does not modify that file). When a
+    restore lands a NEW kg_schema generation, those trailing diffs must land in the
+    NEW collections, not the ones the writer was originally constructed against --
+    hence ``arango_writer``: if given, it is retargeted (``ArangoConsumerWriter.retarget``)
+    to the resolved names the moment the restore succeeds, before anything else
+    (including the old-schema drop) runs. ``persist_kg_schema``, if given, is called
+    with the resolved kg_schema string (``"v2"``/``"v3"``) at that same point, so a
+    later failure in the diff-apply loop can never leave the on-disk record behind
+    what the stores actually hold.
+
+    Args:
+        release_client: See the other positional args below (unchanged).
+        work_dir: Scratch directory for downloads.
+        qdrant_url: Base URL of the local Qdrant.
+        collection: Qdrant collection name.
+        arango_url: Base URL of the local Arango.
+        db: Arango database name.
+        username: Arango username.
+        password: Arango password.
+        arango_writer: Optional ``ArangoConsumerWriter`` (or anything exposing
+            ``.retarget(entities=, relationships=)``) to re-point at the resolved
+            collections immediately after a successful restore -- the SAME instance
+            ``updater.update``'s subsequent diff-apply loop uses. ``None`` (e.g. in a
+            test that doesn't thread one through) skips this step.
+        persist_kg_schema: Optional ``callable(kg_schema: str)`` invoked with the
+            resolved kg_schema right after retargeting, before the old-schema drop.
+            ``None`` skips this step.
 
     Returns:
         A callable taking one manifest baseline entry, restoring it locally, and
@@ -359,6 +400,22 @@ def make_baseline_importer(
                 qdrant_url, collection
             ),
         )
+
+        # Retarget the writer `updater.update`'s own diff-apply loop is about to use
+        # -- in this SAME call, right after this function returns -- BEFORE anything
+        # else, including the old-schema drop below. Without this, a v3 baseline
+        # followed by trailing diffs in one update() applies them through the
+        # writer's ORIGINAL (pre-restore) collections, which the drop is about to
+        # remove out from under it.
+        if arango_writer is not None:
+            arango_writer.retarget(entities=names["entities"], relationships=names["relationships"])
+        # Persisted HERE, not after updater.update() returns: a failure anywhere in
+        # the diff-apply loop that follows this function (in the same update() call)
+        # would otherwise leave the on-disk record behind what the stores actually
+        # hold, or -- because the diff loop is what would fail -- never record it at
+        # all.
+        if persist_kg_schema is not None:
+            persist_kg_schema(baseline_entry.get("kg_schema") or "v2")
 
         # A successful restore onto anything other than v2 orphans the v2 collections
         # (the dump this run just restored never touches them) -- drop them so the
