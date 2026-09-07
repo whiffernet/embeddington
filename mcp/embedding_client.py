@@ -19,7 +19,7 @@ import httpx
 try:
     from .probe import probe_with_retry
 except ImportError:  # pragma: no cover — flat-layout import fallback
-    from probe import probe_with_retry  # type: ignore[no-redef] # noqa: F401
+    from probe import probe_with_retry  # type: ignore[no-redef,import-not-found] # noqa: F401
 
 logger = logging.getLogger("embeddington.embedding")
 

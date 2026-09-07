@@ -23,7 +23,12 @@ import sys
 import time
 from typing import Any, Callable
 
+import config
 from arango_client import ArangoKGClient
+
+# Derived from the active EMBEDDINGTON_KG_SCHEMA (default "v2"), not hardcoded --
+# a v3 run must resolve/pin ids against entities_v3, not entities_v2 (spec §9.2).
+ENTITY_PREFIX = config.kg_collections()["entities"] + "/"
 
 FIND_NEEDLES = [
     "incident",
@@ -108,7 +113,10 @@ def bench_find_entities(client: ArangoKGClient, reps: int) -> None:
 #   - The hub-mediated pair is pinned by _id rather than by name: find_entities("HR Service
 #     Delivery") ranks the Product entity ahead of the Module (higher view score), but
 #     module__hr_service_delivery -> module__discovery is the real role__admin-mediated
-#     route on prod. An "entities_v2/..." string is used as-is instead of being resolved.
+#     route on prod. An ENTITY_PREFIX-qualified string is used as-is instead of being
+#     resolved -- built from the active schema's entities collection, not hardcoded, so a
+#     v3 run pins the v3 id (this pair predates a v3 graph existing; re-verify the same
+#     route holds there once one does).
 PATH_PAIRS = [
     ("Incident", "ITIL"),
     ("Discovery", "CMDB"),
@@ -116,26 +124,26 @@ PATH_PAIRS = [
     ("Change Management", "Change Request"),
     ("Service Catalog", "Request Management"),
     ("Process Selection", "Upgrade to next family release"),
-    ("entities_v2/module__hr_service_delivery", "entities_v2/module__discovery"),
+    (f"{ENTITY_PREFIX}module__hr_service_delivery", f"{ENTITY_PREFIX}module__discovery"),
 ]
 
 
 def _resolve(client: ArangoKGClient, label: str) -> dict[str, Any] | None:
     """Resolve a `PATH_PAIRS` label to `{id, ...}`.
 
-    A raw entity ``_id`` (``entities_v2/...``) passes through unchanged, letting a
-    bench pair pin an exact entity when name resolution would rank a different type
-    first. Anything else resolves via `find_entities`'s top-1 match.
+    A raw entity ``_id`` (``ENTITY_PREFIX``-qualified) passes through unchanged,
+    letting a bench pair pin an exact entity when name resolution would rank a
+    different type first. Anything else resolves via `find_entities`'s top-1 match.
 
     Args:
         client: Client to resolve against.
-        label: Either an ``entities_v2/...`` id or free-text to search.
+        label: Either an ``ENTITY_PREFIX``-qualified id or free-text to search.
 
     Returns:
         ``{"id": ...}`` (an id label) or a full `find_entities` result dict, or
         `None` if a searched label had no match.
     """
-    if label.startswith("entities_v2/"):
+    if label.startswith(ENTITY_PREFIX):
         return {"id": label}
     found = client.find_entities(label, limit=1)
     return found[0] if found else None
@@ -219,7 +227,6 @@ def bench_enrich(client: ArangoKGClient, reps: int) -> None:
     """enrich() end to end: ms, KG edges returned, and whether relevance scoring degraded."""
     import asyncio
 
-    import config
     from embedding_client import EmbeddingClient
     from enrich import enrich
     from qdrant_client import QdrantSearchClient
@@ -281,7 +288,7 @@ def main() -> None:
     ap.add_argument("--only", choices=sorted(SECTIONS), default=None)
     args = ap.parse_args()
     client = _client()
-    print(f"database={client._database}  reps={args.reps}")
+    print(f"database={client._database}  schema={config.KG_SCHEMA}  reps={args.reps}")
     for name, fn in SECTIONS.items():
         if args.only in (None, name):
             fn(client, args.reps)

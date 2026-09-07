@@ -71,3 +71,54 @@ def test_qdrant_api_key_is_stripped(monkeypatch):
     monkeypatch.setenv("QDRANT_API_KEY", "  a-key\n")
     importlib.reload(config)
     assert config.QDRANT_API_KEY == "a-key"
+
+
+# --- KG schema knob (Track 2 cutover switch, spec §9.2) ---------------------
+
+
+def test_kg_schema_defaults_to_v2(monkeypatch):
+    monkeypatch.delenv("EMBEDDINGTON_KG_SCHEMA", raising=False)
+    importlib.reload(config)
+    assert config.KG_SCHEMA == "v2"
+    assert config.kg_collections() == {
+        "entities": "entities_v2",
+        "relationships": "relationships_v2",
+        "graph": "servicenow_graph_v2",
+        "search_view": "entities_v2_search",
+    }
+
+
+def test_kg_schema_v3_resolves_the_four_v3_names(monkeypatch):
+    monkeypatch.setenv("EMBEDDINGTON_KG_SCHEMA", "v3")
+    importlib.reload(config)
+    try:
+        assert config.KG_SCHEMA == "v3"
+        assert config.kg_collections() == {
+            "entities": "entities_v3",
+            "relationships": "relationships_v3",
+            "graph": "servicenow_graph_v3",
+            "search_view": "entities_v3_search",
+        }
+    finally:
+        # restore the module to its real state for other tests
+        monkeypatch.delenv("EMBEDDINGTON_KG_SCHEMA", raising=False)
+        importlib.reload(config)
+
+
+def test_kg_schema_unknown_value_raises_naming_the_env_var(monkeypatch):
+    monkeypatch.setenv("EMBEDDINGTON_KG_SCHEMA", "v9")
+    with pytest.raises(ValueError, match="EMBEDDINGTON_KG_SCHEMA"):
+        importlib.reload(config)
+    # restore the module to its real state for other tests
+    monkeypatch.delenv("EMBEDDINGTON_KG_SCHEMA", raising=False)
+    importlib.reload(config)
+
+
+def test_kg_collections_returns_a_fresh_dict_each_call(monkeypatch):
+    """Callers must not be able to corrupt the schema table by mutating what
+    kg_collections() returns."""
+    monkeypatch.delenv("EMBEDDINGTON_KG_SCHEMA", raising=False)
+    importlib.reload(config)
+    first = config.kg_collections()
+    first["entities"] = "tampered"
+    assert config.kg_collections()["entities"] == "entities_v2"

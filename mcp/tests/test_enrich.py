@@ -335,7 +335,9 @@ def test_kg_fetch_plus_select_equals_kg_side():
         def find_entities(self, text, limit=3):
             return [{"id": "entities_v2/a", "name": text, "type": "t", "degree": 4}]
 
-        def neighbors_stratified(self, eid, per_predicate, overall, predicates):
+        def neighbors_stratified(
+            self, eid, per_predicate, overall, predicates, coverage_only=False
+        ):
             return {
                 "nodes": [{"id": "entities_v2/a"}, {"id": "entities_v2/b"}],
                 "edges": [
@@ -488,7 +490,7 @@ class RelArango:
     def find_entities(self, text, limit=3):
         return [{"id": "entities_v2/a", "name": text, "type": "t", "degree": 2}]
 
-    def neighbors_stratified(self, eid, per_predicate, overall, predicates):
+    def neighbors_stratified(self, eid, per_predicate, overall, predicates, coverage_only=False):
         return {
             "nodes": [{"id": "entities_v2/a"}, {"id": "entities_v2/b"}],
             "edges": [
@@ -576,7 +578,7 @@ class QuotaPoolArango:
     def find_entities(self, text, limit=3):
         return [{"id": "entities_v2/a", "name": text, "type": "t", "degree": 3}]
 
-    def neighbors_stratified(self, eid, per_predicate, overall, predicates):
+    def neighbors_stratified(self, eid, per_predicate, overall, predicates, coverage_only=False):
         return {
             "nodes": [
                 {"id": "entities_v2/a"},
@@ -969,7 +971,7 @@ class SixEdgeArango:
     def find_entities(self, text, limit=3):
         return [{"id": "entities_v2/a", "name": text, "type": "t", "degree": 6}]
 
-    def neighbors_stratified(self, eid, per_predicate, overall, predicates):
+    def neighbors_stratified(self, eid, per_predicate, overall, predicates, coverage_only=False):
         edges = [
             {
                 "id": f"e{i}",

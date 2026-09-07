@@ -597,7 +597,7 @@ def test_neighbors_sorts_by_confidence_then_provenance_then_predicate_rank(kg_cl
     kg_client.neighbors("entities_v2/x", depth=1, limit=50)
     aql = kg_client._db.aql.execute.call_args.args[0]
     bind = kg_client._db.aql.execute.call_args.kwargs["bind_vars"]
-    # v2 has no provenance array yet; LENGTH(releases) is the stand-in (see PROVENANCE_COUNT_AQL)
+    # v2 has no provenance array yet; LENGTH(releases) is the stand-in (see _provenance_count_aql)
     assert "SORT e.confidence DESC, LENGTH(e.releases || []) DESC" in aql
     assert "COLLECT p = r.edge.predicate INTO grp" in aql
     assert "pred_rank" in aql
@@ -624,6 +624,83 @@ def test_neighbors_pool_is_capped(kg_client):
     assert aql.index("LIMIT @pool_cap") < aql.index("COLLECT p = r.edge.predicate INTO grp")
     assert aql.index("SORT e.confidence DESC") < aql.index("LIMIT @pool_cap")
     assert bind["pool_cap"] == NEIGHBORS_POOL_CAP == 5000
+
+
+def test_provenance_count_aql_switches_to_provenance_length_under_v3(monkeypatch, kg_client):
+    """Fix round 1, Important 5: RESPONSE_SHAPES and this module's own
+    comments claimed v3 sorts on LENGTH(provenance) before this was actually
+    implemented -- pin the real behavior now that it is."""
+    import config
+
+    monkeypatch.setattr(config, "KG_SCHEMA", "v3")
+    kg_client._db.aql.execute.return_value = iter([])
+    kg_client.neighbors("entities_v3/x", depth=1, limit=50)
+    aql = kg_client._db.aql.execute.call_args.args[0]
+    assert "SORT e.confidence DESC, LENGTH(e.provenance || []) DESC" in aql
+    assert (
+        "SORT r.edge.confidence DESC, LENGTH(r.edge.provenance || []) DESC, r.pred_rank ASC" in aql
+    )
+    # The tiebreak sort keys must not ALSO mention releases under v3 (that
+    # would mean both branches leaked into the same query).
+    assert "LENGTH(e.releases || [])" not in aql
+    assert "LENGTH(r.edge.releases || [])" not in aql
+
+
+def test_provenance_count_aql_stays_on_releases_length_under_v2(kg_client):
+    """Explicit control for the test above: the default schema is unchanged."""
+    kg_client._db.aql.execute.return_value = iter([])
+    kg_client.neighbors("entities_v2/x", depth=1, limit=50)
+    aql = kg_client._db.aql.execute.call_args.args[0]
+    assert "SORT e.confidence DESC, LENGTH(e.releases || []) DESC" in aql
+    assert "LENGTH(e.provenance || [])" not in aql
+
+
+def test_neighbors_v3_preserves_ordering_by_provenance_count_for_equal_confidence(
+    monkeypatch, kg_client
+):
+    """Two v3 edges of equal confidence and different provenance counts:
+    the higher-provenance-count edge must stay first in the output, i.e.
+    neighbors() does no additional in-Python resort that could undo the
+    AQL's LENGTH(provenance)-based tiebreak."""
+    import config
+
+    monkeypatch.setattr(config, "KG_SCHEMA", "v3")
+
+    def _row(edge_id, provenance):
+        return {
+            "vertex": {
+                "id": f"entities_v3/{edge_id}-target",
+                "name": edge_id,
+                "type": "T",
+                "releases": None,
+                "updated_at": None,
+            },
+            "edge": {
+                "id": edge_id,
+                "source": "entities_v3/x",
+                "target": f"entities_v3/{edge_id}-target",
+                "predicate": "CONTAINS",
+                "confidence": 0.9,
+                "extraction_type": "explicit",
+                "releases": None,
+                "source_document": "d",
+                "source_quote": "q",
+                "updated_at": None,
+                "origins": ["markdown"],
+                "provenance": provenance,
+            },
+        }
+
+    # Same confidence (0.9); the AQL's LENGTH(provenance) tiebreak would rank
+    # "high" (2 entries) ahead of "low" (1 entry) -- rows arrive pre-ranked, as
+    # the AQL would return them.
+    rows = [
+        _row("high", [_v3_entry(), _v3_entry()]),
+        _row("low", [_v3_entry()]),
+    ]
+    kg_client._db.aql.execute.return_value = iter(rows)
+    out = kg_client.neighbors("entities_v3/x", depth=1, limit=50)
+    assert [e["id"] for e in out["edges"]] == ["high", "low"]
 
 
 def test_neighbors_depth_2_sort_rank_path_interleaves_predicates(kg_client):
@@ -710,3 +787,379 @@ def test_neighbors_row_shape_and_fetched_unchanged(kg_client):
     out = kg_client.neighbors("entities_v2/x")
     assert set(out) == {"nodes", "edges", "fetched"} and out["fetched"] == 1
     assert "pred_rank" not in out["edges"][0]
+
+
+# --- Track 2: origins/best_provenance, coverage_only (spec §2, §9.2) --------------
+
+
+def _v3_entry(
+    origin="markdown",
+    confidence=0.9,
+    extraction_type="explicit",
+    extracted_at="2026-08-01T00:00:00Z",
+    source_document="doc-a",
+    **extra,
+):
+    return {
+        "origin": origin,
+        "confidence": confidence,
+        "extraction_type": extraction_type,
+        "extracted_at": extracted_at,
+        "source_document": source_document,
+        "release": "zurich",
+        "file_hash": "abc123",
+        "chunk_ids": ["c1"],
+        "source_quote": "q",
+        "extraction_recipe": "r1",
+        **extra,
+    }
+
+
+class TestBestProvenance:
+    """Unit tests for `_best_provenance` / `_entry_outranks` (mirrors
+    llamaindex's writer._entry_rank, spec §2)."""
+
+    def test_empty_or_missing_entries_yield_none(self):
+        from arango_client import _best_provenance
+
+        assert _best_provenance([]) is None
+        assert _best_provenance(None) is None
+
+    def test_non_pdf_legacy_origin_wins_outright(self):
+        from arango_client import _best_provenance
+
+        legacy = _v3_entry(
+            origin="pdf-legacy", confidence=0.99, extracted_at="2026-08-05T00:00:00Z"
+        )
+        live = _v3_entry(origin="markdown", confidence=0.1, extracted_at="2026-01-01T00:00:00Z")
+        best = _best_provenance([legacy, live])
+        assert best["origin"] == "markdown"
+
+    def test_ties_break_by_highest_confidence(self):
+        from arango_client import _best_provenance
+
+        low = _v3_entry(confidence=0.5)
+        high = _v3_entry(confidence=0.95)
+        assert _best_provenance([low, high])["confidence"] == 0.95
+
+    def test_confidence_ties_break_by_explicit_over_inferred(self):
+        # extraction_type isn't in the returned 9-key subset, so distinguish
+        # the winner by a field that IS: source_document.
+        from arango_client import _best_provenance
+
+        inferred = _v3_entry(
+            confidence=0.9, extraction_type="inferred", source_document="inferred-doc"
+        )
+        explicit = _v3_entry(
+            confidence=0.9, extraction_type="explicit", source_document="explicit-doc"
+        )
+        best = _best_provenance([inferred, explicit])
+        assert best["source_document"] == "explicit-doc"
+
+    def test_explicit_over_inferred_uses_entry_outranks_directly(self):
+        """Unit-level pin on the tier itself, independent of what
+        `_best_provenance` happens to project back out."""
+        from arango_client import _entry_outranks
+
+        inferred = _v3_entry(confidence=0.9, extraction_type="inferred")
+        explicit = _v3_entry(confidence=0.9, extraction_type="explicit")
+        assert _entry_outranks(explicit, inferred) is True
+        assert _entry_outranks(inferred, explicit) is False
+
+    def test_explicit_ties_break_by_latest_extracted_at(self):
+        from arango_client import _best_provenance
+
+        older = _v3_entry(extracted_at="2026-01-01T00:00:00Z")
+        newer = _v3_entry(extracted_at="2026-08-01T00:00:00Z")
+        assert _best_provenance([older, newer])["extracted_at"] == "2026-08-01T00:00:00Z"
+
+    def test_full_tie_breaks_by_lowest_source_document(self):
+        from arango_client import _best_provenance
+
+        z = _v3_entry(source_document="z-doc")
+        a = _v3_entry(source_document="a-doc")
+        assert _best_provenance([z, a])["source_document"] == "a-doc"
+
+    def test_returns_exactly_the_nine_key_subset(self):
+        from arango_client import _best_provenance
+
+        entry = _v3_entry(
+            window=3, window_size=500, window_overlap=50, **{"pass": 1, "pass_hits": 2}
+        )
+        best = _best_provenance([entry])
+        assert set(best) == {
+            "origin",
+            "source_document",
+            "release",
+            "file_hash",
+            "chunk_ids",
+            "confidence",
+            "source_quote",
+            "extraction_recipe",
+            "extracted_at",
+        }
+
+    def test_source_quote_is_truncated_to_240_chars(self):
+        """Fix round 1, Important 2: every sibling edge shape truncates
+        source_quote to 240 chars -- best_provenance must too, or a v3 edge's
+        best_provenance is the one place an untruncated quote reaches a
+        caller."""
+        from arango_client import _best_provenance
+
+        entry = _v3_entry(source_quote="q" * 500)
+        best = _best_provenance([entry])
+        assert len(best["source_quote"]) == 240
+        assert best["source_quote"] == "q" * 240
+
+    def test_source_quote_none_is_left_as_none_not_truncated_to_empty(self):
+        from arango_client import _best_provenance
+
+        entry = _v3_entry(source_quote=None)
+        best = _best_provenance([entry])
+        assert best["source_quote"] is None
+
+    def test_chunk_ids_capped_to_first_five(self):
+        from arango_client import _best_provenance
+
+        entry = _v3_entry(chunk_ids=[f"c{i}" for i in range(10)])
+        best = _best_provenance([entry])
+        assert best["chunk_ids"] == ["c0", "c1", "c2", "c3", "c4"]
+
+    def test_chunk_ids_none_is_left_as_none_not_an_empty_list(self):
+        from arango_client import _best_provenance
+
+        entry = _v3_entry(chunk_ids=None)
+        best = _best_provenance([entry])
+        assert best["chunk_ids"] is None
+
+
+def test_edge_view_v2_shaped_edge_omits_track2_keys_entirely():
+    """R3 (controller-revised, fix round 1): Track 2 is v3-only (spec §6) --
+    an edge with neither `origins` nor `provenance` must not add EITHER key,
+    not even as `origins: []` / `best_provenance: None`. Emitting them
+    unconditionally added ~37 bytes/edge, which pushed enrich's token-ceiling
+    trim to drop tail edges even under v2 (fix round 1, Important 1)."""
+    from arango_client import _edge_view
+
+    view = _edge_view({"id": "e1", "predicate": "CONTAINS"})
+    assert view == {}
+
+
+def test_edge_view_omits_when_origins_and_provenance_are_explicitly_null():
+    """Same as above, but for the shape neighbors()/neighbors_stratified()
+    actually produce: AQL member access on a missing field projects the key
+    with a null value, not an absent key."""
+    from arango_client import _edge_view
+
+    view = _edge_view({"id": "e1", "origins": None, "provenance": None})
+    assert view == {}
+
+
+def test_edge_view_v3_shaped_edge_derives_both_fields():
+    from arango_client import _edge_view
+
+    entry = _v3_entry()
+    view = _edge_view({"origins": ["markdown"], "provenance": [entry]})
+    assert view["origins"] == ["markdown"]
+    assert view["best_provenance"]["origin"] == "markdown"
+
+
+def test_neighbors_merges_origins_and_best_provenance_into_the_edge(kg_client):
+    entry = _v3_entry(origin="markdown")
+    kg_client._db.aql.execute.return_value = iter(
+        [
+            {
+                "vertex": {
+                    "id": "entities_v3/n",
+                    "name": "n",
+                    "type": "T",
+                    "releases": None,
+                    "updated_at": None,
+                },
+                "edge": {
+                    "id": "1",
+                    "source": "entities_v3/x",
+                    "target": "entities_v3/n",
+                    "predicate": "CONTAINS",
+                    "confidence": 0.9,
+                    "extraction_type": "explicit",
+                    "releases": None,
+                    "source_document": "d",
+                    "source_quote": "q",
+                    "updated_at": None,
+                    "origins": ["pdf-legacy", "markdown"],
+                    "provenance": [entry],
+                },
+            }
+        ]
+    )
+    out = kg_client.neighbors("entities_v3/x")
+    edge = out["edges"][0]
+    assert edge["origins"] == ["pdf-legacy", "markdown"]
+    assert edge["best_provenance"]["origin"] == "markdown"
+    assert "provenance" not in edge  # raw array is not part of the public shape
+
+
+def test_neighbors_v2_shaped_row_omits_track2_keys_entirely(kg_client):
+    """R3 (controller-revised), exercised through neighbors() rather than
+    _edge_view directly."""
+    kg_client._db.aql.execute.return_value = iter(
+        [
+            {
+                "vertex": {
+                    "id": "entities_v2/n",
+                    "name": "n",
+                    "type": "T",
+                    "releases": None,
+                    "updated_at": None,
+                },
+                "edge": {
+                    "id": "1",
+                    "source": "entities_v2/x",
+                    "target": "entities_v2/n",
+                    "predicate": "CONTAINS",
+                    "confidence": 0.9,
+                    "extraction_type": "explicit",
+                    "releases": ["zurich"],
+                    "source_document": "d",
+                    "source_quote": "q",
+                    "updated_at": None,
+                },
+            }
+        ]
+    )
+    out = kg_client.neighbors("entities_v2/x")
+    edge = out["edges"][0]
+    assert "origins" not in edge
+    assert "best_provenance" not in edge
+
+
+def test_neighbors_coverage_only_filter_wired_into_query_and_bind_vars(kg_client):
+    kg_client._db.aql.execute.return_value = iter([])
+    kg_client.neighbors("entities_v3/x", coverage_only=True)
+    aql = kg_client._db.aql.execute.call_args.args[0]
+    bind = kg_client._db.aql.execute.call_args.kwargs["bind_vars"]
+    assert bind["coverage_only"] is True
+    assert "@coverage_only" in aql
+    assert 'o != "pdf-legacy"' in aql
+    # Filter must run inside the pool, before the confidence SORT/cap.
+    assert aql.index("@coverage_only") < aql.index("SORT e.confidence DESC")
+
+
+def test_neighbors_coverage_only_defaults_false(kg_client):
+    kg_client._db.aql.execute.return_value = iter([])
+    kg_client.neighbors("entities_v3/x")
+    bind = kg_client._db.aql.execute.call_args.kwargs["bind_vars"]
+    assert bind["coverage_only"] is False
+
+
+def test_neighbors_stratified_coverage_only_filter_wired_into_query(kg_client):
+    kg_client._db.aql.execute.return_value = iter([])
+    kg_client.neighbors_stratified("entities_v3/x", coverage_only=True)
+    aql = kg_client._db.aql.execute.call_args.args[0]
+    bind = kg_client._db.aql.execute.call_args.kwargs["bind_vars"]
+    assert bind["coverage_only"] is True
+    assert "@coverage_only" in aql
+    assert aql.index("@coverage_only") < aql.index("SORT e.confidence == null")
+
+
+def test_neighbors_stratified_merges_origins_and_best_provenance(kg_client):
+    entry = _v3_entry(origin="markdown")
+    kg_client._db.aql.execute.return_value = iter(
+        [
+            {
+                "vertex": {"id": "entities_v3/n", "name": "n", "type": "T", "releases": None},
+                "edge": {
+                    "id": "1",
+                    "source": "entities_v3/x",
+                    "target": "entities_v3/n",
+                    "predicate": "CONTAINS",
+                    "confidence": 0.9,
+                    "extraction_type": "explicit",
+                    "releases": None,
+                    "source_document": "d",
+                    "source_quote": "q",
+                    "origins": ["markdown"],
+                    "provenance": [entry],
+                },
+                "fetched": 1,
+            },
+        ]
+    )
+    out = kg_client.neighbors_stratified("entities_v3/x")
+    edge = out["edges"][0]
+    assert edge["origins"] == ["markdown"]
+    assert edge["best_provenance"]["origin"] == "markdown"
+    assert "provenance" not in edge
+
+
+def test_neighbors_stratified_v2_shaped_row_omits_track2_keys_entirely(kg_client):
+    """R3 (controller-revised): no origins/provenance on the raw edge -> no
+    Track 2 keys on the response edge at all."""
+    kg_client._db.aql.execute.return_value = iter(
+        [
+            {
+                "vertex": {"id": "entities_v2/n", "name": "n", "type": "T", "releases": None},
+                "edge": {
+                    "id": "1",
+                    "source": "entities_v2/x",
+                    "target": "entities_v2/n",
+                    "predicate": "CONTAINS",
+                    "confidence": 0.9,
+                    "extraction_type": "explicit",
+                    "releases": None,
+                    "source_document": "d",
+                    "source_quote": "q",
+                },
+                "fetched": 1,
+            },
+        ]
+    )
+    out = kg_client.neighbors_stratified("entities_v2/x")
+    edge = out["edges"][0]
+    assert "origins" not in edge
+    assert "best_provenance" not in edge
+
+
+def test_shortest_path_coverage_only_wired_into_query_and_bind_vars(kg_client):
+    kg_client._db.aql.execute.side_effect = [
+        iter([_path(("a", "Table"), ("b", "Role"))]),
+    ]
+    kg_client.shortest_path("entities_v3/a", "entities_v3/b", max_hops=4, coverage_only=True)
+    first_aql = kg_client._db.aql.execute.call_args_list[0].args[0]
+    first_bind = kg_client._db.aql.execute.call_args_list[0].kwargs["bind_vars"]
+    assert first_bind["coverage_only"] is True
+    assert "@coverage_only" in first_aql
+    assert 'o != "pdf-legacy"' in first_aql
+
+
+def test_shortest_path_coverage_only_defaults_false(kg_client):
+    kg_client._db.aql.execute.side_effect = [
+        iter([_path(("a", "Table"), ("b", "Role"))]),
+    ]
+    kg_client.shortest_path("entities_v3/a", "entities_v3/b", max_hops=4)
+    first_bind = kg_client._db.aql.execute.call_args_list[0].kwargs["bind_vars"]
+    assert first_bind["coverage_only"] is False
+
+
+def test_shortest_path_render_merges_origins_and_best_provenance(kg_client):
+    entry = _v3_entry(origin="markdown")
+    path = _path(("a", "Table"), ("b", "Role"))
+    path["edges"][0]["origins"] = ["markdown"]
+    path["edges"][0]["provenance"] = [entry]
+    kg_client._db.aql.execute.side_effect = [iter([path])]
+    out = kg_client.shortest_path("entities_v3/a", "entities_v3/b", max_hops=4)
+    edge = out["edges"][0]
+    assert edge["origins"] == ["markdown"]
+    assert edge["best_provenance"]["origin"] == "markdown"
+    assert "provenance" not in edge
+
+
+def test_shortest_path_render_v2_shaped_edge_omits_track2_keys_entirely(kg_client):
+    """R3 (controller-revised)."""
+    path = _path(("a", "Table"), ("b", "Role"))  # _e() edges have no origins/provenance
+    kg_client._db.aql.execute.side_effect = [iter([path])]
+    out = kg_client.shortest_path("entities_v2/a", "entities_v2/b", max_hops=4)
+    edge = out["edges"][0]
+    assert "origins" not in edge
+    assert "best_provenance" not in edge

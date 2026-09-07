@@ -160,6 +160,7 @@ class _Arango(Protocol):
         per_predicate: int = 2,
         overall: int = 50,
         predicates: Optional[list[str]] = None,
+        coverage_only: bool = False,
     ) -> dict: ...
 
     def count_edges(self, entity_id: str, predicates: Optional[list[str]] = None) -> int: ...
@@ -206,6 +207,7 @@ async def enrich(
     diversity_quota_fraction: float = 0.40,
     score_threshold: float = 0.0,
     lexical_ready: bool = False,
+    coverage_only: bool = True,
 ) -> dict[str, Any]:
     """Budgeted parallel vector search + KG concept expansion (spec §3–5).
 
@@ -250,6 +252,12 @@ async def enrich(
             0.0 disables the filter).
         lexical_ready: Whether the lexical MatchText lane may run (server
             config, wired in via server.py from its chunk_text index status).
+        coverage_only: Tool param (not server config), default True — the KG
+            half excludes an edge whose ``origins`` are entirely
+            ``"pdf-legacy"`` (R2). Default True because the vector half
+            already covers the PDF corpus; the KG half defaulting to
+            attested-only avoids double-counting that backfill as if it were
+            independent corroboration. No effect on a v2-shaped graph.
 
     Returns:
         {vector_chunks, kg_matches, errors, budget, warnings, grounding} —
@@ -273,7 +281,7 @@ async def enrich(
         )
     )
     kg_task = asyncio.create_task(
-        asyncio.to_thread(_kg_fetch, hints, arango_client, edge_budget, predicates)
+        asyncio.to_thread(_kg_fetch, hints, arango_client, edge_budget, predicates, coverage_only)
     )
     vector_result, kg_fetched = await asyncio.gather(vector_task, kg_task)
 
@@ -486,6 +494,7 @@ def _kg_fetch(
     arango: _Arango,
     edge_budget: int,
     predicates: Optional[list[str]],
+    coverage_only: bool = True,
 ) -> dict[str, Any]:
     """Seed, group, budget, and fetch pools — everything before selection.
 
@@ -497,6 +506,10 @@ def _kg_fetch(
         arango: ArangoDB KG client.
         edge_budget: Total edge slots to split across matched concepts.
         predicates: Optional predicate allowlist to scope KG expansion.
+        coverage_only: Forwarded to `neighbors_stratified` (R2) — excludes an
+            edge whose ``origins`` are entirely ``"pdf-legacy"``. Default True
+            matches `enrich`'s tool-level default: the vector half already
+            covers the PDF corpus, so the KG half defaults to attested-only.
 
     Returns:
         dict with keys prepared (list of {match, pool_nodes, pool_edges,
@@ -542,6 +555,7 @@ def _kg_fetch(
                         per_predicate=2,
                         overall=max(2 * n_slots, 20),
                         predicates=predicates,
+                        coverage_only=coverage_only,
                     )
                     for nd in fetched["nodes"]:
                         pool_nodes.setdefault(nd["id"], nd)
@@ -618,6 +632,7 @@ def _kg_side(
     arango: _Arango,
     edge_budget: int,
     predicates: Optional[list[str]],
+    coverage_only: bool = True,
 ) -> dict[str, Any]:
     """Legacy composition: fetch then select with no relevance (spec §6 path).
 
@@ -629,13 +644,14 @@ def _kg_side(
         arango: ArangoDB KG client.
         edge_budget: Total edge slots to split across matched concepts.
         predicates: Optional predicate allowlist to scope KG expansion.
+        coverage_only: Forwarded to `_kg_fetch` (R2). Default True.
 
     Returns:
         dict with keys matches (list of match dicts), error (str or None),
         and warnings (list of str).
     """
     return _kg_select(
-        _kg_fetch(hints, arango, edge_budget, predicates),
+        _kg_fetch(hints, arango, edge_budget, predicates, coverage_only=coverage_only),
         relevance=None,
         diversity_quota_fraction=_budget.DIVERSITY_QUOTA_FRACTION,
     )

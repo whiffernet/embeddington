@@ -19,7 +19,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any, Optional, TypedDict
 from urllib.parse import urlparse
 
 from dotenv import load_dotenv
@@ -240,12 +240,33 @@ def _get_known_predicates() -> set[str] | None:
 # --- Startup sanity check -------------------------------------------------
 
 
+class _ProbeKwargs(TypedDict):
+    """Shared kwargs for the fatal Qdrant/embed startup probes.
+
+    A plain `dict` literal mixing `config.STARTUP_PROBE_RETRIES` (int) with
+    the three float knobs infers as `dict[str, float]` under mypy, which
+    then rejects `**`-unpacking it into `probe_collection`/`probe`'s
+    `retries: int` parameter (a `float` is not assignable to `int`). A
+    TypedDict keeps `retries` typed as `int` on its own, checked field-by-
+    field against the callee's actual parameter types on `**` unpack.
+    """
+
+    retries: int
+    backoff: float
+    timeout: float
+    deadline: float
+
+
 async def _isolation_sanity_check() -> None:
     """Verify the MCP's runtime configuration is safe to expose tools.
 
     Checks before exposing tools:
-      - POSITIVE: the configured Qdrant URL can serve all allowlisted Qdrant
-        collections. If not, we'd return empty results forever.
+      - FATAL: the configured Qdrant URL can serve all allowlisted Qdrant
+        collections, AND the /embed endpoint answers with correctly-sized
+        vectors. Both go through `probe.probe_with_retry` (retrying only
+        genuine transport failures) and, on failure, land in the `leaks`
+        list below and raise `SystemExit` — booting without either would
+        only defer the same failure to each individual query.
 
     No Qdrant deny check in v1: there's no credential enforcement at the
     Qdrant layer (see spec §5). The future JWT-enabled version adds that.
@@ -257,13 +278,11 @@ async def _isolation_sanity_check() -> None:
     leaves the status "unavailable" — it must never block startup, since the
     lexical lane is an enhancement, not a dependency of the dense lane.
 
-    Also runs two warn-only probes so a misconfigured BYO-prod store fails
+    Also runs one warn-only probe so a misconfigured BYO-prod store fails
     LOUD instead of booting clean and silently returning empty/degraded
     results: an Arango probe (one cheap allowlisted read — catches a wrong
-    ARANGO_DATABASE or a missing grant) and an embed probe (one embed call —
-    the client already raises on both unreachable and wrong-dims, so the
-    exception path alone is the signal). Neither ever raises out of this
-    function; both only log.
+    ARANGO_DATABASE or a missing grant). Unlike the Qdrant/embed probes
+    above, this one never raises out of this function; it only logs.
     """
     global _lexical_status
 
@@ -271,7 +290,7 @@ async def _isolation_sanity_check() -> None:
 
     leaks: list[str] = []
 
-    probe_kwargs = {
+    probe_kwargs: _ProbeKwargs = {
         "retries": config.STARTUP_PROBE_RETRIES,
         "backoff": config.STARTUP_PROBE_RETRY_BACKOFF,
         "timeout": config.STARTUP_PROBE_TIMEOUT,
@@ -457,6 +476,15 @@ async def enrich(
             "names are validated and flagged in warnings."
         ),
     ] = None,
+    coverage_only: Annotated[
+        bool,
+        Field(
+            description="Exclude a KG edge whose provenance is entirely the "
+            "pre-v3 PDF-corpus backfill ('pdf-legacy'), never an edge with no "
+            "provenance at all. Defaults True because the vector half already "
+            "covers that corpus — set False to see PDF-only-attested edges too."
+        ),
+    ] = True,
 ) -> dict[str, Any]:
     """Default starting tool: budgeted parallel vector search + KG concept match.
 
@@ -516,6 +544,8 @@ async def enrich(
             (1-200, default 60).
         predicates: Optional relationship predicate filter. Unknown
             predicates (per kg_schema) are flagged in warnings, not rejected.
+        coverage_only: Exclude pdf-legacy-only KG edges (default True). No
+            effect on a v2-shaped graph, which has no provenance to exclude.
 
     Returns:
         dict with keys vector_chunks, kg_matches, errors, budget, warnings,
@@ -551,6 +581,7 @@ async def enrich(
         diversity_quota_fraction=config.DIVERSITY_QUOTA_FRACTION,
         score_threshold=config.SCORE_THRESHOLD,
         lexical_ready=(_lexical_status == "ready"),
+        coverage_only=coverage_only,
     )
     result["warnings"] = server_warnings + result["warnings"]
     if _lexical_status != "ready" and not any(
@@ -667,7 +698,10 @@ async def kg_find_entities(
 
 @mcp.tool
 async def kg_get_entity(
-    entity_id: Annotated[str, Field(description="Full document ID, e.g. 'entities_v2/abc'.")],
+    entity_id: Annotated[
+        str,
+        Field(description="Full document ID, e.g. '<entities-collection>/abc' (see kg_schema)."),
+    ],
 ) -> dict[str, Any]:
     """Fetch a full entity document by its _id.
 
@@ -707,6 +741,15 @@ async def kg_neighbors(
             "explicitly for broad exploration.",
         ),
     ] = 100,
+    coverage_only: Annotated[
+        bool,
+        Field(
+            description="Exclude an edge whose provenance is entirely the "
+            "pre-v3 PDF-corpus backfill ('pdf-legacy'), never an edge with no "
+            "provenance at all. Defaults False — unlike enrich, an explicit "
+            "neighbors lookup returns everything attested by default."
+        ),
+    ] = False,
 ) -> dict[str, Any]:
     """Return connected entities + edges around `entity_id`.
 
@@ -736,13 +779,17 @@ async def kg_neighbors(
         depth: Traversal depth, 1-3.
         types: Optional relationship predicate filter list.
         limit: Max raw traversal rows (1-500, default 100).
+        coverage_only: Exclude pdf-legacy-only edges (default False). No
+            effect on a v2-shaped graph.
 
     Returns:
         dict with keys nodes, edges, truncation, and optional error. Node
         dicts carry `releases` for per-entity version context.
     """
     try:
-        result = _get_arango().neighbors(entity_id, depth=depth, types=types, limit=limit)
+        result = _get_arango().neighbors(
+            entity_id, depth=depth, types=types, limit=limit, coverage_only=coverage_only
+        )
     except ArangoError as exc:
         return {
             "nodes": [],
@@ -772,6 +819,14 @@ async def kg_path(
     from_id: Annotated[str, Field(description="Source entity _id.")],
     to_id: Annotated[str, Field(description="Target entity _id.")],
     max_hops: Annotated[int, Field(ge=1, le=6, description="Max path length.")] = 4,
+    coverage_only: Annotated[
+        bool,
+        Field(
+            description="Drop a candidate path if ANY of its edges has "
+            "provenance entirely 'pdf-legacy' (never a path over an edge "
+            "with no provenance at all). Defaults False."
+        ),
+    ] = False,
 ) -> dict[str, Any]:
     """Find the shortest connection between two known entities.
 
@@ -799,13 +854,17 @@ async def kg_path(
         from_id: Source entity ArangoDB document ID.
         to_id: Target entity ArangoDB document ID.
         max_hops: Maximum number of hops to search (1-6).
+        coverage_only: Drop a pdf-legacy-only-attested path (default False).
+            No effect on a v2-shaped graph.
 
     Returns:
         dict with keys nodes, edges, optional no_path flag, optional
         abstained/reason/hubs, and optional error.
     """
     try:
-        result = _get_arango().shortest_path(from_id, to_id, max_hops=max_hops)
+        result = _get_arango().shortest_path(
+            from_id, to_id, max_hops=max_hops, coverage_only=coverage_only
+        )
         return result if result is not None else {"nodes": [], "edges": [], "no_path": True}
     except ArangoError as exc:
         return {"nodes": [], "edges": [], "error": str(exc)}
@@ -821,12 +880,22 @@ async def kg_schema() -> dict[str, Any]:
     tool-result cap.
 
     Returns:
-        dict with keys entity_types (list), predicates (list), and optional error.
+        dict with keys entity_types (list), predicates (list), kg_schema (the
+        active schema name, e.g. "v2") and optional error. On an Arango
+        error this never degrades into a 200-shaped payload without the
+        error key -- entity_types comes back empty instead.
     """
     try:
-        return _get_arango().schema()
+        result = _get_arango().schema()
+        result["kg_schema"] = config.KG_SCHEMA
+        return result
     except ArangoError as exc:
-        return {"entity_types": [], "predicates": [], "error": str(exc)}
+        return {
+            "entity_types": [],
+            "predicates": [],
+            "kg_schema": config.KG_SCHEMA,
+            "error": str(exc),
+        }
 
 
 # --- Entry point ----------------------------------------------------------

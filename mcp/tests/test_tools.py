@@ -141,6 +141,19 @@ async def test_kg_get_entity_returns_doc():
 
 
 @pytest.mark.asyncio
+async def test_kg_get_entity_tool_schema_names_no_specific_kg_version():
+    """The tool's JSON schema (its parameter description) must not spell out
+    a schema version (v2 or v3, Track 2) -- kg_schema() is the source of
+    truth for which collection an id belongs to."""
+    import json
+    import re
+
+    tool = await srv.mcp.get_tool("kg_get_entity")
+    schema_text = json.dumps(tool.parameters)
+    assert not re.search(r"_v[23]\b", schema_text)
+
+
+@pytest.mark.asyncio
 async def test_kg_neighbors_returns_graph():
     fn = await _fn("kg_neighbors")
     result = await fn(entity_id="entities_v2/x", depth=1)
@@ -154,7 +167,7 @@ async def test_kg_neighbors_default_limit_is_100(monkeypatch):
     captured: dict = {}
     fake = MagicMock()
 
-    def record_neighbors(entity_id, depth=1, types=None, limit=100):
+    def record_neighbors(entity_id, depth=1, types=None, limit=100, coverage_only=False):
         captured["limit"] = limit
         return {"nodes": [], "edges": []}
 
@@ -171,7 +184,7 @@ async def test_kg_neighbors_forwards_explicit_limit(monkeypatch):
     captured: dict = {}
     fake = MagicMock()
 
-    def record_neighbors(entity_id, depth=1, types=None, limit=100):
+    def record_neighbors(entity_id, depth=1, types=None, limit=100, coverage_only=False):
         captured["limit"] = limit
         return {"nodes": [], "edges": []}
 
@@ -225,6 +238,32 @@ async def test_kg_schema_returns_types():
     result = await fn()
     assert "entity_types" in result
     assert "predicates" in result
+
+
+@pytest.mark.asyncio
+async def test_kg_schema_includes_the_active_schema_name():
+    import config
+
+    fn = await _fn("kg_schema")
+    result = await fn()
+    assert result["kg_schema"] == config.KG_SCHEMA
+
+
+@pytest.mark.asyncio
+async def test_kg_schema_on_arango_error_carries_error_and_empty_entity_types(monkeypatch):
+    """The Task 6 preflight (check 8) relies on this exact shape: never a
+    200-shaped payload without an `error` key on failure."""
+    import config
+    from arango_client import ArangoError
+
+    fake = MagicMock()
+    fake.schema = MagicMock(side_effect=ArangoError("boom"))
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake)
+    fn = await _fn("kg_schema")
+    result = await fn()
+    assert result["entity_types"] == []
+    assert result["error"] == "boom"
+    assert result["kg_schema"] == config.KG_SCHEMA
 
 
 @pytest.mark.asyncio
@@ -435,6 +474,73 @@ async def test_enrich_tool_defaults_match_tuned_values():
     params = inspect.signature(fn).parameters
     assert params["edge_budget"].default == 60
     assert params["top_k"].default == 5
+
+
+def test_coverage_only_tool_defaults():
+    """enrich defaults coverage_only True; kg_neighbors and kg_path default
+    False (spec §2/§9.2 R2) -- guards the three tool-level defaults directly
+    against a drift that every functional test above would miss, since they
+    all pass an explicit fake and never exercise the parameter default."""
+    import inspect
+
+    from server import enrich, kg_neighbors, kg_path
+
+    for tool, expected in ((enrich, True), (kg_neighbors, False), (kg_path, False)):
+        fn = tool.fn if hasattr(tool, "fn") else tool
+        assert inspect.signature(fn).parameters["coverage_only"].default is expected
+
+
+@pytest.mark.asyncio
+async def test_enrich_tool_forwards_coverage_only(monkeypatch):
+    captured: dict = {}
+
+    async def fake_enrich_impl(**kwargs):
+        captured.update(kwargs)
+        return {
+            "vector_chunks": [],
+            "kg_matches": [],
+            "errors": {},
+            "budget": {"edge_budget": 60},
+            "warnings": [],
+            "grounding": {"tier": "none", "reasons": []},
+        }
+
+    monkeypatch.setattr(srv, "_enrich_impl", fake_enrich_impl)
+    fn = await _fn("enrich")
+    await fn(query="q", entity_hints=["X"], top_k=5, coverage_only=False)
+    assert captured["coverage_only"] is False
+
+
+@pytest.mark.asyncio
+async def test_kg_neighbors_forwards_coverage_only(monkeypatch):
+    captured: dict = {}
+    fake = MagicMock()
+
+    def record_neighbors(entity_id, depth=1, types=None, limit=100, coverage_only=False):
+        captured["coverage_only"] = coverage_only
+        return {"nodes": [], "edges": []}
+
+    fake.neighbors = record_neighbors
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake)
+    fn = await _fn("kg_neighbors")
+    await fn(entity_id="entities_v2/x", coverage_only=True)
+    assert captured["coverage_only"] is True
+
+
+@pytest.mark.asyncio
+async def test_kg_path_forwards_coverage_only(monkeypatch):
+    captured: dict = {}
+    fake = MagicMock()
+
+    def record_shortest_path(from_id, to_id, max_hops=4, coverage_only=False):
+        captured["coverage_only"] = coverage_only
+        return {"nodes": [], "edges": []}
+
+    fake.shortest_path = record_shortest_path
+    monkeypatch.setattr(srv, "_get_arango", lambda: fake)
+    fn = await _fn("kg_path")
+    await fn(from_id="entities_v2/x", to_id="entities_v2/y", coverage_only=True)
+    assert captured["coverage_only"] is True
 
 
 @pytest.mark.asyncio

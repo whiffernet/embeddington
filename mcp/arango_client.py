@@ -1,8 +1,11 @@
 """ArangoDB client for embeddington knowledge graph queries.
 
-Wraps python-arango to query only ServiceNow KG collections (entity/relationship/graph
-names are hardcoded constants). All queries are AQL templates with bound parameters —
-never string-interpolated user input.
+Wraps python-arango to query only ServiceNow KG collections. Which collections,
+graph and search view those are is resolved once per client, at construction,
+from `config.kg_collections()` — never hardcoded here (spec §9.2: the schema
+knob that lets the same reader code run against either KG generation). All
+queries are AQL templates with bound parameters — never string-interpolated
+user input.
 """
 
 from __future__ import annotations
@@ -16,18 +19,16 @@ from arango.cursor import Cursor
 from arango.exceptions import ArangoError as _ArangoError
 from arango.exceptions import DocumentGetError
 
+# Same dual-context import shim as server.py — supports both package import
+# (tests, python -m) and direct script invocation (when server.py is run as
+# a file path by Claude Desktop, this module gets loaded via sys.path).
+try:
+    from . import config
+except ImportError:
+    import config  # type: ignore[no-redef,import-not-found]
+
 logger = logging.getLogger("embeddington.arango")
 
-ENTITIES = "entities_v2"
-RELATIONSHIPS = "relationships_v2"
-GRAPH = "servicenow_graph_v2"
-# ArangoSearch view over entities_v2.name, built by langchain's ensure_search_view():
-# analyzers are the built-in ``text_en`` (tokenised, stemmed prose) and the
-# database-scoped ``<database>::norm_en`` (whole name lowercased as one token —
-# exact technical names such as com.snc.itsm.roles.request_management).
-# Consumer installs restore entities_v2 by arangorestore, which carries neither the
-# view nor the analyzer, so the view is optional and find_entities falls back.
-ENTITIES_SEARCH_VIEW = "entities_v2_search"
 # The scan query ran a 1-hop degree traversal for EVERY substring match (thousands for a
 # short needle); the view query ranks first and traverses at most this many survivors.
 FIND_CANDIDATE_CAP = 200
@@ -48,16 +49,226 @@ PATH_EXCLUDED_INTERMEDIATE_TYPES = frozenset({"Release"})
 # shortest-path search per candidate; 20 keeps a hub-adjacent pair under ~100 ms.
 PATH_CANDIDATE_CAP = 20
 
-# Provenance count used as the second sort key in neighbors(). v2 has NO provenance array
-# (an edge records only its first asserter, see spec §1); LENGTH(releases) is the closest
-# available signal: an edge re-asserted by a second release carries two entries. On v3 this
-# becomes LENGTH({e}.provenance). One template, two call sites (pool and final sort).
-PROVENANCE_COUNT_AQL = "LENGTH({e}.releases || [])"
+_PROVENANCE_COUNT_AQL_V2 = "LENGTH({e}.releases || [])"
+_PROVENANCE_COUNT_AQL_V3 = "LENGTH({e}.provenance || [])"
+
+
+def _provenance_count_aql(e: str) -> str:
+    """AQL fragment for the provenance-count sort key used as the second tier
+    in `neighbors()`'s tiebreak (pool SORT and final SORT, spec §6).
+
+    v2 has NO provenance array (an edge records only its first asserter, see
+    spec §1); `LENGTH(releases)` is the closest available signal -- an edge
+    re-asserted by a second release carries two entries. v3 edges carry a
+    real per-assertion `provenance` array (Track 2, spec §2), so under
+    `EMBEDDINGTON_KG_SCHEMA=v3` this switches to `LENGTH(provenance)` instead
+    -- without it the `limit` cap would keep a different edge set than
+    RESPONSE_SHAPES documents once `v3` is selectable, a silent ranking
+    degradation rather than an error.
+
+    Read from `config.KG_SCHEMA` at CALL time, not at module-import time, so
+    the schema can be monkeypatched in tests without reloading this module.
+
+    Args:
+        e: The AQL variable name for the edge document (``"e"`` in the pool
+            query, ``"r.edge"`` in the final sort).
+
+    Returns:
+        The AQL fragment, e.g. ``"LENGTH(e.releases || [])"``.
+    """
+    template = _PROVENANCE_COUNT_AQL_V3 if config.KG_SCHEMA == "v3" else _PROVENANCE_COUNT_AQL_V2
+    return template.format(e=e)
+
+
 # Same value and rationale as neighbors_stratified's pool cap: keep hub memory sane. Applied
 # after the pool's confidence/provenance SORT (so it keeps the top band) and before the
 # per-predicate COLLECT/rank, so a hub over this size is ranked over its top-N candidates
 # rather than every traversal row — same trade-off neighbors_stratified already makes.
 NEIGHBORS_POOL_CAP = 5000
+
+# --- Track 2 coverage/provenance (spec §2, §9.2) ----------------------------
+# v3 edges carry `origins` (a pre-sorted, deduped list of provenance origins,
+# e.g. ["markdown"] or ["pdf-legacy", "markdown"]) and `provenance` (the full
+# per-assertion array llamaindex's writer appends to). v2 edges have neither
+# field at all -- AQL's `|| []` coalesce is what makes the same query template
+# correct against both schemas (R3: a v2-shaped row yields origins == [] and
+# no provenance to rank, never an error).
+#
+# "pdf-legacy" marks a provenance entry seeded from the pre-v3 PDF corpus
+# migration, not a live re-extraction. `coverage_only=True` (R2) is "give me
+# edges attested by something OTHER than that backfill" -- it excludes a row
+# ONLY when EVERY origin it has is "pdf-legacy"; a row with no origins at all
+# (v2, or a v3 row the writer never annotated) is not pdf-legacy-only and must
+# never be excluded by this filter.
+#
+# One template, three call sites: neighbors(), neighbors_stratified() apply it
+# verbatim inside their single-edge FOR loop; shortest_path() adapts it to
+# require EVERY edge on a candidate path to pass, since a path is only as
+# trustworthy as its weakest edge.
+COVERAGE_ONLY_EDGE_FILTER = (
+    "FILTER !@coverage_only OR LENGTH(e.origins || []) == 0 "
+    'OR LENGTH(FOR o IN (e.origins || []) FILTER o != "pdf-legacy" RETURN 1) > 0'
+)
+
+# The 9-key subset of a provenance entry `_best_provenance` returns -- a
+# deliberate cut-down of the full per-assertion record (which also carries
+# `window`, `window_size`, `window_overlap`, `pass`, `pass_hits`) to the
+# fields a caller needs to judge and cite the winning assertion.
+_PROVENANCE_VIEW_KEYS = (
+    "origin",
+    "source_document",
+    "release",
+    "file_hash",
+    "chunk_ids",
+    "confidence",
+    "source_quote",
+    "extraction_recipe",
+    "extracted_at",
+)
+
+
+def _entry_outranks(a: dict[str, Any], b: dict[str, Any]) -> bool:
+    """True if provenance entry ``a`` outranks ``b`` (mirrors llamaindex's
+    ``writer._entry_rank``, spec §2).
+
+    Priority, each tier breaking ties in the previous one only:
+      1. Any origin other than "pdf-legacy" beats "pdf-legacy", full stop --
+         a live re-extraction is preferred over the PDF-corpus backfill
+         regardless of every other signal.
+      2. Higher `confidence` wins.
+      3. `extraction_type == "explicit"` beats "inferred".
+      4. A later `extracted_at` wins (most recent assertion).
+      5. A lexicographically LOWER `source_document` wins -- the only tier
+         that favors the smaller value, purely for deterministic output when
+         every other signal ties.
+
+    Args:
+        a: Candidate provenance entry.
+        b: Current best provenance entry.
+
+    Returns:
+        True iff `a` should replace `b` as the best entry.
+    """
+    a_live = a.get("origin") != "pdf-legacy"
+    b_live = b.get("origin") != "pdf-legacy"
+    if a_live != b_live:
+        return a_live
+
+    a_conf = a.get("confidence") or 0.0
+    b_conf = b.get("confidence") or 0.0
+    if a_conf != b_conf:
+        return a_conf > b_conf
+
+    a_explicit = a.get("extraction_type") == "explicit"
+    b_explicit = b.get("extraction_type") == "explicit"
+    if a_explicit != b_explicit:
+        return a_explicit
+
+    a_time = a.get("extracted_at") or ""
+    b_time = b.get("extracted_at") or ""
+    if a_time != b_time:
+        return a_time > b_time
+
+    a_doc = a.get("source_document") or ""
+    b_doc = b.get("source_document") or ""
+    if a_doc != b_doc:
+        return a_doc < b_doc
+
+    return False  # fully tied -- keep the incumbent (stable)
+
+
+def _best_provenance(entries: Optional[list[dict[str, Any]]]) -> Optional[dict[str, Any]]:
+    """Pick the single most-trustworthy provenance entry for an edge.
+
+    Applies the same size guards every sibling edge shape already applies to
+    its own `source_quote`/list fields (`SUBSTRING(e.source_quote, 0, 240)`
+    in both pool queries, `[:240]` in `_render_path`, `SLICE(..., 0, 5)` on
+    `source_documents`) -- without them, a v3 edge's `best_provenance` would
+    be the one place an untruncated quote or an unbounded `chunk_ids` list
+    could reach a caller.
+
+    Args:
+        entries: The edge's raw `provenance` array, or None/[] for a
+            v2-shaped edge (R3) or a v3 edge the writer never annotated.
+
+    Returns:
+        The winning entry projected to `_PROVENANCE_VIEW_KEYS`, with
+        `source_quote` truncated to 240 chars and `chunk_ids` capped to its
+        first 5 entries (both left as-is if absent/None), or None if
+        `entries` is empty.
+    """
+    if not entries:
+        return None
+    best = entries[0]
+    for entry in entries[1:]:
+        if _entry_outranks(entry, best):
+            best = entry
+    view = {k: best.get(k) for k in _PROVENANCE_VIEW_KEYS}
+    quote = view.get("source_quote")
+    if quote is not None:
+        view["source_quote"] = quote[:240]
+    chunk_ids = view.get("chunk_ids")
+    if chunk_ids is not None:
+        view["chunk_ids"] = list(chunk_ids)[:5]
+    return view
+
+
+def _edge_view(e: dict[str, Any]) -> dict[str, Any]:
+    """Coverage-tier fields every edge response shape adds (spec §2, §6).
+
+    Called by every RETURN shape that builds an edge dict (`neighbors`,
+    `neighbors_stratified`, `_render_path`) against the raw AQL/document edge
+    `e`, so the origins/best_provenance derivation lives in exactly one place
+    instead of being reimplemented at each call site.
+
+    Track 2 is v3-only (spec §6): an edge with neither field yields an EMPTY
+    dict here, not `{"origins": [], "best_provenance": None}` -- the caller
+    must merge this in without adding those keys at all, so a v2 (or
+    schema-with-no-provenance-model) response is byte-identical in shape and
+    size to pre-Track-2 behavior. This mattered in practice: emitting the two
+    keys unconditionally added ~37 bytes/edge, which pushed `enrich`'s
+    token-ceiling trim to drop 2-4 tail edges per query even under v2 (Task 3
+    fix round 1, Important 1).
+
+    Args:
+        e: Raw edge document/row, exposing (or, on a v2-shaped edge, lacking)
+            `origins` and `provenance`.
+
+    Returns:
+        `{}` when `e` carries neither `origins` nor `provenance`. Otherwise
+        ``{"origins": list[str], "best_provenance": dict | None}`` to merge
+        into whatever edge shape the caller is building.
+    """
+    origins = e.get("origins")
+    provenance = e.get("provenance")
+    if origins is None and provenance is None:
+        return {}
+    return {
+        "origins": origins or [],
+        "best_provenance": _best_provenance(provenance),
+    }
+
+
+def _apply_edge_view(e: dict[str, Any]) -> None:
+    """Merge `_edge_view(e)` into `e` in place, then drop the raw AQL
+    projection keys `_edge_view` read from.
+
+    `neighbors()`/`neighbors_stratified()` always project `origins:
+    e.origins, provenance: e.provenance` in their AQL `RETURN` (AQL member
+    access on a missing field yields `null`, not an absent key), so on a
+    v2-shaped edge `e` already carries a stray `"origins": None` even though
+    `_edge_view` correctly returned `{}` for it. This strips that stray key
+    too, so the final edge dict has no Track-2 keys at all on v2 -- not
+    `origins: None` and not `origins: []`.
+
+    Args:
+        e: The edge dict to update in place. Must already carry the raw
+            `origins`/`provenance` keys the AQL RETURN projects.
+    """
+    e.update(_edge_view(e))
+    e.pop("provenance", None)
+    if e.get("origins") is None:
+        e.pop("origins", None)
 
 
 class ArangoError(Exception):
@@ -67,8 +278,10 @@ class ArangoError(Exception):
 class ArangoKGClient:
     """Query interface for the ServiceNow knowledge graph.
 
-    Queries only the hardcoded KG collections (entities_v2, relationships_v2,
-    servicenow_graph_v2) by construction.
+    Queries only the KG collections (entities, relationships, graph, search
+    view) named by `config.kg_collections()` for the active `config.KG_SCHEMA`
+    — resolved once, here, at construction, never re-read per query and never
+    hardcoded in a query template.
 
     Args:
         url: ArangoDB endpoint (e.g. http://localhost:8529).
@@ -101,9 +314,18 @@ class ArangoKGClient:
         self._db = self._client.db(database, username=username, password=password)
         self._database = database
         self._search_view_available: Optional[bool] = None  # probed lazily, once
+        # Resolved once here, from the schema active at construction time — not
+        # re-read per query. A process that needs the other schema restarts
+        # with EMBEDDINGTON_KG_SCHEMA set differently; this client never mixes
+        # collections from two schemas in one query.
+        schema = config.kg_collections()
+        self._entities = schema["entities"]
+        self._relationships = schema["relationships"]
+        self._graph = schema["graph"]
+        self._search_view = schema["search_view"]
 
     def _view_available(self) -> bool:
-        """Whether ``entities_v2_search`` exists in this database (probed once).
+        """Whether the active schema's search view exists in this database (probed once).
 
         Returns:
             True if the view exists and the probe succeeded; False otherwise
@@ -122,21 +344,21 @@ class ArangoKGClient:
                     # has_view (a MagicMock, or a future driver release that adds
                     # the method).
                     self._search_view_available = bool(
-                        self._db.has_view(ENTITIES_SEARCH_VIEW)  # type: ignore[attr-defined]
+                        self._db.has_view(self._search_view)  # type: ignore[attr-defined]
                     )
                 except AttributeError:
                     # views() is typed as returning a sync/async/batch union because
                     # the same client class backs all three execution modes; this
                     # client only ever runs synchronously, so the result is a plain list.
                     names = {v["name"] for v in cast(list[dict[str, Any]], self._db.views())}
-                    self._search_view_available = ENTITIES_SEARCH_VIEW in names
+                    self._search_view_available = self._search_view in names
             except _ArangoError as exc:
                 logger.warning("view probe failed (%s); find_entities uses the scan query", exc)
                 self._search_view_available = False
             if not self._search_view_available:
                 logger.warning(
                     "%s absent in %s — find_entities uses the full-scan seed query",
-                    ENTITIES_SEARCH_VIEW,
+                    self._search_view,
                     self._database,
                 )
         return self._search_view_available
@@ -176,7 +398,7 @@ class ArangoKGClient:
             }"""
         if not use_view:
             return f"""
-        FOR e IN {ENTITIES}
+        FOR e IN {self._entities}
             FILTER CONTAINS(LOWER(e.name), @needle_lc)
             LET nm = LOWER(e.name)
             LET match_rank = nm == @needle_lc ? 3 : (STARTS_WITH(nm, @needle_lc) ? 2 : 1)
@@ -191,7 +413,7 @@ class ArangoKGClient:
         norm = f"{self._database}::norm_en"
         return f"""
         LET cands = (
-            FOR c IN {ENTITIES_SEARCH_VIEW}
+            FOR c IN {self._search_view}
                 SEARCH ANALYZER(
                         c.name == @needle_lc
                         OR STARTS_WITH(c.name, @needle_lc)
@@ -226,7 +448,7 @@ class ArangoKGClient:
             view-only keys are added only for the view query.
         """
         needle_lc = text.lower()
-        bind: dict[str, Any] = {"needle_lc": needle_lc, "limit": limit, "graph": GRAPH}
+        bind: dict[str, Any] = {"needle_lc": needle_lc, "limit": limit, "graph": self._graph}
         if use_view:
             bind["needle"] = text
             bind["needle_like"] = self._like_pattern(needle_lc)
@@ -271,7 +493,8 @@ class ArangoKGClient:
             raise ArangoError(f"find_entities failed: {exc}") from exc
 
     def get_entity(self, entity_id: str) -> Optional[dict[str, Any]]:
-        """Fetch a full entity document by _id (e.g. 'entities_v2/abc123').
+        """Fetch a full entity document by _id (e.g. '<entities-collection>/abc123' —
+        see `kg_schema()` for the active schema's collection name).
 
         Args:
             entity_id: Full ArangoDB document ID including collection prefix.
@@ -286,7 +509,7 @@ class ArangoKGClient:
         if "/" not in entity_id:
             raise ArangoError(f"invalid entity_id (must include collection): {entity_id}")
         try:
-            doc = self._db.collection(ENTITIES).get(entity_id.split("/", 1)[1])
+            doc = self._db.collection(self._entities).get(entity_id.split("/", 1)[1])
         except DocumentGetError:
             return None
         except _ArangoError as exc:
@@ -305,6 +528,7 @@ class ArangoKGClient:
         depth: int = 1,
         types: Optional[list[str]] = None,
         limit: int = 100,
+        coverage_only: bool = False,
     ) -> dict[str, Any]:
         """Return connected entities (any direction) and the edges that connect them.
 
@@ -317,26 +541,32 @@ class ArangoKGClient:
                 chosen to keep the JSON response under Claude Code's
                 ~75-100 KB single-tool-result cap; raise for broad
                 exploration only when needed.
+            coverage_only: When True, drop an edge whose ``origins`` are
+                entirely ``"pdf-legacy"`` (R2) — never drops an edge with no
+                ``origins`` at all (v2, or an unannotated v3 edge). No effect
+                on a v2-shaped graph, where no edge has ``origins``.
 
         Returns:
             Dict with ``nodes`` (``{id, name, type, releases, updated_at}``
             vertex dicts), ``edges`` (``{id, source, target, predicate,
             confidence, extraction_type, releases, source_document,
-            source_quote, updated_at}`` dicts), and ``fetched`` (raw
-            pre-dedup traversal row count — lets callers tell "truncated by
-            limit" apart from "genuinely small neighborhood"). ``releases``
-            gives ServiceNow version context; ``updated_at`` is an ISO
-            timestamp of last KG write (recency metadata, not a ranking
-            signal); ``extraction_type`` ("explicit"/"inferred") pairs with
+            source_quote, updated_at, origins, best_provenance}`` dicts — see
+            ``_edge_view`` for the last two), and ``fetched`` (raw pre-dedup
+            traversal row count — lets callers tell "truncated by limit"
+            apart from "genuinely small neighborhood"). ``releases`` gives
+            ServiceNow version context; ``updated_at`` is an ISO timestamp of
+            last KG write (recency metadata, not a ranking signal);
+            ``extraction_type`` ("explicit"/"inferred") pairs with
             ``confidence`` as a reliability signal; ``source_quote`` is
             verbatim provenance truncated to 240 chars so a dense
             neighborhood stays under the consumer tool-result cap.
             Edges are ordered by ``confidence`` DESC, then provenance count
-            (``LENGTH(releases)`` on v2, see ``PROVENANCE_COUNT_AQL``) DESC,
-            then per-predicate rank ASC — so when ``limit`` truncates a hub the
-            cap keeps the most-reliable, best-attested edges and interleaves
-            predicates within a tied band instead of taking one predicate's
-            slice. On hubs whose depth-N neighborhood exceeds
+            (``LENGTH(releases)`` on v2, ``LENGTH(provenance)`` on v3 — see
+            ``_provenance_count_aql``) DESC, then per-predicate rank ASC — so
+            when ``limit`` truncates a hub the cap keeps the most-reliable,
+            best-attested edges and interleaves predicates within a tied
+            band instead of taking one predicate's slice. On hubs whose
+            depth-N neighborhood exceeds
             ``NEIGHBORS_POOL_CAP`` (5000) candidate rows, the confidence/
             provenance sort and predicate ranking are computed over only the
             top ``NEIGHBORS_POOL_CAP`` by confidence/provenance — the same
@@ -352,10 +582,11 @@ class ArangoKGClient:
         type_filter = ""
         bind_vars: dict[str, Any] = {
             "start": entity_id,
-            "graph": GRAPH,
+            "graph": self._graph,
             "depth": depth,
             "row_cap": limit,
             "pool_cap": NEIGHBORS_POOL_CAP,
+            "coverage_only": coverage_only,
         }
         if types:
             type_filter = "FILTER e.predicate IN @types"
@@ -368,12 +599,13 @@ class ArangoKGClient:
         # i-th best row of that predicate. pool_cap (applied after the pool's SORT, so it
         # keeps the top band, and before the COLLECT/rank) bounds a depth>1 hub traversal —
         # without it a depth-3 walk from a 26k-degree hub has no bound at all.
-        prov_e = PROVENANCE_COUNT_AQL.format(e="e")
-        prov_r = PROVENANCE_COUNT_AQL.format(e="r.edge")
+        prov_e = _provenance_count_aql("e")
+        prov_r = _provenance_count_aql("r.edge")
         query = f"""
         LET pool = (
             FOR v, e IN 1..@depth ANY @start GRAPH @graph
                 {type_filter}
+                {COVERAGE_ONLY_EDGE_FILTER}
                 SORT e.confidence DESC, {prov_e} DESC
                 LIMIT @pool_cap
                 RETURN {{
@@ -392,6 +624,8 @@ class ArangoKGClient:
                         source_document: e.source_document,
                         source_quote: SUBSTRING(e.source_quote, 0, 240),
                         updated_at: e.updated_at,
+                        origins: e.origins,
+                        provenance: e.provenance,
                     }}
                 }}
         )
@@ -416,6 +650,7 @@ class ArangoKGClient:
         for r in results:
             v = r["vertex"]
             e = r["edge"]
+            _apply_edge_view(e)
             nodes.setdefault(v["id"], v)
             edges.setdefault(e["id"], e)
         return {
@@ -430,6 +665,7 @@ class ArangoKGClient:
         per_predicate: int = 2,
         overall: int = 50,
         predicates: Optional[list[str]] = None,
+        coverage_only: bool = False,
     ) -> dict[str, Any]:
         """Depth-1 neighborhood sampled for predicate diversity (spec §3.3).
 
@@ -446,10 +682,14 @@ class ArangoKGClient:
             per_predicate: Edges kept per distinct predicate (>=1).
             overall: Overall top-N by confidence to union in.
             predicates: Optional predicate filter, case-insensitive.
+            coverage_only: When True, drop an edge whose ``origins`` are
+                entirely ``"pdf-legacy"`` (R2) — never drops an edge with no
+                ``origins`` at all. No effect on a v2-shaped graph.
 
         Returns:
             ``{nodes, edges, fetched}`` — same node/edge shapes as neighbors()
-            (including ``updated_at`` on both).
+            (including ``updated_at``, ``origins``, ``best_provenance`` on
+            edges — see ``_edge_view``).
 
         Raises:
             ArangoError: On query failure.
@@ -459,9 +699,10 @@ class ArangoKGClient:
         pred_filter = ""
         bind_vars: dict[str, Any] = {
             "start": entity_id,
-            "graph": GRAPH,
+            "graph": self._graph,
             "pp": per_predicate,
             "overall": overall,
+            "coverage_only": coverage_only,
         }
         if predicates:
             pred_filter = "FILTER UPPER(e.predicate) IN @preds"
@@ -479,6 +720,7 @@ class ArangoKGClient:
         LET pool = (
             FOR v, e IN 1..1 ANY @start GRAPH @graph
                 {pred_filter}
+                {COVERAGE_ONLY_EDGE_FILTER}
                 SORT e.confidence == null ? 0.5 : e.confidence DESC
                 LIMIT 5000
                 RETURN {{
@@ -493,6 +735,8 @@ class ArangoKGClient:
                         source_document: e.source_document,
                         source_quote: SUBSTRING(e.source_quote, 0, 240),
                         updated_at: e.updated_at,
+                        origins: e.origins,
+                        provenance: e.provenance,
                     }},
                 }}
         )
@@ -516,7 +760,9 @@ class ArangoKGClient:
         fetched = 0
         for r in results:
             nodes.setdefault(r["vertex"]["id"], r["vertex"])
-            edges.setdefault(r["edge"]["id"], r["edge"])
+            e = r["edge"]
+            _apply_edge_view(e)
+            edges.setdefault(e["id"], e)
             fetched = max(fetched, r.get("fetched", 0))
         return {"nodes": list(nodes.values()), "edges": list(edges.values()), "fetched": fetched}
 
@@ -538,7 +784,7 @@ class ArangoKGClient:
             ArangoError: On query failure.
         """
         pred_filter = ""
-        bind_vars: dict[str, Any] = {"start": entity_id, "graph": GRAPH}
+        bind_vars: dict[str, Any] = {"start": entity_id, "graph": self._graph}
         if predicates:
             pred_filter = "FILTER UPPER(e.predicate) IN @preds"
             bind_vars["preds"] = [p.upper() for p in predicates]
@@ -575,7 +821,7 @@ class ArangoKGClient:
             RETURN {id: vid, degree: d}
         """
         try:
-            cursor = self._db.aql.execute(query, bind_vars={"ids": ids, "graph": GRAPH})
+            cursor = self._db.aql.execute(query, bind_vars={"ids": ids, "graph": self._graph})
             rows = list(cast(Cursor, cursor))
         except _ArangoError as exc:
             raise ArangoError(f"degrees failed: {exc}") from exc
@@ -590,8 +836,9 @@ class ArangoKGClient:
 
         Returns:
             ``nodes`` as ``{id, name, type, releases}``; ``edges`` as ``{source, target,
-            predicate, extraction_type, releases, source_document, source_quote}`` with the
-            quote truncated to 240 chars. No ``id``/``confidence`` on path edges.
+            predicate, extraction_type, releases, source_document, source_quote, origins,
+            best_provenance}`` (see ``_edge_view``) with the quote truncated to 240 chars.
+            No ``id``/``confidence`` on path edges.
         """
         return {
             "nodes": [
@@ -612,13 +859,14 @@ class ArangoKGClient:
                     "releases": e.get("releases"),
                     "source_document": e.get("source_document"),
                     "source_quote": (e.get("source_quote") or "")[:240],
+                    **_edge_view(e),
                 }
                 for e in path["edges"]
             ],
         }
 
     def shortest_path(
-        self, from_id: str, to_id: str, max_hops: int = 4
+        self, from_id: str, to_id: str, max_hops: int = 4, coverage_only: bool = False
     ) -> Optional[dict[str, Any]]:
         """Shortest USABLE path between two entities, or an explicit abstention.
 
@@ -635,6 +883,11 @@ class ArangoKGClient:
             from_id: Starting vertex ``_id``.
             to_id: Target vertex ``_id``.
             max_hops: Discard paths longer than this (clamped to 1–6).
+            coverage_only: When True, drop a candidate path if ANY of its
+                edges has ``origins`` entirely ``"pdf-legacy"`` (R2) — a path
+                is only as trustworthy as its weakest edge. Never drops a
+                path over an edge with no ``origins`` at all. No effect on a
+                v2-shaped graph.
 
         Returns:
             ``{nodes, edges}`` for a usable path; ``{nodes: [], edges: [],
@@ -642,22 +895,35 @@ class ArangoKGClient:
             suppressed (``hubs`` lists the over-ceiling intermediates as
             ``{id, name, type, degree}``, highest degree first, empty when only
             release suppression fired); ``None`` when no candidate exists
-            within ``max_hops``.
+            within ``max_hops`` (this also covers every candidate being
+            dropped by ``coverage_only`` before ``max_hops`` filtering).
 
         Raises:
             ArangoError: On query failure.
         """
         max_hops = max(1, min(max_hops, 6))  # safety cap
+        # A path is only as trustworthy as its weakest edge: unlike neighbors()/
+        # neighbors_stratified() (one edge per row), a path carries several, so
+        # coverage_only excludes the WHOLE path if any single edge on it is
+        # pdf-legacy-only -- same per-edge test as COVERAGE_ONLY_EDGE_FILTER,
+        # applied across p.edges instead of a single-edge FOR variable.
         query = """
         FOR p IN ANY K_SHORTEST_PATHS @from TO @to GRAPH @graph
+            FILTER !@coverage_only OR LENGTH(
+                FOR e IN p.edges
+                    FILTER LENGTH(e.origins || []) > 0
+                        AND LENGTH(FOR o IN (e.origins || []) FILTER o != "pdf-legacy" RETURN 1) == 0
+                    RETURN 1
+            ) == 0
             LIMIT @cap
             RETURN {vertices: p.vertices, edges: p.edges}
         """
         bind_vars: dict[str, Any] = {
             "from": from_id,
             "to": to_id,
-            "graph": GRAPH,
+            "graph": self._graph,
             "cap": PATH_CANDIDATE_CAP,
+            "coverage_only": coverage_only,
         }
         try:
             cursor = self._db.aql.execute(query, bind_vars=bind_vars)
@@ -727,14 +993,15 @@ class ArangoKGClient:
         try:
             entity_types = list(
                 cast(
-                    Cursor, self._db.aql.execute(f"FOR e IN {ENTITIES} COLLECT t = e.type RETURN t")
+                    Cursor,
+                    self._db.aql.execute(f"FOR e IN {self._entities} COLLECT t = e.type RETURN t"),
                 )
             )
             predicates = list(
                 cast(
                     Cursor,
                     self._db.aql.execute(
-                        f"FOR r IN {RELATIONSHIPS} COLLECT p = r.predicate RETURN p"
+                        f"FOR r IN {self._relationships} COLLECT p = r.predicate RETURN p"
                     ),
                 )
             )
@@ -745,17 +1012,18 @@ class ArangoKGClient:
     def probe_read(self) -> None:
         """Cheap allowlisted read used as a startup probe.
 
-        Exercises real read access against entities_v2 (LIMIT 1) so a wrong
-        ARANGO_DATABASE or a missing/insufficient grant on the configured
-        user surfaces as a boot-time signal, instead of as silent empty
-        results the first time a tool queries the KG.
+        Exercises real read access against the active schema's entities
+        collection (LIMIT 1) so a wrong ARANGO_DATABASE or a missing/
+        insufficient grant on the configured user surfaces as a boot-time
+        signal, instead of as silent empty results the first time a tool
+        queries the KG.
 
         Raises:
             Exception: Any failure from the underlying AQL execution (bad
                 database, missing grant, connectivity). The caller treats
                 this as a warn-only startup signal, never a hard failure.
         """
-        self._db.aql.execute(f"FOR e IN {ENTITIES} LIMIT 1 RETURN 1")
+        self._db.aql.execute(f"FOR e IN {self._entities} LIMIT 1 RETURN 1")
 
     def can_read_collection(self, collection_name: str) -> bool:
         """Probe whether this client's user can read the given collection.

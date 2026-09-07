@@ -127,14 +127,56 @@ if DEFAULT_QDRANT_COLLECTION not in ALLOWED_QDRANT_COLLECTIONS:
         f"ALLOWED_QDRANT_COLLECTIONS {sorted(ALLOWED_QDRANT_COLLECTIONS)}"
     )
 DEFAULT_EMBED_INDEX = ALLOWED_QDRANT_COLLECTIONS[DEFAULT_QDRANT_COLLECTION]
-
-ALLOWED_ARANGO_COLLECTIONS = {
-    "entities": "entities_v2",
-    "relationships": "relationships_v2",
-    "graph": "servicenow_graph_v2",
-}
 # Note: no FORBIDDEN_QDRANT_COLLECTIONS in v1 — Qdrant has no credential isolation
 # yet (see spec §5). Code-level scoping in tool implementations is the only guard.
+
+# --- KG schema (Track 2 cutover switch, spec §9.2) --------------------------
+# The single knob that selects which Arango entities/relationships collections,
+# named graph and search view every reader (ArangoKGClient) queries. v2 is the
+# schema in production today; v3 adds a per-edge `provenance` array and
+# derived `origins` list (spec §2) on the SAME underlying KG data — this knob
+# never migrates or mutates anything, it only changes which existing
+# collections a read-only server points its queries at.
+KG_SCHEMA = os.environ.get("EMBEDDINGTON_KG_SCHEMA", "v2")
+
+_KG_SCHEMAS: dict[str, dict[str, str]] = {
+    "v2": {
+        "entities": "entities_v2",
+        "relationships": "relationships_v2",
+        "graph": "servicenow_graph_v2",
+        "search_view": "entities_v2_search",
+    },
+    "v3": {
+        "entities": "entities_v3",
+        "relationships": "relationships_v3",
+        "graph": "servicenow_graph_v3",
+        "search_view": "entities_v3_search",
+    },
+}
+
+if KG_SCHEMA not in _KG_SCHEMAS:
+    raise ValueError(
+        f"EMBEDDINGTON_KG_SCHEMA={KG_SCHEMA!r} is not one of {sorted(_KG_SCHEMAS)} "
+        "-- set EMBEDDINGTON_KG_SCHEMA to a supported schema name"
+    )
+
+
+def kg_collections() -> dict[str, str]:
+    """Return the Arango collection/graph/view names for the active KG schema.
+
+    The active schema is fixed at import time by `KG_SCHEMA` (env
+    `EMBEDDINGTON_KG_SCHEMA`, default "v2") and never re-read afterward.
+    `ArangoKGClient` calls this once, at construction, rather than hardcoding
+    a collection name in a query template — so switching schemas is a single
+    environment variable, not a code change (`tests/test_no_collection_literals.py`
+    guards against a literal creeping back into reader code).
+
+    Returns:
+        Dict with keys ``entities``, ``relationships``, ``graph`` and
+        ``search_view``.
+    """
+    return dict(_KG_SCHEMAS[KG_SCHEMA])
+
 
 # --- Response budgeting -----------------------------------------------------
 # Response ceiling for enrich, in ESTIMATED tokens (chars/3, pessimistic).
