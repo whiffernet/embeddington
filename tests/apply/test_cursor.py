@@ -68,17 +68,27 @@ def test_unreachable_cursor_falls_back_to_baseline():
 
 def test_schema_major_bump_is_gated():
     with pytest.raises(errors.SchemaVersionError):
-        cursor.plan_update("e5f6", _manifest(schema_version="4.0"))
+        cursor.plan_update("e5f6", _manifest(schema_version="5.0"))
 
 
-def test_supported_major_is_3_and_major3_passes():
-    assert cursor.SUPPORTED_SCHEMA_MAJOR == 3
-    cursor.plan_update(None, _manifest(schema_version="3.0"))
+def test_supported_major_is_4_and_major4_passes():
+    """The kg-v3-cutover release: a schema-aware client understands chain major 4."""
+    assert cursor.SUPPORTED_SCHEMA_MAJOR == 4
+    cursor.plan_update(None, _manifest(schema_version="4.0"))
 
 
-def test_major4_still_refused():
+def test_major5_still_refused():
     with pytest.raises(errors.SchemaVersionError):
-        cursor.plan_update(None, _manifest(schema_version="4.0"))
+        cursor.plan_update(None, _manifest(schema_version="5.0"))
+
+
+def test_an_older_client_still_refuses_major4():
+    """A client that has NOT taken the kg_schema-aware release must refuse a
+    re-rooted (major 4) chain rather than corrupt its graph -- the whole point of
+    the major bump: old installs stop cold instead of applying v3 diffs against
+    v2 collections."""
+    with pytest.raises(errors.SchemaVersionError):
+        cursor.plan_update(None, _manifest(schema_version="4.0"), supported_major=3)
 
 
 def test_an_older_major_is_still_accepted():

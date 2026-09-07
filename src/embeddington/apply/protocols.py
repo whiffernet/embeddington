@@ -14,7 +14,15 @@ class QdrantWriter(Protocol):
 
 
 class ArangoWriter(Protocol):
-    """Minimal write surface for entities_v2 / relationships_v2."""
+    """Minimal write surface for the KG's entity/relationship collections.
+
+    Schema-generation-agnostic: which physical collections (``entities_v2`` /
+    ``relationships_v2``, or their ``v3`` successors) an implementation actually
+    writes into is a construction-time concern of the adapter (see
+    ``consumer.writers.ArangoConsumerWriter`` and
+    ``embeddington.apply.schema_names.resolve_schema_names``), not part of this
+    protocol.
+    """
 
     def upsert_entity(self, key: str, doc: dict) -> None: ...
 
