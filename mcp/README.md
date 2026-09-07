@@ -70,15 +70,39 @@ The server reads its connection details from the environment (set them in the
 `.mcp.json` / Desktop `env` block, or a `.env` next to `server.py`). New
 information is welcome to come to light here:
 
-| Variable          | Example                       | What it points at                                                           |
-| ----------------- | ----------------------------- | --------------------------------------------------------------------------- |
-| `QDRANT_URL`      | `http://localhost:6333`       | Your Qdrant instance (holds the `technology` collection).                   |
-| `ARANGO_URL`      | `http://localhost:8529`       | Your ArangoDB instance (holds the ServiceNow graph).                        |
-| `ARANGO_DATABASE` | `technology_kg`               | The database with `entities_v2`, `relationships_v2`, `servicenow_graph_v2`. |
-| `ARANGO_USER`     | `root`                        | The Arango user the server authenticates as.                                |
-| `ARANGO_PASSWORD` | _(required)_                  | That user's password. No default — the server refuses to start without it.  |
-| `EMBED_URL`       | `http://localhost:8100/embed` | The local embedding service, producing 1024-dim `bge-m3` vectors.           |
-| `EXTRA_QDRANT_COLLECTIONS` | _(unset)_            | Optional. Additional collections to allow, as `name:embed_index` pairs.     |
+| Variable                   | Example                       | What it points at                                                           |
+| -------------------------- | ----------------------------- | --------------------------------------------------------------------------- |
+| `QDRANT_URL`               | `http://localhost:6333`       | Your Qdrant instance (holds the `technology` collection).                   |
+| `ARANGO_URL`               | `http://localhost:8529`       | Your ArangoDB instance (holds the ServiceNow graph).                        |
+| `ARANGO_DATABASE`          | `technology_kg`               | The database with `entities_v2`, `relationships_v2`, `servicenow_graph_v2`. |
+| `ARANGO_USER`              | `root`                        | The Arango user the server authenticates as.                                |
+| `ARANGO_PASSWORD`          | _(required)_                  | That user's password. No default — the server refuses to start without it.  |
+| `EMBED_URL`                | `http://localhost:8100/embed` | The local embedding service, producing 1024-dim `bge-m3` vectors.           |
+| `EXTRA_QDRANT_COLLECTIONS` | _(unset)_                     | Optional. Additional collections to allow, as `name:embed_index` pairs.     |
+| `EMBEDDINGTON_KG_SCHEMA`   | `v2` (default)                | Which physical Arango collection/graph generation to read. See below.       |
+
+### Schema generations
+
+`EMBEDDINGTON_KG_SCHEMA` lives in `mcp/.env`, defaults to `v2`, and picks which
+collection/named-graph generation the server reads — it does not change any tool's
+interface, only which rows back it. Set it to `v3` only when the graph this server
+points at is actually a `v3` generation: for an install managed by the consumer
+package, that env var is written automatically after a `v3` re-baseline, so a normal
+deployment never has to touch it by hand. Running the server standalone against a
+`v3` store means editing `mcp/.env` and restarting.
+
+The two generations differ in what an edge carries:
+
+- **`v2`** — edges have no `origins` or `best_provenance` keys at all. Absence means
+  no per-edge provenance model exists yet, not that provenance was stripped.
+- **`v3`** — every edge carries both: `origins` (which sources attest it) and
+  `best_provenance` (the strongest one). This is also what unlocks `coverage_only`
+  (see `enrich`, `kg_neighbors`, `kg_path` below): it excludes an edge whose only
+  origin is `pdf-legacy`, the pre-v3 corpus with the weakest attestation. `enrich`
+  defaults `coverage_only` to `True`; `kg_neighbors` and `kg_path` default it to
+  `False`, since a graph traversal is more often used to confirm a specific edge
+  exists than to sample the corpus's coverage. Under `v2`, where there is no
+  `origins` to filter on, `coverage_only` is a no-op.
 
 ### Serving a differently-named collection
 
@@ -95,8 +119,8 @@ EXTRA_QDRANT_COLLECTIONS=technology_v2:technology
 DEFAULT_QDRANT_COLLECTION=technology_v2
 ```
 
-**The two halves of a pair are different things.** The left is the Qdrant *collection*; the
-right is the `/embed` *index token* that selects the encoder. They are usually the same string,
+**The two halves of a pair are different things.** The left is the Qdrant _collection_; the
+right is the `/embed` _index token_ that selects the encoder. They are usually the same string,
 which is why the distinction is easy to miss — but if the embed index does not resolve to the
 model that produced the stored vectors, queries are embedded by the wrong encoder. bge-large and
 bge-m3 are both 1024-dim, so **nothing raises**. No error, no warning, just answers that have
@@ -129,15 +153,15 @@ hands Claude both the documents and the connected structure, so it has the most 
 over in one shot. The other six are for targeted drill-downs once you know where you're
 headed.
 
-| Tool                                      | What it does                                                                                                          | Needs embed service? |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `enrich(query, entity_hints, top_k)`      | **The default move** — vector search **and** KG entity match + 1-hop neighbors, in parallel. The richest single call. | Yes                  |
-| `vector_search(query, collection, limit)` | Raw vector search against an allowlisted Qdrant collection (defaults to `technology`).                                | Yes                  |
-| `kg_find_entities(text, limit)`           | Fuzzy-match entity names; relevance-ranked, hub entities win.                                                         | No                   |
-| `kg_get_entity(entity_id)`                | Fetch one full entity document by its `_id`.                                                                          | No                   |
-| `kg_neighbors(entity_id, depth, types)`   | Traverse connected entities + edges around a node (depth 1–3).                                                        | No                   |
+| Tool                                      | What it does                                                                                                                                            | Needs embed service? |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `enrich(query, entity_hints, top_k)`      | **The default move** — vector search **and** KG entity match + 1-hop neighbors, in parallel. The richest single call.                                   | Yes                  |
+| `vector_search(query, collection, limit)` | Raw vector search against an allowlisted Qdrant collection (defaults to `technology`).                                                                  | Yes                  |
+| `kg_find_entities(text, limit)`           | Fuzzy-match entity names; relevance-ranked, hub entities win.                                                                                           | No                   |
+| `kg_get_entity(entity_id)`                | Fetch one full entity document by its `_id`.                                                                                                            | No                   |
+| `kg_neighbors(entity_id, depth, types)`   | Traverse connected entities + edges around a node (depth 1–3).                                                                                          | No                   |
 | `kg_path(from_id, to_id, max_hops)`       | Shortest usable path between two entities; suppresses release-mediated paths and abstains (with the hub named) instead of returning a hub-mediated one. | No                   |
-| `kg_schema()`                             | List the entity types and relationship predicates in the graph.                                                       | No                   |
+| `kg_schema()`                             | List the entity types and relationship predicates in the graph.                                                                                         | No                   |
 
 `vector_search` and `enrich` embed the query first, so they need `EMBED_URL`
 reachable. The `kg_*` traversal tools talk to ArangoDB only — pure graph, no

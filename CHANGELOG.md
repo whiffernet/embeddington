@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.12.4 — 2026-09-06
+
+Forward-sync of the vendored MCP server (`mcp/`) from upstream: the KG cutover's third
+part, following the schema knob shipped consumer-side in v0.12.3.
+
+- **NEW: `EMBEDDINGTON_KG_SCHEMA`** (`mcp/.env`, default `v2`) — selects which Arango
+  collection/named-graph generation `mcp/server.py` reads. Set to `v3` only when the
+  graph this server points at is a `v3` generation; a consumer-managed install writes
+  this automatically after a `v3` re-baseline. See `mcp/README.md`'s "Schema
+  generations" section.
+- **NEW: per-edge `origins` / `best_provenance`.** Under `v3`, every edge in a
+  `kg_neighbors`/`kg_path`/`enrich` response carries both keys; under `v2` neither key
+  is present (no provenance model yet, not stripped).
+- **NEW: `coverage_only`.** Excludes an edge whose only origin is the pre-`v3`
+  `pdf-legacy` corpus. Defaults to `True` on `enrich`, `False` on `kg_neighbors` and
+  `kg_path`. A no-op under `v2`.
+- `sync_mcp.sh`'s `SYNCED` list gained `probe.py` (the startup-probe module
+  introduced in v0.12.2, now formally tracked so it re-syncs like everything else)
+  and `tests/test_no_collection_literals.py`, a new guard test that keeps the
+  vendored suite from hardcoding Arango collection names outside `config.py`.
+
 ## v0.12.3 — 2026-09-06
 
 Schema-aware consumer: the KG cutover's second half. This release only teaches the

@@ -22,7 +22,7 @@ import httpx
 try:
     from .probe import RETRYABLE_TRANSPORT_ERRORS, probe_with_retry
 except ImportError:  # pragma: no cover — flat-layout import fallback
-    from probe import (  # type: ignore[no-redef] # noqa: F401
+    from probe import (  # type: ignore[no-redef,import-not-found] # noqa: F401
         RETRYABLE_TRANSPORT_ERRORS,
         probe_with_retry,
     )
