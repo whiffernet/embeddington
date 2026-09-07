@@ -1,5 +1,36 @@
 # Changelog
 
+## v0.12.3 — 2026-09-06
+
+Schema-aware consumer: the KG cutover's second half. This release only teaches the
+consumer to recognize and route by a new manifest field — it does not itself move the
+public diff chain (see the cutover's own notes for when that lands and why installs
+need this release merged first).
+
+- **BREAKING: `SUPPORTED_SCHEMA_MAJOR` 3 → 4.** An install still on this code stops
+  with `SchemaVersionError` on a manifest at chain major 4, rather than applying a
+  re-rooted chain against collections it doesn't understand. Fix is
+  `embeddington-setup --yes` (or the install one-liner). The gate is
+  `major > supported`, so older manifests still apply unchanged.
+- **NEW: `kg_schema` on a manifest baseline entry.** Absent means today's collections
+  (byte-identical behavior for every manifest published before this field existed).
+  When present (`"v2"` or `"v3"`), it selects which physical ArangoDB
+  collections/named-graph a baseline restore, a diff apply, and this install's doctor
+  checks all target — resolved in one place, `embeddington.apply.schema_names`, so a
+  writer/restore adapter/uninstall inventory never has to know the mapping itself.
+  `embeddington-consume update` also gained `--kg-schema` (default:
+  `$EMBEDDINGTON_KG_SCHEMA`) for the same reason.
+- A restore onto a NEW schema generation now drops the previous generation's
+  now-orphaned collections and named graph afterward, so an install never carries two
+  full copies of the KG side by side.
+- The active schema is recorded in `consumer/.env` as `EMBEDDINGTON_KG_SCHEMA` right
+  after a baseline restore lands, and read back before the next update's writers are
+  built — the same file `mcp/server.py` already falls back to for the Arango
+  password, kept to one install-owned fact per place on disk.
+- Package version 0.3.0 → 0.4.0 (tracked separately from the release tag above — see
+  `installer/update_record.py`'s `clone_version` for why — to mark that this consumer
+  package now understands chain schema major 4 / `kg_schema`).
+
 ## v0.12.2 — 2026-09-02
 
 The fatal startup probes are now bounded, retried only where retrying can help, and say
@@ -24,9 +55,9 @@ Qdrant was still coming up, and the message named neither the host nor the reaso
   `(httpx.TimeoutException, httpx.NetworkError)`; a typo'd scheme, a redirect loop or a
   decoding error fails on the first attempt, because no number of retries fixes them.
 - The refusal carries its own diagnosis — `no response from … after 2 attempt(s) in
-  12.0s — last error: ConnectTimeout` for an outage, `answered HTTP 401 — the collection
-  is missing, or the credential was rejected` for a rejection, and `failed and cannot be
-  retried (UnsupportedProtocol: …)` for a bad URL.
+12.0s — last error: ConnectTimeout` for an outage, `answered HTTP 401 — the collection
+is missing, or the credential was rejected` for a rejection, and `failed and cannot be
+retried (UnsupportedProtocol: …)` for a bad URL.
 - NEW: `mcp/probe.py`, the shared retry policy both fatal probes use.
 - The four `EMBEDDINGTON_STARTUP_*` knobs are documented in `mcp/.env.example`. The one
   trade-off: a genuine misconfiguration against an unreachable host now surfaces in ~12s
@@ -42,7 +73,7 @@ answer, and keep a log of the run. Closes #119 (OrbStack report).
   install of the runtime they already had. OrbStack is the case that bites: its CLI lives
   in `~/.orbstack/bin` and reaches `PATH` through a shell-init edit that a non-login shell
   never reads. A binary found — via `EMBEDDINGTON_DOCKER_BIN`, a known location, or typed
-  at the new menu option — has its directory prepended to *this process's* `PATH`. The
+  at the new menu option — has its directory prepended to _this process's_ `PATH`. The
   user's shell profile is never touched.
 - An unreachable daemon now reports the endpoint it dialed, the active context, the other
   configured contexts, and docker's own message — shown **before** the wait rather than
