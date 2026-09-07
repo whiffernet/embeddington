@@ -20,6 +20,13 @@ from installer.cron import CRON_MARKERS, strip_cron_lines
 from installer.errors import SetupError
 
 KNOWN_QDRANT_COLLECTIONS = {"technology"}
+# DATABASE names, not collection names -- foreign-data detection for Arango
+# (inspect_stores, below) only ever asks `list_databases()`, never enumerates
+# collections inside a known database. That makes this set schema-generation-agnostic
+# by construction: whether `technology_kg` holds the v2 collections, the v3 ones (see
+# Task 5's `embeddington.apply.schema_names`), or both mid-cutover, it is still exactly
+# one known database and never reads as foreign. See
+# tests/installer/test_uninstall.py::test_a_v3_schema_technology_kg_is_not_foreign.
 KNOWN_ARANGO_DBS = {"technology_kg", "_system"}
 
 

@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 from pathlib import Path
@@ -5,7 +6,15 @@ from pathlib import Path
 import pytest
 from arango.exceptions import ArangoServerError
 
-from consumer import cursor_store, release_client, state_paths, updater, writers
+from consumer import (
+    cursor_store,
+    env_file,
+    release_client,
+    restore_ops,
+    state_paths,
+    updater,
+    writers,
+)
 from embeddington.format import bundle as bundle_mod
 from embeddington.format import records
 from embeddington.format.manifest import sha256_file
@@ -73,7 +82,6 @@ def _setup(tmp_path):
             },
         ],
     }
-    import json
 
     fetcher = _FakeFetcher(
         {
@@ -368,7 +376,6 @@ def test_candidate_whose_plan_raises_is_not_adopted_over_a_usable_fallback(
             {"prev_sha": "e5f6", "head_sha": "a7b8", "asset": "diff-a7b8.jsonl.zst", "sha256": s2},
         ],
     }
-    import json
 
     fetcher = _FakeFetcher(
         {
@@ -929,3 +936,116 @@ def test_force_baseline_restores_even_when_the_cursor_says_up_to_date(
 
     assert imported == ["baseline-2026-06"]  # it actually restores
     assert result["mode"] == "baseline"
+
+
+# --- C1 regression: a v3 baseline plus trailing diffs, in ONE update() call ---------
+
+
+def test_v3_baseline_with_a_trailing_diff_in_one_update_call(
+    tmp_path, monkeypatch, fake_qdrant_client, fake_arango_db
+):
+    """Reproduces the review's finding: cursor.plan_update returns baseline +
+    after_baseline diffs together (UpdatePlan("baseline", latest_baseline,
+    after_baseline)), so a v3 re-root with even one diff published on top of it hits
+    baseline-then-diffs in a SINGLE updater.update() call -- the steady state, not an
+    edge case. The diff must land in entities_v3 (not the just-dropped entities_v2),
+    and EMBEDDINGTON_KG_SCHEMA must already be on disk by the time that diff applies.
+    """
+    repo = "me/embeddington"
+
+    def url(tag, name):
+        return f"https://github.com/{repo}/releases/download/{tag}/{name}"
+
+    # One diff ON TOP of the v3 baseline, carrying an entity upsert -- not just a
+    # vector point -- so a misrouted write is visible as a missing/misplaced entity.
+    diff_recs = [
+        records.header("1.0", "v3-root", "v3-head", points=0, entities=1, edges=0),
+        records.entity_upsert("E1", {"name": "CMDB"}),
+    ]
+    diff_path = tmp_path / "diff-v3-head.jsonl.zst"
+    bundle_mod.write_bundle(diff_path, diff_recs)
+    diff_sha = sha256_file(diff_path)
+
+    manifest = {
+        "schema_version": "4.0",
+        "baselines": [
+            {
+                "tag": "baseline-2026-09-reroot",
+                "head_sha": "v3-root",
+                "kg_schema": "v3",
+                "points": 0,
+                "entities": 0,
+                "edges": 0,
+                "assets": {"qdrant": "q.zst", "arango": "a.zst"},
+                "sha256": {"qdrant": "x", "arango": "y"},
+            }
+        ],
+        "diffs": [
+            {
+                "prev_sha": "v3-root",
+                "head_sha": "v3-head",
+                "asset": "diff-v3-head.jsonl.zst",
+                "sha256": diff_sha,
+            }
+        ],
+    }
+    fetcher = _FakeFetcher(
+        {
+            url("diffs", "manifest.json"): json.dumps(manifest).encode(),
+            url("diffs", "diff-v3-head.jsonl.zst"): diff_path.read_bytes(),
+        }
+    )
+    rc = release_client.ReleaseClient(fetcher, repo=repo)
+    qw, aw = _writers(fake_qdrant_client, fake_arango_db)  # aw starts targeting v2
+
+    # Fake every heavy IO op the importer's `_import` calls, except the wiring under
+    # test (schema resolution, retarget, persist, drop).
+    monkeypatch.setattr(restore_ops, "decompress", lambda p: f"{p}.out")
+    monkeypatch.setattr(restore_ops, "restore_qdrant_snapshot", lambda *a: None)
+    monkeypatch.setattr(restore_ops, "restore_arango_dump", lambda *a: None)
+    monkeypatch.setattr(restore_ops, "ensure_named_graph", lambda *a, **k: None)
+    monkeypatch.setattr(restore_ops, "drop_old_schema_collections", lambda *a: None)
+    monkeypatch.setattr(
+        restore_ops.lexical_index, "ensure_chunk_text_index", lambda *a, **k: "ready"
+    )
+
+    class _RC:
+        def download_asset(self, tag, asset, dest, sha):
+            return str(dest)
+
+    env_path = tmp_path / "consumer.env"
+    persisted = []
+
+    def persist(schema):
+        persisted.append(schema)
+        env_file.set_key(env_path, "EMBEDDINGTON_KG_SCHEMA", schema)
+
+    importer = restore_ops.make_baseline_importer(
+        _RC(),
+        tmp_path / "work",
+        "http://q",
+        "technology",
+        "http://a",
+        "technology_kg",
+        "root",
+        "pw",
+        arango_writer=aw,
+        persist_kg_schema=persist,
+    )
+
+    result = updater.update(
+        rc,
+        qw,
+        aw,
+        tmp_path / "state" / ".cursor",
+        work_dir=tmp_path / "work",
+        baseline_importer=importer,
+    )
+
+    assert result["applied"] == 1
+    assert "E1" in fake_arango_db.collections["entities_v3"], (
+        "the trailing diff must land in entities_v3, not the writer's original v2 target"
+    )
+    assert "E1" not in fake_arango_db.collections["entities_v2"]
+    assert persisted == ["v3"]
+    assert env_file.read_key(env_path, "EMBEDDINGTON_KG_SCHEMA") == "v3"

@@ -7,14 +7,45 @@ consumer/cli.py builds), a status spinner, and translating exceptions to EMB cod
 The spec asks for "Rich progress" here; per the non-goal of never modifying the
 updater, that is realized as an indeterminate status spinner with elapsed time, not
 per-byte progress bars (which would require callbacks the updater doesn't have).
+
+Schema-generation wiring (Task 5's ``kg_schema`` manifest field): the Arango writer
+built here for DIFF application must target whichever collections this install's
+stores are CURRENTLY named for -- which a baseline restore may have just changed. That
+fact is recorded as ``EMBEDDINGTON_KG_SCHEMA``, read here before wiring the writer used
+for THIS run, but recorded (both here and for the next run) from inside
+``consumer.restore_ops.make_baseline_importer``'s importer, at the moment a restore
+lands -- never after ``updater.update()`` returns, since a v3 baseline immediately
+followed by trailing diffs (the common case: `cursor.plan_update` returns baseline +
+every diff published after it in one shot) applies those diffs, in the SAME call,
+before this function ever gets a result back. The importer both retargets the very
+writer object that diff-apply loop uses (``ArangoConsumerWriter.retarget``) and
+persists the schema, at that same point -- see ``restore_ops.make_baseline_importer``'s
+docstring.
+
+The value is written to two files: ``consumer/.env`` (which this module reads back on
+the NEXT run) and ``mcp/.env`` (which the installed MCP server itself loads --
+``mcp/server.py`` loads only ``mcp/.env`` plus a single hardcoded scan of
+``consumer/.env`` for the Arango password specifically, so ``consumer/.env`` alone is
+invisible to the server process; a schema-aware ``mcp/config.py`` has nowhere else to
+read this from).
 """
 
 import os
+import sys
 import urllib.error
 from pathlib import Path
 
-from consumer import lexical_index, release_client, restore_ops, state_paths, updater, writers
+from consumer import (
+    env_file,
+    lexical_index,
+    release_client,
+    restore_ops,
+    state_paths,
+    updater,
+    writers,
+)
 from consumer.fetcher import HttpFetcher
+from embeddington.apply import schema_names
 from embeddington.errors import ChecksumError, EmbeddingtonError, SchemaVersionError
 from installer.errors import SetupError
 
@@ -23,12 +54,72 @@ ARANGO_URL = "http://localhost:8529"
 COLLECTION = "technology"
 ARANGO_DB = "technology_kg"
 
+KG_SCHEMA_ENV_KEY = "EMBEDDINGTON_KG_SCHEMA"
+
+
+def installed_kg_schema(consumer_dir):
+    """The kg_schema this install's local Arango collections are currently named for.
+
+    Args:
+        consumer_dir: The clone's ``consumer/`` directory.
+
+    Returns:
+        The persisted value from ``consumer/.env``, or ``None`` when absent -- which
+        ``schema_names.resolve_schema_names`` treats identically to ``"v2"``.
+    """
+    return env_file.read_key(Path(consumer_dir) / ".env", KG_SCHEMA_ENV_KEY)
+
+
+def _persist_kg_schema(repo_root, kg_schema):
+    """Best-effort: record the now-active schema where the NEXT run and the MCP see it.
+
+    Writes ``EMBEDDINGTON_KG_SCHEMA`` to both ``consumer/.env`` (read back by
+    ``installed_kg_schema`` before the next run's writer is built) and ``mcp/.env``
+    (the installed MCP server's only general-purpose env source -- see the module
+    docstring). Each file is attempted independently, so one failing does not stop
+    the other. Never fatal -- a successful data update must not fail (or look like it
+    failed) over a bookkeeping write.
+
+    Called from inside ``restore_ops.make_baseline_importer``'s importer, at the
+    moment a restore lands -- not after ``updater.update()`` returns (see the module
+    docstring for why that was too late).
+
+    Args:
+        repo_root: The clone root (``consumer/`` and ``mcp/`` live beneath it).
+        kg_schema: The value to persist (a baseline entry's ``kg_schema``, or "v2").
+    """
+    repo_root = Path(repo_root)
+    for env_path in (repo_root / "consumer" / ".env", repo_root / "mcp" / ".env"):
+        try:
+            env_file.set_key(env_path, KG_SCHEMA_ENV_KEY, kg_schema)
+        except OSError as exc:
+            print(
+                f"warning: could not record {KG_SCHEMA_ENV_KEY}={kg_schema} in "
+                f"{env_path} ({exc}). The next update run re-derives it from the "
+                "manifest, so this is not itself a failure.",
+                file=sys.stderr,
+            )
+
 
 def _production_wiring(repo_root, password, repo):
-    """Build the exact objects consumer/cli.py's _cmd_update builds."""
+    """Build the exact objects consumer/cli.py's _cmd_update builds.
+
+    The Arango writer is schema-aware: its entities/relationships collections are
+    resolved from this install's PERSISTED ``kg_schema`` (see ``installed_kg_schema``),
+    not hardcoded to v2 -- a diff applied after a v3 re-baseline must land in
+    ``entities_v3``/``relationships_v3``, not the (about to be dropped) v2 pair.
+    """
     rc = release_client.ReleaseClient(HttpFetcher(), repo=repo)
     qdrant = writers.QdrantConsumerWriter.connect(QDRANT_URL, COLLECTION)
-    arango = writers.ArangoConsumerWriter.connect(ARANGO_URL, ARANGO_DB, "root", password)
+    names = schema_names.resolve_schema_names(installed_kg_schema(Path(repo_root) / "consumer"))
+    arango = writers.ArangoConsumerWriter.connect(
+        ARANGO_URL,
+        ARANGO_DB,
+        "root",
+        password,
+        entities=names["entities"],
+        relationships=names["relationships"],
+    )
     return rc, qdrant, arango
 
 
@@ -87,6 +178,8 @@ def run_import(
             ARANGO_DB,
             "root",
             password,
+            arango_writer=arango,
+            persist_kg_schema=lambda schema: _persist_kg_schema(repo_root, schema),
         )
     else:
         rc, qdrant, arango, importer = wiring_fn(repo_root, password, repo)

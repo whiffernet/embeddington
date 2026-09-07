@@ -1,8 +1,10 @@
 """Real Qdrant/Arango write adapters implementing Plan-1's writer protocols.
 
 These write to the USER's local stack. An edge's ``predicate`` is carried inside the
-record's ``doc`` and persisted as an attribute on the relationships_v2 edge (the
-consumer half of Plan-1 I1 — no protocol change needed).
+record's ``doc`` and persisted as an attribute on the relationships edge (the
+consumer half of Plan-1 I1 — no protocol change needed). ``ArangoConsumerWriter``
+targets the pre-cutover v2 collections by default; a caller resolves the v3 pair via
+``embeddington.apply.schema_names.resolve_schema_names`` for a v3 install.
 """
 
 from arango.exceptions import ArangoServerError, CollectionListError, DocumentCountError
@@ -195,18 +197,57 @@ class QdrantConsumerWriter:
 
 
 class ArangoConsumerWriter:
-    """Implements embeddington.apply.protocols.ArangoWriter against a python-arango db."""
+    """Implements embeddington.apply.protocols.ArangoWriter against a python-arango db.
 
-    def __init__(self, db):
+    Which physical collections this writer targets is a construction-time choice, not
+    a hardcoded fact: ``entities``/``relationships`` default to the pre-cutover v2
+    names (byte-identical to every install before the kg_schema field existed), and a
+    caller resolves the pair for a manifest baseline's ``kg_schema`` field via
+    ``embeddington.apply.schema_names.resolve_schema_names`` before constructing one of
+    these for a v3 install.
+    """
+
+    def __init__(self, db, *, entities="entities_v2", relationships="relationships_v2"):
         # db.collection() is LAZY in python-arango (no server round-trip), so holding these
         # handles says nothing about whether the database or collections actually exist.
         # Keep the db handle too: it is the only way to ask (has_collection).
         self._db = db
-        self._entities = db.collection("entities_v2")
-        self._edges = db.collection("relationships_v2")
+        self._entities_name = entities
+        self._relationships_name = relationships
+        self._entities = db.collection(entities)
+        self._edges = db.collection(relationships)
+
+    def retarget(self, *, entities, relationships):
+        """Re-bind this SAME writer instance to a different collection pair.
+
+        A baseline restore that lands a NEW KG schema generation happens mid
+        ``consumer.updater.update()``: the writer passed into that call is the one the
+        diff-apply loop AFTER the baseline uses, in the same call, so it must be
+        updated in place rather than requiring a second writer to be constructed and
+        re-threaded through code (``updater.py``) this project does not otherwise
+        touch. See ``consumer.restore_ops.make_baseline_importer``'s ``arango_writer``
+        parameter, which calls this right after a restore lands.
+
+        Args:
+            entities: New entities collection name.
+            relationships: New relationships collection name.
+        """
+        self._entities_name = entities
+        self._relationships_name = relationships
+        self._entities = self._db.collection(entities)
+        self._edges = self._db.collection(relationships)
 
     @classmethod
-    def connect(cls, url, db_name, username, password):
+    def connect(
+        cls,
+        url,
+        db_name,
+        username,
+        password,
+        *,
+        entities="entities_v2",
+        relationships="relationships_v2",
+    ):
         """Construct from a URL (the user's local Arango).
 
         Args:
@@ -214,13 +255,20 @@ class ArangoConsumerWriter:
             db_name: Name of the ArangoDB database.
             username: ArangoDB username.
             password: ArangoDB password.
+            entities: Name of the entities collection (default: the pre-cutover v2 name).
+            relationships: Name of the relationships collection (default: the
+                pre-cutover v2 name).
 
         Returns:
             An ArangoConsumerWriter connected to the given database.
         """
         from arango import ArangoClient
 
-        return cls(ArangoClient(hosts=url).db(db_name, username=username, password=password))
+        return cls(
+            ArangoClient(hosts=url).db(db_name, username=username, password=password),
+            entities=entities,
+            relationships=relationships,
+        )
 
     def entity_count(self) -> int:
         """Return how many entities the graph holds.
@@ -240,14 +288,14 @@ class ArangoConsumerWriter:
         graph is empty when it is merely unreachable, and ~1 GB would land on a live store.
 
         Returns:
-            The number of documents in entities_v2, or 0 if the collection (or the whole
-            database) does not exist yet.
+            The number of documents in the resolved entities collection, or 0 if the
+            collection (or the whole database) does not exist yet.
 
         Raises:
             ArangoServerError: Any Arango failure that is not a genuine "not found".
         """
         try:
-            if not self._db.has_collection("entities_v2"):
+            if not self._db.has_collection(self._entities_name):
                 return 0
             return self._entities.count()
         except (CollectionListError, DocumentCountError) as exc:
@@ -256,7 +304,7 @@ class ArangoConsumerWriter:
             raise
 
     def upsert_entity(self, key: str, doc: dict) -> None:
-        """Upsert an entity vertex into entities_v2.
+        """Upsert an entity vertex into the resolved entities collection.
 
         Args:
             key: ArangoDB _key for the entity document.
@@ -265,7 +313,7 @@ class ArangoConsumerWriter:
         self._entities.insert({**doc, "_key": key}, overwrite=True)
 
     def upsert_edge(self, key: str, from_: str, to: str, doc: dict) -> None:
-        """Upsert a relationship edge into relationships_v2.
+        """Upsert a relationship edge into the resolved relationships collection.
 
         The ``predicate`` attribute is carried inside ``doc`` and written as an
         edge attribute (I1 resolution — no protocol-level predicate arg needed).

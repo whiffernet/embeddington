@@ -11,7 +11,7 @@ from typing import Literal
 from embeddington.errors import ChainGapError, SchemaVersionError
 from embeddington.format.manifest import validate_manifest
 
-SUPPORTED_SCHEMA_MAJOR = 3
+SUPPORTED_SCHEMA_MAJOR = 4
 
 
 @dataclass
