@@ -1,4 +1,4 @@
-fastmcp>=3.4.7
+fastmcp>=4.0.2
 python-arango>=8.3.3
 python-dotenv>=1.2.2
 httpx>=0.28.1
