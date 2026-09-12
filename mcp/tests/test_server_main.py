@@ -357,6 +357,48 @@ async def test_isolation_check_logs_embed_probe_pass(monkeypatch, caplog):
     assert any("Embed probe passed" in r.message for r in caplog.records)
 
 
+# --- Transport selection (_run_server) --------------------------------------
+
+
+def test_run_server_defaults_to_stdio(monkeypatch):
+    """With EMBEDDINGTON_MCP_TRANSPORT unset, mcp.run() must be called with
+    no transport kwarg at all -- the stdio path existing Claude Code /
+    claudegraph consumers rely on."""
+    monkeypatch.delenv("EMBEDDINGTON_MCP_TRANSPORT", raising=False)
+
+    calls = []
+    monkeypatch.setattr(srv.mcp, "run", lambda *a, **k: calls.append((a, k)))
+
+    srv._run_server()
+
+    assert len(calls) == 1
+    args, kwargs = calls[0]
+    assert args == ()
+    assert kwargs == {}
+
+
+def test_run_server_selects_streamable_http_from_env(monkeypatch):
+    """With EMBEDDINGTON_MCP_TRANSPORT=streamable-http, mcp.run() must be
+    called with transport="streamable-http" plus host/port sourced from
+    EMBEDDINGTON_MCP_HOST / EMBEDDINGTON_MCP_PORT (port coerced to int)."""
+    monkeypatch.setenv("EMBEDDINGTON_MCP_TRANSPORT", "streamable-http")
+    monkeypatch.setenv("EMBEDDINGTON_MCP_PORT", "9001")
+    monkeypatch.delenv("EMBEDDINGTON_MCP_HOST", raising=False)
+
+    calls = []
+    monkeypatch.setattr(srv.mcp, "run", lambda *a, **k: calls.append((a, k)))
+
+    srv._run_server()
+
+    assert len(calls) == 1
+    args, kwargs = calls[0]
+    assert args == ()
+    assert kwargs["transport"] == "streamable-http"
+    assert kwargs["port"] == 9001
+    assert isinstance(kwargs["port"], int)
+    assert "host" in kwargs
+
+
 @pytest.mark.asyncio
 async def test_maybe_reprobe_throttles_to_once_per_60s(monkeypatch):
     """_maybe_reprobe must not hammer Qdrant on every degraded tool call —

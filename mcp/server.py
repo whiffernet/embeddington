@@ -960,8 +960,27 @@ def main() -> None:
     _embed_clients = {}
     _qdrant_clients = {}
 
-    logger.info("Starting embeddington MCP (stdio)")
-    mcp.run()
+    _run_server()
+
+
+def _run_server() -> None:
+    """Start the FastMCP server on the env-selected transport.
+
+    Reads ``EMBEDDINGTON_MCP_TRANSPORT`` to pick between the default stdio
+    transport (used by Claude Code / claudegraph stdio consumers) and
+    streamable-http (used by network-exposed deployments like the jailed
+    hermes-kg-mcp service). Split out of ``main()`` so the transport-dispatch
+    logic can be unit-tested without exercising the startup sanity checks.
+    """
+    transport = os.environ.get("EMBEDDINGTON_MCP_TRANSPORT", "stdio")
+    if transport == "streamable-http":
+        host = os.environ.get("EMBEDDINGTON_MCP_HOST", "0.0.0.0")
+        port = int(os.environ.get("EMBEDDINGTON_MCP_PORT", "9000"))
+        logger.info("Starting embeddington MCP (streamable-http on %s:%s)", host, port)
+        mcp.run(transport="streamable-http", host=host, port=port)
+    else:
+        logger.info("Starting embeddington MCP (stdio)")
+        mcp.run()
 
 
 if __name__ == "__main__":
