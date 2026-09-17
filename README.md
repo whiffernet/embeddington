@@ -21,7 +21,7 @@ back to a real sentence in a real ServiceNow page.
 It comes in two parts that stay in sync:
 
 - **Qdrant** — a vector collection (`technology`) for semantic search over the docs.
-- **ArangoDB** — an entity/relationship graph (`entities_v2` / `relationships_v2`) for
+- **ArangoDB** — an entity/relationship graph (`entities_v3` / `relationships_v3`) for
   structured traversal: what depends on what, what a feature extends, the whole tied-together rug of it.
 
 You get the data, not a service. embeddington ships the graph as a **baseline** plus small
@@ -89,21 +89,40 @@ you where to look. The docs are still the truth.
 
 > _"There's a lot of strands to keep in old Duder's head."_
 
-These are the counts of the current published baseline, **`baseline-2026-09`** — and, with
-no diffs published on top of it yet, exactly what a fresh install restores today. They'll
-grow when the next baseline or diff batch is published.
+These are the counts of the current published baseline, **`baseline-2026-09c`** — and, with
+no diffs published on top of it yet, exactly what a fresh install restores today. They move
+when the next baseline or diff batch is published.
 
 | Metric                                      | Count       |
 | ------------------------------------------- | ----------- |
-| Vectors (Qdrant chunks, `bge-m3`, 1024-dim) | **70,102**  |
-| Entities (graph nodes)                      | **355,523** |
-| Relationships / triples (graph edges)       | **809,806** |
+| Vectors (Qdrant chunks, `bge-m3`, 1024-dim) | **70,699**  |
+| Entities (graph nodes)                      | **271,274** |
+| Relationships / triples (graph edges)       | **561,618** |
 | Entity types                                | 14          |
 | Relationship predicates                     | 14          |
-| Avg. relationships per entity               | ~2.2        |
+| Avg. relationships per entity               | ~2.1        |
 
 Each edge is one subject–predicate–object triple, so "relationships" and "triples" are the
 same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
+
+**The entity and edge counts went down from the previous baseline, and that is expected.**
+The last v2 baseline reported 355,523 entities and 809,806 edges. This is the first baseline
+published on **KG schema v3**, which is a re-derivation rather than a migration: the
+markdown half of the graph was extracted fresh from the pinned corpus, and the PDF-era edges
+were carried across under an explicit provenance marker. Today's 561,618 edges are 317,700
+freshly derived and 243,918 carried over. Along the way, 15,015 edges belonging to 2,087
+markdown paths that had left the corpus were deliberately not carried forward — v3's
+deletion path removes exactly such edges going forward, so seeding them would have
+contradicted the design on day one.
+
+What you gain for the smaller number is that an edge now records **every** document that
+asserts it, not just the first one to. A v2 edge was unique on `(from, predicate, to)` with a
+single scalar `source_document`, so the second and subsequent assertions of the same triple
+were discarded at write time. A v3 edge carries a `provenance` array: 561,618 edges hold
+636,347 provenance entries, and 51,105 of them are corroborated by more than one document —
+evidence the v2 schema structurally could not keep.
+
+The vector count is unaffected, because chunking never depended on the graph schema.
 
 > _"I'm the Dude. So that's what you call me."_ — one document, one id, every time.
 
@@ -394,8 +413,8 @@ whole graph:
 
 ```
 Embeddington update complete.
-  Action:  restored full baseline (baseline-2026-09)
-  Loaded:  70,102 vectors · 355,523 entities · 809,806 edges
+  Action:  restored full baseline (baseline-2026-09c)
+  Loaded:  70,699 vectors · 271,274 entities · 561,618 edges
   Version: ts-161fc74e847211ad
   Diffs:   0 applied on top of the baseline
   Note:    a one-time full re-download is expected after a compaction — existing
@@ -419,11 +438,11 @@ Embeddington update complete.
 A baseline restore reporting `Diffs: 0` is a **success**, not a no-op — it means the baseline
 it just loaded was already current. Nothing more to fetch, man.
 
-`baseline-2026-09` **re-rooted the chain**: it is the new root, and the diffs that chained onto
-the previous baselines were dropped rather than carried forward. Those described the old corpus,
-which this baseline replaces wholesale — applying them on top would have layered yesterday's
-deltas onto today's content, and that's a whole new can of worms. So `Diffs: 0` is expected here
-for a while, until daily publishing appends new ones.
+`baseline-2026-09c` **re-rooted the chain**: it is the current root, and the diffs that chained
+onto the previous baselines were dropped rather than carried forward. Those described the old
+corpus on the old graph schema, which this baseline replaces wholesale — applying them on top
+would have layered yesterday's deltas onto today's content, and that's a whole new can of worms.
+So `Diffs: 0` is expected here for a while, until daily publishing appends new ones.
 
 ---
 
@@ -826,24 +845,34 @@ Every installer *failure* prints an `[EMB-nn]` code with a fix line already atta
 yours below for the full story. The first entry has no code at all, because it happens after
 an install that worked.
 
-#### `SchemaVersionError: manifest schema major 3 exceeds supported 2`
+#### `SchemaVersionError: manifest schema major 4 exceeds supported 3; re-baseline`
 
 > _"You're out of your element."_ — your client, politely, about a manifest it doesn't speak.
 
-Your install predates the schema-3 release (2026-09-01) and the published manifest is now
-3.0.0. **This is the update refusing to run rather than applying a baseline it does not
-understand** — a deliberate stop, not corruption. Nothing local is damaged, man.
+Your install predates the schema-4 release and the published manifest is now 4.0.0. **This is
+the update refusing to run rather than applying a baseline it does not understand** — a
+deliberate stop, not corruption. Nothing local is damaged, man.
 
-The fix is the ordinary update, which pulls the newer code and then applies the baseline:
+The trailing number is whichever major *your* install speaks, so you may see `exceeds
+supported 1` or `2` instead. The fix is the same either way — the ordinary update, which
+pulls the newer code and then applies the baseline:
 
 ```bash
 # run from: your clone
 embeddington-setup --yes
 ```
 
-Schema 3 is where baseline restores became **replace** rather than merge. An older client
-applying a 3.0.0 baseline would have merged it into your existing collection, leaving two
-generations of every document — which is precisely what the version gate exists to prevent.
+Each major is a gate on a change an older client would get silently wrong:
+
+- **Schema 3** is where baseline restores became **replace** rather than merge. A pre-3
+  client applying a 3.0.0 baseline would have merged it into the existing collection,
+  leaving two generations of every document.
+- **Schema 4** is the move to KG schema **v3** — the graph now lives in `entities_v3` /
+  `relationships_v3`, and the baseline entry names which generation it holds in a
+  `kg_schema` field. A pre-4 client has no notion of that field, so it cannot name the
+  collections the baseline actually contains: it would report a successful update while its
+  MCP went on reading the v2 collections it already had. Serving yesterday's graph and
+  calling it today's is worse than refusing, which is why the gate is here.
 
 #### "I installed it, but I don't see embeddington in Claude"
 
@@ -1096,7 +1125,7 @@ under the **Apache License 2.0**. See [`LICENSE`](LICENSE).
 The **data** is derived, not original. Both the vectors and the graph are extracted from
 **[ServiceNow/ServiceNowDocs](https://github.com/ServiceNow/ServiceNowDocs)** — ServiceNow's
 own platform documentation, © ServiceNow, published under the Apache License 2.0. The
-derived artifacts shipped here (Qdrant chunk embeddings, `entities_v2`, `relationships_v2`)
+derived artifacts shipped here (Qdrant chunk embeddings, `entities_v3`, `relationships_v3`)
 are redistributed under those same terms.
 
 Nothing in this graph is authoritative on its own. Every relationship carries the
