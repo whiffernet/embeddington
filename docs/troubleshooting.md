@@ -99,28 +99,33 @@ Three answers, three unrelated problems:
 **Want it from every directory, not just the clone?** That's what the wizard's user-scope
 offer is for — see the registration line under [query with Claude](#in-the-parlance-of-our-times-query-with-claude).
 
+<a id="emb-10"></a>
 ### EMB-10 — no interactive terminal
 
 `install.sh` was piped without a TTY and `EMBEDDINGTON_YES` isn't set — it can't prompt
 for anything. Run it from a real terminal, or set `EMBEDDINGTON_YES=1` for an
 unattended install.
 
+<a id="emb-11"></a>
 ### EMB-11 — git missing
 
 `git` isn't on `PATH`. Install it (`xcode-select --install` on macOS; `apt`/`dnf
 install git` on Linux), then re-run.
 
+<a id="emb-12"></a>
 ### EMB-12 — python too old or missing
 
 No `python3.13`, `python3.12`, or `python3` on `PATH` resolves to 3.12+. Install
 Python 3.12 or newer (python.org, `brew install python@3.12`, or your distro), then
 re-run.
 
+<a id="emb-13"></a>
 ### EMB-13 — can't reach the repo
 
 `git ls-remote` against the clone URL failed — no network, or a proxy is in the way.
 Check your connection, then re-run.
 
+<a id="emb-14"></a>
 ### EMB-14 — venv/pip bootstrap failed
 
 Three distinct causes share this code, and `install.sh` tells you which: the
@@ -131,17 +136,20 @@ then re-run); or
 the clone is stale and `embeddington-setup` never landed (`cd` into the install dir,
 `git stash && git pull --ff-only`, then re-run).
 
+<a id="emb-15"></a>
 ### EMB-15 — not enough disk
 
 Preflight found less than 3 GB free. Free up at least 3 GB (12+ recommended), then
 re-run.
 
+<a id="emb-16"></a>
 ### EMB-16 — install dir isn't empty and isn't a clone
 
 The install directory exists, has files in it, and isn't an embeddington git clone —
 `install.sh` won't overwrite something it doesn't recognize. Pick a different location
 (`EMBEDDINGTON_INSTALL_DIR=...`), or move that directory aside.
 
+<a id="emb-20"></a>
 ### EMB-20 — docker install declined
 
 No container runtime was found and every offer to install one was turned down (or,
@@ -150,6 +158,7 @@ because it can't consent on your behalf). Install OrbStack, Colima, Docker Deskt
 or Docker Engine yourself, then re-run — or run interactively without
 `EMBEDDINGTON_YES` so the wizard can offer.
 
+<a id="emb-21"></a>
 ### EMB-21 — docker daemon not reachable
 
 The daemon didn't answer within the wait window, or it's up but your user can't
@@ -175,6 +184,7 @@ your actual daemon sits there healthy. `docker context use orbstack` — or whic
 one the error lists — fixes it. A `DOCKER_HOST` exported in your shell profile beats
 the context entirely, and is reported on its own line when set.
 
+<a id="emb-22"></a>
 ### EMB-22 — manual runtime install required
 
 The wizard can't finish this install path for you — no Homebrew to install OrbStack
@@ -182,6 +192,7 @@ with, an OrbStack brew install that failed, Colima's three-step manual setup, or
 Docker Desktop (a GUI download it can't script). Follow the printed steps or install
 a runtime yourself, then re-run.
 
+<a id="emb-23"></a>
 ### EMB-23 — automatic docker install failed or unsupported
 
 Either the `docker compose` v2 plugin is missing after an otherwise-working Docker
@@ -191,11 +202,13 @@ Engine + the compose plugin per
 [docs.docker.com/engine/install](https://docs.docker.com/engine/install/), then
 re-run.
 
+<a id="emb-24"></a>
 ### EMB-24 — port already taken
 
 A port `consumer/docker-compose.yml` needs is bound by something that isn't
 embeddington. Stop whatever holds that port (or move it), then re-run.
 
+<a id="emb-31"></a>
 ### EMB-31 — docker compose up failed
 
 Either `docker compose up -d --build` exited non-zero (the error prints just above),
@@ -216,6 +229,7 @@ replied, so nothing could be asked about the containers at all. Start Docker —
 OrbStack/Docker Desktop, `colima start`, or `sudo systemctl start docker` — and re-run the
 check. The containers may well be fine underneath.
 
+<a id="emb-32"></a>
 ### EMB-32 — embed service didn't come up
 
 The `embed` service's first build downloads ~2 GB of model weights, and that stalled
@@ -223,22 +237,26 @@ or failed past the embed timeout. Run `docker compose logs embed` in `consumer/`
 see why; a plain retry (`docker compose up -d --build`) resumes a dropped download
 cleanly.
 
+<a id="emb-33"></a>
 ### EMB-33 — no usable ArangoDB password
 
 `consumer/.env` either doesn't exist, or exists but its `ARANGO_ROOT_PASSWORD` is
 empty or still the placeholder `change-me`. Re-run the installer to generate one, or
 open the file and set `ARANGO_ROOT_PASSWORD` to any non-empty value yourself.
 
+<a id="emb-41"></a>
 ### EMB-41 — download failed (network)
 
 A baseline or diff download hit a network error. Check your connection and re-run —
 downloads resume/retry cleanly.
 
+<a id="emb-42"></a>
 ### EMB-42 — asset checksum mismatch
 
 A downloaded asset failed checksum verification. Re-run — a corrupted download
 re-fetches cleanly. If it repeats, open an issue.
 
+<a id="emb-43"></a>
 ### EMB-43 — populated store with no cursor
 
 The stores already hold data and no cursor was found, so the updater refuses to
@@ -247,6 +265,7 @@ update` exits `3` for). If the store is healthy, copy your old cursor into the s
 dir (see **Configuration** in the [README](../README.md)); to deliberately re-restore everything, re-run with
 `--force-baseline`.
 
+<a id="emb-44"></a>
 ### EMB-44 — proof-of-life query returned zero
 
 After import, a real query against Qdrant and ArangoDB found at least one store
@@ -255,18 +274,21 @@ empty or unqueryable. Give the containers a few seconds to settle and re-run
 `consumer/`, or run `embeddington-consume update --force-baseline` for a clean
 restore.
 
+<a id="emb-45"></a>
 ### EMB-45 — updater error
 
 The updater hit something other than a network, checksum, or guard failure (a chain
 gap, a schema version mismatch, ...). Re-run the installer; if it repeats, run
 `embeddington-consume update` directly for the full error.
 
+<a id="emb-51"></a>
 ### EMB-51 — MCP dependency install failed
 
 `pip install -r mcp/requirements.txt` failed while wiring up Claude — the graph
 itself is unaffected and fully usable without it. Run that `pip install` manually with
 the clone's own interpreter (`.venv/bin/pip`) to see why.
 
+<a id="emb-52"></a>
 ### EMB-52 — the MCP server didn't start when probed
 
 After wiring Claude, the installer starts the server once to prove it works, instead of
@@ -288,6 +310,7 @@ A healthy server prints a startup line and exits cleanly when its input closes. 
 outcome prints the real reason, which your client would otherwise report only as a closed
 connection.
 
+<a id="emb-61"></a>
 ### EMB-61 — couldn't inspect store contents before deletion
 
 Uninstall couldn't query the stores (daemon down?) before offering to delete their
@@ -295,11 +318,13 @@ volumes, so it can't prove they hold only embeddington data. This is a non-fatal
 warning, not a stopper. For an inspected deletion: `cd consumer && docker compose up
 -d`, then re-run the uninstall — or proceed knowing the contents are unverified.
 
+<a id="emb-62"></a>
 ### EMB-62 — crontab rewrite failed
 
 Uninstall couldn't rewrite your crontab to strip the embeddington line. Run
 `crontab -e` and remove the line yourself.
 
+<a id="emb-63"></a>
 ### EMB-63 — clone self-delete handoff failed
 
 Uninstall hands off to a tiny detached script to delete the clone (so the running
