@@ -1,5 +1,58 @@
 # Changelog
 
+## v0.13.0 — 2026-09-06
+
+Schema-aware consumer, part one: the release that lets an install recognise and apply a
+**KG schema v3** baseline. The data itself moved later — see "Corpus counts" below.
+
+- **BREAKING: `SUPPORTED_SCHEMA_MAJOR` 3 → 4.** An install still on schema 3 stops with
+  `SchemaVersionError: manifest schema major 4 exceeds supported 3; re-baseline` rather
+  than applying a 4.0.0 baseline it cannot name the collections for. Fix is
+  `embeddington-setup --yes`. The gate is `major > supported`, so older manifests still
+  apply.
+- **NEW: the `kg_schema` manifest field**, resolved by
+  `embeddington.apply.schema_names`. A baseline entry now declares which collection
+  generation it holds (`"v2"` or `"v3"`); absent means `"v2"`, so every manifest published
+  before this release resolves byte-identically to what it always did. Nothing outside the
+  resolver reads the field or any KG-schema environment variable.
+- `ArangoConsumerWriter` resolves its collections and named graph from that field instead
+  of hardcoding the v2 names, and the diff-apply writer is retargeted mid-restore so the
+  diffs that follow a baseline land in the generation the baseline just wrote.
+- The installer resolves and **persists** the active `kg_schema` around updates, into
+  `consumer/` and `mcp/.env`, so the MCP server reads the generation the local store
+  actually holds. `embeddington-consume update` gained `--kg-schema` to override it.
+- Uninstall's Arango detection is schema-agnostic and has a test saying so.
+- New shared dotenv read/write helper; `env_file.set_key`'s replace path is now atomic.
+- Package version bumped to 0.4.0. (The package version and the release tag are
+  deliberately separate numbering schemes.)
+
+**The diff chain was re-rooted.** `baseline-2026-09c` (published 2026-09-17) is the current
+root with zero diffs, on schema 4.0.0. The diffs that chained onto `baseline-2026-09` were
+dropped, not compacted — they described the old corpus on the old graph schema.
+
+**Corpus counts** (`baseline-2026-09` → `baseline-2026-09c`):
+
+|          |      09 |     09c |
+| -------- | ------: | ------: |
+| vectors  |  70,102 |  70,699 |
+| entities | 355,523 | 271,274 |
+| edges    | 809,806 | 561,618 |
+
+The entity and edge counts fall because v3 is a **re-derivation, not a migration**. The
+markdown half of the graph was extracted fresh from the pinned corpus and the PDF-era edges
+were carried across under an explicit provenance marker: of 561,618 edges, 317,700 are
+freshly derived and 243,918 are seeded. A further 15,015 edges on 2,087 markdown paths that
+had left the corpus were deliberately not seeded — v3's deletion path removes exactly such
+edges going forward, so seeding them would have contradicted the design on day one.
+
+What the smaller number buys is provenance. A v2 edge was unique on
+`(_from, _to, predicate)` with a single scalar `source_document`, so the second and
+subsequent documents asserting the same triple were discarded at write time — an edge
+recorded only its first asserter, forever. A v3 edge carries a `provenance` array keyed on
+`(source_document, release)`: 561,618 edges hold 636,347 provenance entries, and 51,105
+edges are corroborated by more than one document. The vector count is unaffected, because
+chunking never depended on the graph schema.
+
 ## v0.12.4 — 2026-09-06
 
 Forward-sync of the vendored MCP server (`mcp/`) from upstream: the KG cutover's third

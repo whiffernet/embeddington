@@ -105,24 +105,9 @@ when the next baseline or diff batch is published.
 Each edge is one subject–predicate–object triple, so "relationships" and "triples" are the
 same count. Distance metric is cosine; chunking is ~1500 tokens / 200 overlap.
 
-**The entity and edge counts went down from the previous baseline, and that is expected.**
-The last v2 baseline reported 355,523 entities and 809,806 edges. This is the first baseline
-published on **KG schema v3**, which is a re-derivation rather than a migration: the
-markdown half of the graph was extracted fresh from the pinned corpus, and the PDF-era edges
-were carried across under an explicit provenance marker. Today's 561,618 edges are 317,700
-freshly derived and 243,918 carried over. Along the way, 15,015 edges belonging to 2,087
-markdown paths that had left the corpus were deliberately not carried forward — v3's
-deletion path removes exactly such edges going forward, so seeding them would have
-contradicted the design on day one.
-
-What you gain for the smaller number is that an edge now records **every** document that
-asserts it, not just the first one to. A v2 edge was unique on `(from, predicate, to)` with a
-single scalar `source_document`, so the second and subsequent assertions of the same triple
-were discarded at write time. A v3 edge carries a `provenance` array: 561,618 edges hold
-636,347 provenance entries, and 51,105 of them are corroborated by more than one document —
-evidence the v2 schema structurally could not keep.
-
-The vector count is unaffected, because chunking never depended on the graph schema.
+The entity and edge counts are lower than the previous baseline's, which reported 355,523
+and 809,806. This is the first baseline on **KG schema v3**, and v3 re-derives the graph
+from the corpus rather than migrating the old rows forward. The CHANGELOG has the details.
 
 > _"I'm the Dude. So that's what you call me."_ — one document, one id, every time.
 
