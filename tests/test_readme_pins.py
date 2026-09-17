@@ -111,18 +111,72 @@ def _component_row(component):
     raise AssertionError(f"no third-party table row for {component} in the README")
 
 
-def test_every_emb_code_has_a_troubleshooting_heading():
-    """Every registered installer error code must have the anchor it advertises.
+def _github_slug(heading):
+    """Reproduce GitHub's heading -> fragment id conversion.
 
-    A failing install prints `errors.anchor(code)`; that URL only resolves if
-    docs/troubleshooting.md carries an `### EMB-nn` heading, because GitHub derives
-    the fragment from the heading text.
+    GitHub lowercases, drops every character that is not a word character,
+    space or hyphen, then replaces spaces with hyphens. Verified against the
+    rendered page: "EMB-21 — docker daemon not reachable" becomes
+    "emb-21--docker-daemon-not-reachable" -- the em dash vanishes and leaves
+    the two spaces around it as two hyphens.
+
+    Args:
+        heading: The heading's text, without its leading hashes.
+
+    Returns:
+        The fragment id GitHub will emit for it.
     """
+    s = re.sub(r"[^\w\- ]", "", heading.strip().lower(), flags=re.UNICODE)
+    return s.replace(" ", "-")
+
+
+def _reachable_fragments(doc):
+    """Every fragment a reader can actually land on in ``doc``.
+
+    Args:
+        doc: The markdown source.
+
+    Returns:
+        The set of ids, from explicit `<a id="...">` anchors and from the
+        slugs GitHub derives from headings.
+    """
+    explicit = set(re.findall(r'<a\s+id="([^"]+)"\s*>', doc))
+    derived = {_github_slug(h) for h in re.findall(r"(?m)^#{1,6} (.+)$", doc)}
+    return explicit | derived
+
+
+def test_every_emb_code_has_a_troubleshooting_heading():
+    """The entry itself must exist, keyed on the code."""
     from installer import errors
 
     doc = _troubleshooting_text()
     missing = [code for code in errors.CODES if f"### {code}" not in doc]
     assert not missing, f"EMB codes without a troubleshooting heading: {missing}"
+
+
+def test_every_printed_anchor_actually_resolves():
+    """The fragment a failing install sends the user to must exist on the page.
+
+    This is the assertion that matters and the one that was missing (#147): a
+    heading existing does not mean the advertised fragment resolves. It did not,
+    for every code, for as long as the codes have existed -- GitHub slugifies the
+    WHOLE heading, so `#emb-21` was never `emb-21--docker-daemon-not-reachable`.
+    A browser does not report an unknown fragment, it just does not scroll, so
+    the links looked fine.
+    """
+    from installer import errors
+
+    reachable = _reachable_fragments(_troubleshooting_text())
+    dead = [
+        (code, frag)
+        for code in errors.CODES
+        for frag in [errors.anchor(code).rsplit("#", 1)[1]]
+        if frag not in reachable
+    ]
+    assert not dead, (
+        "these error messages point at fragments that do not exist on the page, "
+        f"so the link silently lands the user at the top: {dead}"
+    )
 
 
 def test_anchor_base_points_at_the_file_the_headings_live_in():
