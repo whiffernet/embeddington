@@ -12,7 +12,8 @@ set -euo pipefail
 
 CLONE_URL="${EMBEDDINGTON_CLONE_URL:-https://github.com/whiffernet/embeddington.git}"
 YES="${EMBEDDINGTON_YES:-}"
-ANCHOR="https://github.com/whiffernet/embeddington#"
+# Must match installer/errors.py's ANCHOR_BASE (pinned by tests/test_readme_pins.py).
+ANCHOR="https://github.com/whiffernet/embeddington/blob/main/docs/troubleshooting.md#"
 
 say()  { printf '%s\n' "$*"; }
 fail() { # fail EMB-nn "friendly" "fix"
