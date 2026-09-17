@@ -1,59 +1,33 @@
 # Changelog
 
-## v0.13.0 — 2026-09-06
+## v0.14.3 — 2026-09-16
+README refreshed for KG schema v3 and `baseline-2026-09c` (#143, #144). Docs only.
 
-Schema-aware consumer, part one: the release that lets an install recognise and apply a
-**KG schema v3** baseline. The data itself moved later — see "Corpus counts" below.
+- The README described the v2 graph: v2 collection names in the intro and the
+  attribution clause, the previous baseline's counts, `baseline-2026-09` as the chain
+  root, and a troubleshooting entry for a `SchemaVersionError` no published manifest can
+  raise any more. All corrected against the `manifest.json` on the `diffs` release.
+- **NEW troubleshooting entry** for `manifest schema major 4 exceeds supported 3;
+  re-baseline`, the message a pre-v0.13.0 install now gets. The entry it replaces
+  documented the 3-vs-2 gate and explained it in terms of replace-vs-merge semantics,
+  which is true of schema 3 and is not the reason for schema 4.
 
-- **BREAKING: `SUPPORTED_SCHEMA_MAJOR` 3 → 4.** An install still on schema 3 stops with
-  `SchemaVersionError: manifest schema major 4 exceeds supported 3; re-baseline` rather
-  than applying a 4.0.0 baseline it cannot name the collections for. Fix is
-  `embeddington-setup --yes`. The gate is `major > supported`, so older manifests still
-  apply.
-- **NEW: the `kg_schema` manifest field**, resolved by
-  `embeddington.apply.schema_names`. A baseline entry now declares which collection
-  generation it holds (`"v2"` or `"v3"`); absent means `"v2"`, so every manifest published
-  before this release resolves byte-identically to what it always did. Nothing outside the
-  resolver reads the field or any KG-schema environment variable.
-- `ArangoConsumerWriter` resolves its collections and named graph from that field instead
-  of hardcoding the v2 names, and the diff-apply writer is retargeted mid-restore so the
-  diffs that follow a baseline land in the generation the baseline just wrote.
-- The installer resolves and **persists** the active `kg_schema` around updates, into
-  `consumer/` and `mcp/.env`, so the MCP server reads the generation the local store
-  actually holds. `embeddington-consume update` gained `--kg-schema` to override it.
-- Uninstall's Arango detection is schema-agnostic and has a test saying so.
-- New shared dotenv read/write helper; `env_file.set_key`'s replace path is now atomic.
-- Package version bumped to 0.4.0. (The package version and the release tag are
-  deliberately separate numbering schemes.)
+## v0.14.2 — 2026-09-11
+- **NEW: `EMBEDDINGTON_MCP_TRANSPORT`** (`mcp/server.py`, default `stdio`) — selects the
+  FastMCP transport. Set it to `streamable-http` for a network-exposed deployment, with
+  `EMBEDDINGTON_MCP_HOST` (default `0.0.0.0`) and `EMBEDDINGTON_MCP_PORT` (default
+  `9000`). Consumers launching the server over stdio, which is every install the wizard
+  wires, are unaffected: the default path is the one they already took.
+- Transport dispatch is split into `_run_server()` so it can be unit-tested without
+  running the startup sanity checks.
 
-**The diff chain was re-rooted.** `baseline-2026-09c` (published 2026-09-17) is the current
-root with zero diffs, on schema 4.0.0. The diffs that chained onto `baseline-2026-09` were
-dropped, not compacted — they described the old corpus on the old graph schema.
+## v0.14.1 — 2026-09-11
+- `mcp/requirements.txt`: fastmcp `>=3.4.7` → `>=4.0.2`. An install carrying an old
+  fastmcp is one of the ways the server dies at import and surfaces to the client as a
+  bare `CONNECTION_CLOSED`, so the floor moving matters more than a dependency bump
+  usually would. See #121 — the requirement is still unbounded above.
 
-**Corpus counts** (`baseline-2026-09` → `baseline-2026-09c`):
-
-|          |      09 |     09c |
-| -------- | ------: | ------: |
-| vectors  |  70,102 |  70,699 |
-| entities | 355,523 | 271,274 |
-| edges    | 809,806 | 561,618 |
-
-The entity and edge counts fall because v3 is a **re-derivation, not a migration**. The
-markdown half of the graph was extracted fresh from the pinned corpus and the PDF-era edges
-were carried across under an explicit provenance marker: of 561,618 edges, 317,700 are
-freshly derived and 243,918 are seeded. A further 15,015 edges on 2,087 markdown paths that
-had left the corpus were deliberately not seeded — v3's deletion path removes exactly such
-edges going forward, so seeding them would have contradicted the design on day one.
-
-What the smaller number buys is provenance. A v2 edge was unique on
-`(_from, _to, predicate)` with a single scalar `source_document`, so the second and
-subsequent documents asserting the same triple were discarded at write time — an edge
-recorded only its first asserter, forever. A v3 edge carries a `provenance` array keyed on
-`(source_document, release)`: 561,618 edges hold 636,347 provenance entries, and 51,105
-edges are corroborated by more than one document. The vector count is unaffected, because
-chunking never depended on the graph schema.
-
-## v0.12.4 — 2026-09-06
+## v0.14.0 — 2026-09-07
 
 Forward-sync of the vendored MCP server (`mcp/`) from upstream: the KG cutover's third
 part, following the schema knob shipped consumer-side in v0.12.3.
@@ -74,7 +48,7 @@ part, following the schema knob shipped consumer-side in v0.12.3.
   and `tests/test_no_collection_literals.py`, a new guard test that keeps the
   vendored suite from hardcoding Arango collection names outside `config.py`.
 
-## v0.12.3 — 2026-09-06
+## v0.13.0 — 2026-09-06
 
 Schema-aware consumer: the KG cutover's second half. This release only teaches the
 consumer to recognize and route by a new manifest field — it does not itself move the
@@ -104,6 +78,74 @@ need this release merged first).
 - Package version 0.3.0 → 0.4.0 (tracked separately from the release tag above — see
   `installer/update_record.py`'s `clone_version` for why — to mark that this consumer
   package now understands chain schema major 4 / `kg_schema`).
+
+**The diff chain was re-rooted.** `baseline-2026-09c` (published 2026-09-17) is the current
+root with zero diffs, on schema 4.0.0. The diffs that chained onto `baseline-2026-09` were
+dropped, not compacted — they described the old corpus on the old graph schema.
+
+**Corpus counts** (`baseline-2026-09` → `baseline-2026-09c`):
+
+|          |      09 |     09c |
+| -------- | ------: | ------: |
+| vectors  |  70,102 |  70,699 |
+| entities | 355,523 | 271,274 |
+| edges    | 809,806 | 561,618 |
+
+The entity and edge counts fall because v3 is a **re-derivation, not a migration**. The
+markdown half of the graph was extracted fresh from the pinned corpus and the PDF-era edges
+were carried across under an explicit provenance marker: of 561,618 edges, 317,700 are
+freshly derived and 243,918 are seeded. A further 15,015 edges on 2,087 markdown paths that
+had left the corpus were deliberately not seeded — v3's deletion path removes exactly such
+edges going forward, so seeding them would have contradicted the design on day one.
+
+What the smaller number buys is provenance. A v2 edge was unique on
+`(_from, _to, predicate)` with a single scalar `source_document`, so the second and
+subsequent documents asserting the same triple were discarded at write time — an edge
+recorded only its first asserter, forever. A v3 edge carries a `provenance` array keyed on
+`(source_document, release)`: 561,618 edges hold 636,347 provenance entries, and 51,105
+edges are corroborated by more than one document. The vector count is unaffected, because
+chunking never depended on the graph schema.
+
+## v0.12.7 — 2026-09-03
+- The installer records **which revision actually ran**, so the run journal names the
+  code that produced a failure rather than whatever is checked out when someone reads it
+  afterward.
+- A failed `git pull` now says what failed and what it means for the run, instead of
+  letting the wizard continue silently against stale code.
+
+## v0.12.6 — 2026-09-03
+- **One log file.** `install.sh`'s bootstrap log is unified into `run.log` (#128). Two
+  logs in two places meant the half holding the failure was reliably the half nobody
+  sent.
+- The `ensurepip` probe is scoped to the current run, so an earlier run's result can no
+  longer decide this one.
+
+## v0.12.5 — 2026-09-03
+- **The adopted PATH is pinned to the cron chain.** When the wizard finds a container
+  runtime that is not on `PATH` (OrbStack at `~/.orbstack/bin`, Colima under Homebrew),
+  it records that location in the nightly job. That chain held only because
+  `ensure_docker` happens to run before `install_cron`; reorder them and the nightly job
+  silently stops finding docker, failing every night into a log nobody reads. Now pinned
+  at the seam and mutation-checked — stub out the environment mutation and both new
+  tests fail.
+- **Adoption appends to `PATH` rather than prepending.** It resolves the same binary
+  either way (adoption only happens when `shutil.which("docker")` came back empty, so
+  there is nothing to order against), but prepending put a directory the user does not
+  own ahead of all of theirs for the rest of the process. OrbStack's own shell init
+  appends; this now matches.
+
+## v0.12.4 — 2026-09-02
+- **The stack failing to come up now leaves evidence.** EMB-31's fix text said "the
+  error is in the output just above" — and above was the only place it existed.
+  `docker compose up` streams, so `runner.run` returns empty `out`/`err` by contract and
+  the run journal recorded the command and its return code with no body; a container
+  that started and then died left no trace at all. On failure only, compose is now asked
+  two read-only questions — `ps` for which services are up or exited, `logs --tail=100`
+  for why one died — and the answers go to the journal. The low-RAM case where Arango
+  will not stay up, which EMB-31 names by hand, was previously invisible after the fact.
+
+## v0.12.3 — 2026-09-02
+- Docs only: CHANGELOG entries for v0.12.1 and v0.12.2.
 
 ## v0.12.2 — 2026-09-02
 
@@ -182,7 +224,11 @@ claudegraph. `sync_mcp.sh` is now the only way `mcp/` changes.
 - Measurement apparatus: `fetch_paths()` records `abstained` as its own outcome.
 - Consumer-facing `mcp/requirements.txt` floors `python-arango>=8.3.3`.
 
-## v0.11.26 — 2026-09-02
+## v0.11.27 — 2026-09-01
+- Docs only: README rewritten for the 2026-09 corpus rebuild — the corpus stated as it
+  is, with the history moved into this file.
+
+## v0.11.26 — 2026-09-01
 
 Schema **3.0.0**. Baseline `baseline-2026-09` re-roots the diff chain.
 
@@ -226,7 +272,7 @@ Schema **3.0.0**. Baseline `baseline-2026-09` re-roots the diff chain.
   encoder — and a mismatch raises nothing, since both encoders are 1024-dim.
   A score collapse is the only symptom.
 
-## v0.9.0 — 2026-07-20
+## v0.9.0 — 2026-07-19
 
 Closes #44 (response-ceiling gate re-tune) and delivers issue #37's
 outstanding monotonicity criterion.
@@ -282,7 +328,7 @@ outstanding monotonicity criterion.
   sweep (`2026-07-20-pr6-final-identifier-sweep.{md,json}`), and both
   sweeps' worst-response calibration dumps.
 
-## v0.8.0 — 2026-07-20
+## v0.8.0 — 2026-07-19
 
 Closes #47 (empty/weak-retrieval guard: an explicit `grounding` signal so a
 confident-looking `enrich` response can be told apart from one that didn't
