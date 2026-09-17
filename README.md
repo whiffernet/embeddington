@@ -43,27 +43,13 @@ Loaded in Claude, it shows up as **embeddington**.
 
 The ServiceNow docs are authoritative and public. So why build anything at all?
 
-Because there are three different ways to ask a question, and they fail differently.
-
-**Reading the docs directly** gives you the truth, one page at a time. It's perfect when you
-know which page you need. It's brutal when the answer isn't written on any single page —
-and across ~48,000 markdown files, most interesting answers aren't. You end up being the
-join engine: open twelve tabs, hold the relationships in your head, hope you didn't miss a
-thirteenth.
-
-**Vector search (plain RAG)** finds passages that _resemble_ your question. Ask "what is a
-MID Server" and it nails it, because some paragraph literally says what a MID Server is.
-Ask "if we deprecate this integration, what else breaks?" and it hands you the five
-passages most similar to the words _deprecate_ and _breaks_ — which is not the answer,
-because **no passage contains the answer**. The answer only exists in the relationships
-_between_ passages, and similarity search cannot traverse a relationship it never
-represented. It retrieves; it doesn't connect.
-
-**A knowledge graph** does the joining ahead of time. Extraction reads every page once and
-writes down the relationships as typed edges — _this feature extends that one, this
-component depends on that service, this plugin requires that other plugin_. Now the
-multi-hop question is a two-line traversal instead of an afternoon, and the machine follows
-the chain instead of guessing at it.
+Because there are three ways to ask a question and they fail differently. The docs are the
+truth, one page at a time — brutal when the answer isn't written on any single page, and
+across ~48,000 markdown files most interesting answers aren't. Vector search finds passages
+that _resemble_ your question, which is the wrong tool when **no passage contains the
+answer** — when it only exists in the relationships _between_ passages. A graph does that
+joining ahead of time: extraction reads every page once and writes the relationships down as
+typed edges, so a multi-hop question is a traversal instead of an afternoon.
 
 | Your question                                          | The docs                       | Vector search                      | The graph                |
 | ------------------------------------------------------ | ------------------------------ | ---------------------------------- | ------------------------ |
@@ -276,47 +262,30 @@ Re-running the one-liner on a box that already has embeddington opens a short me
   image needs rebuilding that can take 10–20 minutes; if everything's actually healthy
   it finishes fast.
 
-The first Update after a big upgrade may do a little one-time work — recreate the local
-database with a memory cap, or build the keyword index (a few minutes on a full graph).
-The receipt tells you exactly what happened. After a code update, your data works
-immediately; to load new Claude search-tool code, reopen Claude Desktop (Claude Code
-picks it up automatically on its next run).
+After a code update your data works immediately; to load new Claude search-tool code,
+reopen Claude Desktop (Claude Code picks it up on its next run).
 
-**The installer offers to set this up for you.** During install (and on **Repair**), the
-wizard asks _"Set up daily auto-updates at 06:00?"_ — say yes and it adds the crontab entry
-below automatically (idempotently; `embeddington-setup --uninstall` removes it). If you
-declined, ran unattended (`EMBEDDINGTON_YES=1`), or want a different schedule, add it by hand:
-
-The crontab line runs `embeddington-setup --yes` — the same **Update** the wizard runs by
-hand, unattended: code pull, gated dependency resync, container config, and data, all in one
-idempotent shot. It also brings a stopped stack back up, so a box that got rebooted or had
-Docker die overnight self-heals at 06:00 instead of just sitting there stale. It needs
-`ARANGO_ROOT_PASSWORD` in its environment — the same value in `consumer/.env` from install.
-The line below loads it, then `cd`s into the clone first so the relative `consumer/.env`
-resolves and, on a first-time migration, the old cursor in that clone gets found and adopted:
+**The installer offers to schedule it.** During install (and on **Repair**) the wizard asks
+_"Set up daily auto-updates at 06:00?"_ — say yes and it writes the crontab entry
+idempotently (`embeddington-setup --uninstall` removes it). **The wizard's receipt prints the
+line for your own install**, with the right path already filled in from where it found
+docker; copy it from there. To write one by hand:
 
 ```bash
 # crontab -e   — update daily at 06:00
 0 6 * * * PATH=/usr/local/bin:$PATH; cd $HOME/embeddington && set -a && . consumer/.env && set +a && .venv/bin/embeddington-setup --yes >> $HOME/embeddington-update.log 2>&1
 ```
 
-**That `PATH=` is not optional.** cron runs with a minimal path — roughly `/usr/bin:/bin` —
-and on macOS every container runtime lives outside it: Docker Desktop in `/usr/local/bin`,
-OrbStack in `~/.orbstack/bin`, Colima via Homebrew in `/opt/homebrew/bin`. Without it the
-nightly job finds no `docker` and fails every night into a log nobody reads. Set it to
-whichever directory holds your own `docker` (`dirname "$(command -v docker)"` prints it).
-Linux users mostly get away without it, since `/usr/bin/docker` is already on cron's path.
+It runs the same unattended **Update**, so a box that rebooted or had Docker die overnight
+self-heals at 06:00 rather than sitting there stale. The `cd` is what makes the relative
+`consumer/.env` resolve, which is where `ARANGO_ROOT_PASSWORD` comes from.
 
-That example line assumes `~/embeddington`; if you installed somewhere else, the wizard's
-receipt prints the crontab line for your actual install location, with the right `PATH`
-already filled in from where docker was found on your machine — copy it from there instead
-of hand-editing the path above.
-
-**Already have the old, data-only cron line?** You don't have to touch it by hand. The next
-time you run the wizard's **Update** (by hand or via an already-scheduled cron job that still
-has the old line), it silently rewrites the crontab entry to the new self-upgrading form —
-no prompt, no action needed from you. If you want it upgraded right now instead of waiting
-for the next 06:00 run, just run the install one-liner again.
+**That `PATH=` is not optional.** cron runs with roughly `/usr/bin:/bin`, and on macOS every
+container runtime lives outside it — Docker Desktop in `/usr/local/bin`, OrbStack in
+`~/.orbstack/bin`, Colima via Homebrew in `/opt/homebrew/bin`. Without it the nightly job
+finds no `docker` and fails every night into a log nobody reads. `dirname "$(command -v
+docker)"` prints yours. Linux mostly gets away without it, since `/usr/bin/docker` is
+already on cron's path.
 
 **How to tell whether any of that is actually happening.** Every way a scheduled update can
 fail is silent — the cron daemon isn't running, macOS won't let a background job read the
@@ -327,24 +296,16 @@ was shut down. So the install records each successful run, and tells you when th
 embeddington-setup --check
 ```
 
-The `updates` row reads `last successful run 3d ago (v0.11.12)` on a healthy machine, and
-says how far behind you are when it isn't — along with the release you're on, which is the
-first thing worth knowing when something looks wrong. The wizard says the same thing when
-you start it after a long gap, and an install that has gone more than a month without
-updating gets mentioned once through Claude, since someone whose updates stopped is by
-definition not the person running the installer. Nothing is reported anywhere: the record
-is a local file, read locally, and `embeddington-setup --uninstall` removes it with the
-rest of the state directory.
+The `updates` row reads `last successful run 3d ago (v0.14.2)` on a healthy machine and says
+how far behind you are when it isn't, along with the release you're on. An install that has
+gone more than a month without updating also gets mentioned once through Claude — someone
+whose updates stopped is by definition not the person running the installer. Nothing is
+reported anywhere: the record is a local file, read locally, and removed by
+`embeddington-setup --uninstall`.
 
 If you'd rather run the data-only piece by hand for some reason — diffs and the keyword
 index, no container/config/venv changes — `embeddington-consume update` is still there; see
 **Configuration** below for its flags.
-
-**Transition note.** If a nightly run (or a manual `embeddington-consume update`) prints
-`error: this embeddington install is out of date`, that means a published baseline moved to
-a data format this install's code predates it. Re-run the install one-liner — it pulls the
-new code first, and updates resume automatically from there. Nothing about your data is
-wrong; the code just needs to catch up once.
 
 <details><summary>Auto-updates on macOS and WSL2 (platform notes)</summary>
 
@@ -390,8 +351,7 @@ other baseline). That's expected, not an error.
 
 A baseline restore **replaces** your local collection rather than merging into it — anything
 already stored is cleared first. Merging would leave the previous generation sitting alongside
-the new one, two copies of every document, and nobody wants that in their rug. Run it on whatever schedule you like — a
-daily cron, say — to stay current.
+the new one, two copies of every document, and nobody wants that in their rug.
 
 What it prints. **First run** (or the first run after a new baseline is cut) restores the
 whole graph:
@@ -402,8 +362,6 @@ Embeddington update complete.
   Loaded:  70,699 vectors · 271,274 entities · 561,618 edges
   Version: ts-161fc74e847211ad
   Diffs:   0 applied on top of the baseline
-  Note:    a one-time full re-download is expected after a compaction — existing
-           installs re-restore the latest baseline in a single step.
 ```
 
 **Later runs** apply only what changed, and say so when there's nothing to do:
@@ -422,12 +380,6 @@ Embeddington update complete.
 
 A baseline restore reporting `Diffs: 0` is a **success**, not a no-op — it means the baseline
 it just loaded was already current. Nothing more to fetch, man.
-
-`baseline-2026-09c` **re-rooted the chain**: it is the current root, and the diffs that chained
-onto the previous baselines were dropped rather than carried forward. Those described the old
-corpus on the old graph schema, which this baseline replaces wholesale — applying them on top
-would have layered yesterday's deltas onto today's content, and that's a whole new can of worms.
-So `Diffs: 0` is expected here for a while, until daily publishing appends new ones.
 
 ---
 
@@ -513,8 +465,10 @@ Unlike the MCP server, these are **project-scoped only**: they live in the clone
 `.claude/commands/` and are available when the clone is your project directory. Copy them
 into `~/.claude/commands/` if you want them everywhere.
 
-Pointing the server somewhere else — a different store, a scoped read-only user, a Qdrant
-that needs an API key — is what `mcp/.env` is for: `cp mcp/.env.example mcp/.env` and set
+### Pointing it somewhere else
+
+Pointing the server at a different store, a scoped read-only user, or a Qdrant that needs an
+API key is what `mcp/.env` is for: `cp mcp/.env.example mcp/.env` and set
 what you need. It takes precedence over `consumer/.env`, and an explicit environment
 variable takes precedence over both. Claude Desktop needs no extra wiring either: point it
 at `mcp/server.py` (see `mcp/README.md`) and the same resolution applies, which matters
@@ -540,8 +494,8 @@ deliberately decided to accept the risk, set `EMBEDDINGTON_ALLOW_REMOTE_ROOT=1`.
 
 Use the clone's own `.venv/bin/pip`, not a bare `pip`: the server is launched with
 `.venv/bin/python`, and dependencies installed anywhere else are invisible to it. If the
-server won't start, `embeddington-setup --check` names the reason, and **EMB-52** in the
-troubleshooting table below walks through it.
+server won't start, `embeddington-setup --check` names the reason, and **EMB-52** in
+[docs/troubleshooting.md](docs/troubleshooting.md) walks through it.
 
 Both query styles work out of the box: graph traversal (`kg_find_entities`, `kg_neighbors`,
 `kg_path`, `kg_schema`, `kg_get_entity`) runs against your local ArangoDB, and
@@ -581,36 +535,22 @@ Two examples to steal from:
 **1. CI identification & deduplication strategy**
 
 > /embeddington-ask We're loading CMDB from three places — Discovery, a Service Graph
-> Connector, and a legacy import that predates all of us — and we're drowning in duplicate CIs. Can you help me work
-> out how identification _should_ be settled here?
+> Connector, and a legacy import — and we're drowning in duplicate CIs. When should we trust
+> Discovery's identification rules versus the identifiers a connector hands us versus our own
+> IRE rules, and how is datasource precedence supposed to resolve it when two sources claim
+> the same attribute? Where does the line fall between dependent and independent CI
+> identification?
 >
-> The parts I keep going back and forth on: when to trust Discovery's identification rules
-> versus the identifiers a connector hands us versus writing our own IRE rules, and how
-> datasource precedence is supposed to resolve it when two sources claim the same attribute.
-> I'm also never sure where the line falls between dependent and independent CI
-> identification.
->
-> Reason it through with me rather than jumping to an answer, then land on a default
-> authoritative-source model and name the exceptions where it shouldn't apply. If you can
-> point at the docs behind the big calls, that'd help me sell this internally.
+> Reason it through rather than jumping to an answer, then land on a default
+> authoritative-source model and name the exceptions. Point at the docs behind the big calls.
 
 **2. Multi-instance platform & domain strategy at scale**
 
-> I'm advising a global enterprise — 12 business units, a bit over 200k employees — and we
-> have to settle the platform topology before anything else can move. Single instance with
-> domain separation? Separate production instances? Something hub-and-spoke? I'd honestly
-> rather see the trade-offs laid out than be handed a verdict.
->
-> Two things are fixed: each BU needs its own isolation, but they share a CMDB. And please
-> stick to GA features — I can't build a plan on what's coming next year.
->
-> Once you've picked a direction, I'll need the rest of the story: how we handle archiving
-> and table rotation on the high-volume tables, what the cross-instance integration pattern
-> looks like, which performance levers are actually worth pulling, and what any of this does
-> to our licensing.
->
-> Give me the short recommendation first, then the detail behind it. Close with the three
-> architectural risks you'd lose sleep over.
+> I'm advising a global enterprise — 12 business units, 200k+ employees — and we have to
+> settle the platform topology first. Single instance with domain separation? Separate
+> production instances? Hub-and-spoke? Each BU needs isolation but they share a CMDB, and
+> stick to GA features. Lay out the trade-offs rather than handing me a verdict, then close
+> with the three architectural risks you'd lose sleep over.
 
 **Start with `enrich`** — it's the fullest, most robust tool in the box. One call runs
 vector search **and** graph traversal (entity match + neighbors) in parallel and hands Claude
@@ -641,11 +581,7 @@ time. A failed download, or a diff that could not be applied, is left in place d
 it is evidence, and re-running re-fetches it anyway. Plus **~6–8 GB RAM** — the embedder
 alone holds ~2.3 GB once bge-m3 loads, on top of Qdrant + ArangoDB serving the full graph.
 
-Upgrading? Downloads used to land in `data/work/` inside your clone. That directory is no
-longer used and can be deleted outright — it may still be holding ~1 GB of baseline scratch.
-
-Sizes track the baseline, so they grow over time: `baseline-2026-07` roughly doubled the
-vector count over `baseline-2026-06`, and the disk figures moved with it.
+These figures track the current baseline and move with it.
 
 ---
 
@@ -708,7 +644,7 @@ vector count over `baseline-2026-06`, and the disk figures moved with it.
 The **state directory** holds the cursor — the record of which version of the graph you have.
 It resolves in this order: `$EMBEDDINGTON_HOME`, then `$XDG_DATA_HOME/embeddington`, then
 `~/.local/share/embeddington`. There is one local stack per machine, so there is one cursor
-per machine — which is why the working directory no longer matters.
+per machine — which is why the working directory does not matter.
 
 > **Careful with `$EMBEDDINGTON_HOME` / `$XDG_DATA_HOME`.** If you export either one from
 > `.bashrc` (or a login profile), **cron does not inherit it** — cron starts a bare shell.
@@ -717,40 +653,16 @@ per machine — which is why the working directory no longer matters.
 > refusal (exit 3). Either set the variable inside the crontab line itself, or don't set it
 > at all.
 
-Upgrading from a version that kept its cursor in `data/.cursor`? The first run adopts it and
-says so — nothing is re-downloaded — **provided that old cursor is somewhere the CLI looks**:
-the current directory, the install root (your clone, for the documented `pip install -e .`),
-or `$HOME`. If you once ran the tool from a fourth place (say `~/work`), copy that file into
-the state directory yourself before the first run:
+**Exit codes**, for anyone wrapping this in a job runner:
 
-```bash
-mkdir -p ~/.local/share/embeddington
-cp ~/work/data/.cursor ~/.local/share/embeddington/.cursor
-embeddington-consume update
-```
+| Code | Meaning |
+| ---- | ------- |
+| `0`  | Success (restored, applied diffs, or already up to date) |
+| `1`  | Unhandled error |
+| `3`  | **Refused**: a baseline was needed, but the stores already hold data and no cursor was found. Nothing was downloaded. Pass `--force-baseline` if you want the ~1 GB re-restore. |
 
-(Use `$EMBEDDINGTON_HOME` or `$XDG_DATA_HOME/embeddington` instead if you've set either.)
-A copy — not `--cursor ~/work/data/.cursor`: that flag only tells this one run where the
-cursor file lives, and keeps using it in place. It's a permanent flag, not a migration.
-
-Every old cursor the first run _does_ find is renamed to `data/.cursor.migrated` (kept, not
-deleted) — all of them, not just the one it adopts, so none can be mistaken for a live cursor
-later.
-
-Two more upgrade housekeeping notes:
-
-- Your old scratch dir — `data/work/` in the clone — is orphaned now that downloads land in
-  `<state dir>/work/`. It can hold up to ~1 GB of baseline leftovers; delete it.
-- **Exit codes**, for anyone wrapping this in a job runner:
-
-  | Code | Meaning                                                                                                                                                                                                                                                 |
-  | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-  | `0`  | Success (restored, applied diffs, or already up to date)                                                                                                                                                                                                |
-  | `1`  | Unhandled error                                                                                                                                                                                                                                         |
-  | `3`  | **Refused**: a baseline was needed, but the stores already hold data and no cursor was found. Nothing was downloaded. Copy your old cursor into the state dir (above) and re-run, or pass `--force-baseline` if you really want the ~1 GB re-restore. |
-
-  (There is no `2`: it's reserved for `BaselineRequired`, which only the library can raise —
-  the CLI always supplies a baseline importer.)
+(There is no `2`: it's reserved for `BaselineRequired`, which only the library can raise —
+the CLI always supplies a baseline importer.)
 
 > _"This is what happens when you float your version tags."_
 >
@@ -785,12 +697,10 @@ pytest
 cd ..
 ```
 
-The battery (`mcp/tests/battery_sweep.py`) now records latency (median/IQR
-over repeats), per-call counts, and machine-readable JSON results;
-retrieval changes are gated on a frozen, cross-model-validated gold set
-(`mcp/tests/gold/`). The 2026-07 retrieval-quality chain (v0.5.0–v0.9.0) closed
-with a per-issue adversarial audit; the full record lives in
-`mcp/tests/battery_results/2026-07-20-closing-audit.md`.
+Retrieval changes are gated on a frozen, cross-model-validated gold set
+(`mcp/tests/gold/`). The battery (`mcp/tests/battery_sweep.py`) records latency
+(median/IQR over repeats), per-call counts, and machine-readable JSON results;
+past sweeps are kept in `mcp/tests/battery_results/`.
 
 ---
 
@@ -798,307 +708,20 @@ with a per-issue adversarial audit; the full record lives in
 
 > _"This is a very complicated case."_
 
-### The run log
-
-Every command the wizard runs — and the error from any that fails — is appended to
-`~/.local/share/embeddington/run.log` (or `$EMBEDDINGTON_HOME/run.log`). So is the
-Python environment bootstrap from `install.sh`, so a failed install and a failed run
-land in one place. Each run opens with the revision it is about to run and whether the
-code update succeeded, so the log answers "which version was this?" without anyone
-having to ask:
-
-```
-=== embeddington run 2026-09-03T14:17:07-0700 ===
-2026-09-03T14:17:07-0700  clone /Users/you/embeddington at v0.12.6 — code update: ok
-```
-
-A `code update: failed` there means the clone could not fast-forward and the run used
-older code than you were expecting — `git -C <clone> status` shows what is in the way. The nightly update job writes there too, which is usually the only
-way to find out that it has been failing quietly. It's trimmed to its last megabyte
-each run, so it won't grow on you.
-
-It lives outside the clone deliberately: reinstalling is the first thing people try, and
-a log that a re-clone destroys is a log that is never there when you need it.
-
-Nothing secret goes in it: no installer command carries a password on its command line,
-the generated ArangoDB root password never leaves `consumer/.env`, and credentials
-embedded in a `PIP_INDEX_URL` are stripped before anything is recorded. **If you're
-reporting a problem, this is the file to send.**
-
-
-Every installer *failure* prints an `[EMB-nn]` code with a fix line already attached — find
-yours below for the full story. The first entry has no code at all, because it happens after
-an install that worked.
-
-#### `SchemaVersionError: manifest schema major 4 exceeds supported 3; re-baseline`
-
-> _"You're out of your element."_ — your client, politely, about a manifest it doesn't speak.
-
-Your install predates the schema-4 release and the published manifest is now 4.0.0. **This is
-the update refusing to run rather than applying a baseline it does not understand** — a
-deliberate stop, not corruption. Nothing local is damaged, man.
-
-The trailing number is whichever major *your* install speaks, so you may see `exceeds
-supported 1` or `2` instead. The fix is the same either way — the ordinary update, which
-pulls the newer code and then applies the baseline:
-
-```bash
-# run from: your clone
-embeddington-setup --yes
-```
-
-Each major is a gate on a change an older client would get silently wrong:
-
-- **Schema 3** is where baseline restores became **replace** rather than merge. A pre-3
-  client applying a 3.0.0 baseline would have merged it into the existing collection,
-  leaving two generations of every document.
-- **Schema 4** is the move to KG schema **v3** — the graph now lives in `entities_v3` /
-  `relationships_v3`, and the baseline entry names which generation it holds in a
-  `kg_schema` field. A pre-4 client has no notion of that field, so it cannot name the
-  collections the baseline actually contains: it would report a successful update while its
-  MCP went on reading the v2 collections it already had. Serving yesterday's graph and
-  calling it today's is worse than refusing, which is why the gate is here.
-
-#### "I installed it, but I don't see embeddington in Claude"
-
-**First, the surface.** embeddington is an MCP server, not a plugin. It shows up under
-**`/mcp`**, and it will never show up under `/plugin`. If that's where you looked, there is
-nothing wrong with your install.
-
-**Second, the directory.** The `.mcp.json` this repo ships is *project-scoped*: Claude Code
-finds it when the clone is your project directory. Start Claude anywhere else and there is
-nothing to see.
-
-```bash
-# run from: your clone
-claude
-```
-
-**Still nothing?** Ask the client what it thinks, from the clone:
-
-```bash
-claude mcp list
-```
-
-Three answers, three unrelated problems:
-
-| What it says | What it means |
-| --- | --- |
-| `embeddington … ⏸ Pending approval` | You were asked to approve it and didn't. Run `claude` there and accept — or `claude mcp reset-project-choices`, then relaunch, to be asked again. |
-| `embeddington … ✘ Failed to connect` | Found, but it won't start. `embeddington-setup --check` names the reason; see **EMB-52**. |
-| not listed at all | Claude isn't treating that directory as the project. Check where you launched it from. |
-
-**Want it from every directory, not just the clone?** That's what the wizard's user-scope
-offer is for — see the registration line under [query with Claude](#in-the-parlance-of-our-times-query-with-claude).
-
-#### EMB-10 — no interactive terminal
-
-`install.sh` was piped without a TTY and `EMBEDDINGTON_YES` isn't set — it can't prompt
-for anything. Run it from a real terminal, or set `EMBEDDINGTON_YES=1` for an
-unattended install.
-
-#### EMB-11 — git missing
-
-`git` isn't on `PATH`. Install it (`xcode-select --install` on macOS; `apt`/`dnf
-install git` on Linux), then re-run.
-
-#### EMB-12 — python too old or missing
-
-No `python3.13`, `python3.12`, or `python3` on `PATH` resolves to 3.12+. Install
-Python 3.12 or newer (python.org, `brew install python@3.12`, or your distro), then
-re-run.
-
-#### EMB-13 — can't reach the repo
-
-`git ls-remote` against the clone URL failed — no network, or a proxy is in the way.
-Check your connection, then re-run.
-
-#### EMB-14 — venv/pip bootstrap failed
-
-Three distinct causes share this code, and `install.sh` tells you which: the
-`python3-venv` package is missing (`sudo apt install python3-venv`, or
-`python3.12-venv`, then re-run); a `pip install` step failed (the last 20 lines print
-above the error, and the whole thing is in the run log — fix what it complains about,
-then re-run); or
-the clone is stale and `embeddington-setup` never landed (`cd` into the install dir,
-`git stash && git pull --ff-only`, then re-run).
-
-#### EMB-15 — not enough disk
-
-Preflight found less than 3 GB free. Free up at least 3 GB (12+ recommended), then
-re-run.
-
-#### EMB-16 — install dir isn't empty and isn't a clone
-
-The install directory exists, has files in it, and isn't an embeddington git clone —
-`install.sh` won't overwrite something it doesn't recognize. Pick a different location
-(`EMBEDDINGTON_INSTALL_DIR=...`), or move that directory aside.
-
-#### EMB-20 — docker install declined
-
-No container runtime was found and every offer to install one was turned down (or,
-in `--yes` mode, there was no one to ask — unattended mode never installs Docker
-because it can't consent on your behalf). Install OrbStack, Colima, Docker Desktop,
-or Docker Engine yourself, then re-run — or run interactively without
-`EMBEDDINGTON_YES` so the wizard can offer.
-
-#### EMB-21 — docker daemon not reachable
-
-The daemon didn't answer within the wait window, or it's up but your user can't
-reach its socket yet (fresh Linux installs aren't in the `docker` group by default —
-the wizard offers `usermod -aG docker`, but that only takes effect after you log out
-and back in, or run `newgrp docker`). Start the daemon manually (OrbStack/Docker
-Desktop, `colima start`, or `sudo systemctl start docker`) or re-login, then re-run.
-
-The error now carries what the client was actually doing — the socket it dialed, the
-active docker context, and the other contexts you have configured:
-
-```
-  dialed: unix:///Users/you/.docker/run/docker.sock
-  context: desktop-linux (active)
-  also configured: default, orbstack
-  docker said: Cannot connect to the Docker daemon. Is the docker daemon running?
-```
-
-**If your runtime is plainly running and you still see this, read the context line.**
-Migrating from Docker Desktop to OrbStack (or Colima, or Rancher) leaves the old
-context selected, so the client keeps dialing a socket nothing owns any more while
-your actual daemon sits there healthy. `docker context use orbstack` — or whichever
-one the error lists — fixes it. A `DOCKER_HOST` exported in your shell profile beats
-the context entirely, and is reported on its own line when set.
-
-#### EMB-22 — manual runtime install required
-
-The wizard can't finish this install path for you — no Homebrew to install OrbStack
-with, an OrbStack brew install that failed, Colima's three-step manual setup, or
-Docker Desktop (a GUI download it can't script). Follow the printed steps or install
-a runtime yourself, then re-run.
-
-#### EMB-23 — automatic docker install failed or unsupported
-
-Either the `docker compose` v2 plugin is missing after an otherwise-working Docker
-install, the Linux distro wasn't recognized so the wizard wouldn't guess a package
-manager, or the recognized distro's package install command failed. Install Docker
-Engine + the compose plugin per
-[docs.docker.com/engine/install](https://docs.docker.com/engine/install/), then
-re-run.
-
-#### EMB-24 — port already taken
-
-A port `consumer/docker-compose.yml` needs is bound by something that isn't
-embeddington. Stop whatever holds that port (or move it), then re-run.
-
-#### EMB-31 — docker compose up failed
-
-Either `docker compose up -d --build` exited non-zero (the error prints just above),
-or Qdrant/ArangoDB didn't answer within the store timeout. Fix what compose
-complained about (ports, disk, daemon) — or check `docker compose ps` and
-`docker compose logs` in `consumer/` — then re-run; it picks up where it left off.
-
-You don't have to catch it live. When compose fails, the service states and the last
-100 lines of container output are written to the run log, so a container that started
-and then died leaves its reason behind — the low-RAM case where arango won't stay up
-being the common one. **That's the file to send if you want a hand.** (An *image build*
-failure is the exception: it happens before any container exists, so only the terminal
-output above has it.)
-
-**Not the same as `unknown`.** If `embeddington-setup --check` reports the containers (or
-`embed`) as **`unknown — Docker isn't answering`**, that is not this error: the daemon never
-replied, so nothing could be asked about the containers at all. Start Docker — open
-OrbStack/Docker Desktop, `colima start`, or `sudo systemctl start docker` — and re-run the
-check. The containers may well be fine underneath.
-
-#### EMB-32 — embed service didn't come up
-
-The `embed` service's first build downloads ~2 GB of model weights, and that stalled
-or failed past the embed timeout. Run `docker compose logs embed` in `consumer/` to
-see why; a plain retry (`docker compose up -d --build`) resumes a dropped download
-cleanly.
-
-#### EMB-33 — no usable ArangoDB password
-
-`consumer/.env` either doesn't exist, or exists but its `ARANGO_ROOT_PASSWORD` is
-empty or still the placeholder `change-me`. Re-run the installer to generate one, or
-open the file and set `ARANGO_ROOT_PASSWORD` to any non-empty value yourself.
-
-#### EMB-41 — download failed (network)
-
-A baseline or diff download hit a network error. Check your connection and re-run —
-downloads resume/retry cleanly.
-
-#### EMB-42 — asset checksum mismatch
-
-A downloaded asset failed checksum verification. Re-run — a corrupted download
-re-fetches cleanly. If it repeats, open an issue.
-
-#### EMB-43 — populated store with no cursor
-
-The stores already hold data and no cursor was found, so the updater refuses to
-guess whether a full re-restore is safe (this is the same guard `embeddington-consume
-update` exits `3` for). If the store is healthy, copy your old cursor into the state
-dir (see **Configuration** above); to deliberately re-restore everything, re-run with
-`--force-baseline`.
-
-#### EMB-44 — proof-of-life query returned zero
-
-After import, a real query against Qdrant and ArangoDB found at least one store
-empty or unqueryable. Give the containers a few seconds to settle and re-run
-`embeddington-setup --check`; if it persists, check `docker compose logs` in
-`consumer/`, or run `embeddington-consume update --force-baseline` for a clean
-restore.
-
-#### EMB-45 — updater error
-
-The updater hit something other than a network, checksum, or guard failure (a chain
-gap, a schema version mismatch, ...). Re-run the installer; if it repeats, run
-`embeddington-consume update` directly for the full error.
-
-#### EMB-51 — MCP dependency install failed
-
-`pip install -r mcp/requirements.txt` failed while wiring up Claude — the graph
-itself is unaffected and fully usable without it. Run that `pip install` manually with
-the clone's own interpreter (`.venv/bin/pip`) to see why.
-
-#### EMB-52 — the MCP server didn't start when probed
-
-After wiring Claude, the installer starts the server once to prove it works, instead of
-assuming it does. This code means that probe failed, and the message names which of the
-few possible causes it was: the clone's `.venv` is missing, the server's dependencies
-aren't installed in it, no password is resolvable (`consumer/.env` is missing or empty and
-`mcp/.env` doesn't supply one), or the local stack isn't answering (which is the stack
-being down, not the wiring being wrong).
-
-Your knowledge graph is unaffected either way — this step only concerns querying it from
-Claude. To watch the failure yourself:
-
-```bash
-# run from: repo root
-.venv/bin/python mcp/server.py < /dev/null
-```
-
-A healthy server prints a startup line and exits cleanly when its input closes. Any other
-outcome prints the real reason, which your client would otherwise report only as a closed
-connection.
-
-#### EMB-61 — couldn't inspect store contents before deletion
-
-Uninstall couldn't query the stores (daemon down?) before offering to delete their
-volumes, so it can't prove they hold only embeddington data. This is a non-fatal
-warning, not a stopper. For an inspected deletion: `cd consumer && docker compose up
--d`, then re-run the uninstall — or proceed knowing the contents are unverified.
-
-#### EMB-62 — crontab rewrite failed
-
-Uninstall couldn't rewrite your crontab to strip the embeddington line. Run
-`crontab -e` and remove the line yourself.
-
-#### EMB-63 — clone self-delete handoff failed
-
-Uninstall hands off to a tiny detached script to delete the clone (so the running
-Python process isn't deleting the directory it's executing from); the handoff
-`execv` itself failed. Remove the clone yourself: `rm -rf <clone path>`.
-
----
+**The run log is `~/.local/share/embeddington/run.log`** (or `$EMBEDDINGTON_HOME/run.log`).
+Every command the wizard runs, the error from any that fails, and the nightly update job all
+land there — including `install.sh`'s Python bootstrap, so a failed install and a failed run
+are in one file. It lives outside the clone deliberately, because re-cloning is the first
+thing people try. Nothing secret goes in it. **If you're reporting a problem, this is the
+file to send.**
+
+**`embeddington-setup --check`** is the doctor: it reports health, changes nothing, and
+exits 0 or 1.
+
+Every installer failure prints an `[EMB-nn]` code with a fix line attached.
+**[docs/troubleshooting.md](docs/troubleshooting.md)** has the full entry for each one,
+plus the two failures that have no code: the schema-version gate, and embeddington not
+showing up in Claude.
 
 ## Who's got the papers (license & data provenance)
 

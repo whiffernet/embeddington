@@ -13,8 +13,10 @@ def test_every_code_matches_the_emb_pattern():
         assert re.fullmatch(r"EMB-\d\d", code), code
 
 
-def test_anchor_is_lowercase_readme_url():
-    assert errors.anchor("EMB-21") == "https://github.com/whiffernet/embeddington#emb-21"
+def test_anchor_is_lowercase_troubleshooting_url():
+    assert errors.anchor("EMB-21") == (
+        "https://github.com/whiffernet/embeddington/blob/main/docs/troubleshooting.md#emb-21"
+    )
 
 
 def test_setup_error_carries_code_friendly_fix():

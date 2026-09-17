@@ -1,13 +1,14 @@
 """Single registry of every EMB-nn error the installer can raise.
 
-The code is the stable, greppable contract between a failing install and the README's
-troubleshooting table: every registered code has a `#### EMB-nn` heading in the README
-(pinned by tests/test_readme_pins.py). install.sh hard-codes EMB-10..EMB-16 (the codes
+The code is the stable, greppable contract between a failing install and the
+troubleshooting guide: every registered code has an `### EMB-nn` heading in
+docs/troubleshooting.md (pinned by tests/test_readme_pins.py, which also pins the
+anchor below to that file). install.sh hard-codes EMB-10..EMB-16 (the codes
 reachable before Python exists; EMB-15 is raised by the Python preflight); everything
 else is raised from this module's SetupError.
 """
 
-ANCHOR_BASE = "https://github.com/whiffernet/embeddington#"
+ANCHOR_BASE = "https://github.com/whiffernet/embeddington/blob/main/docs/troubleshooting.md#"
 
 # code -> short internal description (the user-facing text lives at each raise site,
 # where it can name the actual port/path/command involved).
@@ -41,7 +42,7 @@ CODES = {
 
 
 def anchor(code):
-    """Return the README troubleshooting anchor URL for an EMB code."""
+    """Return the troubleshooting-guide anchor URL for an EMB code."""
     return ANCHOR_BASE + code.lower()
 
 

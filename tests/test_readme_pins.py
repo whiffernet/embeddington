@@ -1,4 +1,4 @@
-"""Guard the README's third-party licence table against drift.
+"""Guard the README's third-party licence table, and the troubleshooting anchors.
 
 That table is legally load-bearing: it tells a reader that ArangoDB 3.12.4 is
 BUSL-1.1 (not open source, no third-party DBaaS) while Qdrant v1.16.3 is
@@ -18,6 +18,9 @@ import pytest
 
 _ROOT = Path(__file__).resolve().parents[1]
 _COMPOSE = _ROOT / "consumer" / "docker-compose.yml"
+# The troubleshooting catalog lives here, not in the README (#145). The installer
+# prints anchors into this file, so its path is part of a user-facing contract.
+_TROUBLESHOOTING = _ROOT / "docs" / "troubleshooting.md"
 
 # image name -> the bolded component label used in the README table
 _COMPONENTS = {
@@ -39,6 +42,14 @@ def _readme_text():
         if p.exists():
             return p.read_text(encoding="utf-8")
     raise AssertionError("no README found at the repo root")
+
+
+def _troubleshooting_text():
+    assert _TROUBLESHOOTING.exists(), (
+        f"{_TROUBLESHOOTING.relative_to(_ROOT)} is missing. Every installer error prints "
+        "an anchor into it; moving or deleting it breaks those links for users."
+    )
+    return _TROUBLESHOOTING.read_text(encoding="utf-8")
 
 
 def _compose_pins():
@@ -100,26 +111,57 @@ def _component_row(component):
     raise AssertionError(f"no third-party table row for {component} in the README")
 
 
-def test_every_emb_code_has_a_readme_troubleshooting_heading():
-    """Every registered installer error code must have its README anchor.
+def test_every_emb_code_has_a_troubleshooting_heading():
+    """Every registered installer error code must have the anchor it advertises.
 
-    show_error() prints github.com/whiffernet/embeddington#emb-nn; that anchor only
-    exists if the README carries a `#### EMB-nn` heading.
+    A failing install prints `errors.anchor(code)`; that URL only resolves if
+    docs/troubleshooting.md carries an `### EMB-nn` heading, because GitHub derives
+    the fragment from the heading text.
     """
     from installer import errors
 
-    readme = _readme_text()
-    missing = [code for code in errors.CODES if f"#### {code}" not in readme]
-    assert not missing, f"EMB codes without a README troubleshooting heading: {missing}"
+    doc = _troubleshooting_text()
+    missing = [code for code in errors.CODES if f"### {code}" not in doc]
+    assert not missing, f"EMB codes without a troubleshooting heading: {missing}"
 
 
-def test_readme_documents_the_unknown_container_row_verbatim():
+def test_anchor_base_points_at_the_file_the_headings_live_in():
+    """The printed URL and the headings must not drift apart.
+
+    Moving the catalog is exactly the change that silently turns every error message
+    into a dead link, so the path is asserted rather than left to review.
+    """
+    from installer import errors
+
+    rel = _TROUBLESHOOTING.relative_to(_ROOT).as_posix()
+    assert errors.ANCHOR_BASE.endswith(f"/{rel}#"), (
+        f"ANCHOR_BASE ({errors.ANCHOR_BASE!r}) does not point at {rel}, which is where "
+        "the EMB-nn headings actually are."
+    )
+
+
+def test_install_sh_anchor_matches_the_python_one():
+    """install.sh hard-codes the same URL for the codes it raises before Python exists.
+
+    Two copies of one fact: update one and the pre-Python errors point somewhere the
+    post-Python errors do not.
+    """
+    from installer import errors
+
+    line = f'ANCHOR="{errors.ANCHOR_BASE}"'
+    assert line in (_ROOT / "install.sh").read_text(encoding="utf-8"), (
+        f"install.sh does not carry the same anchor base as installer/errors.py: {line!r}"
+    )
+
+
+def test_troubleshooting_documents_the_unknown_container_row_verbatim():
     """`embeddington-setup --check` can report containers as "unknown — Docker isn't
     answering" (issue #87), and EMB-31 carries the entry explaining that it is NOT that
     error. The entry is keyed on the exact wording, so reword one without the other and a
     user searching for what they saw on screen finds nothing."""
     from installer.cli import _UNKNOWN_CONTAINERS
 
-    assert _UNKNOWN_CONTAINERS in _readme_text(), (
-        f"README does not contain the doctor's exact wording: {_UNKNOWN_CONTAINERS!r}"
+    assert _UNKNOWN_CONTAINERS in _troubleshooting_text(), (
+        f"docs/troubleshooting.md does not contain the doctor's exact wording: "
+        f"{_UNKNOWN_CONTAINERS!r}"
     )
